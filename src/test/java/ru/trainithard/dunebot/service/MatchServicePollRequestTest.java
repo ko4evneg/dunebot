@@ -49,7 +49,10 @@ class MatchServicePollRequestTest {
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        player1.setId(1L);
+        jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
+                "values (10000, 12345, 'st_pl', 'name', '2010-10-10') ");
+
+        player1.setId(10000L);
         player1.setSteamName("st_AKos");
         player1.setUserName("tg_AKos");
 
@@ -65,8 +68,9 @@ class MatchServicePollRequestTest {
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from match_players where player_id between 1 and 4");
+        jdbcTemplate.execute("delete from match_players where player_id = 10000");
         jdbcTemplate.execute("delete from matches where telegram_poll_id is null or telegram_poll_id = '" + POLL_ID + "'");
+        jdbcTemplate.execute("delete from players where id = 10000");
     }
 
     @Test
@@ -74,7 +78,7 @@ class MatchServicePollRequestTest {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
-                "where id = (select match_id from match_players where player_id = 1)", Long.class);
+                "where id = (select match_id from match_players where player_id = 10000)", Long.class);
 
         assertNotNull(actualMatchId);
     }
@@ -84,7 +88,7 @@ class MatchServicePollRequestTest {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where " +
-                "id = (select match_id from match_players where player_id = 1 and owner_id = 1)", new BeanPropertyRowMapper<>(Match.class));
+                "id = (select match_id from match_players where player_id = 10000 and owner_id = 10000)", new BeanPropertyRowMapper<>(Match.class));
 
         assertThat(actualMatch,
                 both(hasProperty("telegramPollId", is(POLL_ID)))
@@ -96,7 +100,7 @@ class MatchServicePollRequestTest {
     void shouldCreateNewMatchPlayerWith() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
-        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players where player_id = 1 and place is null", Long.class);
+        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players where player_id = 10000 and place is null", Long.class);
 
         assertNotNull(actualMatchPlayerId);
     }
