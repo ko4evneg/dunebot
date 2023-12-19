@@ -7,11 +7,11 @@ import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
-import ru.trainithard.dunebot.model.PlayerMatch;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.repository.PlayerMatchRepository;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
 import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
 import ru.trainithard.dunebot.service.telegram.TelegramService;
@@ -23,7 +23,7 @@ import java.util.List;
 public class MatchServiceImpl implements MatchService {
     private final TelegramService telegramService;
     private final MatchRepository matchRepository;
-    private final PlayerMatchRepository playerMatchRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final TransactionTemplate transactionTemplate;
 
     private static final List<String> POLL_OPTIONS = List.of("Да", "Нет", "Результат");
@@ -32,8 +32,8 @@ public class MatchServiceImpl implements MatchService {
     public void requestNewMatch(Player initiator, ModType modType) throws TelegramApiException {
         Match match = new Match();
         match.setModType(modType);
-        PlayerMatch playerMatch = new PlayerMatch();
-        playerMatch.setPlayer(initiator);
+        MatchPlayer matchPlayer = new MatchPlayer();
+        matchPlayer.setPlayer(initiator);
 
         SendPoll sendPoll = getNewPoll(initiator, modType);
         telegramService.sendPoll(sendPoll, ((message, throwable) -> {
@@ -45,8 +45,8 @@ public class MatchServiceImpl implements MatchService {
                     match.setTelegramMessageId(messageId);
                     match.setOwner(initiator);
                     Match savedMatch = matchRepository.save(match);
-                    playerMatch.setMatch(savedMatch);
-                    playerMatchRepository.save(playerMatch);
+                    matchPlayer.setMatch(savedMatch);
+                    matchPlayerRepository.save(matchPlayer);
                 });
             }
         }));
