@@ -18,6 +18,6 @@ public class Match extends BaseEntity {
     private Player owner;
     private String telegramPollId;
     private int telegramMessageId;
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private ModType modType;
 }
