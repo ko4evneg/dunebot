@@ -13,7 +13,11 @@ import java.util.List;
 public class Match extends BaseEntity {
     @OneToMany(mappedBy = "match", fetch = FetchType.LAZY)
     private List<PlayerMatch> playerMatches;
+    @OneToOne
+    @JoinColumn(name = "owner_id")
+    private Player owner;
     private String telegramPollId;
+    private int telegramMessageId;
     @Enumerated
     private ModType modType;
 }

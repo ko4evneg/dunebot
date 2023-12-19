@@ -17,6 +17,7 @@ public class Player extends BaseEntity {
     @Nullable
     private String lastName;
     @Nullable
+    // TODO:  rename
     private String userName;
 
     public String getFriendlyName() {
