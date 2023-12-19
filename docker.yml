@@ -1,0 +1,10 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      #      todo
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: sa
+    ports:
+      - 5432:5432
