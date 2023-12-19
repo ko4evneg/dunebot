@@ -12,12 +12,14 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
@@ -41,6 +43,7 @@ class MatchServiceNewPollsTest {
     private TelegramBot telegramBot;
 
     private static final String POLL_ID = "12345";
+    private static final Integer MESSAGE_ID = 100500;
     private final Player player1 = new Player();
 
     @BeforeEach
@@ -54,6 +57,7 @@ class MatchServiceNewPollsTest {
         poll.setId(POLL_ID);
         Message message = new Message();
         message.setPoll(poll);
+        message.setMessageId(MESSAGE_ID);
         CompletableFuture<Message> completableFuture = new CompletableFuture<>();
         completableFuture.complete(message);
         doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
@@ -69,14 +73,27 @@ class MatchServiceNewPollsTest {
     void shouldCreateNewMatchOnPollRequest() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
-        Long actualMatchId = jdbcTemplate.queryForObject("select id from matches where " +
-                "id = (select match_id from player_matches where player_id = 1 and telegram_poll_id = '" + POLL_ID + "')", Long.class);
+        Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
+                "where id = (select match_id from player_matches where player_id = 1)", Long.class);
 
         assertNotNull(actualMatchId);
     }
 
     @Test
-    void shouldCreateNewPlayerMatchWithNullPlaceOnPollRequest() throws TelegramApiException {
+    void shouldCorrectlyFillNewMatchOnPollRequest() throws TelegramApiException {
+        matchService.requestNewMatch(player1, ModType.CLASSIC);
+
+        Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where " +
+                "id = (select match_id from player_matches where player_id = 1 and owner_id = 1)", new BeanPropertyRowMapper<>(Match.class));
+
+        assertThat(actualMatch,
+                both(hasProperty("telegramPollId", is(POLL_ID)))
+                        .and(hasProperty("telegramMessageId", is(MESSAGE_ID)))
+        );
+    }
+
+    @Test
+    void shouldCreateNewPlayerMatchWithOnPollRequest() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Long actualPlayerMatchId = jdbcTemplate.queryForObject("select id from player_matches where player_id = 1 and place is null", Long.class);
