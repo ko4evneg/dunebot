@@ -13,6 +13,7 @@ import org.springframework.lang.Nullable;
 public class Player extends BaseEntity {
     private Long telegramId;
     private String firstName;
+    private String steamName;
     @Nullable
     private String lastName;
     @Nullable
