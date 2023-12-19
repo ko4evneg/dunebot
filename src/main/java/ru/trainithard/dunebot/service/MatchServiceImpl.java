@@ -41,6 +41,9 @@ public class MatchServiceImpl implements MatchService {
                 transactionTemplate.executeWithoutResult(status -> {
                     String pollId = message.getPoll().getId();
                     match.setTelegramPollId(pollId);
+                    int messageId = message.getMessageId();
+                    match.setTelegramMessageId(messageId);
+                    match.setOwner(initiator);
                     Match savedMatch = matchRepository.save(match);
                     playerMatch.setMatch(savedMatch);
                     playerMatchRepository.save(playerMatch);
@@ -69,7 +72,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    public void cancelNewMatch(Player initiator, ModType modType) {
+    public void cancelNewMatch(String chatId, int messageId) throws TelegramApiException {
 
     }
 

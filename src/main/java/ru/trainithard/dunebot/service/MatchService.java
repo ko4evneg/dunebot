@@ -10,7 +10,7 @@ public interface MatchService {
     // TODO:  add handling
     void requestNewMatch(Player initiator, ModType modType) throws TelegramApiException;
 
-    void cancelNewMatch(Player initiator, ModType modType);
+    void cancelNewMatch(String chatId, int messageId) throws TelegramApiException;
 
     void requestMatchSubmit(Player player);
 
