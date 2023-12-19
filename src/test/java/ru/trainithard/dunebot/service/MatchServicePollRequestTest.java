@@ -65,7 +65,7 @@ class MatchServicePollRequestTest {
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from player_matches where player_id between 1 and 4");
+        jdbcTemplate.execute("delete from match_players where player_id between 1 and 4");
         jdbcTemplate.execute("delete from matches where telegram_poll_id is null or telegram_poll_id = '" + POLL_ID + "'");
     }
 
@@ -74,7 +74,7 @@ class MatchServicePollRequestTest {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
-                "where id = (select match_id from player_matches where player_id = 1)", Long.class);
+                "where id = (select match_id from match_players where player_id = 1)", Long.class);
 
         assertNotNull(actualMatchId);
     }
@@ -84,7 +84,7 @@ class MatchServicePollRequestTest {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where " +
-                "id = (select match_id from player_matches where player_id = 1 and owner_id = 1)", new BeanPropertyRowMapper<>(Match.class));
+                "id = (select match_id from match_players where player_id = 1 and owner_id = 1)", new BeanPropertyRowMapper<>(Match.class));
 
         assertThat(actualMatch,
                 both(hasProperty("telegramPollId", is(POLL_ID)))
@@ -96,7 +96,7 @@ class MatchServicePollRequestTest {
     void shouldCreateNewMatchPlayerWith() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
-        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from player_matches where player_id = 1 and place is null", Long.class);
+        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players where player_id = 1 and place is null", Long.class);
 
         assertNotNull(actualMatchPlayerId);
     }
@@ -144,7 +144,7 @@ class MatchServicePollRequestTest {
         doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(id) from matches where " +
-                "id = (select match_id from player_matches where player_id = 1 and telegram_poll_id = '" + POLL_ID + "')", Long.class);
+                "id = (select match_id from match_players where player_id = 1 and telegram_poll_id = '" + POLL_ID + "')", Long.class);
 
         assertEquals(0, actualMatchesCount);
     }
