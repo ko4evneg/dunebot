@@ -1,3 +1,32 @@
 spring:
+  config:
+    activate:
+      on-profile: prod
   main:
     web-application-type: none
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    #    todo
+    username: sa
+    password: sa
+    driver-class-name: org.postgresql.Driver
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  main:
+    web-application-type: none
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: sa
+    password: sa
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      mode: always
+      platform: postgresql
