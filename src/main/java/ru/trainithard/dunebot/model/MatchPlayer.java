@@ -8,8 +8,8 @@ import org.springframework.lang.Nullable;
 @Getter
 @Setter
 @Entity
-@Table(name = "player_matches")
-public class PlayerMatch extends BaseEntity {
+@Table(name = "match_players")
+public class MatchPlayer extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "match_id")
     private Match match;

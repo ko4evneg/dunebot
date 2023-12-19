@@ -93,12 +93,12 @@ class MatchServicePollRequestTest {
     }
 
     @Test
-    void shouldCreateNewPlayerMatchWith() throws TelegramApiException {
+    void shouldCreateNewMatchPlayerWith() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
-        Long actualPlayerMatchId = jdbcTemplate.queryForObject("select id from player_matches where player_id = 1 and place is null", Long.class);
+        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from player_matches where player_id = 1 and place is null", Long.class);
 
-        assertNotNull(actualPlayerMatchId);
+        assertNotNull(actualMatchPlayerId);
     }
 
     @Test

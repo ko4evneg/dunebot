@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name = "matches")
 public class Match extends BaseEntity {
     @OneToMany(mappedBy = "match", fetch = FetchType.LAZY)
-    private List<PlayerMatch> playerMatches;
+    private List<MatchPlayer> matchPlayers;
     @OneToOne
     @JoinColumn(name = "owner_id")
     private Player owner;
