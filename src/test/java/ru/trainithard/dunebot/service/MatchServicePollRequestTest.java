@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MatchServiceNewPollsTest {
+class MatchServicePollRequestTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
@@ -70,7 +70,7 @@ class MatchServiceNewPollsTest {
     }
 
     @Test
-    void shouldCreateNewMatchOnPollRequest() throws TelegramApiException {
+    void shouldCreateNewMatch() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
@@ -80,7 +80,7 @@ class MatchServiceNewPollsTest {
     }
 
     @Test
-    void shouldCorrectlyFillNewMatchOnPollRequest() throws TelegramApiException {
+    void shouldCorrectlyFillNewMatch() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where " +
@@ -93,7 +93,7 @@ class MatchServiceNewPollsTest {
     }
 
     @Test
-    void shouldCreateNewPlayerMatchWithOnPollRequest() throws TelegramApiException {
+    void shouldCreateNewPlayerMatchWith() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Long actualPlayerMatchId = jdbcTemplate.queryForObject("select id from player_matches where player_id = 1 and place is null", Long.class);
@@ -102,7 +102,7 @@ class MatchServiceNewPollsTest {
     }
 
     @Test
-    void shouldSendTelegramPollOnPollRequest() throws TelegramApiException {
+    void shouldSendTelegramPoll() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         ArgumentCaptor<SendPoll> pollCaptor = ArgumentCaptor.forClass(SendPoll.class);
@@ -119,7 +119,7 @@ class MatchServiceNewPollsTest {
 
     @ParameterizedTest
     @MethodSource("chatIdSource")
-    void shouldSetCorrectTelegramPollChatAndTopicIdsOnPollRequest(ModType modType, int expectedTopicId) throws TelegramApiException {
+    void shouldSetCorrectTelegramPollChatAndTopicIds(ModType modType, int expectedTopicId) throws TelegramApiException {
         matchService.requestNewMatch(player1, modType);
 
         ArgumentCaptor<SendPoll> pollCaptor = ArgumentCaptor.forClass(SendPoll.class);
@@ -140,7 +140,7 @@ class MatchServiceNewPollsTest {
     }
 
     @Test
-    void shouldNotCreateMatchWhenTelegramCallFailsOnPollRequest() throws TelegramApiException {
+    void shouldNotCreateMatchWhenTelegramCallFails() throws TelegramApiException {
         doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(id) from matches where " +
@@ -150,7 +150,7 @@ class MatchServiceNewPollsTest {
     }
 
     @Test
-    void shouldThrowWhenTelegramCallFailsOnPollRequest() throws TelegramApiException {
+    void shouldThrowWhenTelegramCallFails() throws TelegramApiException {
         doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
         assertThrows(TelegramApiException.class, () -> matchService.requestNewMatch(player1, ModType.CLASSIC));
