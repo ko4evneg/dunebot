@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
@@ -12,11 +14,13 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
 import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
 import ru.trainithard.dunebot.service.telegram.TelegramService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,8 @@ public class MatchServiceImpl implements MatchService {
     private final TelegramService telegramService;
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
+    // TODO:
+    private final PlayerRepository playerRepository;
     private final TransactionTemplate transactionTemplate;
 
     private static final List<String> POLL_OPTIONS = List.of("Да", "Нет", "Результат");
@@ -66,14 +72,25 @@ public class MatchServiceImpl implements MatchService {
     private int getTopicId(ModType modType) {
         return switch (modType) {
             case CLASSIC -> SettingConstants.TOPIC_ID_CLASSIC;
-            case UPRISING_4 -> SettingConstants.TOPIC_ID_UPRISING;
-            case UPRISING_6 -> SettingConstants.TOPIC_ID_UPRISING;
+            case UPRISING_4, UPRISING_6 -> SettingConstants.TOPIC_ID_UPRISING;
         };
     }
 
     @Override
-    public void cancelNewMatch(String chatId, int messageId) throws TelegramApiException {
-
+    public void cancelMatch(User user) throws TelegramApiException {
+        Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(user.getId());
+        if (latestOwnedMatchOptional.isPresent()) {
+            Match match = latestOwnedMatchOptional.get();
+            DeleteMessage deleteMessage = new DeleteMessage();
+            deleteMessage.setMessageId(match.getTelegramMessageId());
+            deleteMessage.setChatId(SettingConstants.CHAT_ID);
+            telegramService.deleteMessage(deleteMessage, (bool, throwable) ->
+                    transactionTemplate.executeWithoutResult(status -> {
+                        matchRepository.delete(match);
+                        matchPlayerRepository.deleteAll(match.getMatchPlayers());
+                    })
+            );
+        }
     }
 
     @Override
