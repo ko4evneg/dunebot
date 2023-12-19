@@ -1,9 +1,6 @@
 package ru.trainithard.dunebot.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,8 +11,9 @@ import java.util.List;
 @Setter
 @Table(name = "matches")
 public class Match extends BaseEntity {
-    @OneToMany(mappedBy = "match")
-    private List<PlayerResult> playerResults;
+    @OneToMany(mappedBy = "match", fetch = FetchType.LAZY)
+    private List<PlayerMatch> playerMatches;
+    private String telegramPollId;
     @Enumerated
     private ModType modType;
 }

@@ -18,4 +18,13 @@ public class Player extends BaseEntity {
     private String lastName;
     @Nullable
     private String userName;
+
+    public String getFriendlyName() {
+
+        return String.format("%s (%s)", steamName, userName != null ? userName : getFullName());
+    }
+
+    private String getFullName() {
+        return lastName == null ? firstName : firstName + " " + lastName;
+    }
 }
