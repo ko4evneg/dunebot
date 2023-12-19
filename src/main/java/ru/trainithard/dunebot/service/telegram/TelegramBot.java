@@ -1,19 +1,19 @@
-package ru.trainithard.dunebot.telegram;
+package ru.trainithard.dunebot.service.telegram;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private final String botUsername;
+    private final String botUserName;
 
-    public TelegramBot(String botUsername, String botToken) {
+    public TelegramBot(String botUserName, String botToken) {
         super(botToken);
-        this.botUsername = botUsername;
+        this.botUserName = botUserName;
     }
 
     @Override
     public String getBotUsername() {
-        return botUsername;
+        return botUserName;
     }
 
     @Override
@@ -21,5 +21,4 @@ public class TelegramBot extends TelegramLongPollingBot {
         // TODO: 18.12.2023
         System.out.println(update.getMessage().getText());
     }
-
 }
