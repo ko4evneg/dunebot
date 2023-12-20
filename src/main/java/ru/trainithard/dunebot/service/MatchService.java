@@ -16,8 +16,6 @@ public interface MatchService {
 
     void unregisterMathPlayer(long telegramUserId, String telegramPollId);
 
-    void requestMatchSubmit(Player player);
-
     void acceptMatchSubmit(MatchSubmitDto matchSubmit);
 
     void confirmMatchSubmit(ConfirmMatchDto confirmMatch);

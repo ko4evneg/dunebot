@@ -106,7 +106,7 @@ public class MatchServiceImpl implements MatchService {
                 matchRepository.save(match);
                 matchPlayerRepository.save(matchPlayer);
             });
-//            if (match.getRegisteredPlayersCount() >= 4) {
+//            if (match.getRegisteredPlayersCount() == 4) {
             // TODO: start match
 //            }
         }
@@ -124,12 +124,10 @@ public class MatchServiceImpl implements MatchService {
                 matchRepository.save(match);
                 matchPlayerRepository.delete(matchPlayer);
             });
+            //            if (match.getRegisteredPlayersCount() == 0) {
+            // TODO: start match
+//            }
         }
-    }
-
-    @Override
-    public void requestMatchSubmit(Player player) {
-
     }
 
     @Override
