@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
 
@@ -9,6 +10,7 @@ import org.springframework.lang.Nullable;
 @Setter
 @Entity
 @Table(name = "match_players")
+@NoArgsConstructor
 public class MatchPlayer extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "match_id")
@@ -20,4 +22,9 @@ public class MatchPlayer extends BaseEntity {
 
     @Nullable
     private Integer place;
+
+    public MatchPlayer(Match match, Player player) {
+        this.match = match;
+        this.player = player;
+    }
 }
