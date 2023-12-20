@@ -73,21 +73,21 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    public void cancelMatch(long telegramUserId) throws TelegramApiException {
-        Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(telegramUserId);
+    public void cancelMatch(long playerId) throws TelegramApiException {
+        Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(playerId);
         if (latestOwnedMatchOptional.isPresent()) {
-            Match match = latestOwnedMatchOptional.get();
-            if (match.isFinished()) {
+            Match latestOwnedMatch = latestOwnedMatchOptional.get();
+            if (latestOwnedMatch.isFinished()) {
                 // TODO:  notify
                 return;
             }
             DeleteMessage deleteMessage = new DeleteMessage();
-            deleteMessage.setMessageId(match.getTelegramMessageId());
+            deleteMessage.setMessageId(latestOwnedMatch.getTelegramMessageId());
             deleteMessage.setChatId(SettingConstants.CHAT_ID);
             telegramService.deleteMessage(deleteMessage, (bool, throwable) ->
                     transactionTemplate.executeWithoutResult(status -> {
-                        matchRepository.delete(match);
-                        matchPlayerRepository.deleteAll(match.getMatchPlayers());
+                        matchRepository.delete(latestOwnedMatch);
+                        matchPlayerRepository.deleteAll(latestOwnedMatch.getMatchPlayers());
                     })
             );
         }
