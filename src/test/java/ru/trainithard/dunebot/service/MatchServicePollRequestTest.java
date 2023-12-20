@@ -87,8 +87,9 @@ class MatchServicePollRequestTest {
     void shouldCorrectlyFillNewMatch() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
-        Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where " +
-                "id = (select match_id from match_players where player_id = 10000 and owner_id = 10000)", new BeanPropertyRowMapper<>(Match.class));
+        Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where id = " +
+                        "(select match_id from match_players where player_id = 10000 and owner_id = 10000 and registered_players_count = 1)",
+                new BeanPropertyRowMapper<>(Match.class));
 
         assertThat(actualMatch, allOf(
                 hasProperty("telegramPollId", is(POLL_ID)),
@@ -98,10 +99,11 @@ class MatchServicePollRequestTest {
     }
 
     @Test
-    void shouldCreateNewMatchPlayerWith() throws TelegramApiException {
+    void shouldCreateNewMatchPlayer() throws TelegramApiException {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
-        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players where player_id = 10000 and place is null", Long.class);
+        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players " +
+                "where player_id = 10000 and place is null", Long.class);
 
         assertNotNull(actualMatchPlayerId);
     }

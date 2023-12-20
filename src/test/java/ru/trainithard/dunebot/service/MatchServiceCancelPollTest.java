@@ -43,8 +43,8 @@ class MatchServiceCancelPollTest {
 
         jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
                 "values (10000, 12345, 'st_pl', 'name', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, telegram_poll_id, telegram_message_id, owner_id, mod_type, created_at) " +
-                "values (10000, '12346', '" + MESSAGE_ID + "', 10000, '" + ModType.CLASSIC + "', '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, telegram_poll_id, telegram_message_id, owner_id, mod_type, registered_players_count, created_at) " +
+                "values (10000, '12346', '" + MESSAGE_ID + "', 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
     }

@@ -12,7 +12,9 @@ public interface MatchService {
 
     void cancelMatch(long telegramUserId) throws TelegramApiException;
 
-    void registerMathPlayer(long telegramUserId, long pollId);
+    void registerMathPlayer(long telegramUserId, String telegramPollId);
+
+    void unregisterMathPlayer(long telegramUserId, String telegramPollId);
 
     void requestMatchSubmit(Player player);
 
