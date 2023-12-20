@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.exception.TelegramApiCallException;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -16,13 +17,21 @@ import java.util.function.BiConsumer;
 public class TelegramService {
     private final TelegramBot telegramBot;
 
-    public void sendPoll(SendPoll sendPoll, BiConsumer<Message, Throwable> onCompleteAction) throws TelegramApiException {
-        CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(sendPoll);
-        sendMessageCompletableFuture.whenComplete(onCompleteAction);
+    public void sendPoll(SendPoll sendPoll, BiConsumer<Message, Throwable> onCompleteAction) {
+        try {
+            CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(sendPoll);
+            sendMessageCompletableFuture.whenComplete(onCompleteAction);
+        } catch (TelegramApiException exception) {
+            throw new TelegramApiCallException("sendPoll() encounters API exception", exception);
+        }
     }
 
-    public void deleteMessage(DeleteMessage deleteMessage, BiConsumer<Boolean, Throwable> onCompleteAction) throws TelegramApiException {
-        CompletableFuture<Boolean> deleteMessageCompletableFuture = telegramBot.executeAsync(deleteMessage);
-        deleteMessageCompletableFuture.whenComplete(onCompleteAction);
+    public void deleteMessage(DeleteMessage deleteMessage, BiConsumer<Boolean, Throwable> onCompleteAction) {
+        try {
+            CompletableFuture<Boolean> deleteMessageCompletableFuture = telegramBot.executeAsync(deleteMessage);
+            deleteMessageCompletableFuture.whenComplete(onCompleteAction);
+        } catch (TelegramApiException exception) {
+            throw new TelegramApiCallException("deleteMessage() encounters API exception", exception);
+        }
     }
 }

@@ -2,11 +2,13 @@ package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.dto.PollMessageDto;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,13 +19,10 @@ public class MatchServiceAdapter {
     private final MatchRepository matchRepository;
 
     public void cancelMatch(long telegramUserId) {
-        playerRepository.findByTelegramId(telegramUserId).ifPresent(player -> {
-            try {
-                matchService.cancelMatch(player.getId());
-            } catch (TelegramApiException e) {
-                // TODO:
-            }
-        });
+        Optional<Player> playerOptional = playerRepository.findByTelegramId(telegramUserId);
+        if (playerOptional.isPresent()) {
+            matchService.cancelMatch(playerOptional.get().getId());
+        }
     }
 
     public void registerMathPlayer(PollMessageDto pollMessage) {

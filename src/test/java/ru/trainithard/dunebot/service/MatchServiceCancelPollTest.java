@@ -13,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
@@ -102,9 +103,9 @@ class MatchServiceCancelPollTest {
     @Test
     void shouldNotDeleteMatchAndMatchPlayersOnFailedCancel() {
         try {
-            doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
+            doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
             matchServiceAdapter.cancelMatch(TELEGRAM_USER_ID);
-        } catch (TelegramApiException ignored) {
+        } catch (TelegramApiCallException | TelegramApiException ignored) {
         }
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);

@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
@@ -158,8 +159,8 @@ class MatchServicePollRequestTest {
 
     @Test
     void shouldThrowWhenTelegramCallFails() throws TelegramApiException {
-        doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
+        doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
-        assertThrows(TelegramApiException.class, () -> matchService.requestNewMatch(player1, ModType.CLASSIC));
+        assertThrows(TelegramApiCallException.class, () -> matchService.requestNewMatch(player1, ModType.CLASSIC));
     }
 }

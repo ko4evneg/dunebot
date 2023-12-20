@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -34,7 +33,7 @@ public class MatchServiceImpl implements MatchService {
     private static final List<String> POLL_OPTIONS = List.of("Да", "Нет", "Результат");
 
     @Override
-    public void requestNewMatch(Player initiator, ModType modType) throws TelegramApiException {
+    public void requestNewMatch(Player initiator, ModType modType) {
         SendPoll sendPoll = getNewPoll(initiator, modType);
         telegramService.sendPoll(sendPoll, ((message, throwable) -> {
             if (throwable == null) {
@@ -73,7 +72,7 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    public void cancelMatch(long playerId) throws TelegramApiException {
+    public void cancelMatch(long playerId) {
         Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(playerId);
         if (latestOwnedMatchOptional.isPresent()) {
             Match latestOwnedMatch = latestOwnedMatchOptional.get();
