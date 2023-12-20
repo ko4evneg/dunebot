@@ -90,10 +90,11 @@ class MatchServicePollRequestTest {
         Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where " +
                 "id = (select match_id from match_players where player_id = 10000 and owner_id = 10000)", new BeanPropertyRowMapper<>(Match.class));
 
-        assertThat(actualMatch,
-                both(hasProperty("telegramPollId", is(POLL_ID)))
-                        .and(hasProperty("telegramMessageId", is(MESSAGE_ID)))
-        );
+        assertThat(actualMatch, allOf(
+                hasProperty("telegramPollId", is(POLL_ID)),
+                hasProperty("telegramMessageId", is(MESSAGE_ID)),
+                hasProperty("finished", is(false))
+        ));
     }
 
     @Test

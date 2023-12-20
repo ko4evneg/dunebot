@@ -20,4 +20,6 @@ public class Match extends BaseEntity {
     private int telegramMessageId;
     @Enumerated(EnumType.STRING)
     private ModType modType;
+    @Column(name = "is_finished")
+    private boolean finished;
 }
