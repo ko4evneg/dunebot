@@ -1,6 +1,8 @@
 package ru.trainithard.dunebot.service;
 
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
@@ -12,9 +14,9 @@ public interface MatchService {
 
     void cancelMatch(long telegramUserId) throws TelegramApiException;
 
-    void registerMathPlayer(long telegramUserId, String telegramPollId);
+    void registerMathPlayer(Player player, Match match);
 
-    void unregisterMathPlayer(long telegramUserId, String telegramPollId);
+    void unregisterMathPlayer(MatchPlayer matchPlayer);
 
     void acceptMatchSubmit(MatchSubmitDto matchSubmit);
 

@@ -11,6 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.service.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.List;
@@ -28,11 +29,14 @@ class MatchServiceMatchPlayerRegistrationTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private MatchService matchService;
+    @Autowired
+    private MatchServiceAdapter matchServiceAdapter;
     @MockBean
     private TelegramBot telegramBot;
 
     private static final String TELEGRAM_POLL_ID = "100500";
     private static final long TELEGRAM_USER_ID = 12349L;
+    private static final PollMessageDto POLL_MESSAGE_DTO = new PollMessageDto(12349L, "100500");
 
     @BeforeEach
     @SneakyThrows
@@ -60,7 +64,7 @@ class MatchServiceMatchPlayerRegistrationTest {
 
     @Test
     void shouldAddNewMatchPlayerOnRegistration() {
-        matchService.registerMathPlayer(TELEGRAM_USER_ID, TELEGRAM_POLL_ID);
+        matchServiceAdapter.registerMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -69,7 +73,7 @@ class MatchServiceMatchPlayerRegistrationTest {
 
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnRegistration() {
-        matchService.registerMathPlayer(TELEGRAM_USER_ID, TELEGRAM_POLL_ID);
+        matchServiceAdapter.registerMathPlayer(POLL_MESSAGE_DTO);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
 
@@ -86,7 +90,7 @@ class MatchServiceMatchPlayerRegistrationTest {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10000, 10001, '2010-10-10')");
 
-        matchService.unregisterMathPlayer(TELEGRAM_USER_ID, TELEGRAM_POLL_ID);
+        matchServiceAdapter.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -99,7 +103,7 @@ class MatchServiceMatchPlayerRegistrationTest {
                 "values (10001, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("update matches set registered_players_count = 2");
 
-        matchService.unregisterMathPlayer(TELEGRAM_USER_ID, TELEGRAM_POLL_ID);
+        matchServiceAdapter.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
 

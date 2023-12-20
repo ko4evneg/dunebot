@@ -94,40 +94,29 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    public void registerMathPlayer(long telegramUserId, String telegramPollId) {
-        Optional<Player> playerOptional = playerRepository.findByTelegramId(telegramUserId);
-        Optional<Match> matchOptional = matchRepository.findByTelegramPollId(telegramPollId);
-        if (playerOptional.isPresent() && matchOptional.isPresent()) {
-            Player player = playerOptional.get();
-            Match match = matchOptional.get();
-            match.increaseRegisteredPlayerCount();
-            MatchPlayer matchPlayer = new MatchPlayer(match, player);
-            transactionTemplate.executeWithoutResult(status -> {
-                matchRepository.save(match);
-                matchPlayerRepository.save(matchPlayer);
-            });
-//            if (match.getRegisteredPlayersCount() == 4) {
-            // TODO: start match
-//            }
-        }
+    public void registerMathPlayer(Player player, Match match) {
+        match.increaseRegisteredPlayerCount();
+        MatchPlayer matchPlayer = new MatchPlayer(match, player);
+        // TODO: remove template?
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.save(matchPlayer);
+        });
+//      if (match.getRegisteredPlayersCount() == 4)
+        // TODO: start match
     }
 
+
     @Override
-    public void unregisterMathPlayer(long telegramUserId, String telegramPollId) {
-        Optional<MatchPlayer> matchPlayerOptional = matchPlayerRepository.findByMatchTelegramPollIdAndPlayerTelegramId(telegramPollId, telegramUserId);
-        Optional<Match> matchOptional = matchRepository.findByTelegramPollId(telegramPollId);
-        if (matchPlayerOptional.isPresent() && matchOptional.isPresent()) {
-            MatchPlayer matchPlayer = matchPlayerOptional.get();
-            Match match = matchOptional.get();
-            match.decreaseRegisteredPlayerCount();
-            transactionTemplate.executeWithoutResult(status -> {
-                matchRepository.save(match);
-                matchPlayerRepository.delete(matchPlayer);
-            });
-            //            if (match.getRegisteredPlayersCount() == 0) {
-            // TODO: start match
-//            }
-        }
+    public void unregisterMathPlayer(MatchPlayer matchPlayer) {
+        Match match = matchPlayer.getMatch();
+        match.decreaseRegisteredPlayerCount();
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.delete(matchPlayer);
+        });
+//      if (match.getRegisteredPlayersCount() == 0) {
+        // TODO: start match
     }
 
     @Override
