@@ -14,4 +14,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             order by m.createdAt desc limit 1
             """)
     Optional<Match> findLatestOwnedMatch(long telegramPlayerId);
+
+    Optional<Match> findByTelegramPollId(String telegramPollId);
 }

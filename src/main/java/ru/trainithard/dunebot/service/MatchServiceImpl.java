@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
@@ -36,22 +35,19 @@ public class MatchServiceImpl implements MatchService {
 
     @Override
     public void requestNewMatch(Player initiator, ModType modType) throws TelegramApiException {
-        Match match = new Match();
-        match.setModType(modType);
-        MatchPlayer matchPlayer = new MatchPlayer();
-        matchPlayer.setPlayer(initiator);
-
         SendPoll sendPoll = getNewPoll(initiator, modType);
         telegramService.sendPoll(sendPoll, ((message, throwable) -> {
             if (throwable == null) {
                 transactionTemplate.executeWithoutResult(status -> {
                     String pollId = message.getPoll().getId();
+                    Match match = new Match(modType);
                     match.setTelegramPollId(pollId);
                     int messageId = message.getMessageId();
                     match.setTelegramMessageId(messageId);
                     match.setOwner(initiator);
+                    match.setRegisteredPlayersCount(1);
                     Match savedMatch = matchRepository.save(match);
-                    matchPlayer.setMatch(savedMatch);
+                    MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);
                     matchPlayerRepository.save(matchPlayer);
                 });
             }
@@ -77,8 +73,8 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    public void cancelMatch(User user) throws TelegramApiException {
-        Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(user.getId());
+    public void cancelMatch(long telegramUserId) throws TelegramApiException {
+        Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(telegramUserId);
         if (latestOwnedMatchOptional.isPresent()) {
             Match match = latestOwnedMatchOptional.get();
             if (match.isFinished()) {
@@ -94,6 +90,40 @@ public class MatchServiceImpl implements MatchService {
                         matchPlayerRepository.deleteAll(match.getMatchPlayers());
                     })
             );
+        }
+    }
+
+    @Override
+    public void registerMathPlayer(long telegramUserId, String telegramPollId) {
+        Optional<Player> playerOptional = playerRepository.findByTelegramId(telegramUserId);
+        Optional<Match> matchOptional = matchRepository.findByTelegramPollId(telegramPollId);
+        if (playerOptional.isPresent() && matchOptional.isPresent()) {
+            Player player = playerOptional.get();
+            Match match = matchOptional.get();
+            match.increaseRegisteredPlayerCount();
+            MatchPlayer matchPlayer = new MatchPlayer(match, player);
+            transactionTemplate.executeWithoutResult(status -> {
+                matchRepository.save(match);
+                matchPlayerRepository.save(matchPlayer);
+            });
+//            if (match.getRegisteredPlayersCount() >= 4) {
+            // TODO: start match
+//            }
+        }
+    }
+
+    @Override
+    public void unregisterMathPlayer(long telegramUserId, String telegramPollId) {
+        Optional<MatchPlayer> matchPlayerOptional = matchPlayerRepository.findByMatchTelegramPollIdAndPlayerTelegramId(telegramPollId, telegramUserId);
+        Optional<Match> matchOptional = matchRepository.findByTelegramPollId(telegramPollId);
+        if (matchPlayerOptional.isPresent() && matchOptional.isPresent()) {
+            MatchPlayer matchPlayer = matchPlayerOptional.get();
+            Match match = matchOptional.get();
+            match.decreaseRegisteredPlayerCount();
+            transactionTemplate.executeWithoutResult(status -> {
+                matchRepository.save(match);
+                matchPlayerRepository.delete(matchPlayer);
+            });
         }
     }
 
