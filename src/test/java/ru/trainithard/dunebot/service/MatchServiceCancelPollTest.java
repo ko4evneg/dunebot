@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
@@ -32,14 +31,12 @@ class MatchServiceCancelPollTest {
     @MockBean
     private TelegramBot telegramBot;
 
-    private static final Integer MESSAGE_ID = 100500;
-    private final User user = new User();
+    private static final int MESSAGE_ID = 100500;
+    private static final long TELEGRAM_USER_ID = 12345L;
 
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        user.setId(12345L);
-
         CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
         completableFuture.complete(true);
         doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
@@ -61,7 +58,7 @@ class MatchServiceCancelPollTest {
 
     @Test
     void shouldSendCorrectDeleteMessageRequest() throws TelegramApiException {
-        matchService.cancelMatch(user);
+        matchService.cancelMatch(TELEGRAM_USER_ID);
 
         ArgumentCaptor<DeleteMessage> deleteMessageCaptor = ArgumentCaptor.forClass(DeleteMessage.class);
         verify(telegramBot).executeAsync(deleteMessageCaptor.capture());
@@ -73,7 +70,7 @@ class MatchServiceCancelPollTest {
 
     @Test
     void shouldDeleteMatch() throws TelegramApiException {
-        matchService.cancelMatch(user);
+        matchService.cancelMatch(TELEGRAM_USER_ID);
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
 
@@ -85,7 +82,7 @@ class MatchServiceCancelPollTest {
         jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
                 "values (10001, 12346, 'st_pl2', 'name2', '2010-10-10') ");
 
-        matchService.cancelMatch(user);
+        matchService.cancelMatch(TELEGRAM_USER_ID);
 
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
@@ -96,14 +93,14 @@ class MatchServiceCancelPollTest {
     void shouldThrowOnFailedCancel() throws TelegramApiException {
         doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
 
-        assertThrows(TelegramApiException.class, () -> matchService.cancelMatch(user));
+        assertThrows(TelegramApiException.class, () -> matchService.cancelMatch(TELEGRAM_USER_ID));
     }
 
     @Test
     void shouldNotDeleteMatchAndMatchPlayersOnFailedCancel() {
         try {
             doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
-            matchService.cancelMatch(user);
+            matchService.cancelMatch(TELEGRAM_USER_ID);
         } catch (TelegramApiException ignored) {
         }
 
@@ -118,7 +115,7 @@ class MatchServiceCancelPollTest {
     void shouldNotDeleteMatchAndMatchPlayersOnFinishedMatchCancelRequest() throws TelegramApiException {
         jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
 
-        matchService.cancelMatch(user);
+        matchService.cancelMatch(TELEGRAM_USER_ID);
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
@@ -131,7 +128,7 @@ class MatchServiceCancelPollTest {
     void shouldNotSendTelegramDeleteRequestOnFinishedMatchCancelRequest() throws TelegramApiException {
         jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
 
-        matchService.cancelMatch(user);
+        matchService.cancelMatch(TELEGRAM_USER_ID);
 
         verifyNoInteractions(telegramBot);
     }

@@ -43,7 +43,7 @@ class MatchServicePollRequestTest {
     private TelegramBot telegramBot;
 
     private static final String POLL_ID = "12345";
-    private static final Integer MESSAGE_ID = 100500;
+    private static final int MESSAGE_ID = 100500;
     private final Player player1 = new Player();
 
     @BeforeEach
