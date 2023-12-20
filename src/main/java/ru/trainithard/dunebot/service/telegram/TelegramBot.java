@@ -21,8 +21,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        // TODO: 18.12.2023
-        System.out.println(update.getMessage().getText());
+        updates.add(update);
     }
 
     public Update poll() {
