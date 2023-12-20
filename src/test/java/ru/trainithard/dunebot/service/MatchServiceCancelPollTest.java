@@ -113,4 +113,26 @@ class MatchServiceCancelPollTest {
         assertEquals(1, actualMatchesCount);
         assertEquals(1, actualMatchPlayersCount);
     }
+
+    @Test
+    void shouldNotDeleteMatchAndMatchPlayersOnFinishedMatchCancelRequest() throws TelegramApiException {
+        jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
+
+        matchService.cancelMatch(user);
+
+        Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
+        Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
+
+        assertEquals(1, actualMatchesCount);
+        assertEquals(1, actualMatchPlayersCount);
+    }
+
+    @Test
+    void shouldNotSendTelegramDeleteRequestOnFinishedMatchCancelRequest() throws TelegramApiException {
+        jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
+
+        matchService.cancelMatch(user);
+
+        verifyNoInteractions(telegramBot);
+    }
 }

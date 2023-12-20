@@ -81,6 +81,10 @@ public class MatchServiceImpl implements MatchService {
         Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(user.getId());
         if (latestOwnedMatchOptional.isPresent()) {
             Match match = latestOwnedMatchOptional.get();
+            if (match.isFinished()) {
+                // TODO:  notify
+                return;
+            }
             DeleteMessage deleteMessage = new DeleteMessage();
             deleteMessage.setMessageId(match.getTelegramMessageId());
             deleteMessage.setChatId(SettingConstants.CHAT_ID);
