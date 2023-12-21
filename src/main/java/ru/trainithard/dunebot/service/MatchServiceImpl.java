@@ -3,9 +3,6 @@ package ru.trainithard.dunebot.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
@@ -15,60 +12,39 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
 import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
-import ru.trainithard.dunebot.service.telegram.TelegramService;
+import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
+import ru.trainithard.dunebot.service.telegram.TelegramBotAdapter;
 
-import java.util.List;
 import java.util.Optional;
+
+import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 
 @Service
 @RequiredArgsConstructor
 public class MatchServiceImpl implements MatchService {
-    private final TelegramService telegramService;
+    private final TelegramBotAdapter telegramBotAdapter;
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     // TODO:
     private final PlayerRepository playerRepository;
     private final TransactionTemplate transactionTemplate;
 
-    private static final List<String> POLL_OPTIONS = List.of("Да", "Нет", "Результат");
 
     @Override
     public void requestNewMatch(Player initiator, ModType modType) {
-        SendPoll sendPoll = getNewPoll(initiator, modType);
-        telegramService.sendPoll(sendPoll, ((message, throwable) -> {
-            if (throwable == null) {
-                transactionTemplate.executeWithoutResult(status -> {
-                    String pollId = message.getPoll().getId();
-                    Match match = new Match(modType);
-                    match.setTelegramPollId(pollId);
-                    int messageId = message.getMessageId();
-                    match.setTelegramMessageId(messageId);
-                    match.setOwner(initiator);
-                    match.setRegisteredPlayersCount(1);
-                    Match savedMatch = matchRepository.save(match);
-                    MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);
-                    matchPlayerRepository.save(matchPlayer);
-                });
-            }
-        }));
-    }
-
-    private SendPoll getNewPoll(Player initiator, ModType modType) {
-        SendPoll sendPoll = new SendPoll();
-        sendPoll.setQuestion("Игрок " + initiator.getFriendlyName() + " призывает всех на матч в " + modType.getModName());
-        sendPoll.setAllowMultipleAnswers(false);
-        sendPoll.setIsAnonymous(false);
-        sendPoll.setChatId(SettingConstants.CHAT_ID);
-        sendPoll.setMessageThreadId(getTopicId(modType));
-        sendPoll.setOptions(POLL_OPTIONS);
-        return sendPoll;
-    }
-
-    private int getTopicId(ModType modType) {
-        return switch (modType) {
-            case CLASSIC -> SettingConstants.TOPIC_ID_CLASSIC;
-            case UPRISING_4, UPRISING_6 -> SettingConstants.TOPIC_ID_UPRISING;
-        };
+        TelegramUserMessageDto telegramUserMessage = telegramBotAdapter.sendPoll(initiator, modType);
+        if (telegramUserMessage.getThrowable() == null) {
+            transactionTemplate.executeWithoutResult(status -> {
+                Match match = new Match(modType);
+                match.setTelegramPollId(telegramUserMessage.getTelegramPollId());
+                match.setTelegramMessageId(telegramUserMessage.getTelegramMessageId());
+                match.setOwner(initiator);
+                match.setRegisteredPlayersCount(1);
+                Match savedMatch = matchRepository.save(match);
+                MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);
+                matchPlayerRepository.save(matchPlayer);
+            });
+        }
     }
 
     @Override
@@ -80,10 +56,7 @@ public class MatchServiceImpl implements MatchService {
                 // TODO:  notify
                 return;
             }
-            DeleteMessage deleteMessage = new DeleteMessage();
-            deleteMessage.setMessageId(latestOwnedMatch.getTelegramMessageId());
-            deleteMessage.setChatId(SettingConstants.CHAT_ID);
-            telegramService.deleteMessage(deleteMessage, (bool, throwable) ->
+            telegramBotAdapter.deleteMessage(latestOwnedMatch.getTelegramMessageId(), CHAT_ID, (bool, throwable) ->
                     transactionTemplate.executeWithoutResult(status -> {
                         matchRepository.delete(latestOwnedMatch);
                         matchPlayerRepository.deleteAll(latestOwnedMatch.getMatchPlayers());

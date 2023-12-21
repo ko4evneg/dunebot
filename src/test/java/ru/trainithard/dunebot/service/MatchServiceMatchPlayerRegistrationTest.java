@@ -11,7 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.dto.PollMessageDto;
+import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.List;
@@ -36,7 +36,7 @@ class MatchServiceMatchPlayerRegistrationTest {
 
     private static final String TELEGRAM_POLL_ID = "100500";
     private static final long TELEGRAM_USER_ID = 12349L;
-    private static final PollMessageDto POLL_MESSAGE_DTO = new PollMessageDto(12349L, "100500");
+    private static final TelegramUserPollDto POLL_MESSAGE_DTO = new TelegramUserPollDto(12349L, "100500");
 
     @BeforeEach
     @SneakyThrows

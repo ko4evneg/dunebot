@@ -6,7 +6,7 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.dto.PollMessageDto;
+import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public class MatchServiceAdapter {
         }
     }
 
-    public void registerMathPlayer(PollMessageDto pollMessage) {
+    public void registerMathPlayer(TelegramUserPollDto pollMessage) {
         playerRepository.findByTelegramId(pollMessage.telegramUserId())
                 .ifPresent(player -> matchRepository.findByTelegramPollId(pollMessage.telegramPollId())
                         .ifPresent(match -> matchService.registerMathPlayer(player, match)
@@ -33,7 +33,7 @@ public class MatchServiceAdapter {
                 );
     }
 
-    public void unregisterMathPlayer(PollMessageDto pollMessage) {
+    public void unregisterMathPlayer(TelegramUserPollDto pollMessage) {
         matchPlayerRepository
                 .findByMatchTelegramPollIdAndPlayerTelegramId(pollMessage.telegramPollId(), pollMessage.telegramUserId())
                 .ifPresent(matchService::unregisterMathPlayer);
