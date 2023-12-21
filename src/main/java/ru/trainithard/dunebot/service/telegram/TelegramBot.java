@@ -6,8 +6,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private final String botUserName;
     private final ConcurrentLinkedQueue<Update> updates = new ConcurrentLinkedQueue<>();
+    private final String botUserName;
 
     public TelegramBot(String botUserName, String botToken) {
         super(botToken);
