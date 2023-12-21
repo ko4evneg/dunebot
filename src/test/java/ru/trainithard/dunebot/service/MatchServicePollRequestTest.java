@@ -55,7 +55,7 @@ class MatchServicePollRequestTest {
 
         player1.setId(10000L);
         player1.setSteamName("st_AKos");
-        player1.setUserName("tg_AKos");
+        player1.setFirstName("tg_AKos");
 
         Poll poll = new Poll();
         poll.setId(POLL_ID);
@@ -89,7 +89,7 @@ class MatchServicePollRequestTest {
         matchService.requestNewMatch(player1, ModType.CLASSIC);
 
         Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where id = " +
-                        "(select match_id from match_players where player_id = 10000 and owner_id = 10000 and registered_players_count = 1)",
+                        "(select match_id from match_players where player_id = 10000 and owner_id = 10000 and registered_players_count = 0)",
                 new BeanPropertyRowMapper<>(Match.class));
 
         assertThat(actualMatch, allOf(

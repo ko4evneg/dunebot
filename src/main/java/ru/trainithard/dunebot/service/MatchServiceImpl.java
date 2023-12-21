@@ -39,7 +39,6 @@ public class MatchServiceImpl implements MatchService {
                 match.setTelegramPollId(telegramUserMessage.getTelegramPollId());
                 match.setTelegramMessageId(telegramUserMessage.getTelegramMessageId());
                 match.setOwner(initiator);
-                match.setRegisteredPlayersCount(1);
                 Match savedMatch = matchRepository.save(match);
                 MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);
                 matchPlayerRepository.save(matchPlayer);
