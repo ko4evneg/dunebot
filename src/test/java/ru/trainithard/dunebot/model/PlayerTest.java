@@ -23,12 +23,4 @@ class PlayerTest {
 
         assertEquals("st_name (f_name l_name)", player.getFriendlyName());
     }
-
-    @Test
-    void shouldReturnTelegramUsernameInstedOfPlainNames() {
-        player.setLastName("l_name");
-        player.setUserName("u_name");
-
-        assertEquals("st_name (u_name)", player.getFriendlyName());
-    }
 }

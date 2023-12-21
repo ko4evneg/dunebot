@@ -22,7 +22,7 @@ public class Player extends BaseEntity {
 
     public String getFriendlyName() {
 
-        return String.format("%s (%s)", steamName, userName != null ? userName : getFullName());
+        return String.format("%s (%s)", steamName, getFullName());
     }
 
     private String getFullName() {
