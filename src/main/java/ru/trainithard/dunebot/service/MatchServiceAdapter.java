@@ -2,13 +2,11 @@ package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,11 +16,14 @@ public class MatchServiceAdapter {
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
 
+    public void requestNewMatch(long telegramUserId, ModType modType) {
+        playerRepository.findByTelegramId(telegramUserId)
+                .ifPresent(player -> matchService.requestNewMatch(player, modType));
+    }
+
     public void cancelMatch(long telegramUserId) {
-        Optional<Player> playerOptional = playerRepository.findByTelegramId(telegramUserId);
-        if (playerOptional.isPresent()) {
-            matchService.cancelMatch(playerOptional.get().getId());
-        }
+        playerRepository.findByTelegramId(telegramUserId)
+                .ifPresent(player -> matchService.cancelMatch(player.getId()));
     }
 
     public void registerMathPlayer(TelegramUserPollDto pollMessage) {
