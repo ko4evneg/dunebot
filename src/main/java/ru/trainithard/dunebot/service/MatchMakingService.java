@@ -6,12 +6,13 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
 import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
+import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
 
-public interface MatchService {
-    // TODO:  add handling
-    void requestNewMatch(Player initiator, ModType modType);
+public interface MatchMakingService {
 
-    void cancelMatch(long playerId);
+    void registerNewMatch(Player initiator, ModType modType, TelegramUserMessageDto telegramUserMessage);
+
+    void cancelMatch(Match playerId);
 
     void registerMathPlayer(Player player, Match match);
 
