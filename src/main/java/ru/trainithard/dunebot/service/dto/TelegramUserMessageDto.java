@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public final class TelegramUserMessageDto {
-    private int telegramMessageId;
+    private Integer telegramMessageId;
+    private Long telegramChatId;
     private String telegramPollId;
-    private Throwable throwable;
 }

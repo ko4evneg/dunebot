@@ -4,34 +4,31 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest
-class MatchServiceMatchPlayerRegistrationTest {
+class MatchServiceMatchPlayerRegistrationTestMaking {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
-    private MatchService matchService;
+    private MatchMakingService matchMakingService;
     @Autowired
-    private MatchServiceAdapter matchServiceAdapter;
+    private TextCommandProcessor textCommandProcessor;
     @MockBean
+    // TODO:
     private TelegramBot telegramBot;
 
     private static final String TELEGRAM_POLL_ID = "100500";
@@ -41,9 +38,10 @@ class MatchServiceMatchPlayerRegistrationTest {
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
-        completableFuture.complete(true);
-        doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
+        // TODO:
+//        CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
+//        completableFuture.complete(true);
+//        doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
 
         jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
                 "values (10000, 12345, 'st_pl1', 'name1', '2010-10-10') ");
@@ -64,7 +62,7 @@ class MatchServiceMatchPlayerRegistrationTest {
 
     @Test
     void shouldAddNewMatchPlayerOnRegistration() {
-        matchServiceAdapter.registerMathPlayer(POLL_MESSAGE_DTO);
+        textCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -73,7 +71,7 @@ class MatchServiceMatchPlayerRegistrationTest {
 
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnRegistration() {
-        matchServiceAdapter.registerMathPlayer(POLL_MESSAGE_DTO);
+        textCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
 
@@ -90,7 +88,7 @@ class MatchServiceMatchPlayerRegistrationTest {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10000, 10001, '2010-10-10')");
 
-        matchServiceAdapter.unregisterMathPlayer(POLL_MESSAGE_DTO);
+        textCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -103,7 +101,7 @@ class MatchServiceMatchPlayerRegistrationTest {
                 "values (10001, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("update matches set registered_players_count = 2");
 
-        matchServiceAdapter.unregisterMathPlayer(POLL_MESSAGE_DTO);
+        textCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
 

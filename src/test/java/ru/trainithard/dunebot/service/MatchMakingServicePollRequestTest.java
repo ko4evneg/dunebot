@@ -15,14 +15,17 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.exception.DubeBotExsception;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.concurrent.CompletableFuture;
@@ -35,17 +38,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MatchServicePollRequestTest {
+class MatchMakingServicePollRequestTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
-    private MatchService matchService;
+    private TextCommandProcessor textCommandProcessor;
     @MockBean
     private TelegramBot telegramBot;
 
     private static final String POLL_ID = "12345";
     private static final int MESSAGE_ID = 100500;
+    private static final long CHAT_ID = 9000L;
     private final Player player1 = new Player();
+    public static final TelegramUserMessageDto telegramUserMessage = new TelegramUserMessageDto(MESSAGE_ID, CHAT_ID, POLL_ID);
 
     @BeforeEach
     @SneakyThrows
@@ -62,6 +67,9 @@ class MatchServicePollRequestTest {
         Message message = new Message();
         message.setPoll(poll);
         message.setMessageId(MESSAGE_ID);
+        Chat chat = new Chat();
+        chat.setId(CHAT_ID);
+        message.setChat(chat);
         CompletableFuture<Message> completableFuture = new CompletableFuture<>();
         completableFuture.complete(message);
         doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
@@ -75,33 +83,34 @@ class MatchServicePollRequestTest {
     }
 
     @Test
-    void shouldCreateNewMatch() throws TelegramApiException {
-        matchService.requestNewMatch(player1, ModType.CLASSIC);
+    void shouldCreateNewMatch() {
+        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
-                "where id = (select match_id from match_players where player_id = 10000)", Long.class);
+                "where id = (select match_id from match_players where player_id = 10000 and telegram_poll_id = '" + POLL_ID + "' and telegram_chat_id = '" + CHAT_ID + "')", Long.class);
 
         assertNotNull(actualMatchId);
     }
 
     @Test
-    void shouldCorrectlyFillNewMatch() throws TelegramApiException {
-        matchService.requestNewMatch(player1, ModType.CLASSIC);
+    void shouldCorrectlyFillNewMatch() {
+        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
-        Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id from matches where id = " +
+        Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id, telegram_chat_id from matches where id = " +
                         "(select match_id from match_players where player_id = 10000 and owner_id = 10000 and registered_players_count = 0)",
                 new BeanPropertyRowMapper<>(Match.class));
 
         assertThat(actualMatch, allOf(
                 hasProperty("telegramPollId", is(POLL_ID)),
                 hasProperty("telegramMessageId", is(MESSAGE_ID)),
+                hasProperty("telegramChatId", is(CHAT_ID)),
                 hasProperty("finished", is(false))
         ));
     }
 
     @Test
-    void shouldCreateNewMatchPlayer() throws TelegramApiException {
-        matchService.requestNewMatch(player1, ModType.CLASSIC);
+    void shouldCreateNewMatchPlayer() {
+        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players " +
                 "where player_id = 10000 and place is null", Long.class);
@@ -111,7 +120,7 @@ class MatchServicePollRequestTest {
 
     @Test
     void shouldSendTelegramPoll() throws TelegramApiException {
-        matchService.requestNewMatch(player1, ModType.CLASSIC);
+        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         ArgumentCaptor<SendPoll> pollCaptor = ArgumentCaptor.forClass(SendPoll.class);
         verify(telegramBot).executeAsync(pollCaptor.capture());
@@ -120,7 +129,7 @@ class MatchServicePollRequestTest {
         assertThat(actualPoll, allOf(
                 hasProperty("allowMultipleAnswers", is(false)),
                 hasProperty("isAnonymous", is(false)),
-                hasProperty("question", is("Игрок st_AKos (tg_AKos) призывает всех на матч в " + ModType.CLASSIC.getModName())),
+                hasProperty("question", is("Игрок st_pl (name) призывает всех на матч в " + ModType.CLASSIC.getModName())),
                 hasProperty("options", contains("Да", "Нет", "Результат"))
         ));
     }
@@ -128,7 +137,7 @@ class MatchServicePollRequestTest {
     @ParameterizedTest
     @MethodSource("chatIdSource")
     void shouldSetCorrectTelegramPollChatAndTopicIds(ModType modType, int expectedTopicId) throws TelegramApiException {
-        matchService.requestNewMatch(player1, modType);
+        textCommandProcessor.registerNewMatch(12345L, modType);
 
         ArgumentCaptor<SendPoll> pollCaptor = ArgumentCaptor.forClass(SendPoll.class);
         verify(telegramBot).executeAsync(pollCaptor.capture());
@@ -161,6 +170,6 @@ class MatchServicePollRequestTest {
     void shouldThrowWhenTelegramCallFails() throws TelegramApiException {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
-        assertThrows(TelegramApiCallException.class, () -> matchService.requestNewMatch(player1, ModType.CLASSIC));
+        assertThrows(DubeBotExsception.class, () -> textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
     }
 }
