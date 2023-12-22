@@ -27,7 +27,8 @@ public class Match extends BaseEntity {
     private boolean finished;
 
     private String telegramPollId;
-    private int telegramMessageId;
+    private Integer telegramMessageId;
+    private Long telegramChatId;
     private int registeredPlayersCount;
 
     public Match(ModType modType) {
