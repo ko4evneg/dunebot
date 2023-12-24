@@ -11,7 +11,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
@@ -19,14 +18,14 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
-import ru.trainithard.dunebot.exception.DubeBotExsception;
+import ru.trainithard.dunebot.exception.DubeBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
-import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -38,13 +37,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MatchMakingServicePollRequestTest {
+class MatchMakingServicePollRequestTest extends TestContextMock {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private TextCommandProcessor textCommandProcessor;
-    @MockBean
-    private TelegramBot telegramBot;
 
     private static final String POLL_ID = "12345";
     private static final int MESSAGE_ID = 100500;
@@ -170,6 +167,6 @@ class MatchMakingServicePollRequestTest {
     void shouldThrowWhenTelegramCallFails() throws TelegramApiException {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
-        assertThrows(DubeBotExsception.class, () -> textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
+        assertThrows(DubeBotException.class, () -> textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
     }
 }

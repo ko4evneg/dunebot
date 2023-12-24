@@ -6,11 +6,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
-import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.List;
 
@@ -20,16 +19,11 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class MatchServiceMatchPlayerRegistrationTestMaking {
+class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
-    private MatchMakingService matchMakingService;
-    @Autowired
     private TextCommandProcessor textCommandProcessor;
-    @MockBean
-    // TODO:
-    private TelegramBot telegramBot;
 
     private static final String TELEGRAM_POLL_ID = "100500";
     private static final long TELEGRAM_USER_ID = 12349L;
@@ -38,11 +32,6 @@ class MatchServiceMatchPlayerRegistrationTestMaking {
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        // TODO:
-//        CompletableFuture<Boolean> completableFuture = new CompletableFuture<>();
-//        completableFuture.complete(true);
-//        doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
-
         jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
                 "values (10000, 12345, 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +

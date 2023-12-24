@@ -9,13 +9,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -25,13 +24,11 @@ import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 
 @SpringBootTest
-class MatchMakingServiceCancelPollTest {
+class MatchMakingServiceCancelPollTest extends TestContextMock {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private TextCommandProcessor textCommandProcessor;
-    @MockBean
-    private TelegramBot telegramBot;
 
     private static final int MESSAGE_ID = 100500;
     private static final long TELEGRAM_USER_ID = 12345L;
