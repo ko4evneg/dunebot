@@ -7,7 +7,8 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.configuration.SettingConstants;
-import ru.trainithard.dunebot.exception.DubeBotExsception;
+import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
+import ru.trainithard.dunebot.exception.DubeBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
@@ -15,6 +16,7 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
@@ -29,6 +31,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 @RequiredArgsConstructor
 public class TextCommandProcessor {
     private final MatchMakingService matchMakingService;
+    private final PlayerService playerService;
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
@@ -53,7 +56,7 @@ public class TextCommandProcessor {
                     }
                 });
             } catch (Exception exception) {
-                throw new DubeBotExsception(exception);
+                throw new DubeBotException(exception);
             }
         });
     }
@@ -80,12 +83,11 @@ public class TextCommandProcessor {
     public void cancelMatch(long telegramUserId) {
         playerRepository.findByTelegramId(telegramUserId).ifPresent(player -> {
             Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(player.getId());
-            Match latestOwnedMatch = latestOwnedMatchOptional.get();
-            if (latestOwnedMatch.isFinished()) {
-                // TODO:  notify
-                return;
-            }
             if (latestOwnedMatchOptional.isPresent()) {
+                Match latestOwnedMatch = latestOwnedMatchOptional.get();
+                if (latestOwnedMatch.isFinished()) {
+                    throw new AnswerableDubeBotException("Запрещено отменять завершенные матчи!");
+                }
                 try {
                     DeleteMessage deleteMessage = new DeleteMessage();
                     deleteMessage.setMessageId(latestOwnedMatch.getTelegramMessageId());
@@ -111,5 +113,9 @@ public class TextCommandProcessor {
         matchPlayerRepository
                 .findByMatchTelegramPollIdAndPlayerTelegramId(pollMessage.telegramPollId(), pollMessage.telegramUserId())
                 .ifPresent(matchMakingService::unregisterMathPlayer);
+    }
+
+    public void registerNewPlayer(PlayerRegistrationDto playerRegistration) {
+        playerService.registerNewPlayer(playerRegistration);
     }
 }
