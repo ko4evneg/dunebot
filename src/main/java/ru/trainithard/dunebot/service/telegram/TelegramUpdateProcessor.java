@@ -20,21 +20,24 @@ public class TelegramUpdateProcessor {
     public void process() {
         Update update = telegramBot.poll();
         while (update != null) {
-            Message message = update.getMessage();
-            // TODO:  try? thread?
-            if (message != null && message.getText() != null && telegramUpdateValidator.isValidCommand(message)) {
-                String text = message.getText();
-                long telegramUserId = message.getFrom().getId();
-                Command command = Command.getCommand(text.substring(1));
-                switch (command) {
-                    case DUNE -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.CLASSIC);
-                    case UP4 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
-                    case UP6 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_6);
-                    case CANCEL -> textCommandProcessor.cancelMatch(telegramUserId);
+            try {
+                Message message = update.getMessage();
+                if (message != null && message.getText() != null && telegramUpdateValidator.isValidCommand(message)) {
+                    String text = message.getText();
+                    long telegramUserId = message.getFrom().getId();
+                    Command command = Command.getCommand(text.substring(1));
+                    switch (command) {
+                        case DUNE -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.CLASSIC);
+                        case UP4 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
+                        case UP6 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_6);
+                        case CANCEL -> textCommandProcessor.cancelMatch(telegramUserId);
+                    }
                 }
+                update = telegramBot.poll();
+            } catch (Exception e) {
+                // TODO:
+                throw new RuntimeException(e);
             }
-            update = telegramBot.poll();
         }
-
     }
 }

@@ -10,7 +10,10 @@ spring:
     username: sa
     password: sa
     driver-class-name: org.postgresql.Driver
-
+  task:
+    scheduling:
+      pool:
+        size: 1
 ---
 spring:
   config:
