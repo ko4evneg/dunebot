@@ -10,7 +10,6 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
 import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
@@ -20,8 +19,6 @@ import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
 public class MatchMakingServiceImpl implements MatchMakingService {
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
-    // TODO:
-    private final PlayerRepository playerRepository;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
