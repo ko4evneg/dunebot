@@ -10,7 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 
@@ -78,7 +78,7 @@ class PlayerServiceTest extends TestContextMock {
                 "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
-        AnswerableDubeBotException exsception = assertThrows(AnswerableDubeBotException.class, () -> textCommandProcessor.registerNewPlayer(playerRegistration));
+        AnswerableDuneBotException exsception = assertThrows(AnswerableDuneBotException.class, () -> textCommandProcessor.registerNewPlayer(playerRegistration));
         assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME + "!", exsception.getMessage());
     }
 
@@ -88,7 +88,7 @@ class PlayerServiceTest extends TestContextMock {
                 "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
-        AnswerableDubeBotException exsception = assertThrows(AnswerableDubeBotException.class, () -> textCommandProcessor.registerNewPlayer(playerRegistration));
+        AnswerableDuneBotException exsception = assertThrows(AnswerableDuneBotException.class, () -> textCommandProcessor.registerNewPlayer(playerRegistration));
         assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exsception.getMessage());
     }
 

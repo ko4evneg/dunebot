@@ -13,7 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.ModType;
 
@@ -145,7 +145,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
     void shouldThrowOnFinishedMatchCancelRequest() {
         jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
 
-        AnswerableDubeBotException actualException = assertThrows(AnswerableDubeBotException.class, () -> textCommandProcessor.cancelMatch(TELEGRAM_USER_ID));
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> textCommandProcessor.cancelMatch(TELEGRAM_USER_ID));
         assertEquals("Запрещено отменять завершенные матчи!", actualException.getMessage());
     }
 }

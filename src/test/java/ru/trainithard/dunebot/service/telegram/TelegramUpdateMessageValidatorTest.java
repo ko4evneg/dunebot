@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 
 import java.util.stream.Stream;
@@ -70,7 +70,7 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     void shouldThrowForInvalidCommand(String commandText, String expectedReply) {
         message.setText(commandText);
 
-        AnswerableDubeBotException actualException = assertThrows(AnswerableDubeBotException.class, () -> validator.validate(message));
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(message));
         assertEquals(expectedReply, actualException.getMessage());
     }
 
@@ -93,7 +93,7 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase());
 
-        AnswerableDubeBotException actualException = assertThrows(AnswerableDubeBotException.class, () -> validator.validate(message));
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(message));
         assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"", actualException.getMessage());
     }
 }
