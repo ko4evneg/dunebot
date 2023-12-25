@@ -12,6 +12,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
+import ru.trainithard.dunebot.service.telegram.ChatType;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -97,6 +98,7 @@ class PlayerServiceTest extends TestContextMock {
         user.setUserName(steamName);
         Chat chat = new Chat();
         chat.setId(TELEGRAM_CHAT_ID);
+        chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
         message.setChat(chat);
         message.setFrom(user);
