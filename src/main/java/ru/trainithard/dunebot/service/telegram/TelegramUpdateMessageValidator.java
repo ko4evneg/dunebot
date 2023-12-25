@@ -7,6 +7,9 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 class TelegramUpdateMessageValidator {
@@ -14,7 +17,9 @@ class TelegramUpdateMessageValidator {
     private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"";
     private static final String WRONG_COMMAND = "Неверная команда!";
     private static final String WRONG_REGISTER_COMMAND = "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"";
-    private static final String PUBLIC_REGISTER_COMMAND = "Регистрация возможна только в личном сообщении - напишите боту напрямую.";
+    private static final String PUBLIC_PROHIBITED_COMMAND = "Команда запрещена в групповых чатах - напишите боту напрямую.";
+
+    private static final Set<Command> publicChatProhibitedCommands = EnumSet.of(Command.REGISTER, Command.SUBMIT);
 
     public void validate(Message message) {
         String text = message.getText();
@@ -34,8 +39,8 @@ class TelegramUpdateMessageValidator {
         if (!command.isAnonymous() && !playerRepository.existsByTelegramId(message.getFrom().getId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId);
         }
-        if (command == Command.REGISTER && !ChatType.PRIVATE.getValue().equals(message.getChat().getType())) {
-            throw new AnswerableDuneBotException(PUBLIC_REGISTER_COMMAND, telegramChatId);
+        if (publicChatProhibitedCommands.contains(command) && !ChatType.PRIVATE.getValue().equals(message.getChat().getType())) {
+            throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId);
         }
     }
 }
