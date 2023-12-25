@@ -32,10 +32,10 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
-                "values (10000, 12345, 'st_pl1', 'name1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
-                "values (10001, " + TELEGRAM_USER_ID + ", 'st_pl2', 'name2', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+                "values (10000, 12345, 12345, 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+                "values (10001, " + TELEGRAM_USER_ID + ", 12345, 'st_pl2', 'name2', '2010-10-10') ");
         jdbcTemplate.execute("insert into matches (id, telegram_poll_id, telegram_message_id, owner_id, mod_type, registered_players_count, created_at) " +
                 "values (10000, '" + TELEGRAM_POLL_ID + "', '123', 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +

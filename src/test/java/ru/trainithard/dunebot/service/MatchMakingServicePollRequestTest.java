@@ -52,8 +52,8 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        jdbcTemplate.execute("insert into players (id, telegram_id, steam_name, first_name, created_at) " +
-                "values (10000, 12345, 'st_pl', 'name', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+                "values (10000, 12345, 9000, 'st_pl', 'name', '2010-10-10') ");
 
         player1.setId(10000L);
         player1.setSteamName("st_AKos");
