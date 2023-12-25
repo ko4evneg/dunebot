@@ -31,9 +31,9 @@ public class PlayerServiceImpl implements PlayerService {
     private void validate(PlayerRegistrationDto playerRegistration, long telegramId, String steamName) {
         playerRepository.findByTelegramIdOrSteamName(telegramId, steamName).ifPresent(player -> {
             if (telegramId == player.getTelegramId()) {
-                throw new AnswerableDubeBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player);
+                throw new AnswerableDubeBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player.getTelegramChatId());
             } else if (playerRegistration.getSteamName().equals(steamName)) {
-                throw new AnswerableDubeBotException("Пользователь со steam ником " + steamName + " уже существует!", player);
+                throw new AnswerableDubeBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getTelegramChatId());
             }
         });
     }

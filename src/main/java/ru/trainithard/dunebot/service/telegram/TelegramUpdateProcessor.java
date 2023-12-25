@@ -50,6 +50,7 @@ public class TelegramUpdateProcessor {
             case UP4 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
             case UP6 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_6);
             case CANCEL -> textCommandProcessor.cancelMatch(telegramUserId);
+            case SUBMIT -> textCommandProcessor.getSubmitMessage(telegramUserId, message.getChatId(), text);
             case REGISTER ->
                     textCommandProcessor.registerNewPlayer(new PlayerRegistrationDto(message, commandWithArguments[1]));
         }
