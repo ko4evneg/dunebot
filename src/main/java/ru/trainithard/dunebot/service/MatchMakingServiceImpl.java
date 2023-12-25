@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.trainithard.dunebot.model.Match;
-import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
@@ -25,8 +22,7 @@ public class MatchMakingServiceImpl implements MatchMakingService {
     public void registerNewMatch(Player initiator, ModType modType, TelegramUserMessageDto telegramUserMessage) {
         Match match = new Match(modType);
         match.setTelegramPollId(telegramUserMessage.getTelegramPollId());
-        match.setTelegramMessageId(telegramUserMessage.getTelegramMessageId());
-        match.setTelegramChatId(telegramUserMessage.getTelegramChatId());
+        match.setTelegramMessageId(new TelegramMessageId(telegramUserMessage.getTelegramMessageId(), telegramUserMessage.getTelegramChatId()));
         match.setOwner(initiator);
         Match savedMatch = matchRepository.save(match);
         MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);
