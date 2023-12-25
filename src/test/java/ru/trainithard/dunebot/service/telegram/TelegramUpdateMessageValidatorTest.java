@@ -1,13 +1,18 @@
 package ru.trainithard.dunebot.service.telegram;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
 import ru.trainithard.dunebot.model.Command;
 
@@ -15,11 +20,16 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TelegramUpdateMessageValidatorTest {
-    private static final TelegramUpdateMessageValidator validator = new TelegramUpdateMessageValidator();
-    private final Message message = new Message();
+@SpringBootTest
+class TelegramUpdateMessageValidatorTest extends TestContextMock {
+    @Autowired
+    private TelegramUpdateMessageValidator validator;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
+    private final Message message = new Message();
 
     @BeforeEach
     void beforeEach() {
@@ -29,6 +39,14 @@ class TelegramUpdateMessageValidatorTest {
         chat.setId(TELEGRAM_CHAT_ID);
         message.setFrom(user);
         message.setChat(chat);
+
+        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+                "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', '2010-10-10') ");
+    }
+
+    @AfterEach
+    void afterEach() {
+        jdbcTemplate.execute("delete from players where id = 10000");
     }
 
     @ParameterizedTest
@@ -67,5 +85,15 @@ class TelegramUpdateMessageValidatorTest {
                 Arguments.of("/register_X", "Неверная команда!"),
                 Arguments.of("/register", "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"")
         );
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER"})
+    void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
+        jdbcTemplate.execute("delete from players where id = 10000");
+        message.setText("/" + command.name().toLowerCase());
+
+        AnswerableDubeBotException actualException = assertThrows(AnswerableDubeBotException.class, () -> validator.validate(message));
+        assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"", actualException.getMessage());
     }
 }
