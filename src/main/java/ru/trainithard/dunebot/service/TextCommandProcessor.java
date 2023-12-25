@@ -43,17 +43,12 @@ public class TextCommandProcessor {
         playerRepository.findByTelegramId(telegramUserId).ifPresent(player -> {
             try {
                 CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getNewPoll(player, modType));
-                TelegramUserMessageDto telegramUserMessage = new TelegramUserMessageDto();
                 sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                    if (throwable == null) {
-                        telegramUserMessage.setTelegramPollId(message.getPoll().getId());
-                        telegramUserMessage.setTelegramMessageId(message.getMessageId());
-                        telegramUserMessage.setTelegramChatId(message.getChatId());
-                        matchMakingService.registerNewMatch(player, modType, telegramUserMessage);
-                    } else {
+                    if (throwable != null) {
                         // TODO: handle?
                         throw new TelegramApiCallException("sendPoll() call encounters API exception", throwable);
                     }
+                    matchMakingService.registerNewMatch(player, modType, new TelegramUserMessageDto(message));
                 });
             } catch (Exception exception) {
                 throw new DubeBotException(exception);
