@@ -11,9 +11,10 @@ import ru.trainithard.dunebot.repository.PlayerRepository;
 @RequiredArgsConstructor
 class TelegramUpdateMessageValidator {
     private final PlayerRepository playerRepository;
-    public static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"";
-    public static final String WRONG_COMMAND = "Неверная команда!";
-    public static final String WRONG_REGISTER_COMMAND = "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"";
+    private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"";
+    private static final String WRONG_COMMAND = "Неверная команда!";
+    private static final String WRONG_REGISTER_COMMAND = "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"";
+    private static final String PUBLIC_REGISTER_COMMAND = "Регистрация возможна только в личном сообщении - напишите боту напрямую.";
 
     public void validate(Message message) {
         String text = message.getText();
@@ -32,6 +33,9 @@ class TelegramUpdateMessageValidator {
         }
         if (!command.isAnonymous() && !playerRepository.existsByTelegramId(message.getFrom().getId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId);
+        }
+        if (command == Command.REGISTER && !ChatType.PRIVATE.getValue().equals(message.getChat().getType())) {
+            throw new AnswerableDuneBotException(PUBLIC_REGISTER_COMMAND, telegramChatId);
         }
     }
 }

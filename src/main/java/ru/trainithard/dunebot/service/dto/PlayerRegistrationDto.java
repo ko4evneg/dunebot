@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.springframework.lang.Nullable;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.trainithard.dunebot.service.telegram.ChatType;
 
 @Getter
 public final class PlayerRegistrationDto {
@@ -15,6 +16,7 @@ public final class PlayerRegistrationDto {
     private final String lastName;
     @Nullable
     private final String userName;
+    private final ChatType messageType;
 
     public PlayerRegistrationDto(Message message, String steamName) {
         this.steamName = steamName;
@@ -24,5 +26,6 @@ public final class PlayerRegistrationDto {
         this.firstName = telegramUser.getFirstName();
         this.lastName = telegramUser.getLastName();
         this.userName = telegramUser.getUserName();
+        this.messageType = ChatType.valueOf(message.getChat().getType().toUpperCase());
     }
 }

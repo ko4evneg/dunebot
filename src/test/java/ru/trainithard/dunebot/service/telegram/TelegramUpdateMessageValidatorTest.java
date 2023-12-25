@@ -57,6 +57,7 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(Command.class)
     void shouldNotThrowForValidCommandWithUnusedArguments(Command command) {
+        message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
 
         assertDoesNotThrow(() -> validator.validate(message));
@@ -92,5 +93,15 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(message));
         assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"", actualException.getMessage());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldThrowForRegisterCommandInNonPrivateChat(ChatType chatType) {
+        message.getChat().setType(chatType.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(message));
+        assertEquals("Регистрация возможна только в личном сообщении - напишите боту напрямую.", actualException.getMessage());
     }
 }
