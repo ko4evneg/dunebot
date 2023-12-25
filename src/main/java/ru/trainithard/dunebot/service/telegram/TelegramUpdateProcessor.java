@@ -15,7 +15,7 @@ import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 @RequiredArgsConstructor
 public class TelegramUpdateProcessor {
     private final TelegramBot telegramBot;
-    private final TelegramUpdateValidator telegramUpdateValidator;
+    private final TelegramUpdateMessageValidator telegramUpdateMessageValidator;
     private final TextCommandProcessor textCommandProcessor;
 
     @Scheduled(fixedDelay = 500)
@@ -24,12 +24,13 @@ public class TelegramUpdateProcessor {
         while (update != null) {
             try {
                 Message message = update.getMessage();
-                if (message != null && message.getText() != null && telegramUpdateValidator.isValidCommand(message)) {
-                    String text = message.getText();
+                // TODO: validate only valid messages goes further [!!!] commands should contain all complete actions with valid arguments
+                if (message != null && message.getText() != null && message.getText().startsWith("/")) {
+                    telegramUpdateMessageValidator.validate(message);
                     long telegramUserId = message.getFrom().getId();
+                    String text = message.getText();
                     String[] commandWithArguments = text.substring(1).split("\\s");
                     Command command = Command.getCommand(commandWithArguments[0]);
-                    validateCommand(command, commandWithArguments);
                     switch (command) {
                         case DUNE -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.CLASSIC);
                         case UP4 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
@@ -48,12 +49,6 @@ public class TelegramUpdateProcessor {
             } finally {
                 update = telegramBot.poll();
             }
-        }
-    }
-
-    private void validateCommand(Command command, String[] commandWithArguments) {
-        if (command == Command.REGISTER && commandWithArguments.length <= 1) {
-            throw new AnswerableDubeBotException("Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"");
         }
     }
 }

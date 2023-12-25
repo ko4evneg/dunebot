@@ -86,7 +86,7 @@ public class TextCommandProcessor {
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
                 if (latestOwnedMatch.isFinished()) {
-                    throw new AnswerableDubeBotException("Запрещено отменять завершенные матчи!");
+                    throw new AnswerableDubeBotException("Запрещено отменять завершенные матчи!", player);
                 }
                 try {
                     DeleteMessage deleteMessage = new DeleteMessage();

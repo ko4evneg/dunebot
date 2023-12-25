@@ -20,6 +20,7 @@ public class PlayerServiceImpl implements PlayerService {
 
         Player player = new Player();
         player.setTelegramId(telegramId);
+        player.setTelegramChatId(playerRegistration.getTelegramChatId());
         player.setFirstName(playerRegistration.getFirstName());
         player.setLastName(playerRegistration.getLastName());
         player.setUserName(playerRegistration.getUserName());
@@ -30,9 +31,9 @@ public class PlayerServiceImpl implements PlayerService {
     private void validate(PlayerRegistrationDto playerRegistration, long telegramId, String steamName) {
         playerRepository.findByTelegramIdOrSteamName(telegramId, steamName).ifPresent(player -> {
             if (telegramId == player.getTelegramId()) {
-                throw new AnswerableDubeBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!");
+                throw new AnswerableDubeBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player);
             } else if (playerRegistration.getSteamName().equals(steamName)) {
-                throw new AnswerableDubeBotException("Пользователь со steam ником " + steamName + " уже существует!");
+                throw new AnswerableDubeBotException("Пользователь со steam ником " + steamName + " уже существует!", player);
             }
         });
     }
