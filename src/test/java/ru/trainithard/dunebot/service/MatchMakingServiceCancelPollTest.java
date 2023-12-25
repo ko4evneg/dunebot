@@ -9,7 +9,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.TestContextMock;
@@ -27,9 +26,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 @SpringBootTest
 class MatchMakingServiceCancelPollTest extends TestContextMock {
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private TextCommandProcessor textCommandProcessor;
+    private MatchCommandProcessor matchCommandProcessor;
 
     private static final int MESSAGE_ID = 100500;
     private static final long TELEGRAM_USER_ID = 12345L;
@@ -58,7 +55,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
 
     @Test
     void shouldSendCorrectDeleteMessageRequest() throws TelegramApiException {
-        textCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
+        matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
 
         ArgumentCaptor<DeleteMessage> deleteMessageCaptor = ArgumentCaptor.forClass(DeleteMessage.class);
         verify(telegramBot).executeAsync(deleteMessageCaptor.capture());
@@ -70,7 +67,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
 
     @Test
     void shouldDeleteMatch() throws TelegramApiException {
-        textCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
+        matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
 
@@ -82,7 +79,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
         jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, 12346, 9000, 'st_pl2', 'name2', '2010-10-10') ");
 
-        textCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
+        matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
 
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
@@ -95,14 +92,14 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
     void shouldThrowOnFailedCancel() throws TelegramApiException {
         doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
 
-        assertThrows(TelegramApiException.class, () -> textCommandProcessor.cancelMatch(TELEGRAM_USER_ID));
+        assertThrows(TelegramApiException.class, () -> matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID));
     }
 
     @Test
     void shouldNotDeleteMatchAndMatchPlayersOnFailedCancel() {
         try {
             doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
-            textCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
+            matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
         } catch (TelegramApiCallException | TelegramApiException ignored) {
         }
 
@@ -118,7 +115,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
         jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
 
         try {
-            textCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
+            matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
         } catch (Exception ignored) {
         }
 
@@ -134,7 +131,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
         jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
 
         try {
-            textCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
+            matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID);
         } catch (Exception ignored) {
         }
 
@@ -145,7 +142,7 @@ class MatchMakingServiceCancelPollTest extends TestContextMock {
     void shouldThrowOnFinishedMatchCancelRequest() {
         jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> textCommandProcessor.cancelMatch(TELEGRAM_USER_ID));
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> matchCommandProcessor.cancelMatch(TELEGRAM_USER_ID));
         assertEquals("Запрещено отменять завершенные матчи!", actualException.getMessage());
     }
 }

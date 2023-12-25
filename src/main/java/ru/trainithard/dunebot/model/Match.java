@@ -26,9 +26,10 @@ public class Match extends BaseEntity {
     @Column(name = "is_finished")
     private boolean finished;
 
+    @Embedded
+    private TelegramMessageId telegramMessageId;
+
     private String telegramPollId;
-    private Integer telegramMessageId;
-    private Long telegramChatId;
     private int registeredPlayersCount;
 
     public Match(ModType modType) {
@@ -42,4 +43,6 @@ public class Match extends BaseEntity {
     public void decreaseRegisteredPlayerCount() {
         registeredPlayersCount--;
     }
+
+
 }

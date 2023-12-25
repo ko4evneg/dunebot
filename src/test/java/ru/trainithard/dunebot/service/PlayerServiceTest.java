@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -20,9 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 class PlayerServiceTest extends TestContextMock {
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private TextCommandProcessor textCommandProcessor;
+    private MatchCommandProcessor matchCommandProcessor;
 
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
@@ -38,7 +35,7 @@ class PlayerServiceTest extends TestContextMock {
     void shouldSaveMinimallyFilledNewPlayer() {
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
-        textCommandProcessor.registerNewPlayer(playerRegistration);
+        matchCommandProcessor.registerNewPlayer(playerRegistration);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", Long.class);
@@ -50,7 +47,7 @@ class PlayerServiceTest extends TestContextMock {
     void shouldSaveTelegramIdAndTelegramIdForNewPlayer() {
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
-        textCommandProcessor.registerNewPlayer(playerRegistration);
+        matchCommandProcessor.registerNewPlayer(playerRegistration);
 
         Player actualPlayer = jdbcTemplate.queryForObject("select telegram_id, telegram_chat_id from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", new BeanPropertyRowMapper<>(Player.class));
@@ -63,7 +60,7 @@ class PlayerServiceTest extends TestContextMock {
     void shouldSaveCompletelyFilledNewPlayer() {
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto("lName", "uName");
 
-        textCommandProcessor.registerNewPlayer(playerRegistration);
+        matchCommandProcessor.registerNewPlayer(playerRegistration);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'" +
@@ -78,7 +75,7 @@ class PlayerServiceTest extends TestContextMock {
                 "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
-        AnswerableDuneBotException exsception = assertThrows(AnswerableDuneBotException.class, () -> textCommandProcessor.registerNewPlayer(playerRegistration));
+        AnswerableDuneBotException exsception = assertThrows(AnswerableDuneBotException.class, () -> matchCommandProcessor.registerNewPlayer(playerRegistration));
         assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME + "!", exsception.getMessage());
     }
 
@@ -88,7 +85,7 @@ class PlayerServiceTest extends TestContextMock {
                 "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
-        AnswerableDuneBotException exsception = assertThrows(AnswerableDuneBotException.class, () -> textCommandProcessor.registerNewPlayer(playerRegistration));
+        AnswerableDuneBotException exsception = assertThrows(AnswerableDuneBotException.class, () -> matchCommandProcessor.registerNewPlayer(playerRegistration));
         assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exsception.getMessage());
     }
 

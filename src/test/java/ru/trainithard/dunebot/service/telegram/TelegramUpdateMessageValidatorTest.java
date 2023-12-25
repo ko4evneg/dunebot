@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -24,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class TelegramUpdateMessageValidatorTest extends TestContextMock {
     @Autowired
     private TelegramUpdateMessageValidator validator;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
@@ -50,7 +47,7 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER"})
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "SUBMIT"})
     void shouldNotThrowForValidCommand(Command command) {
         message.setText("/" + command.name().toLowerCase());
 
@@ -88,7 +85,7 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER"})
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "SUBMIT"})
     void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase());

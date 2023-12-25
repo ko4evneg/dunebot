@@ -1,5 +1,7 @@
 package ru.trainithard.dunebot.service.telegram;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -17,7 +19,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.DubeBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.TextCommandProcessor;
+import ru.trainithard.dunebot.service.MatchCommandProcessor;
 
 import java.util.stream.Stream;
 
@@ -29,11 +31,29 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @Autowired
     private TelegramUpdateProcessor updateProcessor;
     @MockBean
-    private TextCommandProcessor commandProcessor;
+    private MatchCommandProcessor commandProcessor;
+
+    private static final long TELEGRAM_USER_ID_1 = 10000L;
+    private static final long TELEGRAM_USER_ID_2 = 10001L;
+    private static final long TELEGRAM_CHAT_ID_1 = 9000L;
+    private static final long TELEGRAM_CHAT_ID_2 = 9001L;
+
+    @BeforeEach
+    void beforeEach() {
+        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+                "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+                "values (10001, " + TELEGRAM_USER_ID_2 + ", " + TELEGRAM_CHAT_ID_2 + " , 'st_pl2', 'name2', '2010-10-10') ");
+    }
+
+    @AfterEach
+    void afterEach() {
+        jdbcTemplate.execute("delete from players where id in(10000, 10001)");
+    }
 
     @Test
     void shouldSendCommandToTextCommandProcessor() {
-        when(telegramBot.poll()).thenReturn(getUpdate(10000L, "/" + Command.UP4)).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/" + Command.UP4)).thenReturn(null);
 
         updateProcessor.process();
 
@@ -42,7 +62,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendTelegramMessageOnWrongCommand() throws TelegramApiException {
-        when(telegramBot.poll()).thenReturn(getUpdate(10000L, "/up")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(null);
 
         updateProcessor.process();
 
@@ -53,7 +73,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @ParameterizedTest
     @MethodSource("exceptionsProvider")
     void shouldNotThrowOnException(Class<? extends Exception> aClass) {
-        when(telegramBot.poll()).thenReturn(getUpdate(10000L, "/up")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(null);
         doThrow(aClass).when(commandProcessor).registerNewMatch(anyLong(), any());
 
         assertDoesNotThrow(() -> updateProcessor.process());
@@ -69,29 +89,29 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldMoveToNextUpdateOnException() {
-        when(telegramBot.poll()).thenReturn(getUpdate(10000L, "/up")).thenReturn(getUpdate(3333L, "/up4")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, "/up4")).thenReturn(null);
         doThrow(RuntimeException.class).when(commandProcessor).registerNewMatch(anyLong(), any());
 
         updateProcessor.process();
 
-        verify(commandProcessor, times(1)).registerNewMatch(eq(3333L), eq(ModType.UPRISING_4));
+        verify(commandProcessor, times(1)).registerNewMatch(eq(TELEGRAM_USER_ID_2), eq(ModType.UPRISING_4));
     }
 
     @Test
     void shouldMoveToNextUpdateWithoutException() {
-        when(telegramBot.poll()).thenReturn(getUpdate(10000L, "/up")).thenReturn(getUpdate(3333L, "/up4")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, "/up4")).thenReturn(null);
         doNothing().when(commandProcessor).registerNewMatch(anyLong(), any());
 
         updateProcessor.process();
 
-        verify(commandProcessor, times(1)).registerNewMatch(eq(3333L), eq(ModType.UPRISING_4));
+        verify(commandProcessor, times(1)).registerNewMatch(eq(TELEGRAM_USER_ID_2), eq(ModType.UPRISING_4));
     }
 
-    private static Update getUpdate(long telegramUserId, String text) {
+    private static Update getUpdate(long telegramUserId, long telegramChatId, String text) {
         User user = new User();
         user.setId(telegramUserId);
         Chat chat = new Chat();
-        chat.setId(9000L);
+        chat.setId(telegramChatId);
         Message message = new Message();
         message.setChat(chat);
         message.setFrom(user);

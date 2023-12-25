@@ -11,8 +11,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -22,7 +20,6 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.DubeBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
-import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
@@ -39,9 +36,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class MatchMakingServicePollRequestTest extends TestContextMock {
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private TextCommandProcessor textCommandProcessor;
+    private MatchCommandProcessor matchCommandProcessor;
 
     private static final String POLL_ID = "12345";
     private static final int MESSAGE_ID = 100500;
@@ -81,7 +76,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
 
     @Test
     void shouldCreateNewMatch() {
-        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
+        matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
                 "where id = (select match_id from match_players where player_id = 10000 and telegram_poll_id = '" + POLL_ID + "' and telegram_chat_id = '" + CHAT_ID + "')", Long.class);
@@ -91,23 +86,18 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
 
     @Test
     void shouldCorrectlyFillNewMatch() {
-        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
+        matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
-        Match actualMatch = jdbcTemplate.queryForObject("select telegram_message_id, telegram_poll_id, telegram_chat_id from matches where id = " +
-                        "(select match_id from match_players where player_id = 10000 and owner_id = 10000 and registered_players_count = 0)",
-                new BeanPropertyRowMapper<>(Match.class));
+        Boolean actualMatch = jdbcTemplate.queryForObject("select is_finished from matches where id = (select match_id " +
+                "from match_players where player_id = 10000 and owner_id = 10000 and registered_players_count = 0 and telegram_chat_id = '" +
+                CHAT_ID + "' and telegram_poll_id = '" + POLL_ID + "' and telegram_message_id = " + MESSAGE_ID + ")", Boolean.class);
 
-        assertThat(actualMatch, allOf(
-                hasProperty("telegramPollId", is(POLL_ID)),
-                hasProperty("telegramMessageId", is(MESSAGE_ID)),
-                hasProperty("telegramChatId", is(CHAT_ID)),
-                hasProperty("finished", is(false))
-        ));
+        assertFalse(actualMatch);
     }
 
     @Test
     void shouldCreateNewMatchPlayer() {
-        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
+        matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players " +
                 "where player_id = 10000 and place is null", Long.class);
@@ -117,7 +107,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
 
     @Test
     void shouldSendTelegramPoll() throws TelegramApiException {
-        textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
+        matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         ArgumentCaptor<SendPoll> pollCaptor = ArgumentCaptor.forClass(SendPoll.class);
         verify(telegramBot).executeAsync(pollCaptor.capture());
@@ -134,7 +124,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     @ParameterizedTest
     @MethodSource("chatIdSource")
     void shouldSetCorrectTelegramPollChatAndTopicIds(ModType modType, int expectedTopicId) throws TelegramApiException {
-        textCommandProcessor.registerNewMatch(12345L, modType);
+        matchCommandProcessor.registerNewMatch(12345L, modType);
 
         ArgumentCaptor<SendPoll> pollCaptor = ArgumentCaptor.forClass(SendPoll.class);
         verify(telegramBot).executeAsync(pollCaptor.capture());
@@ -167,6 +157,6 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     void shouldThrowWhenTelegramCallFails() throws TelegramApiException {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
-        assertThrows(DubeBotException.class, () -> textCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
+        assertThrows(DubeBotException.class, () -> matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
     }
 }

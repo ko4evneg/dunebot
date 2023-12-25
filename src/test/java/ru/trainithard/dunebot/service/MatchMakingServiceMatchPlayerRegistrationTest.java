@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
@@ -21,9 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-    @Autowired
-    private TextCommandProcessor textCommandProcessor;
+    private MatchCommandProcessor matchCommandProcessor;
 
     private static final String TELEGRAM_POLL_ID = "100500";
     private static final long TELEGRAM_USER_ID = 12349L;
@@ -51,7 +48,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
 
     @Test
     void shouldAddNewMatchPlayerOnRegistration() {
-        textCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
+        matchCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -60,7 +57,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
 
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnRegistration() {
-        textCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
+        matchCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
 
@@ -77,7 +74,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10000, 10001, '2010-10-10')");
 
-        textCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
+        matchCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -90,7 +87,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
                 "values (10001, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("update matches set registered_players_count = 2");
 
-        textCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
+        matchCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
 
