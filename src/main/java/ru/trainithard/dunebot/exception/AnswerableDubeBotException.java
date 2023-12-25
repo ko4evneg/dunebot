@@ -1,9 +1,12 @@
 package ru.trainithard.dunebot.exception;
 
+import lombok.Getter;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.trainithard.dunebot.model.Player;
 
+@Getter
 public class AnswerableDubeBotException extends DubeBotException {
+    // TODO:  remove?
     private final long telegramUserId;
     private final long telegramChatId;
 
