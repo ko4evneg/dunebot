@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.TextCommandProcessor;
+import ru.trainithard.dunebot.service.MatchCommandProcessor;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 
 @Service
@@ -17,7 +18,7 @@ import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 public class TelegramUpdateProcessor {
     private final TelegramBot telegramBot;
     private final TelegramUpdateMessageValidator telegramUpdateMessageValidator;
-    private final TextCommandProcessor textCommandProcessor;
+    private final MatchCommandProcessor matchCommandProcessor;
 
     @Scheduled(fixedDelay = 500)
     public void process() {
@@ -30,33 +31,34 @@ public class TelegramUpdateProcessor {
                     telegramUpdateMessageValidator.validate(message);
                     processCommand(message);
                 }
-            } catch (AnswerableDubeBotException answerableException) {
+            } catch (AnswerableDuneBotException answerableException) {
                 sendUserNotificationMessage(answerableException);
             } catch (Exception e) {
                 // TODO:
+                System.out.println(e.getMessage());
             } finally {
                 update = telegramBot.poll();
             }
         }
     }
 
-    private void processCommand(Message message) {
+    private void processCommand(Message message) throws TelegramApiException {
         long telegramUserId = message.getFrom().getId();
         String text = message.getText();
         String[] commandWithArguments = text.substring(1).split("\\s");
         Command command = Command.getCommand(commandWithArguments[0]);
         switch (command) {
-            case DUNE -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.CLASSIC);
-            case UP4 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
-            case UP6 -> textCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_6);
-            case CANCEL -> textCommandProcessor.cancelMatch(telegramUserId);
-            case SUBMIT -> textCommandProcessor.getSubmitMessage(telegramUserId, message.getChatId(), text);
+            case DUNE -> matchCommandProcessor.registerNewMatch(telegramUserId, ModType.CLASSIC);
+            case UP4 -> matchCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
+            case UP6 -> matchCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_6);
+            case CANCEL -> matchCommandProcessor.cancelMatch(telegramUserId);
+            case SUBMIT -> matchCommandProcessor.getSubmitMessage(telegramUserId, message.getChatId(), text);
             case REGISTER ->
-                    textCommandProcessor.registerNewPlayer(new PlayerRegistrationDto(message, commandWithArguments[1]));
+                    matchCommandProcessor.registerNewPlayer(new PlayerRegistrationDto(message, commandWithArguments[1]));
         }
     }
 
-    private void sendUserNotificationMessage(AnswerableDubeBotException answerableException) {
+    private void sendUserNotificationMessage(AnswerableDuneBotException answerableException) {
         try {
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(answerableException.getTelegramChatId());
