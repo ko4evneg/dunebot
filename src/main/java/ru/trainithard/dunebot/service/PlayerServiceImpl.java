@@ -2,7 +2,7 @@ package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.exception.AnswerableDubeBotException;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
@@ -31,9 +31,9 @@ public class PlayerServiceImpl implements PlayerService {
     private void validate(PlayerRegistrationDto playerRegistration, long telegramId, String steamName) {
         playerRepository.findByTelegramIdOrSteamName(telegramId, steamName).ifPresent(player -> {
             if (telegramId == player.getTelegramId()) {
-                throw new AnswerableDubeBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player.getTelegramChatId());
+                throw new AnswerableDuneBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player.getTelegramChatId());
             } else if (playerRegistration.getSteamName().equals(steamName)) {
-                throw new AnswerableDubeBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getTelegramChatId());
+                throw new AnswerableDuneBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getTelegramChatId());
             }
         });
     }
