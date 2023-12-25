@@ -30,7 +30,7 @@ class TelegramUpdateMessageValidator {
         if (command == Command.REGISTER && commandWithArguments.length < 2) {
             throw new AnswerableDubeBotException(WRONG_REGISTER_COMMAND, telegramChatId);
         }
-        if (!command.isAnonymous() && playerRepository.findByTelegramId(message.getFrom().getId()).isEmpty()) {
+        if (!command.isAnonymous() && !playerRepository.existsByTelegramId(message.getFrom().getId())) {
             throw new AnswerableDubeBotException(ANONYMOUS_COMMAND_CALL, telegramChatId);
         }
     }
