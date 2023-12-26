@@ -4,8 +4,6 @@ import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
-import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
-import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
 
 public interface MatchMakingService {
@@ -17,8 +15,4 @@ public interface MatchMakingService {
     void registerMathPlayer(Player player, Match match);
 
     void unregisterMathPlayer(MatchPlayer matchPlayer);
-
-    void acceptMatchSubmit(MatchSubmitDto matchSubmit);
-
-    void confirmMatchSubmit(ConfirmMatchDto confirmMatch);
 }

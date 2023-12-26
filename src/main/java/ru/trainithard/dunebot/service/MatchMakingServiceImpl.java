@@ -7,8 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.service.dto.ConfirmMatchDto;
-import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
 
 @Service
@@ -56,15 +54,5 @@ public class MatchMakingServiceImpl implements MatchMakingService {
         matchPlayerRepository.delete(matchPlayer);
 //      if (match.getRegisteredPlayersCount() == 0) {
         // TODO: start match
-    }
-
-    @Override
-    public void acceptMatchSubmit(MatchSubmitDto matchSubmit) {
-
-    }
-
-    @Override
-    public void confirmMatchSubmit(ConfirmMatchDto confirmMatch) {
-
     }
 }
