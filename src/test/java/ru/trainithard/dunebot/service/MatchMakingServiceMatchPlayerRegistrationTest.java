@@ -47,7 +47,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
     }
 
     @Test
-    void shouldAddNewMatchPlayerOnRegistration() {
+    void shouldSaveNewMatchPlayerOnRegistration() {
         matchCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
