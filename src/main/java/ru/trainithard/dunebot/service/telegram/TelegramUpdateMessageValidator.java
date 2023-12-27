@@ -39,6 +39,7 @@ class TelegramUpdateMessageValidator {
         if (!command.isAnonymous() && !playerRepository.existsByTelegramId(message.getFrom().getId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId);
         }
+        // TODO:  make all commands private?
         if (publicChatProhibitedCommands.contains(command) && !ChatType.PRIVATE.getValue().equals(message.getChat().getType())) {
             throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId);
         }
