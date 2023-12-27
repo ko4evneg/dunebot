@@ -12,7 +12,7 @@ public interface MatchMakingService {
 
     void cancelMatch(Match playerId);
 
-    void registerMathPlayer(Player player, Match match);
+    void registerMathPlayer(Player player, Match match, int positiveAnswersCount);
 
-    void unregisterMathPlayer(MatchPlayer matchPlayer);
+    void unregisterMathPlayer(MatchPlayer matchPlayer, int positiveAnswersCount);
 }

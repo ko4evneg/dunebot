@@ -24,7 +24,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
 
     private static final String TELEGRAM_POLL_ID = "100500";
     private static final long TELEGRAM_USER_ID = 12349L;
-    private static final TelegramUserPollDto POLL_MESSAGE_DTO = new TelegramUserPollDto(12349L, "100500");
+    private static final TelegramUserPollDto POLL_MESSAGE_DTO = new TelegramUserPollDto(TELEGRAM_USER_ID, TELEGRAM_POLL_ID, 1);
 
     @BeforeEach
     @SneakyThrows
@@ -33,7 +33,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
                 "values (10000, 12345, 12345, 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, " + TELEGRAM_USER_ID + ", 12345, 'st_pl2', 'name2', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, telegram_poll_id, telegram_message_id, owner_id, mod_type, registered_players_count, created_at) " +
+        jdbcTemplate.execute("insert into matches (id, telegram_poll_id, telegram_message_id, owner_id, mod_type, active_players_count, created_at) " +
                 "values (10000, '" + TELEGRAM_POLL_ID + "', '123', 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
@@ -41,7 +41,7 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from match_players where match_id = (select id from matches where id = 10000)");
+        jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id between 10000 and 10002 or telegram_id = " + TELEGRAM_USER_ID);
     }
@@ -56,12 +56,21 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
     }
 
     @Test
-    void shouldIncreaseMatchRegisteredPlayersCountOnRegistration() {
-        matchCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
+    void shouldIncreaseMatchRegisteredPlayersCountOnPositiveReplyRegistration() {
+        matchCommandProcessor.registerMathPlayer(new TelegramUserPollDto(TELEGRAM_USER_ID, TELEGRAM_POLL_ID, 2));
 
-        Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
+        Long actualPlayersCount = jdbcTemplate.queryForObject("select active_players_count from matches where id = 10000", Long.class);
 
         assertEquals(2, actualPlayersCount);
+    }
+
+    @Test
+    void shouldNotIncreaseMatchRegisteredPlayersCountOnNonPositiveReplyRegistration() {
+        matchCommandProcessor.registerMathPlayer(POLL_MESSAGE_DTO);
+
+        Long actualPlayersCount = jdbcTemplate.queryForObject("select active_players_count from matches where id = 10000", Long.class);
+
+        assertEquals(1, actualPlayersCount);
     }
 
     @Test
@@ -82,15 +91,28 @@ class MatchMakingServiceMatchPlayerRegistrationTest extends TestContextMock {
     }
 
     @Test
-    void shouldDecreaseMatchRegisteredPlayersCountOnRegistrationRevocation() {
+    void shouldDecreaseMatchRegisteredPlayersCountOnPositiveReplyRegistrationRevocation() {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10000, 10001, '2010-10-10')");
-        jdbcTemplate.execute("update matches set registered_players_count = 2");
+        jdbcTemplate.execute("update matches set active_players_count = 2");
 
         matchCommandProcessor.unregisterMathPlayer(POLL_MESSAGE_DTO);
 
-        Long actualPlayersCount = jdbcTemplate.queryForObject("select registered_players_count from matches where id = 10000", Long.class);
+        Long actualPlayersCount = jdbcTemplate.queryForObject("select active_players_count from matches where id = 10000", Long.class);
 
         assertEquals(1, actualPlayersCount);
+    }
+
+    @Test
+    void shouldNotDecreaseMatchRegisteredPlayersCountOnNonPositiveReplyRegistrationRevocation() {
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                "values (10001, 10000, 10001, '2010-10-10')");
+        jdbcTemplate.execute("update matches set active_players_count = 2");
+
+        matchCommandProcessor.unregisterMathPlayer(new TelegramUserPollDto(TELEGRAM_USER_ID, TELEGRAM_POLL_ID, 2));
+
+        Long actualPlayersCount = jdbcTemplate.queryForObject("select active_players_count from matches where id = 10000", Long.class);
+
+        assertEquals(2, actualPlayersCount);
     }
 }

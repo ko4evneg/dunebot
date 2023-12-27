@@ -36,23 +36,23 @@ public class MatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void registerMathPlayer(Player player, Match match) {
-        match.increaseRegisteredPlayerCount();
+    public void registerMathPlayer(Player player, Match match, int positiveAnswersCount) {
+        match.setPositiveAnswersCount(positiveAnswersCount);
         MatchPlayer matchPlayer = new MatchPlayer(match, player);
         matchRepository.save(match);
         matchPlayerRepository.save(matchPlayer);
 //      if (match.getRegisteredPlayersCount() == 4)
-        // TODO: start match
+        // TODO: start match if threshold crosses 4
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void unregisterMathPlayer(MatchPlayer matchPlayer) {
+    public void unregisterMathPlayer(MatchPlayer matchPlayer, int positiveAnswersCount) {
         Match match = matchPlayer.getMatch();
-        match.decreaseRegisteredPlayerCount();
+        match.setPositiveAnswersCount(positiveAnswersCount);
         matchRepository.save(match);
         matchPlayerRepository.delete(matchPlayer);
 //      if (match.getRegisteredPlayersCount() == 0) {
-        // TODO: start match
+        // TODO: delete start match if threshold crosses 4
     }
 }
