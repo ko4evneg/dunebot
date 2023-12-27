@@ -26,23 +26,16 @@ public class Match extends BaseEntity {
     @Column(name = "is_finished")
     private boolean finished;
 
+    @Column(name = "is_onsubmit")
+    private boolean onSubmit;
+
     @Embedded
     private TelegramMessageId telegramMessageId;
 
     private String telegramPollId;
-    private int registeredPlayersCount;
+    private int positiveAnswersCount;
 
     public Match(ModType modType) {
         this.modType = modType;
     }
-
-    public void increaseRegisteredPlayerCount() {
-        registeredPlayersCount++;
-    }
-
-    public void decreaseRegisteredPlayerCount() {
-        registeredPlayersCount--;
-    }
-
-
 }
