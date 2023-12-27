@@ -1,5 +1,8 @@
 package ru.trainithard.dunebot.service.dto;
 
-public class MatchSubmitDto {
-    // TODO:
+import ru.trainithard.dunebot.model.ModType;
+
+import java.util.List;
+
+public record MatchSubmitDto(long matchId, ModType modType, List<Long> telegramPlayerIds) {
 }
