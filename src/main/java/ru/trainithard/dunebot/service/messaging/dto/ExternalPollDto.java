@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.messaging;
+package ru.trainithard.dunebot.service.messaging.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,17 +9,13 @@ import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 @Setter
 @Getter
 @NoArgsConstructor
-public final class ExternalPollDto {
-    private Integer messageId;
-    private Long chatId;
+public final class ExternalPollDto extends ExternalMessageDto {
+
     private String pollId;
-    private Integer replyId;
 
     public ExternalPollDto(Message message) {
-        this.messageId = message.getMessageId();
-        this.chatId = message.getChatId();
+        super(message);
         this.pollId = message.getPoll().getId();
-        this.replyId = message.getMessageThreadId();
     }
 
     public ExternalPollId toExternalPollId() {
