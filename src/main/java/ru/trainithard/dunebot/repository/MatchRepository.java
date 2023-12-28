@@ -16,5 +16,5 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findLatestOwnedMatch(long playerId);
 
 
-    Optional<Match> findByTelegramPollId(String telegramPollId);
+    Optional<Match> findByExternalPollIdPollId(String telegramPollId);
 }

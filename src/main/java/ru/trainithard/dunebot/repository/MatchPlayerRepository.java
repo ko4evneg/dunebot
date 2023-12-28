@@ -6,5 +6,5 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import java.util.Optional;
 
 public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> {
-    Optional<MatchPlayer> findByMatchTelegramPollIdAndPlayerTelegramId(String telegramPollId, long telegramUserId);
+    Optional<MatchPlayer> findByMatchExternalPollIdPollIdAndPlayerExternalId(String externalPollId, long externalUserId);
 }
