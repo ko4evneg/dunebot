@@ -1,5 +1,6 @@
 package ru.trainithard.dunebot.service;
 
+import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
@@ -10,11 +11,15 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
-import ru.trainithard.dunebot.service.messaging.PollMessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MatchCommandProcessor {
     private final MatchMakingService matchMakingService;
-    //    private final MatchSubmitService matchSubmitService;
+    private final MatchSubmitService matchSubmitService;
     private final PlayerService playerService;
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
@@ -38,12 +43,8 @@ public class MatchCommandProcessor {
     }
 
     private PollMessageDto getNewPoll(Player initiator, ModType modType) {
-        return PollMessageDto.builder()
-                .text("Игрок " + initiator.getFriendlyName() + " призывает всех на матч в " + modType.getModName())
-                .chatId(SettingConstants.CHAT_ID)
-                .replyMessageId(getTopicId(modType))
-                .options(POLL_OPTIONS)
-                .build();
+        String text = "Игрок " + initiator.getFriendlyName() + " призывает всех на матч в " + modType.getModName();
+        return new PollMessageDto(SettingConstants.CHAT_ID, text, getTopicId(modType), POLL_OPTIONS);
     }
 
     private int getTopicId(ModType modType) {
@@ -84,26 +85,20 @@ public class MatchCommandProcessor {
     public void registerNewPlayer(PlayerRegistrationDto playerRegistration) {
         playerService.registerNewPlayer(playerRegistration);
     }
-// TODO:
-//    public void getSubmitMessage(long telegramUserId, long telegramChatId, String matchIdString) throws TelegramApiException {
-//        MatchSubmitDto matchSubmit = matchSubmitService.getMatchSubmit(telegramUserId, telegramChatId, matchIdString);
-//        List<InlineKeyboardButton> buttons = new ArrayList<>();
-//        List<Long> matchPlayerTelegramIds = matchSubmit.telegramPlayerIds();
-//        for (int i = 0; i < matchPlayerTelegramIds.size() ; i++) {
-//            buttons.add(InlineKeyboardButton.builder().text(Integer.toString(i + 1)).callbackData(matchIdString + "__" + (i + 1)).build());
-//        }
-//        buttons.add(InlineKeyboardButton.builder().text("не участвовал(а)").callbackData(matchIdString + "__-1").build());
-//        List<List<InlineKeyboardButton>> linedButtons = Lists.partition(buttons, 2);
-//
-//        String telegramChatIdString = Long.toString(telegramChatId);
-//        SendMessage sendMessage = new SendMessage(telegramChatIdString, "Выберите место, которое вы заняли в матче " + matchSubmit.modType() + ":");
-//        sendMessage.setReplyMarkup(new InlineKeyboardMarkup(linedButtons));
-//
-//        CompletableFuture<Message> messageCompletableFuture = telegramBot.executeAsync(sendMessage);
-//        messageCompletableFuture.whenComplete((message, throwable) -> {
-//            if (throwable != null) {
-//                throw new TelegramApiCallException("getSubmitMessage() call encounters API exception", throwable);
-//            }
-//        });
-//    }
+
+    public void getSubmitMessage(long telegramUserId, long telegramChatId, String matchIdString) {
+        MatchSubmitDto matchSubmit = matchSubmitService.getMatchSubmit(telegramUserId, telegramChatId, matchIdString);
+        List<ButtonDto> buttons = new ArrayList<>();
+        List<Player> matchActivePlayers = matchSubmit.activePlayers();
+        for (int i = 0; i < matchActivePlayers.size(); i++) {
+            ButtonDto buttonDto = new ButtonDto(Integer.toString(i + 1), matchIdString + "__" + (i + 1));
+            buttons.add(buttonDto);
+        }
+        buttons.add(new ButtonDto("не участвовал(а)", matchIdString + "__-1"));
+        List<List<ButtonDto>> linedButtons = Lists.partition(buttons, 2);
+
+        String text = "Выберите место, которое вы заняли в матче " + matchSubmit.matchId() + ":";
+        matchActivePlayers.forEach(externalId -> messagingService
+                .sendMessageAsync(new MessageDto(Long.toString(externalId.getExternalChatId()), text, null, linedButtons)));
+    }
 }
