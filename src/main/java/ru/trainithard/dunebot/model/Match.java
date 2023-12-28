@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 
 import java.util.List;
 
@@ -30,9 +31,7 @@ public class Match extends BaseEntity {
     private boolean onSubmit;
 
     @Embedded
-    private TelegramMessageId telegramMessageId;
-
-    private String telegramPollId;
+    private ExternalPollId externalPollId;
     private int positiveAnswersCount;
 
     public Match(ModType modType) {

@@ -11,15 +11,14 @@ import org.springframework.lang.Nullable;
 @Entity
 @Table(name = "players")
 public class Player extends BaseEntity {
-    private long telegramId;
-    private long telegramChatId;
+    private long externalId;
+    private long externalChatId;
     private String firstName;
     private String steamName;
     @Nullable
     private String lastName;
     @Nullable
-    // TODO:  rename
-    private String userName;
+    private String externalName;
 
     public String getFriendlyName() {
 
