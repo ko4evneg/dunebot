@@ -74,7 +74,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
         matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
-                "where id = (select match_id from match_players where player_id = 10000 and external_poll_id = '" + POLL_ID + "' and external_chat_id = '" + CHAT_ID + "')", Long.class);
+                "where id = (select match_id from match_players where player_id = 10000)", Long.class);
 
         assertNotNull(actualMatchId);
     }
@@ -84,8 +84,8 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
         matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Boolean actualMatch = jdbcTemplate.queryForObject("select is_finished from matches where id = (select match_id " +
-                "from match_players where player_id = 10000 and owner_id = 10000 and positive_answers_count = 0 and external_chat_id = '" +
-                CHAT_ID + "' and external_poll_id = '" + POLL_ID + "' and external_message_id = " + MESSAGE_ID + " and external_reply_id = '" + REPLY_ID + "')", Boolean.class);
+                "from match_players where player_id = 10000) and owner_id = 10000 and positive_answers_count = 0 and external_chat_id = '" +
+                CHAT_ID + "' and external_poll_id = '" + POLL_ID + "' and external_message_id = " + MESSAGE_ID + " and external_reply_id = '" + REPLY_ID + "'", Boolean.class);
 
         assertNotNull(actualMatch);
         assertFalse(actualMatch);
