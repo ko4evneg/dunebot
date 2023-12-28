@@ -40,9 +40,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, " + TELEGRAM_USER_ID_2 + ", " + TELEGRAM_CHAT_ID_2 + " , 'st_pl2', 'name2', '2010-10-10') ");
     }
 
