@@ -18,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
-import ru.trainithard.dunebot.exception.DubeBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.ModType;
 
@@ -43,7 +42,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
-        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, 12345, 9000, 'st_pl', 'name', '2010-10-10') ");
 
         Poll poll = new Poll();
@@ -62,7 +61,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where player_id = 10000");
-        jdbcTemplate.execute("delete from matches where telegram_poll_id is null or telegram_poll_id = '" + POLL_ID + "'");
+        jdbcTemplate.execute("delete from matches where matches.external_poll_id is null or external_poll_id = '" + POLL_ID + "'");
         jdbcTemplate.execute("delete from players where id = 10000");
     }
 
@@ -71,7 +70,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
         matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
-                "where id = (select match_id from match_players where player_id = 10000 and telegram_poll_id = '" + POLL_ID + "' and telegram_chat_id = '" + CHAT_ID + "')", Long.class);
+                "where id = (select match_id from match_players where player_id = 10000 and external_poll_id = '" + POLL_ID + "' and external_chat_id = '" + CHAT_ID + "')", Long.class);
 
         assertNotNull(actualMatchId);
     }
@@ -81,9 +80,10 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
         matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC);
 
         Boolean actualMatch = jdbcTemplate.queryForObject("select is_finished from matches where id = (select match_id " +
-                "from match_players where player_id = 10000 and owner_id = 10000 and positive_answers_count = 0 and telegram_chat_id = '" +
-                CHAT_ID + "' and telegram_poll_id = '" + POLL_ID + "' and telegram_message_id = " + MESSAGE_ID + ")", Boolean.class);
+                "from match_players where player_id = 10000 and owner_id = 10000 and positive_answers_count = 0 and external_chat_id = '" +
+                CHAT_ID + "' and external_poll_id = '" + POLL_ID + "' and external_message_id = " + MESSAGE_ID + ")", Boolean.class);
 
+        assertNotNull(actualMatch);
         assertFalse(actualMatch);
     }
 
@@ -140,7 +140,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
         doThrow(new TelegramApiException()).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(id) from matches where " +
-                "id = (select match_id from match_players where player_id = 1 and telegram_poll_id = '" + POLL_ID + "')", Long.class);
+                "id = (select match_id from match_players where player_id = 1 and external_poll_id = '" + POLL_ID + "')", Long.class);
 
         assertEquals(0, actualMatchesCount);
     }
@@ -149,6 +149,6 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     void shouldThrowWhenTelegramCallFails() throws TelegramApiException {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
 
-        assertThrows(DubeBotException.class, () -> matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
+        assertThrows(TelegramApiCallException.class, () -> matchCommandProcessor.registerNewMatch(12345L, ModType.CLASSIC));
     }
 }

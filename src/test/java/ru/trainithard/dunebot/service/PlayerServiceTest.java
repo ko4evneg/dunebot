@@ -14,8 +14,7 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 import ru.trainithard.dunebot.service.telegram.ChatType;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class PlayerServiceTest extends TestContextMock {
@@ -29,7 +28,7 @@ class PlayerServiceTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from players where id = 10000 or telegram_id = '" + TELEGRAM_USER_ID + "'");
+        jdbcTemplate.execute("delete from players where id = 10000 or external_id = '" + TELEGRAM_USER_ID + "'");
     }
 
     @Test
@@ -50,11 +49,12 @@ class PlayerServiceTest extends TestContextMock {
 
         matchCommandProcessor.registerNewPlayer(playerRegistration);
 
-        Player actualPlayer = jdbcTemplate.queryForObject("select telegram_id, telegram_chat_id from players " +
+        Player actualPlayer = jdbcTemplate.queryForObject("select external_id, external_chat_id from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", new BeanPropertyRowMapper<>(Player.class));
 
-        assertEquals(TELEGRAM_USER_ID, actualPlayer.getTelegramId());
-        assertEquals(TELEGRAM_CHAT_ID, actualPlayer.getTelegramChatId());
+        assertNotNull(actualPlayer);
+        assertEquals(TELEGRAM_USER_ID, actualPlayer.getExternalId());
+        assertEquals(TELEGRAM_CHAT_ID, actualPlayer.getExternalChatId());
     }
 
     @Test
@@ -65,14 +65,14 @@ class PlayerServiceTest extends TestContextMock {
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'" +
-                "and last_name = 'lName' and user_name = 'uName'", Long.class);
+                "and last_name = 'lName' and external_name = 'uName'", Long.class);
 
         assertEquals(1, actualPlayersCount);
     }
 
     @Test
     void shouldThrowWhenSameTelegramIdUserExists() {
-        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
@@ -82,7 +82,7 @@ class PlayerServiceTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenSameSteamNameUserExists() {
-        jdbcTemplate.execute("insert into players (id, telegram_id, telegram_chat_id, steam_name, first_name, created_at) " +
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
         PlayerRegistrationDto playerRegistration = getPlayerRegistrationDto(null, null);
 
