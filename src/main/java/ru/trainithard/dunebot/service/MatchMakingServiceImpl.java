@@ -10,7 +10,7 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.service.messaging.ExternalPollDto;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 
 @Service
 @RequiredArgsConstructor

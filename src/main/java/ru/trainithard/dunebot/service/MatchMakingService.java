@@ -4,7 +4,7 @@ import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
-import ru.trainithard.dunebot.service.messaging.ExternalPollDto;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 
 public interface MatchMakingService {
 

@@ -36,6 +36,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
     private MatchCommandProcessor matchCommandProcessor;
 
     private static final String POLL_ID = "12345";
+    private static final int REPLY_ID = 23456;
     private static final int MESSAGE_ID = 100500;
     private static final long CHAT_ID = 9000L;
 
@@ -53,6 +54,9 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         message.setChat(chat);
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(REPLY_ID);
+        message.setReplyToMessage(replyMessage);
         CompletableFuture<Message> completableFuture = new CompletableFuture<>();
         completableFuture.complete(message);
         doReturn(completableFuture).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
@@ -81,7 +85,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
 
         Boolean actualMatch = jdbcTemplate.queryForObject("select is_finished from matches where id = (select match_id " +
                 "from match_players where player_id = 10000 and owner_id = 10000 and positive_answers_count = 0 and external_chat_id = '" +
-                CHAT_ID + "' and external_poll_id = '" + POLL_ID + "' and external_message_id = " + MESSAGE_ID + ")", Boolean.class);
+                CHAT_ID + "' and external_poll_id = '" + POLL_ID + "' and external_message_id = " + MESSAGE_ID + " and external_reply_id = '" + REPLY_ID + "')", Boolean.class);
 
         assertNotNull(actualMatch);
         assertFalse(actualMatch);
@@ -124,7 +128,7 @@ class MatchMakingServicePollRequestTest extends TestContextMock {
 
         assertThat(actualPoll,
                 both(hasProperty("chatId", is(SettingConstants.CHAT_ID)))
-                        .and(hasProperty("messageThreadId", is(expectedTopicId))));
+                        .and(hasProperty("replyToMessageId", is(expectedTopicId))));
     }
 
     private static Stream<Arguments> chatIdSource() {
