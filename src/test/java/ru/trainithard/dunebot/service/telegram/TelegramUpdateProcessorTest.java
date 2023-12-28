@@ -24,6 +24,7 @@ import ru.trainithard.dunebot.service.MatchCommandProcessor;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -68,6 +69,11 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         verify(telegramBot, times(1))
                 .executeAsync(argThat((SendMessage sendMessage) -> "9000".equals(sendMessage.getChatId()) && "Неверная команда!".equals(sendMessage.getText())));
+    }
+
+    @Test
+    void shouldIncludeReplyMessageIdOnTopicWrongCommandReceive() {
+        fail();
     }
 
     @ParameterizedTest
