@@ -22,6 +22,8 @@ public class MatchPlayer extends BaseEntity {
 
     @Nullable
     private Integer place;
+    @Nullable
+    private Integer candidatePlace;
 
     public MatchPlayer(Match match, Player player) {
         this.match = match;
