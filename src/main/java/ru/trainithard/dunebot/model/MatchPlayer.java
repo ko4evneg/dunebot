@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 
 @Getter
 @Setter
@@ -20,6 +21,9 @@ public class MatchPlayer extends BaseEntity {
     @JoinColumn(name = "player_id")
     private Player player;
 
+    @Nullable
+    @Embedded
+    protected ExternalMessageId submitMessageId;
     @Nullable
     private Integer place;
     @Nullable
