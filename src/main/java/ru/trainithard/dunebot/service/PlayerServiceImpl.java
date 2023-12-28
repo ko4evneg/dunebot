@@ -19,21 +19,21 @@ public class PlayerServiceImpl implements PlayerService {
         validate(playerRegistration, telegramId, steamName);
 
         Player player = new Player();
-        player.setTelegramId(telegramId);
-        player.setTelegramChatId(playerRegistration.getTelegramChatId());
+        player.setExternalId(telegramId);
+        player.setExternalChatId(playerRegistration.getTelegramChatId());
         player.setFirstName(playerRegistration.getFirstName());
         player.setLastName(playerRegistration.getLastName());
-        player.setUserName(playerRegistration.getUserName());
+        player.setExternalName(playerRegistration.getUserName());
         player.setSteamName(steamName);
         playerRepository.save(player);
     }
 
     private void validate(PlayerRegistrationDto playerRegistration, long telegramId, String steamName) {
-        playerRepository.findByTelegramIdOrSteamName(telegramId, steamName).ifPresent(player -> {
-            if (telegramId == player.getTelegramId()) {
-                throw new AnswerableDuneBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player.getTelegramChatId());
+        playerRepository.findByExternalIdOrSteamName(telegramId, steamName).ifPresent(player -> {
+            if (telegramId == player.getExternalId()) {
+                throw new AnswerableDuneBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player.getExternalChatId());
             } else if (playerRegistration.getSteamName().equals(steamName)) {
-                throw new AnswerableDuneBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getTelegramChatId());
+                throw new AnswerableDuneBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getExternalChatId());
             }
         });
     }
