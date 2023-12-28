@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.model.messaging;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.lang.Nullable;
 @MappedSuperclass
 @Getter
 @Setter
+@Embeddable
 @NoArgsConstructor
 public class ExternalMessageId {
     @Column(name = "EXTERNAL_MESSAGE_ID")
