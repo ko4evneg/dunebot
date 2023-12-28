@@ -24,24 +24,25 @@ class TelegramUpdateMessageValidator {
     public void validate(Message message) {
         String text = message.getText();
         Long telegramChatId = message.getChatId();
+        Integer replyMessageId = message.getReplyToMessage() != null ? message.getReplyToMessage().getMessageId() : null;
         if (text.length() < 2) {
-            throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId);
+            throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId, replyMessageId);
         }
         String[] commandWithArguments = text.substring(1).split("\\s");
         String textCommand = commandWithArguments[0];
         Command command = Command.getCommand(textCommand);
         if (command == null) {
-            throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId);
+            throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId, replyMessageId);
         }
         if (command.getWordsCount() > commandWithArguments.length) {
-            throw new AnswerableDuneBotException(WRONG_REGISTER_COMMAND, telegramChatId);
+            throw new AnswerableDuneBotException(WRONG_REGISTER_COMMAND, telegramChatId, replyMessageId);
         }
         if (!command.isAnonymous() && !playerRepository.existsByTelegramId(message.getFrom().getId())) {
-            throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId);
+            throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId, replyMessageId);
         }
         // TODO:  make all commands private?
         if (publicChatProhibitedCommands.contains(command) && !ChatType.PRIVATE.getValue().equals(message.getChat().getType())) {
-            throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId);
+            throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId, replyMessageId);
         }
     }
 }

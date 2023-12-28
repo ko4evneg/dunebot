@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.telegram;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -44,6 +45,27 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from players where id = 10000");
+    }
+
+    @Test
+    void shouldCorrectlyFillChatIdAndReplyIdForPersonalMessage() {
+        message.setText("/fake_command");
+
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(message));
+        assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
+        assertNull(actualException.getTelegramTopicId());
+    }
+
+    @Test
+    void shouldCorrectlyFillChatIdAndReplyIdForTopicMessage() {
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(9001);
+        message.setText("/fake_command");
+        message.setReplyToMessage(replyMessage);
+
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(message));
+        assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
+        assertEquals(9001, actualException.getTelegramTopicId());
     }
 
     @ParameterizedTest
