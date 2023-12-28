@@ -4,6 +4,9 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -22,6 +25,7 @@ import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -70,34 +74,23 @@ class MatchSubmitServiceTest extends TestContextMock {
         jdbcTemplate.execute("delete from players where id between 10000 and 10005");
     }
 
-    @Test
-    void shouldThrowOnFinishedMatchSubmit() {
-        jdbcTemplate.execute("update matches set is_finished = true where id = 15000");
+    @ParameterizedTest
+    @MethodSource("exceptionsSource")
+    void shouldThrowOnFinishedMatchSubmit(String query, String expectedException) {
+        jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
                 () -> matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000"));
 
-        assertEquals("Запрещено регистрировать результаты завершенных матчей", actualException.getMessage());
+        assertEquals(expectedException, actualException.getMessage());
     }
 
-    @Test
-    void shouldThrowOnAlreadySubmittingMatchSubmit() {
-        jdbcTemplate.execute("update matches set is_onsubmit = true where id = 15000");
-
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000"));
-
-        assertEquals("Запрос на публикацию этого матча уже сделан", actualException.getMessage());
-    }
-
-    @Test
-    void shouldThrowOnNotFullMatchSubmit() {
-        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 15000");
-
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000"));
-
-        assertEquals("В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос", actualException.getMessage());
+    private static Stream<Arguments> exceptionsSource() {
+        return Stream.of(
+                Arguments.of("update matches set is_finished = true where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
+                Arguments.of("update matches set is_onsubmit = true where id = 15000", "Запрос на публикацию этого матча уже сделан"),
+                Arguments.of("update matches set positive_answers_count = 3 where id = 15000", "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос")
+        );
     }
 
     @Test
