@@ -9,13 +9,13 @@ import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 @Setter
 @Getter
 @NoArgsConstructor
-public final class TelegramPollDto {
+public final class ExternalPollDto {
     private Integer messageId;
     private Long chatId;
     private String pollId;
     private Integer replyId;
 
-    public TelegramPollDto(Message message) {
+    public ExternalPollDto(Message message) {
         this.messageId = message.getMessageId();
         this.chatId = message.getChatId();
         this.pollId = message.getPoll().getId();

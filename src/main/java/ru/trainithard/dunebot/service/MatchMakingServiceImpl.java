@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.trainithard.dunebot.model.*;
+import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.service.dto.TelegramUserMessageDto;
+import ru.trainithard.dunebot.service.messaging.ExternalPollDto;
 
 @Service
 @RequiredArgsConstructor
@@ -17,10 +20,9 @@ public class MatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void registerNewMatch(Player initiator, ModType modType, TelegramUserMessageDto telegramUserMessage) {
+    public void registerNewMatch(Player initiator, ModType modType, ExternalPollDto telegramUserMessage) {
         Match match = new Match(modType);
-        match.setTelegramPollId(telegramUserMessage.getTelegramPollId());
-        match.setTelegramMessageId(new TelegramMessageId(telegramUserMessage.getTelegramMessageId(), telegramUserMessage.getTelegramChatId()));
+        match.setExternalPollId(telegramUserMessage.toExternalPollId());
         match.setOwner(initiator);
         Match savedMatch = matchRepository.save(match);
         MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);

@@ -18,15 +18,15 @@ public class TelegramMessagingService implements MessagingService {
     private final TelegramBot telegramBot;
 
     @Override
-    public CompletableFuture<TelegramPollDto> sendPollAsync(PollMessageDto pollMessage) {
-        CompletableFuture<TelegramPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
+    public CompletableFuture<ExternalPollDto> sendPollAsync(PollMessageDto pollMessage) {
+        CompletableFuture<ExternalPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendPoll(pollMessage));
             sendMessageCompletableFuture.whenComplete((message, throwable) -> {
                 if (throwable != null) {
                     throw new TelegramApiCallException("sendPollAsync() call encounters API exception", throwable);
                 }
-                telegramMessageCompletableFuture.complete(new TelegramPollDto(message));
+                telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
             });
         } catch (TelegramApiException exception) {
             throw new TelegramApiCallException("sendPollAsync() call encounters API exception", exception);
