@@ -33,6 +33,7 @@ public class Match extends BaseEntity {
     @Embedded
     private ExternalPollId externalPollId;
     private int positiveAnswersCount;
+    private int submitsCount;
 
     public Match(ModType modType) {
         this.modType = modType;
