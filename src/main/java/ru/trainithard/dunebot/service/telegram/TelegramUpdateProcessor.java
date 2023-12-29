@@ -8,7 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
-import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 
 import java.util.Map;
@@ -28,9 +28,9 @@ public class TelegramUpdateProcessor {
                 Message message = update.getMessage();
                 // TODO: validate only valid messages goes further [!!!] commands should contain all complete actions with valid arguments
                 if (message != null && message.getText() != null && message.getText().startsWith("/")) {
-                    MessageCommand messageCommand = new MessageCommand(message);
-                    telegramMessageCommandValidator.validate(messageCommand);
-                    commandProcessors.get(messageCommand.getCommand()).process(messageCommand);
+                    CommandMessage commandMessage = new CommandMessage(message);
+                    telegramMessageCommandValidator.validate(commandMessage);
+                    commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 }
             } catch (AnswerableDuneBotException answerableException) {
                 sendUserNotificationMessage(answerableException);

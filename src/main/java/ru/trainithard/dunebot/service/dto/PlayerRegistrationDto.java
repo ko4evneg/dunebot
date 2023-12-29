@@ -3,7 +3,7 @@ package ru.trainithard.dunebot.service.dto;
 import lombok.Getter;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.service.telegram.ChatType;
-import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 @Getter
 public final class PlayerRegistrationDto {
@@ -17,13 +17,13 @@ public final class PlayerRegistrationDto {
     private final String userName;
     private final ChatType messageType;
 
-    public PlayerRegistrationDto(MessageCommand messageCommand) {
-        this.steamName = messageCommand.getArgument(1);
-        this.telegramId = messageCommand.getTelegramUserId();
-        this.telegramChatId = messageCommand.getTelegramChatId();
-        this.firstName = messageCommand.getTelegramFirstName();
-        this.lastName = messageCommand.getTelegramLastName();
-        this.userName = messageCommand.getTelegramUserName();
-        this.messageType = messageCommand.getChatType();
+    public PlayerRegistrationDto(CommandMessage commandMessage) {
+        this.steamName = commandMessage.getArgument(1);
+        this.telegramId = commandMessage.getUserId();
+        this.telegramChatId = commandMessage.getChatId();
+        this.firstName = commandMessage.getFirstName();
+        this.lastName = commandMessage.getLastName();
+        this.userName = commandMessage.getUserName();
+        this.messageType = commandMessage.getChatType();
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 
 import java.util.EnumSet;
@@ -26,21 +26,21 @@ class TelegramMessageCommandValidator {
 
     private static final Set<Command> publicChatProhibitedCommands = EnumSet.of(Command.REGISTER, Command.SUBMIT);
 
-    public void validate(MessageCommand messageCommand) {
-        long telegramChatId = messageCommand.getTelegramChatId();
-        Integer replyMessageId = messageCommand.getReplyMessageId();
-        Command command = messageCommand.getCommand();
+    public void validate(CommandMessage commandMessage) {
+        long telegramChatId = commandMessage.getChatId();
+        Integer replyMessageId = commandMessage.getReplyMessageId();
+        Command command = commandMessage.getCommand();
         if (command == null || !commandProcessors.containsKey(command)) {
             throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId, replyMessageId);
         }
-        if (command.getArgumentsCount() > messageCommand.getArgumentsCount()) {
+        if (command.getArgumentsCount() > commandMessage.getArgumentsCount()) {
             throw new AnswerableDuneBotException(WRONG_REGISTER_COMMAND, telegramChatId, replyMessageId);
         }
-        if (!command.isAnonymous() && !playerRepository.existsByTelegramId(messageCommand.getTelegramUserId())) {
+        if (!command.isAnonymous() && !playerRepository.existsByTelegramId(commandMessage.getUserId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId, replyMessageId);
         }
         // TODO:  make all commands private?
-        if (publicChatProhibitedCommands.contains(command) && ChatType.PRIVATE != messageCommand.getChatType()) {
+        if (publicChatProhibitedCommands.contains(command) && ChatType.PRIVATE != commandMessage.getChatType()) {
             throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId, replyMessageId);
         }
     }
