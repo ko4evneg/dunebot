@@ -70,7 +70,7 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
-        jdbcTemplate.execute("delete from players where id between 10000 and 10005");
+        jdbcTemplate.execute("delete from players where id between 10000 and 10004");
     }
 
     @ParameterizedTest
@@ -174,7 +174,7 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotSaveReplySubmitMessageIdToMatchPlayerFromPrivateChatSubmit() throws TelegramApiException {
+    void shouldNotSaveSubmitMessageReplyIdToMatchPlayerFromPrivateChatSubmit() throws TelegramApiException {
         Chat chat = new Chat();
         chat.setId(111001L);
         Message message = new Message();
@@ -193,7 +193,25 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
 
     @Test
     void shouldNotSaveSubmitMessageIdsForOtherMatchPlayer() throws TelegramApiException {
-        fail();
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
+                "values (10004, 11004, 12004, 'st_pl5', 'name5', '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                "values (10004, 15000, 10004, '2010-10-10')");
+
+        Chat chat = new Chat();
+        chat.setId(111001L);
+        Message message = new Message();
+        message.setMessageId(111000);
+        message.setChat(chat);
+
+        doReturn(CompletableFuture.completedFuture(message)).when(telegramBot).executeAsync(any(SendMessage.class));
+
+        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+
+        List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where " +
+                "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
+
+        assertFalse(assignedIdsPlayers.contains(11004L));
     }
 
     private static class MockReplier implements Answer<CompletableFuture<Message>> {

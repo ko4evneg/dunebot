@@ -104,7 +104,7 @@ public class MatchCommandProcessor {
         String text = "Выберите место, которое вы заняли в матче " + matchSubmit.matchId() + ":";
         matchActivePlayers.forEach(matchPlayer -> {
             CompletableFuture<ExternalMessageDto> externalMessageDtoCompletableFuture = messagingService
-                    .sendMessageAsync(new MessageDto(Long.toString(matchPlayer.getPlayer().getId()), text, null, linedButtons));
+                    .sendMessageAsync(new MessageDto(Long.toString(matchPlayer.getPlayer().getExternalChatId()), text, null, linedButtons));
             externalMessageDtoCompletableFuture.whenComplete((message, throwable) -> {
                 matchPlayer.setSubmitMessageId(new ExternalMessageId(message.getMessageId(), message.getChatId(), message.getReplyId()));
                 matchPlayerRepository.save(matchPlayer);
