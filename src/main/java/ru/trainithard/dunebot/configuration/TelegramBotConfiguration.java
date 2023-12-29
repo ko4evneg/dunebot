@@ -8,7 +8,7 @@ import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 @Configuration
 @Profile(value = "prod")
-public class BeanConfiguration {
+public class TelegramBotConfiguration {
     @Value("${bot.token}")
     private String botToken;
     @Value("${bot.username}")
