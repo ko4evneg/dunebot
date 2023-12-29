@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
@@ -16,12 +18,14 @@ import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -89,7 +93,7 @@ public class MatchCommandProcessor {
     public void getSubmitMessage(long telegramUserId, long telegramChatId, String matchIdString) {
         MatchSubmitDto matchSubmit = matchSubmitService.getMatchSubmit(telegramUserId, telegramChatId, matchIdString);
         List<ButtonDto> buttons = new ArrayList<>();
-        List<Player> matchActivePlayers = matchSubmit.activePlayers();
+        List<MatchPlayer> matchActivePlayers = matchSubmit.activePlayers();
         for (int i = 0; i < matchActivePlayers.size(); i++) {
             ButtonDto buttonDto = new ButtonDto(Integer.toString(i + 1), matchIdString + "__" + (i + 1));
             buttons.add(buttonDto);
@@ -98,7 +102,13 @@ public class MatchCommandProcessor {
         List<List<ButtonDto>> linedButtons = Lists.partition(buttons, 2);
 
         String text = "Выберите место, которое вы заняли в матче " + matchSubmit.matchId() + ":";
-        matchActivePlayers.forEach(externalId -> messagingService
-                .sendMessageAsync(new MessageDto(Long.toString(externalId.getExternalChatId()), text, null, linedButtons)));
+        matchActivePlayers.forEach(matchPlayer -> {
+            CompletableFuture<ExternalMessageDto> externalMessageDtoCompletableFuture = messagingService
+                    .sendMessageAsync(new MessageDto(Long.toString(matchPlayer.getPlayer().getId()), text, null, linedButtons));
+            externalMessageDtoCompletableFuture.whenComplete((message, throwable) -> {
+                matchPlayer.setSubmitMessageId(new ExternalMessageId(message.getMessageId(), message.getChatId(), message.getReplyId()));
+                matchPlayerRepository.save(matchPlayer);
+            });
+        });
     }
 }

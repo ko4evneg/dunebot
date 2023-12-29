@@ -16,7 +16,9 @@ public class ExternalMessageDto {
     public ExternalMessageDto(Message message) {
         this.messageId = message.getMessageId();
         this.chatId = message.getChatId();
-        // TODO:   check
-        this.replyId = message.getReplyToMessage().getMessageId();
+        // TODO:   check threadId
+        if (message.getReplyToMessage() != null) {
+            this.replyId = message.getReplyToMessage().getMessageId();
+        }
     }
 }

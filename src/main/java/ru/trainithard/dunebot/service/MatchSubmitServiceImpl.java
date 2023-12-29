@@ -8,9 +8,9 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.dto.MatchSubmitDto;
+import ru.trainithard.dunebot.service.messaging.dto.PlayerSubmitDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,13 +28,13 @@ public class MatchSubmitServiceImpl implements MatchSubmitService {
             Match match = matchRepository.findById(matchId).orElseThrow(MatchNotExistsException::new);
             validate(telegramChatId, match);
 
-            List<Player> matchActivePlayers = new ArrayList<>();
+            List<MatchPlayer> matchActivePlayers = new ArrayList<>();
             boolean isSubmitAllowed = false;
             for (MatchPlayer matchPlayer : match.getMatchPlayers()) {
                 if (matchPlayer.getPlayer().getExternalId() == telegramUserId) {
                     isSubmitAllowed = true;
                 }
-                matchActivePlayers.add(matchPlayer.getPlayer());
+                matchActivePlayers.add(matchPlayer);
             }
             if (!isSubmitAllowed) {
                 throw new AnswerableDuneBotException("Вы не можете инициировать публикацию этого матча", telegramChatId);
@@ -55,6 +55,10 @@ public class MatchSubmitServiceImpl implements MatchSubmitService {
         if (match.isOnSubmit()) {
             throw new AnswerableDuneBotException("Запрос на публикацию этого матча уже сделан", telegramChatId);
         }
+    }
+
+    @Override
+    public void acceptPlayerSubmitAnswer(PlayerSubmitDto playerSubmitDto) {
 
     }
 }

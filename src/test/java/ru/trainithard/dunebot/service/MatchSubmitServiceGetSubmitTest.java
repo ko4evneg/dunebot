@@ -30,13 +30,12 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MatchSubmitServiceTest extends TestContextMock {
+class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     @Autowired
     private MatchCommandProcessor matchCommandProcessor;
 
@@ -151,6 +150,50 @@ class MatchSubmitServiceTest extends TestContextMock {
         assertThat(linedButtons.get(2), contains(
                 both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callbackData", is("15000__-1"))))
         );
+    }
+
+    @Test
+    void shouldSaveSubmitMessageIdsToMatchPlayers() throws TelegramApiException {
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(111001);
+        Chat chat = new Chat();
+        chat.setId(111002L);
+        Message message = new Message();
+        message.setMessageId(111000);
+        message.setReplyToMessage(replyMessage);
+        message.setChat(chat);
+
+        doReturn(CompletableFuture.completedFuture(message)).when(telegramBot).executeAsync(any(SendMessage.class));
+
+        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+
+        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
+                "external_chat_id = '111002' and external_message_id = 111000 and external_reply_id = 111001", Long.class);
+
+        assertEquals(4, assignedIdsPlayerCount);
+    }
+
+    @Test
+    void shouldNotSaveReplySubmitMessageIdToMatchPlayerFromPrivateChatSubmit() throws TelegramApiException {
+        Chat chat = new Chat();
+        chat.setId(111001L);
+        Message message = new Message();
+        message.setMessageId(111000);
+        message.setChat(chat);
+
+        doReturn(CompletableFuture.completedFuture(message)).when(telegramBot).executeAsync(any(SendMessage.class));
+
+        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+
+        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
+                "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
+
+        assertEquals(4, assignedIdsPlayerCount);
+    }
+
+    @Test
+    void shouldNotSaveSubmitMessageIdsForOtherMatchPlayer() throws TelegramApiException {
+        fail();
     }
 
     private static class MockReplier implements Answer<CompletableFuture<Message>> {
