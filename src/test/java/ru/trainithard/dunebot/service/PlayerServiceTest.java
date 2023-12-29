@@ -13,6 +13,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 import ru.trainithard.dunebot.service.telegram.ChatType;
+import ru.trainithard.dunebot.service.telegram.command.dto.MessageCommand;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -102,6 +103,7 @@ class PlayerServiceTest extends TestContextMock {
         Message message = new Message();
         message.setChat(chat);
         message.setFrom(user);
-        return new PlayerRegistrationDto(message, STEAM_NAME);
+        message.setText("/register " + STEAM_NAME);
+        return new PlayerRegistrationDto(new MessageCommand(message));
     }
 }

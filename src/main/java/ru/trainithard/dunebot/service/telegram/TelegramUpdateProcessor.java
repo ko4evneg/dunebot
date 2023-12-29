@@ -6,12 +6,11 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.MatchCommandProcessor;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
+import ru.trainithard.dunebot.service.telegram.command.dto.MessageCommand;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +27,9 @@ public class TelegramUpdateProcessor {
                 Message message = update.getMessage();
                 // TODO: validate only valid messages goes further [!!!] commands should contain all complete actions with valid arguments
                 if (message != null && message.getText() != null && message.getText().startsWith("/")) {
-                    telegramUpdateMessageValidator.validate(message);
-                    processCommand(message);
+                    MessageCommand messageCommand = new MessageCommand(message);
+                    telegramUpdateMessageValidator.validate(messageCommand);
+                    processCommand(messageCommand);
                 }
             } catch (AnswerableDuneBotException answerableException) {
                 sendUserNotificationMessage(answerableException);
@@ -42,20 +42,16 @@ public class TelegramUpdateProcessor {
         }
     }
 
-    private void processCommand(Message message) throws TelegramApiException {
-        long telegramUserId = message.getFrom().getId();
-        String text = message.getText();
-        String[] commandWithArguments = text.substring(1).split("\\s");
-        Command command = Command.getCommand(commandWithArguments[0]);
-        switch (command) {
+    private void processCommand(MessageCommand messageCommand) {
+        long telegramUserId = messageCommand.getTelegramUserId();
+        switch (messageCommand.getCommand()) {
             case DUNE -> matchCommandProcessor.registerNewMatch(telegramUserId, ModType.CLASSIC);
             case UP4 -> matchCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_4);
             case UP6 -> matchCommandProcessor.registerNewMatch(telegramUserId, ModType.UPRISING_6);
             case CANCEL -> matchCommandProcessor.cancelMatch(telegramUserId);
 //            case SUBMIT ->
 //                    matchCommandProcessor.getSubmitMessage(telegramUserId, message.getChatId(), commandWithArguments[1]);
-            case REGISTER ->
-                    matchCommandProcessor.registerNewPlayer(new PlayerRegistrationDto(message, commandWithArguments[1]));
+            case REGISTER -> matchCommandProcessor.registerNewPlayer(new PlayerRegistrationDto(messageCommand));
         }
     }
 

@@ -12,17 +12,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public enum Command {
 
-    REGISTER(true, 2),
-    DUNE(false, 1),
-    UP4(false, 1),
-    UP6(false, 1),
-    CANCEL(false, 1),
-    SUBMIT(false, 2);
+    REGISTER(true, 1),
+    DUNE(false, 0),
+    UP4(false, 0),
+    UP6(false, 0),
+    CANCEL(false, 0),
+    SUBMIT(false, 1);
 
     private static final Map<String, Command> availableCommands;
 
     private final boolean anonymous;
-    private final int wordsCount;
+    private final int argumentsCount;
 
     static {
         availableCommands = Arrays.stream(values()).collect(Collectors.toMap(Command::name, Function.identity()));
