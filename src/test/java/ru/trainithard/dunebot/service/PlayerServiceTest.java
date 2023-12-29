@@ -13,7 +13,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.dto.PlayerRegistrationDto;
 import ru.trainithard.dunebot.service.telegram.ChatType;
-import ru.trainithard.dunebot.service.telegram.command.dto.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
 
 import static org.junit.jupiter.api.Assertions.*;
 

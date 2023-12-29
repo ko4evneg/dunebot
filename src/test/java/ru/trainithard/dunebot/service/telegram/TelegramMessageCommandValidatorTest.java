@@ -15,16 +15,16 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
-import ru.trainithard.dunebot.service.telegram.command.dto.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
 
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class TelegramUpdateMessageValidatorTest extends TestContextMock {
+class TelegramMessageCommandValidatorTest extends TestContextMock {
     @Autowired
-    private TelegramUpdateMessageValidator validator;
+    private TelegramMessageCommandValidator validator;
 
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
@@ -71,8 +71,8 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "SUBMIT"})
-    void shouldNotThrowForValidCommand(Command command) {
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.INCLUDE, names = {"CANCEL"})
+    void shouldNotThrowForValidCommandWithoutArguments(Command command) {
         message.setText("/" + command.name().toLowerCase());
 
         assertDoesNotThrow(() -> validator.validate(new MessageCommand(message)));
@@ -110,10 +110,10 @@ class TelegramUpdateMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "SUBMIT"})
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER"})
     void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("delete from players where id = 10000");
-        message.setText("/" + command.name().toLowerCase());
+        message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(new MessageCommand(message)));
         assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"", actualException.getMessage());

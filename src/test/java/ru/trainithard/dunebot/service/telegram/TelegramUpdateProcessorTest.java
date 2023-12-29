@@ -35,6 +35,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @MockBean
     private MatchCommandProcessor commandProcessor;
 
+    private static final String COMMAND_UPRISING_4 = "/" + Command.NEW + " up4";
     private static final long TELEGRAM_USER_ID_1 = 10000L;
     private static final long TELEGRAM_USER_ID_2 = 10001L;
     private static final long TELEGRAM_CHAT_ID_1 = 9000L;
@@ -55,7 +56,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendCommandToTextCommandProcessor() {
-        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/" + Command.UP4)).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, COMMAND_UPRISING_4)).thenReturn(null);
 
         updateProcessor.process();
 
@@ -97,7 +98,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldMoveToNextUpdateOnException() {
-        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, "/up4")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, COMMAND_UPRISING_4)).thenReturn(null);
         doThrow(RuntimeException.class).when(commandProcessor).registerNewMatch(anyLong(), any());
 
         updateProcessor.process();
@@ -107,7 +108,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldMoveToNextUpdateWithoutException() {
-        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, "/up4")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, COMMAND_UPRISING_4)).thenReturn(null);
         doNothing().when(commandProcessor).registerNewMatch(anyLong(), any());
 
         updateProcessor.process();
