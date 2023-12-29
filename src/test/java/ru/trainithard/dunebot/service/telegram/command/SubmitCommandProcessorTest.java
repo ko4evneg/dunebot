@@ -1,6 +1,5 @@
-package ru.trainithard.dunebot.service;
+package ru.trainithard.dunebot.service.telegram.command;
 
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,16 +11,20 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
+import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.dto.TelegramUserPollDto;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.telegram.ChatType;
+import ru.trainithard.dunebot.service.telegram.command.processor.SubmitCommandProcessor;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -35,19 +38,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MatchSubmitServiceGetSubmitTest extends TestContextMock {
+class SubmitCommandProcessorTest extends TestContextMock {
     @Autowired
-    private MatchCommandProcessor matchCommandProcessor;
+    private SubmitCommandProcessor commandProcessor;
+    @MockBean
+    private MessagingService messagingService;
 
-    private static final TelegramUserPollDto POLL_MESSAGE_DTO = new TelegramUserPollDto(12349L, "100500", 4);
+    private static final long CHAT_ID_1 = 12000L;
 
     @BeforeEach
-    @SneakyThrows
     void beforeEach() {
-        doAnswer(new MockReplier()).when(telegramBot).executeAsync(any(SendMessage.class));
+        doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 11000, 12000, 'st_pl1', 'name1', '2010-10-10') ");
+                "values (10000, 11000, '" + CHAT_ID_1 + "', 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, 11001, 12001, 'st_pl2', 'name2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
@@ -73,13 +77,27 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
     }
 
+    private CommandMessage getCommandMessage(long userId) {
+        User user = new User();
+        user.setId(userId);
+        Chat chat = new Chat();
+        chat.setId(CHAT_ID_1);
+        chat.setType(ChatType.PRIVATE.getValue());
+        Message message = new Message();
+        message.setMessageId(10000);
+        message.setFrom(user);
+        message.setChat(chat);
+        message.setText("/" + Command.SUBMIT.name() + " 15000");
+        return new CommandMessage(message);
+    }
+
     @ParameterizedTest
     @MethodSource("exceptionsSource")
     void shouldThrowOnFinishedMatchSubmit(String query, String expectedException) {
         jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000"));
+                () -> commandProcessor.process(getCommandMessage(11000L)));
 
         assertEquals(expectedException, actualException.getMessage());
     }
@@ -95,7 +113,7 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     @Test
     void shouldThrowOnAlienMatchSubmit() {
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> matchCommandProcessor.getSubmitMessage(11005L, 12000L, "15000"));
+                () -> commandProcessor.process(getCommandMessage(11005L)));
 
         assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
     }
@@ -106,19 +124,18 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id = 15000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000"));
+                () -> commandProcessor.process(getCommandMessage(11000L)));
 
         assertEquals("Матча с таким ID не существует!", actualException.getMessage());
     }
 
     @Test
-    void shouldSendMessagesToEveryMatchPlayer() throws TelegramApiException {
-        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+    void shouldSendMessagesToEveryMatchPlayer() {
+        commandProcessor.process(getCommandMessage(11000L));
 
-        ArgumentCaptor<SendMessage> sendMessageArgumentCaptor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramBot, times(4)).executeAsync(sendMessageArgumentCaptor.capture());
-        List<SendMessage> actualSendMessages = sendMessageArgumentCaptor.getAllValues();
-
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
+        List<MessageDto> actualSendMessages = messageDtoCaptor.getAllValues();
 
         assertThat(actualSendMessages, containsInAnyOrder(
                 hasProperty("chatId", is("12000")),
@@ -129,31 +146,30 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendCorrectSubmitMessageMessage() throws TelegramApiException {
-        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+    void shouldSendCorrectSubmitMessageMessage() {
+        commandProcessor.process(getCommandMessage(11000L));
 
-        ArgumentCaptor<SendMessage> sendMessageArgumentCaptor = ArgumentCaptor.forClass(SendMessage.class);
-        verify(telegramBot, times(4)).executeAsync(sendMessageArgumentCaptor.capture());
-        SendMessage actualSendMessage = sendMessageArgumentCaptor.getAllValues().get(0);
-        InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) actualSendMessage.getReplyMarkup();
-        List<List<InlineKeyboardButton>> linedButtons = replyMarkup.getKeyboard();
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
+        List<List<ButtonDto>> linedButtons = actualMessageDto.getKeyboard();
 
-        assertEquals("Выберите место, которое вы заняли в матче 15000:", actualSendMessage.getText());
+        assertEquals("Выберите место, которое вы заняли в матче 15000:", actualMessageDto.getText());
         assertThat(linedButtons.get(0), contains(
-                both(hasProperty("text", is("1"))).and(hasProperty("callbackData", is("15000__1"))),
-                both(hasProperty("text", is("2"))).and(hasProperty("callbackData", is("15000__2"))))
+                both(hasProperty("text", is("1"))).and(hasProperty("callback", is("15000__1"))),
+                both(hasProperty("text", is("2"))).and(hasProperty("callback", is("15000__2"))))
         );
         assertThat(linedButtons.get(1), contains(
-                both(hasProperty("text", is("3"))).and(hasProperty("callbackData", is("15000__3"))),
-                both(hasProperty("text", is("4"))).and(hasProperty("callbackData", is("15000__4"))))
+                both(hasProperty("text", is("3"))).and(hasProperty("callback", is("15000__3"))),
+                both(hasProperty("text", is("4"))).and(hasProperty("callback", is("15000__4"))))
         );
         assertThat(linedButtons.get(2), contains(
-                both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callbackData", is("15000__-1"))))
+                both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callback", is("15000__-1"))))
         );
     }
 
     @Test
-    void shouldSaveSubmitMessageIdsToMatchPlayers() throws TelegramApiException {
+    void shouldSaveSubmitMessageIdsToMatchPlayers() {
         Message replyMessage = new Message();
         replyMessage.setMessageId(111001);
         Chat chat = new Chat();
@@ -163,9 +179,9 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
         message.setReplyToMessage(replyMessage);
         message.setChat(chat);
 
-        doReturn(CompletableFuture.completedFuture(message)).when(telegramBot).executeAsync(any(SendMessage.class));
+        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+        commandProcessor.process(getCommandMessage(11000L));
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
                 "external_chat_id = '111002' and external_message_id = 111000 and external_reply_id = 111001", Long.class);
@@ -174,16 +190,16 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotSaveSubmitMessageReplyIdToMatchPlayerFromPrivateChatSubmit() throws TelegramApiException {
+    void shouldNotSaveSubmitMessageReplyIdToMatchPlayerFromPrivateChatSubmit() {
         Chat chat = new Chat();
         chat.setId(111001L);
         Message message = new Message();
         message.setMessageId(111000);
         message.setChat(chat);
 
-        doReturn(CompletableFuture.completedFuture(message)).when(telegramBot).executeAsync(any(SendMessage.class));
+        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+        commandProcessor.process(getCommandMessage(11000L));
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
                 "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
@@ -192,7 +208,7 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotSaveSubmitMessageIdsForOtherMatchPlayer() throws TelegramApiException {
+    void shouldNotSaveSubmitMessageIdsForOtherMatchPlayer() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10004, 11004, 12004, 'st_pl5', 'name5', '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
@@ -204,9 +220,9 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
         message.setMessageId(111000);
         message.setChat(chat);
 
-        doReturn(CompletableFuture.completedFuture(message)).when(telegramBot).executeAsync(any(SendMessage.class));
+        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        matchCommandProcessor.getSubmitMessage(11000L, 12000L, "15000");
+        commandProcessor.process(getCommandMessage(11000L));
 
         List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where " +
                 "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
@@ -214,18 +230,18 @@ class MatchSubmitServiceGetSubmitTest extends TestContextMock {
         assertFalse(assignedIdsPlayers.contains(11004L));
     }
 
-    private static class MockReplier implements Answer<CompletableFuture<Message>> {
+    private static class MockReplier implements Answer<CompletableFuture<ExternalMessageDto>> {
         private int externalId = 11000;
-        private long chatId = 12000L;
+        private long chatId = CHAT_ID_1;
 
         @Override
-        public CompletableFuture<Message> answer(InvocationOnMock invocationOnMock) {
+        public CompletableFuture<ExternalMessageDto> answer(InvocationOnMock invocationOnMock) {
             Chat chat = new Chat();
             chat.setId(chatId++);
             Message message = new Message();
             message.setMessageId(externalId++);
             message.setChat(chat);
-            return CompletableFuture.completedFuture(message);
+            return CompletableFuture.completedFuture(new ExternalMessageDto(message));
         }
     }
 }

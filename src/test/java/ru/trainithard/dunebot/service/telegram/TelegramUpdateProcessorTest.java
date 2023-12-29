@@ -123,6 +123,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         chat.setId(telegramChatId);
         chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
+        message.setMessageId(10000);
         message.setChat(chat);
         message.setFrom(user);
         message.setText(text);

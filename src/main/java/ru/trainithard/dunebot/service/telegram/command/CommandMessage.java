@@ -15,6 +15,7 @@ public class CommandMessage {
     private final ChatType chatType;
     private final long userId;
     private final long chatId;
+    private final int messageId;
     private final Integer replyMessageId;
     private final String firstName;
     private final String lastName;
@@ -29,6 +30,7 @@ public class CommandMessage {
         this.lastName = user.getLastName();
         this.userName = user.getUserName();
         this.chatId = message.getChatId();
+        this.messageId = message.getMessageId();
         this.chatType = ChatType.valueOf(message.getChat().getType().toUpperCase());
         Message replyToMessage = message.getReplyToMessage();
         this.replyMessageId = replyToMessage == null ? null : replyToMessage.getMessageId();

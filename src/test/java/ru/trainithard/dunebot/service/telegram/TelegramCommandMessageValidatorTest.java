@@ -32,14 +32,7 @@ class TelegramCommandMessageValidatorTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        User user = new User();
-        user.setId(TELEGRAM_USER_ID);
-        Chat chat = new Chat();
-        chat.setId(TELEGRAM_CHAT_ID);
-        chat.setType(ChatType.PRIVATE.getValue());
-        message.setFrom(user);
-        message.setChat(chat);
-
+        fillMessage();
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', '2010-10-10') ");
     }
@@ -47,6 +40,17 @@ class TelegramCommandMessageValidatorTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from players where id = 10000");
+    }
+
+    private void fillMessage() {
+        User user = new User();
+        user.setId(TELEGRAM_USER_ID);
+        Chat chat = new Chat();
+        chat.setId(TELEGRAM_CHAT_ID);
+        chat.setType(ChatType.PRIVATE.getValue());
+        message.setMessageId(10000);
+        message.setFrom(user);
+        message.setChat(chat);
     }
 
     @Test

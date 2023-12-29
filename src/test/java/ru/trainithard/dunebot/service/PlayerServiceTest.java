@@ -101,6 +101,7 @@ class PlayerServiceTest extends TestContextMock {
         chat.setId(TELEGRAM_CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
+        message.setMessageId(10000);
         message.setChat(chat);
         message.setFrom(user);
         message.setText("/register " + STEAM_NAME);
