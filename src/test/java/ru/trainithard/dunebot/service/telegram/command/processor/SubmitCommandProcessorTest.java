@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command;
+package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +24,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.ChatType;
-import ru.trainithard.dunebot.service.telegram.command.processor.SubmitCommandProcessor;
+import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -45,13 +45,15 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private MessagingService messagingService;
 
     private static final long CHAT_ID_1 = 12000L;
+    private static final long USER_ID = 11000L;
+    private final CommandMessage pollCommandMessage = getCommandMessage(11000L);
 
     @BeforeEach
     void beforeEach() {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 11000, '" + CHAT_ID_1 + "', 'st_pl1', 'name1', '2010-10-10') ");
+                "values (10000, " + USER_ID + ", '" + CHAT_ID_1 + "', 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, 11001, 12001, 'st_pl2', 'name2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
@@ -77,27 +79,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
     }
 
-    private CommandMessage getCommandMessage(long userId) {
-        User user = new User();
-        user.setId(userId);
-        Chat chat = new Chat();
-        chat.setId(CHAT_ID_1);
-        chat.setType(ChatType.PRIVATE.getValue());
-        Message message = new Message();
-        message.setMessageId(10000);
-        message.setFrom(user);
-        message.setChat(chat);
-        message.setText("/" + Command.SUBMIT.name() + " 15000");
-        return new CommandMessage(message);
-    }
-
     @ParameterizedTest
     @MethodSource("exceptionsSource")
     void shouldThrowOnFinishedMatchSubmit(String query, String expectedException) {
         jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(getCommandMessage(11000L)));
+                () -> commandProcessor.process(pollCommandMessage));
 
         assertEquals(expectedException, actualException.getMessage());
     }
@@ -112,8 +100,12 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldThrowOnAlienMatchSubmit() {
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
+                "values (10004, 11004, 12004, 'st_pl5', 'name5', '2010-10-10') ");
+        CommandMessage commandMessage = getCommandMessage(11004L);
+
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(getCommandMessage(11005L)));
+                () -> commandProcessor.process(commandMessage));
 
         assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
     }
@@ -124,14 +116,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id = 15000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(getCommandMessage(11000L)));
+                () -> commandProcessor.process(pollCommandMessage));
 
         assertEquals("Матча с таким ID не существует!", actualException.getMessage());
     }
 
     @Test
     void shouldSendMessagesToEveryMatchPlayer() {
-        commandProcessor.process(getCommandMessage(11000L));
+        commandProcessor.process(pollCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
@@ -147,7 +139,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendCorrectSubmitMessageMessage() {
-        commandProcessor.process(getCommandMessage(11000L));
+        commandProcessor.process(pollCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
@@ -181,7 +173,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(getCommandMessage(11000L));
+        commandProcessor.process(pollCommandMessage);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
                 "external_chat_id = '111002' and external_message_id = 111000 and external_reply_id = 111001", Long.class);
@@ -199,7 +191,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(getCommandMessage(11000L));
+        commandProcessor.process(pollCommandMessage);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
                 "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
@@ -222,7 +214,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(getCommandMessage(11000L));
+        commandProcessor.process(pollCommandMessage);
 
         List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where " +
                 "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
@@ -230,6 +222,20 @@ class SubmitCommandProcessorTest extends TestContextMock {
         assertFalse(assignedIdsPlayers.contains(11004L));
     }
 
+    private CommandMessage getCommandMessage(long userId) {
+        User user = new User();
+        user.setId(userId);
+        Chat chat = new Chat();
+        chat.setId(CHAT_ID_1);
+        chat.setType(ChatType.PRIVATE.getValue());
+        Message message = new Message();
+        message.setMessageId(10000);
+        message.setFrom(user);
+        message.setChat(chat);
+        message.setText("/" + Command.SUBMIT.name() + " 15000");
+        return new CommandMessage(message);
+    }
+    
     private static class MockReplier implements Answer<CompletableFuture<ExternalMessageDto>> {
         private int externalId = 11000;
         private long chatId = CHAT_ID_1;

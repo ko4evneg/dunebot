@@ -30,6 +30,7 @@ public class TelegramUpdateProcessor {
                 if (message != null && message.getText() != null && message.getText().startsWith("/")) {
                     CommandMessage commandMessage = new CommandMessage(message);
                     telegramMessageCommandValidator.validate(commandMessage);
+                    // TODO:  selection tests
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 }
             } catch (AnswerableDuneBotException answerableException) {
