@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.dto;
+package ru.trainithard.dunebot.service.telegram.command;
 
 import lombok.Getter;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -54,6 +54,10 @@ public class MessageCommand {
         return replyToMessage == null ? null : replyToMessage.getMessageId();
     }
 
+    /**
+     * @param argumentNumber number of argument starting from 1
+     * @return argument <code>String</code> value
+     */
     public String getArgument(int argumentNumber) {
         return args.length > argumentNumber ? null : args[argumentNumber - 1];
     }

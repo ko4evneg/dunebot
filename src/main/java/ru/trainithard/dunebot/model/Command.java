@@ -13,9 +13,7 @@ import java.util.stream.Collectors;
 public enum Command {
 
     REGISTER(true, 1),
-    DUNE(false, 0),
-    UP4(false, 0),
-    UP6(false, 0),
+    NEW(false, 1),
     CANCEL(false, 0),
     SUBMIT(false, 1);
 
