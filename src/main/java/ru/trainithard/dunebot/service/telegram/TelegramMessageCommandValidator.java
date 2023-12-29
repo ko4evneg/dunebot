@@ -5,17 +5,22 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.telegram.command.dto.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-class TelegramUpdateMessageValidator {
+class TelegramMessageCommandValidator {
     private final PlayerRepository playerRepository;
+    private final Map<Command, CommandProcessor> commandProcessors;
+
     private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"";
     private static final String WRONG_COMMAND = "Неверная команда!";
+    // TODO:  change name
     private static final String WRONG_REGISTER_COMMAND = "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"";
     private static final String PUBLIC_PROHIBITED_COMMAND = "Команда запрещена в групповых чатах - напишите боту напрямую.";
 
@@ -25,7 +30,7 @@ class TelegramUpdateMessageValidator {
         long telegramChatId = messageCommand.getTelegramChatId();
         Integer replyMessageId = messageCommand.getReplyMessageId();
         Command command = messageCommand.getCommand();
-        if (command == null) {
+        if (command == null || !commandProcessors.containsKey(command)) {
             throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId, replyMessageId);
         }
         if (command.getArgumentsCount() > messageCommand.getArgumentsCount()) {

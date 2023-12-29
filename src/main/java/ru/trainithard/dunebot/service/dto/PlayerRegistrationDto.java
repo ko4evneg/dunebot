@@ -3,7 +3,7 @@ package ru.trainithard.dunebot.service.dto;
 import lombok.Getter;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.service.telegram.ChatType;
-import ru.trainithard.dunebot.service.telegram.command.dto.MessageCommand;
+import ru.trainithard.dunebot.service.telegram.command.MessageCommand;
 
 @Getter
 public final class PlayerRegistrationDto {

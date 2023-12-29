@@ -12,4 +12,13 @@ public enum ModType {
 
     private final String modName;
     private final int playersCount;
+
+    public static ModType getByAlias(String alias) {
+        return switch (alias.toLowerCase()) {
+            case "dune" -> ModType.CLASSIC;
+            case "up4" -> ModType.UPRISING_4;
+            case "up6" -> ModType.UPRISING_6;
+            default -> null;
+        };
+    }
 }
