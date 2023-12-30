@@ -14,6 +14,7 @@ public enum Command {
 
     REGISTER(true, 1),
     NEW(false, 1),
+    VOTE(false, 0),
     CANCEL(false, 0),
     SUBMIT(false, 1);
 
