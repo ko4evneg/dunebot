@@ -8,6 +8,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 
@@ -17,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TelegramUpdateProcessor {
     private final TelegramBot telegramBot;
+    private final MessagingService messagingService;
     private final TelegramMessageCommandValidator telegramMessageCommandValidator;
     private final Map<Command, CommandProcessor> commandProcessors;
 
@@ -49,10 +52,9 @@ public class TelegramUpdateProcessor {
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(answerableException.getTelegramChatId());
             sendMessage.setText(answerableException.getMessage());
-            if (answerableException.getTelegramTopicId() != null) {
-                sendMessage.setReplyToMessageId(answerableException.getTelegramTopicId());
-            }
-            telegramBot.executeAsync(sendMessage);
+            // TODO:  test replyId null case
+            MessageDto messageDto = new MessageDto(Long.toString(answerableException.getTelegramChatId()), answerableException.getMessage(), answerableException.getTelegramTopicId(), null);
+            messagingService.sendMessageAsync(messageDto);
         } catch (Exception e) {
             // TODO:
             throw new RuntimeException(e);
