@@ -10,7 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
-import ru.trainithard.dunebot.model.messaging.ExternalPollId;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
@@ -84,12 +84,12 @@ public class TelegramMessagingService implements MessagingService {
     }
 
     @Override
-    public void deletePollAsync(ExternalPollId externalPollId) {
+    public void deleteMessageAsync(ExternalMessageId externalMessageId) {
         try {
-            DeleteMessage deleteMessage = new DeleteMessage(Long.toString(externalPollId.getChatId()), externalPollId.getMessageId());
+            DeleteMessage deleteMessage = new DeleteMessage(Long.toString(externalMessageId.getChatId()), externalMessageId.getMessageId());
             telegramBot.executeAsync(deleteMessage);
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException("deletePollAsync() call encounters API exception", exception);
+            throw new TelegramApiCallException("deleteMessageAsync() call encounters API exception", exception);
         }
     }
 }

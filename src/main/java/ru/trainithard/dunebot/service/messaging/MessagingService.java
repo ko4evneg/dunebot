@@ -1,6 +1,6 @@
 package ru.trainithard.dunebot.service.messaging;
 
-import ru.trainithard.dunebot.model.messaging.ExternalPollId;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -13,5 +13,5 @@ public interface MessagingService {
 
     CompletableFuture<ExternalMessageDto> sendMessageAsync(MessageDto message);
 
-    void deletePollAsync(ExternalPollId externalPollId);
+    void deleteMessageAsync(ExternalMessageId externalMessageId);
 }
