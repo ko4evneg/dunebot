@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -47,7 +48,7 @@ class NewCommandProcessorTest extends TestContextMock {
     private static final int REPLY_ID = 23456;
     private static final int MESSAGE_ID = 100500;
     private static final long CHAT_ID = 9000L;
-    private final CommandMessage pollCommandMessage = getCommandMessage(ModType.CLASSIC);
+    private final CommandMessage pollCommandMessage = getCommandMessage(ModType.CLASSIC.getAlias());
 
     @BeforeEach
     @SneakyThrows
@@ -116,7 +117,7 @@ class NewCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @MethodSource("chatIdSource")
     void shouldSetCorrectTelegramPollChatAndTopicIds(ModType modType, int expectedTopicId) {
-        commandProcessor.process(getCommandMessage(modType));
+        commandProcessor.process(getCommandMessage(modType.getAlias()));
 
         ArgumentCaptor<PollMessageDto> pollCaptor = ArgumentCaptor.forClass(PollMessageDto.class);
         verify(messagingService).sendPollAsync(pollCaptor.capture());
@@ -150,10 +151,18 @@ class NewCommandProcessorTest extends TestContextMock {
         assertEquals(0, actualMatchesCount);
     }
 
-    private CommandMessage getCommandMessage(ModType modType) {
+    @Test
+    void shouldThrowWhenUnsupportedMatchTypeArgumentProvided() {
+        CommandMessage commandMessage = getCommandMessage("fake");
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
+                () -> commandProcessor.process(commandMessage));
+        assertEquals("Неподдерживаемый тип матча: fake", actualException.getMessage());
+    }
+
+    private CommandMessage getCommandMessage(String modNameString) {
         Message message = new Message();
         message.setMessageId(MESSAGE_ID);
-        message.setText("/new " + modType.getAlias());
+        message.setText("/new " + modNameString);
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());

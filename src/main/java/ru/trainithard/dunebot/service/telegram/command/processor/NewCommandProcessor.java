@@ -29,9 +29,8 @@ public class NewCommandProcessor implements CommandProcessor {
     public void process(CommandMessage commandMessage) {
         String modTypeString = commandMessage.getArgument(1);
         ModType modType = ModType.getByAlias(modTypeString);
-        // TODO:  test
         if (modType == null) {
-            throw new AnswerableDuneBotException("Неизвестный тип игры: " + modTypeString, commandMessage.getChatId(), commandMessage.getReplyMessageId());
+            throw new AnswerableDuneBotException("Неподдерживаемый тип матча: " + modTypeString, commandMessage.getChatId(), commandMessage.getReplyMessageId());
         }
         playerRepository.findByExternalId(commandMessage.getUserId())
                 .ifPresent(player -> messagingService.sendPollAsync(getNewPollMessage(player, modType))
