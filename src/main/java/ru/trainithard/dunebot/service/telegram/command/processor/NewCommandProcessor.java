@@ -22,7 +22,8 @@ public class NewCommandProcessor implements CommandProcessor {
     private final MatchMakingService matchMakingService;
     private final MessagingService messagingService;
 
-    private static final List<String> POLL_OPTIONS = List.of("Да", "Нет", "Результат");
+    public static final String POSITIVE_ANSWER = "Да";
+    private static final List<String> POLL_OPTIONS = List.of(POSITIVE_ANSWER, "Нет", "Результат");
 
     @Override
     public void process(CommandMessage commandMessage) {

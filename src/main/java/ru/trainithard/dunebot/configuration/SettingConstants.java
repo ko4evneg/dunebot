@@ -10,4 +10,6 @@ public class SettingConstants {
     public static final String CHAT_ID = "-1002139068680";
     public static final int TOPIC_ID_CLASSIC = 2;
     public static final int TOPIC_ID_UPRISING = 4;
+    // TODO:  extract
+    public static final int POSITIVE_POLL_OPTION_ID = 0;
 }
