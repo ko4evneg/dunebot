@@ -38,23 +38,24 @@ public class MatchMakingServiceImpl implements MatchMakingService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void registerMathPlayer(Player player, Match match, int positiveAnswersCount) {
-        int currentActualPositiveAnswersCount = match.getPositiveAnswersCount();
-        if (currentActualPositiveAnswersCount < positiveAnswersCount) {
-            match.setPositiveAnswersCount(positiveAnswersCount);
-            MatchPlayer matchPlayer = new MatchPlayer(match, player);
-            matchRepository.save(match);
-            matchPlayerRepository.save(matchPlayer);
-//      if (match.getRegisteredPlayersCount() == 4)
-            // TODO: start match if threshold crosses 4}
+    public void registerMathPlayer(Player player, Match match) {
+        int currentPositiveAnswersCount = match.getPositiveAnswersCount();
+        match.setPositiveAnswersCount(currentPositiveAnswersCount + 1);
+        MatchPlayer matchPlayer = new MatchPlayer(match, player);
+        matchRepository.save(match);
+        matchPlayerRepository.save(matchPlayer);
+        if (currentPositiveAnswersCount < match.getModType().getPlayersCount()) {
         }
+//      if (match.getRegisteredPlayersCount() == 4)
+        // TODO: start match if threshold crosses 4}
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public void unregisterMathPlayer(MatchPlayer matchPlayer, int positiveAnswersCount) {
+    public void unregisterMathPlayer(MatchPlayer matchPlayer) {
         Match match = matchPlayer.getMatch();
-        match.setPositiveAnswersCount(positiveAnswersCount);
+        int currentPositiveAnswersCount = match.getPositiveAnswersCount();
+        match.setPositiveAnswersCount(currentPositiveAnswersCount - 1);
         matchRepository.save(match);
         matchPlayerRepository.delete(matchPlayer);
 //      if (match.getRegisteredPlayersCount() == 0) {
