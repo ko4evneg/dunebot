@@ -138,7 +138,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendCorrectSubmitMessageMessage() {
+    void shouldSendCorrectSubmitMessage() {
         commandProcessor.process(pollCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
