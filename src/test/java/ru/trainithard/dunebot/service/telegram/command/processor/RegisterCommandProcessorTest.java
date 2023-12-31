@@ -26,7 +26,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
     private static final Long TELEGRAM_CHAT_ID = 9000L;
     private static final String FIRST_NAME = "fName";
     private static final String STEAM_NAME = "stName";
-    private final CommandMessage commandMessage = getCommandMessage(null, null);
+    private final CommandMessage commandMessage = getCommandMessage(STEAM_NAME, null, null);
 
     @AfterEach
     void afterEach() {
@@ -57,13 +57,23 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveCompletelyFilledNewPlayer() {
-        commandProcessor.process(getCommandMessage("lName", "uName"));
+        commandProcessor.process(getCommandMessage(STEAM_NAME, "lName", "uName"));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'" +
                 "and last_name = 'lName' and external_name = 'uName'", Long.class);
 
         assertEquals(1, actualPlayersCount);
+    }
+
+    @Test
+    void shouldSaveNewPlayerWithMultipleWordsSteamName() {
+        commandProcessor.process(getCommandMessage("Vasiliy Prostoy V", "lName", "uName"));
+
+        String actualSteamName = jdbcTemplate.queryForObject("select steam_name from players " +
+                "where first_name = '" + FIRST_NAME + "' and last_name = 'lName' and external_name = 'uName'", String.class);
+
+        assertEquals("Vasiliy Prostoy V", actualSteamName);
     }
 
     @Test
@@ -84,7 +94,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
         assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exception.getMessage());
     }
 
-    private CommandMessage getCommandMessage(@Nullable String lastName, @Nullable String userName) {
+    private CommandMessage getCommandMessage(String steamName, @Nullable String lastName, @Nullable String userName) {
         User user = new User();
         user.setId(TELEGRAM_USER_ID);
         user.setFirstName(FIRST_NAME);
@@ -97,7 +107,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
         message.setMessageId(10000);
         message.setFrom(user);
         message.setChat(chat);
-        message.setText("/register " + STEAM_NAME);
+        message.setText("/register " + steamName);
         return new CommandMessage(message);
     }
 }

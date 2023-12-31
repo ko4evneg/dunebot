@@ -18,7 +18,7 @@ public final class PlayerRegistrationDto {
     private final ChatType messageType;
 
     public PlayerRegistrationDto(CommandMessage commandMessage) {
-        this.steamName = commandMessage.getArgument(1);
+        this.steamName = commandMessage.getAllArguments();
         this.telegramId = commandMessage.getUserId();
         this.telegramChatId = commandMessage.getChatId();
         this.firstName = commandMessage.getFirstName();

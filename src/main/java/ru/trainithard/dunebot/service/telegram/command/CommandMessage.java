@@ -63,6 +63,10 @@ public class CommandMessage {
         return args.length > argumentNumber ? null : args[argumentNumber - 1];
     }
 
+    public String getAllArguments() {
+        return args.length == 0 ? null : String.join(" ", args);
+    }
+
     public int getArgumentsCount() {
         return args.length;
     }
