@@ -4,24 +4,27 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.service.telegram.ChatType;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Getter
 public class CommandMessage {
-    private final Command command;
-    private final ChatType chatType;
     private final long userId;
-    private final long chatId;
-    private final int messageId;
-    private final Integer replyMessageId;
-    private final String firstName;
-    private final String lastName;
-    private final String userName;
+    private Command command;
+    private ChatType chatType;
+    private Integer replyMessageId;
+    private String firstName;
+    private String lastName;
+    private String userName;
+    private long chatId;
+    private int messageId;
+    private PollVote pollVote;
     @Getter(AccessLevel.NONE)
-    private final String[] args;
+    private String[] args;
 
     public CommandMessage(Message message) {
         User user = message.getFrom();
@@ -33,16 +36,23 @@ public class CommandMessage {
         this.messageId = message.getMessageId();
         this.chatType = ChatType.valueOf(message.getChat().getType().toUpperCase());
         Message replyToMessage = message.getReplyToMessage();
-        this.replyMessageId = replyToMessage == null ? null : replyToMessage.getMessageId();
+        if (replyToMessage != null) {
+            this.replyMessageId = replyToMessage.getMessageId();
+        }
         String text = message.getText();
         if (text != null && text.length() > 1) {
             String[] commandWithArguments = text.substring(1).split("\\s");
             this.command = Command.getCommand(commandWithArguments[0]);
             this.args = commandWithArguments.length > 1 ? Arrays.copyOfRange(commandWithArguments, 1, commandWithArguments.length) : new String[0];
         } else {
-            this.command = null;
             this.args = new String[0];
         }
+    }
+
+    public CommandMessage(PollAnswer pollAnswer) {
+        this.command = Command.VOTE;
+        this.userId = pollAnswer.getUser().getId();
+        this.pollVote = new PollVote(pollAnswer);
     }
 
     /**
@@ -55,5 +65,11 @@ public class CommandMessage {
 
     public int getArgumentsCount() {
         return args.length;
+    }
+
+    public record PollVote(String pollId, List<Integer> selectedAnswerId) {
+        private PollVote(PollAnswer pollAnswer) {
+            this(pollAnswer.getPollId(), pollAnswer.getOptionIds());
+        }
     }
 }
