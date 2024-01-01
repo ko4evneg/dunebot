@@ -1,7 +1,6 @@
 package ru.trainithard.dunebot.service.telegram;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -23,7 +22,6 @@ public class TelegramUpdateProcessor {
     private final TelegramMessageCommandValidator telegramMessageCommandValidator;
     private final Map<Command, CommandProcessor> commandProcessors;
 
-    @Scheduled(fixedDelay = 500)
     public void process() {
         Update update = telegramBot.poll();
         while (update != null) {
