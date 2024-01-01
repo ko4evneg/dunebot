@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import ru.trainithard.dunebot.configuration.SettingConstants;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -12,7 +13,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public enum Command {
 
-    REGISTER(true, 1),
+    REGISTER(true, SettingConstants.STEAM_NAME_MAX_WORDS),
+    REFRESH_PROFILE(false, SettingConstants.STEAM_NAME_MAX_WORDS),
     NEW(false, 1),
     VOTE(false, 0),
     CANCEL(false, 0),

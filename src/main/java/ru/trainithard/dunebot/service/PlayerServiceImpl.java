@@ -31,7 +31,7 @@ public class PlayerServiceImpl implements PlayerService {
     private void validate(PlayerRegistrationDto playerRegistration, long telegramId, String steamName) {
         playerRepository.findByExternalIdOrSteamName(telegramId, steamName).ifPresent(player -> {
             if (telegramId == player.getExternalId()) {
-                throw new AnswerableDuneBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "!", player.getExternalChatId());
+                throw new AnswerableDuneBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "! Для смены ника выполните команду \"/change_steam_name *new_name*\"", player.getExternalChatId());
             } else if (playerRegistration.getSteamName().equals(steamName)) {
                 throw new AnswerableDuneBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getExternalChatId());
             }

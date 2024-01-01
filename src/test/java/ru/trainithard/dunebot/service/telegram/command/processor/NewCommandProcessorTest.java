@@ -1,6 +1,5 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,10 +50,9 @@ class NewCommandProcessorTest extends TestContextMock {
     private final CommandMessage pollCommandMessage = getCommandMessage(ModType.CLASSIC.getAlias());
 
     @BeforeEach
-    @SneakyThrows
     void beforeEach() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, '" + USER_ID + "', 9000, 'st_pl', 'name', '2010-10-10') ");
+                "values (10000, " + USER_ID + ", 9000, 'st_pl', 'name', '2010-10-10') ");
 
         doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
     }
