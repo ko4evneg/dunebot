@@ -33,15 +33,15 @@ class TelegramMessageCommandValidator {
         if (command == null || !commandProcessors.containsKey(command)) {
             throw new AnswerableDuneBotException(WRONG_COMMAND, telegramChatId, replyMessageId);
         }
-        if (command.getArgumentsCount() > commandMessage.getArgumentsCount()) {
-            throw new AnswerableDuneBotException(WRONG_REGISTER_COMMAND, telegramChatId, replyMessageId);
-        }
         if (!command.isAnonymous() && !playerRepository.existsByTelegramId(commandMessage.getUserId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, telegramChatId, replyMessageId);
         }
         // TODO:  make all commands private?
         if (publicChatProhibitedCommands.contains(command) && ChatType.PRIVATE != commandMessage.getChatType()) {
             throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId, replyMessageId);
+        }
+        if (command.getMinimalArgumentsCount() > commandMessage.getArgumentsCount()) {
+            throw new AnswerableDuneBotException(WRONG_REGISTER_COMMAND, telegramChatId, replyMessageId);
         }
     }
 }
