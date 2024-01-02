@@ -6,26 +6,15 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 
 @Service
 @RequiredArgsConstructor
 public class MatchMakingServiceImpl implements MatchMakingService {
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
-
-    @Override
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void registerNewMatch(Player initiator, ModType modType, ExternalPollDto telegramUserMessage) {
-        Match match = new Match(modType);
-        match.setExternalPollId(telegramUserMessage.toExternalPollId());
-        match.setOwner(initiator);
-        matchRepository.save(match);
-    }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
