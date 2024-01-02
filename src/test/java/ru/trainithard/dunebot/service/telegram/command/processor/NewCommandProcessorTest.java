@@ -60,7 +60,7 @@ class NewCommandProcessorTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where player_id = 10000");
-        jdbcTemplate.execute("delete from matches where matches.external_poll_id is null or external_poll_id = '" + POLL_ID + "'");
+        jdbcTemplate.execute("delete from matches where external_poll_id is null or external_poll_id = '" + POLL_ID + "'");
         jdbcTemplate.execute("delete from players where id = 10000");
     }
 
@@ -68,8 +68,7 @@ class NewCommandProcessorTest extends TestContextMock {
     void shouldCreateNewMatch() {
         commandProcessor.process(pollCommandMessage);
 
-        Long actualMatchId = jdbcTemplate.queryForObject("select id from matches " +
-                "where id = (select match_id from match_players where player_id = 10000)", Long.class);
+        Long actualMatchId = jdbcTemplate.queryForObject("select id from matches where external_poll_id = '" + POLL_ID + "'", Long.class);
 
         assertNotNull(actualMatchId);
     }
@@ -78,8 +77,8 @@ class NewCommandProcessorTest extends TestContextMock {
     void shouldCorrectlyFillNewMatch() {
         commandProcessor.process(pollCommandMessage);
 
-        Boolean actualMatch = jdbcTemplate.queryForObject("select is_finished from matches where id = (select match_id " +
-                "from match_players where player_id = 10000) and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and external_chat_id = '" +
+        Boolean actualMatch = jdbcTemplate.queryForObject("select is_finished from matches where external_poll_id = '" + POLL_ID + "' " +
+                "and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and external_chat_id = '" +
                 CHAT_ID + "' and external_poll_id = '" + POLL_ID + "' and external_message_id = " + MESSAGE_ID + " and external_reply_id = '" + REPLY_ID + "'", Boolean.class);
 
         assertNotNull(actualMatch);
@@ -87,13 +86,13 @@ class NewCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldCreateNewMatchPlayer() {
+    void shouldNotCreateAnyMatchPlayer() {
         commandProcessor.process(pollCommandMessage);
 
-        Long actualMatchPlayerId = jdbcTemplate.queryForObject("select id from match_players " +
-                "where player_id = 10000 and place is null and  candidate_place is null", Long.class);
+        Long actualMatchPlayerIdsCount = jdbcTemplate.queryForObject("select count(id) from match_players " +
+                "where match_id = (select id from matches where external_poll_id = '" + POLL_ID + "')", Long.class);
 
-        assertNotNull(actualMatchPlayerId);
+        assertEquals(0, actualMatchPlayerIdsCount);
     }
 
     @Test

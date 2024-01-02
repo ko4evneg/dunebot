@@ -5,10 +5,11 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
+import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.MatchMakingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -19,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NewCommandProcessor implements CommandProcessor {
     private final PlayerRepository playerRepository;
-    private final MatchMakingService matchMakingService;
+    private final MatchRepository matchRepository;
     private final MessagingService messagingService;
 
     public static final String POSITIVE_ANSWER = "Да";
@@ -34,7 +35,12 @@ public class NewCommandProcessor implements CommandProcessor {
         }
         playerRepository.findByExternalId(commandMessage.getUserId())
                 .ifPresent(player -> messagingService.sendPollAsync(getNewPollMessage(player, modType))
-                        .thenAccept(telegramPollDto -> matchMakingService.registerNewMatch(player, modType, telegramPollDto)));
+                        .thenAccept(telegramPollDto -> {
+                            Match match = new Match(modType);
+                            match.setExternalPollId(telegramPollDto.toExternalPollId());
+                            match.setOwner(player);
+                            matchRepository.save(match);
+                        }));
     }
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {

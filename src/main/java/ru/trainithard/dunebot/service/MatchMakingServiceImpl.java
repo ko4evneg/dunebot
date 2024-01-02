@@ -24,9 +24,7 @@ public class MatchMakingServiceImpl implements MatchMakingService {
         Match match = new Match(modType);
         match.setExternalPollId(telegramUserMessage.toExternalPollId());
         match.setOwner(initiator);
-        Match savedMatch = matchRepository.save(match);
-        MatchPlayer matchPlayer = new MatchPlayer(savedMatch, initiator);
-        matchPlayerRepository.save(matchPlayer);
+        matchRepository.save(match);
     }
 
     @Override

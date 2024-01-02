@@ -35,7 +35,7 @@ public class TelegramUpdateProcessor {
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 } else if (update.hasPollAnswer()) {
                     CommandMessage commandMessage = new CommandMessage(update.getPollAnswer());
-                    // TODO:   validate? ; test
+                    // TODO:   validate? ;
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 }
             } catch (AnswerableDuneBotException answerableException) {

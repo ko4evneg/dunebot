@@ -22,8 +22,8 @@ public class VoteCommandProcessor implements CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        List<Integer> pollAnswers = commandMessage.getPollVote().selectedAnswerId();
-        if (pollAnswers.contains(SettingConstants.POSITIVE_POLL_OPTION_ID)) {
+        List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
+        if (selectedPollAnswers.contains(SettingConstants.POSITIVE_POLL_OPTION_ID)) {
             playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
                     matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId()).ifPresent(match ->
                             matchMakingService.registerMathPlayer(player, match)));
