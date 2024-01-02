@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.MatchMakingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -15,11 +15,11 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class CancelCommandProcessor implements CommandProcessor {
+public class CancelCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
-    private final MatchMakingService matchMakingService;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -31,7 +31,10 @@ public class CancelCommandProcessor implements CommandProcessor {
                     throw new AnswerableDuneBotException("Запрещено отменять завершенные матчи!", player.getExternalChatId());
                 }
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
-                matchMakingService.cancelMatch(latestOwnedMatch);
+                transactionTemplate.executeWithoutResult(status -> {
+                    matchRepository.delete(latestOwnedMatch);
+                    matchPlayerRepository.deleteAll(latestOwnedMatch.getMatchPlayers());
+                });
             }
         });
     }

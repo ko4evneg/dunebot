@@ -18,7 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class NewCommandProcessor implements CommandProcessor {
+public class NewCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;

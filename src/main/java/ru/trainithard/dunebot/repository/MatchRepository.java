@@ -17,4 +17,11 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
 
     Optional<Match> findByExternalPollIdPollId(String telegramPollId);
+
+    @Query("""
+            select m from Match m
+            left join fetch m.matchPlayers mp
+            where m.id = :matchId
+            """)
+    Optional<Match> findByIdWithMatchPlayers(long matchId);
 }

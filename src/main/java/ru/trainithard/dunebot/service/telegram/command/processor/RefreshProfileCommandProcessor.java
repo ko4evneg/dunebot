@@ -8,7 +8,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 @Service
 @RequiredArgsConstructor
-public class RefreshProfileCommandProcessor implements CommandProcessor {
+public class RefreshProfileCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
 
     @Override
