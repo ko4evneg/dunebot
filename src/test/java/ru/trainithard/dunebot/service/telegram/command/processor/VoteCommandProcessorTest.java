@@ -3,26 +3,41 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.scheduling.TaskScheduler;
+import org.telegram.telegrambots.meta.api.objects.Chat;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.POSITIVE_POLL_OPTION_ID;
 
 @SpringBootTest
@@ -30,19 +45,34 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Autowired
     private VoteCommandProcessor commandProcessor;
+    @MockBean
+    private MessagingService messagingService;
+    @MockBean
+    private Clock clock;
+    @MockBean
+    private TaskScheduler taskScheduler;
 
-    private static final String TELEGRAM_POLL_ID = "100500";
-    private static final long TELEGRAM_USER_2_ID = 12346L;
+    private static final String POLL_ID = "100500";
+    private static final String REPLY_ID = "100500";
+    private static final long USER_2_ID = 12346L;
+    private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
+            .toInstant(ZoneOffset.UTC);
 
     @BeforeEach
     @SneakyThrows
     void beforeEach() {
+        Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
+        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
+        doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
+
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, 12345, 12345, 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10001, " + TELEGRAM_USER_2_ID + ", 12346, 'st_pl2', 'name2', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_message_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (10000, '" + TELEGRAM_POLL_ID + "', '123', 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
+                "values (10001, " + USER_2_ID + ", 12346, 'st_pl2', 'name2', '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_message_id, external_chat_id, external_reply_id, owner_id, mod_type, positive_answers_count, created_at) " +
+                "values (10000, '" + POLL_ID + "', '123', '" + SettingConstants.CHAT_ID + "'," + REPLY_ID + ", 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
     }
@@ -51,12 +81,12 @@ class VoteCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
-        jdbcTemplate.execute("delete from players where id between 10000 and 10003 or external_id = " + TELEGRAM_USER_2_ID);
+        jdbcTemplate.execute("delete from players where id between 10000 and 10003 or external_id = " + USER_2_ID);
     }
 
     @Test
     void shouldSaveNewMatchPlayerOnPositiveReplyRegistration() {
-        commandProcessor.process(getCommandMessage(POSITIVE_POLL_OPTION_ID, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -66,7 +96,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotSaveNewMatchPlayerOnNonPositiveReplyRegistration(int optionId) {
-        commandProcessor.process(getCommandMessage(optionId, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -79,7 +109,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10000, 10001, '2010-10-10')");
 
-        commandProcessor.process(getCommandMessage(optionId, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -89,7 +119,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotDeleteMatchRegisteredPlayerOnNonPositiveReplyRegistrationRevocation(int optionId) {
-        commandProcessor.process(getCommandMessage(optionId, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -98,7 +128,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnPositiveReplyRegistration() {
-        commandProcessor.process(getCommandMessage(POSITIVE_POLL_OPTION_ID, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -108,7 +138,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotIncreaseMatchRegisteredPlayersCountOnNonPositiveReplyRegistration(int optionId) {
-        commandProcessor.process(getCommandMessage(optionId, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -121,7 +151,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 "values (10001, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 2 where id = 10000");
 
-        commandProcessor.process(getCommandMessage(null, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(null, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -131,7 +161,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotDecreaseMatchRegisteredPlayersCountOnNonPositiveReplyRegistrationRevocation(int optionId) {
-        commandProcessor.process(getCommandMessage(optionId, TELEGRAM_USER_2_ID));
+        commandProcessor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -139,18 +169,83 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    @Disabled
-    void shouldSendNotificationOnFourthPlayerRegistration() {
-        fail();
+    void shouldAddScheduledTaskOnFourthPlayerRegistration() {
+        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+
+        commandProcessor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID, USER_2_ID));
+
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        Instant actualInstant = instantCaptor.getValue();
+
+        assertEquals(NOW.plusSeconds(60), actualInstant);
     }
 
-    private CommandMessage getCommandMessage(Integer optionId, long telegramUserid) {
+    @Test
+    void shouldSendMessageOnFourthPlayerRegistration() throws InterruptedException {
+        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
+
+        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+
+        commandProcessor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID, USER_2_ID));
+        syncRunScheduledTaskAction();
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertEquals(SettingConstants.CHAT_ID, messageDto.getChatId());
+        assertEquals(REPLY_ID, Integer.toString(messageDto.getReplyMessageId()));
+        assertEquals("notify match is full", messageDto.getText());
+        assertNull(messageDto.getKeyboard());
+    }
+
+    @Test
+    void shouldSetMatchSubmitMessageIdOnFourthPlayerRegistration() throws InterruptedException {
+        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
+
+        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+
+        commandProcessor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID, USER_2_ID));
+        syncRunScheduledTaskAction();
+
+        Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_submit_chat_id = '111002' " +
+                "and  external_submit_message_id = 111000 and external_submit_reply_id = 111001)", Boolean.class);
+
+        assertNotNull(isExternalIsSet);
+        assertTrue(isExternalIsSet);
+    }
+
+    private void syncRunScheduledTaskAction() throws InterruptedException {
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
+        Runnable actualRunnable = runnableCaptor.getValue();
+
+        Thread thread = new Thread(actualRunnable);
+        thread.start();
+        thread.join();
+    }
+
+    private ExternalMessageDto getSubmitExternalMessage() {
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(111001);
+        Chat chat = new Chat();
+        chat.setId(111002L);
+        Message message = new Message();
+        message.setMessageId(111000);
+        message.setReplyToMessage(replyMessage);
+        message.setChat(chat);
+        return new ExternalMessageDto(message);
+    }
+
+    // TODO:  param
+    private CommandMessage getPollAnswerCommandMessage(Integer optionId, long telegramUserid) {
         User user = new User();
         user.setId(telegramUserid);
         PollAnswer pollAnswer = new PollAnswer();
         pollAnswer.setUser(user);
         pollAnswer.setOptionIds(optionId == null ? Collections.emptyList() : Collections.singletonList(optionId));
-        pollAnswer.setPollId(TELEGRAM_POLL_ID);
+        pollAnswer.setPollId(POLL_ID);
         return new CommandMessage(pollAnswer);
     }
 }
