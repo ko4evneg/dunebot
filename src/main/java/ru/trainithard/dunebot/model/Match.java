@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 
 import java.util.List;
@@ -32,6 +33,13 @@ public class Match extends BaseEntity {
 
     @Embedded
     private ExternalPollId externalPollId;
+    @Embedded
+    @AttributeOverrides(value = {
+            @AttributeOverride(name = "messageId", column = @Column(name = "external_submit_message_id")),
+            @AttributeOverride(name = "chatId", column = @Column(name = "external_submit_chat_id")),
+            @AttributeOverride(name = "replyId", column = @Column(name = "external_submit_reply_id"))
+    })
+    private ExternalMessageId externalSubmitMessageId;
     private int positiveAnswersCount;
     private int submitsCount;
 

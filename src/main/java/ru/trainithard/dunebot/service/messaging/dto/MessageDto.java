@@ -14,7 +14,7 @@ public class MessageDto {
     protected Integer replyMessageId;
     protected List<List<ButtonDto>> keyboard;
 
-    public MessageDto(String chatId, String text, @Nullable Integer replyMessageId, List<List<ButtonDto>> linedButtons) {
+    public MessageDto(String chatId, String text, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
         this.text = text;
         this.chatId = chatId;
         this.replyMessageId = replyMessageId;

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 
 @MappedSuperclass
 @Getter
@@ -25,5 +26,15 @@ public class ExternalMessageId {
         this.messageId = messageId;
         this.chatId = chatId;
         this.replyId = replyId;
+    }
+
+    public ExternalMessageId(ExternalMessageDto messageDto) {
+        this.messageId = messageDto.getMessageId();
+        this.chatId = messageDto.getChatId();
+        this.replyId = messageDto.getReplyId();
+    }
+
+    public String getChatIdString() {
+        return Long.toString(chatId);
     }
 }
