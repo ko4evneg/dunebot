@@ -37,7 +37,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
             MessageDto pollMessage = getPollMessage(matchPlayer, registeredMatchPlayers, commandMessage.getArgument(1));
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(pollMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
-                matchPlayer.setSubmitMessageId(new ExternalMessageId(message.getMessageId(), message.getChatId(), message.getReplyId()));
+                matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                 matchPlayerRepository.save(matchPlayer);
             });
         }

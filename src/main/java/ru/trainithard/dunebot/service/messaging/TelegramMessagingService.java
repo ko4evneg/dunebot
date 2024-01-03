@@ -86,7 +86,7 @@ public class TelegramMessagingService implements MessagingService {
     @Override
     public void deleteMessageAsync(ExternalMessageId externalMessageId) {
         try {
-            DeleteMessage deleteMessage = new DeleteMessage(Long.toString(externalMessageId.getChatId()), externalMessageId.getMessageId());
+            DeleteMessage deleteMessage = new DeleteMessage(externalMessageId.getChatIdString(), externalMessageId.getMessageId());
             telegramBot.executeAsync(deleteMessage);
         } catch (TelegramApiException exception) {
             throw new TelegramApiCallException("deleteMessageAsync() call encounters API exception", exception);

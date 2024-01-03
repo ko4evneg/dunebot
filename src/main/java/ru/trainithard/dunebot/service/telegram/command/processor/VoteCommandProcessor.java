@@ -1,17 +1,27 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -19,36 +29,66 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
+    private final MessagingService messagingService;
+    private final TaskScheduler taskScheduler;
+    private final Clock clock;
+
+    private static final int MATCH_START_DELAY = 60;
+    private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
 
     @Override
     public void process(CommandMessage commandMessage) {
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
         if (selectedPollAnswers.contains(SettingConstants.POSITIVE_POLL_OPTION_ID)) {
             registerMatchPlayer(commandMessage);
-            // TODO:  notify?
         } else {
             unregisterMatchPlayer(commandMessage);
-            // TODO:  notify?
         }
     }
 
     private void registerMatchPlayer(CommandMessage commandMessage) {
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
                 matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
-                        .ifPresent(match -> {
-                                    int currentPositiveAnswersCount = match.getPositiveAnswersCount();
-                                    match.setPositiveAnswersCount(currentPositiveAnswersCount + 1);
-                                    MatchPlayer matchPlayer = new MatchPlayer(match, player);
-                                    transactionTemplate.executeWithoutResult(status -> {
-                                        matchRepository.save(match);
-                                        matchPlayerRepository.save(matchPlayer);
-                                    });
-                                    if (currentPositiveAnswersCount < match.getModType().getPlayersCount()) {
-                                    }
-                                    //      if (match.getRegisteredPlayersCount() == 4)
-                                    // TODO: start match if threshold crosses 4}
-                                }
-                        ));
+                        .ifPresent(match -> processPlayerRegistration(player, match)));
+    }
+
+    private void processPlayerRegistration(Player player, Match match) {
+        int currentPositiveAnswersCount = match.getPositiveAnswersCount();
+        int actualCount = currentPositiveAnswersCount + 1;
+        match.setPositiveAnswersCount(actualCount);
+        MatchPlayer matchPlayer = new MatchPlayer(match, player);
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.save(matchPlayer);
+        });
+        if (actualCount == match.getModType().getPlayersCount()) {
+            ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
+            if (existingScheduledTask != null) {
+                existingScheduledTask.cancel(false);
+            }
+            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> messagingService
+                    .sendMessageAsync(getFullMatchMessage(match)).whenComplete((externalMessageDto, throwable) -> {
+                        deleteExistingOldSubmitMessage(match);
+                        match.setExternalSubmitMessageId(new ExternalMessageId(externalMessageDto));
+                        matchRepository.save(match);
+                    }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
+            scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
+        }
+    }
+
+    private MessageDto getFullMatchMessage(Match match) {
+        String matchTopicChatId = match.getExternalPollId().getChatIdString();
+        Integer replyTopicId = match.getExternalPollId().getReplyId();
+        return new MessageDto(matchTopicChatId, "notify match is full", replyTopicId, null);
+    }
+
+    private void deleteExistingOldSubmitMessage(Match match) {
+        if (match.getExternalSubmitMessageId() != null) {
+            Integer externalSubmitMessageId = match.getExternalSubmitMessageId().getMessageId();
+            Long externalSubmitChatId = match.getExternalSubmitMessageId().getChatId();
+            Integer submitReplyTopicId = match.getExternalSubmitMessageId().getReplyId();
+            messagingService.deleteMessageAsync(new ExternalMessageId(externalSubmitMessageId, externalSubmitChatId, submitReplyTopicId));
+        }
     }
 
     private void unregisterMatchPlayer(CommandMessage commandMessage) {
