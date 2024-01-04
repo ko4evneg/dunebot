@@ -22,6 +22,14 @@ public class Match extends BaseEntity {
     @JoinColumn(name = "owner_id")
     private Player owner;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "EXTERNAL_POLL_ID")
+    private ExternalPollId externalPollId;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
+    private ExternalMessageId externalSubmitId;
+
     @Enumerated(EnumType.STRING)
     private ModType modType;
 
@@ -31,15 +39,6 @@ public class Match extends BaseEntity {
     @Column(name = "is_onsubmit")
     private boolean onSubmit;
 
-    @Embedded
-    private ExternalPollId externalPollId;
-    @Embedded
-    @AttributeOverrides(value = {
-            @AttributeOverride(name = "messageId", column = @Column(name = "external_submit_message_id")),
-            @AttributeOverride(name = "chatId", column = @Column(name = "external_submit_chat_id")),
-            @AttributeOverride(name = "replyId", column = @Column(name = "external_submit_reply_id"))
-    })
-    private ExternalMessageId externalSubmitMessageId;
     private int positiveAnswersCount;
     private int submitsCount;
 

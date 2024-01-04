@@ -1,25 +1,23 @@
 package ru.trainithard.dunebot.model.messaging;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
+import ru.trainithard.dunebot.model.BaseEntity;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 
-@MappedSuperclass
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Table(name = "EXTERNAL_MESSAGES")
 @Getter
 @Setter
 @Embeddable
 @NoArgsConstructor
-public class ExternalMessageId {
-    @Column(name = "EXTERNAL_MESSAGE_ID")
+public class ExternalMessageId extends BaseEntity {
     protected Integer messageId;
-    @Column(name = "EXTERNAL_CHAT_ID")
     protected Long chatId;
-    @Column(name = "EXTERNAL_REPLY_ID")
     private Integer replyId;
 
     public ExternalMessageId(int messageId, long chatId, @Nullable Integer replyId) {

@@ -21,9 +21,10 @@ public class MatchPlayer extends BaseEntity {
     @JoinColumn(name = "player_id")
     private Player player;
 
-    @Nullable
-    @Embedded
-    protected ExternalMessageId submitMessageId;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
+    private ExternalMessageId submitMessageId;
+
     @Nullable
     private Integer place;
     @Nullable
