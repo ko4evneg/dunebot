@@ -27,8 +27,8 @@ public class Match extends BaseEntity {
     private ExternalPollId externalPollId;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
-    private ExternalMessageId externalSubmitId;
+    @JoinColumn(name = "EXTERNAL_START_ID")
+    private ExternalMessageId externalStartId;
 
     @Enumerated(EnumType.STRING)
     private ModType modType;

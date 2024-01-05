@@ -213,7 +213,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         commandProcessor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID, USER_2_ID));
         syncRunScheduledTaskAction();
 
-        Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_submit_id = " +
+        Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_start_id = " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001))", Boolean.class);
 
         assertNotNull(isExternalIsSet);

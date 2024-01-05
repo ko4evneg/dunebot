@@ -37,7 +37,7 @@ class CascadingExternalIdTest {
     void shouldSaveExternalIdWithMatch() {
         Match match = new Match();
         match.setExternalPollId(new ExternalPollId(10000, 10001L, "10002", 10003));
-        match.setExternalSubmitId(new ExternalPollId(10004, 10005L, "10006", 10007));
+        match.setExternalStartId(new ExternalPollId(10004, 10005L, "10006", 10007));
         match.setModType(ModType.CLASSIC);
         matchRepository.save(match);
 
@@ -60,7 +60,7 @@ class CascadingExternalIdTest {
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10004, 10005, 10006, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_submit_id, owner_id, mod_type, created_at) " +
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, created_at) " +
                 "values (10000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '2010-10-10') ");
 
         matchRepository.deleteById(10000L);
@@ -78,11 +78,11 @@ class CascadingExternalIdTest {
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10004, 10005, 10006, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_submit_id, owner_id, mod_type, created_at) " +
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, created_at) " +
                 "values (10000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '2010-10-10') ");
 
         Match match = matchRepository.findById(10000L).orElseThrow();
-        match.setExternalSubmitId(null);
+        match.setExternalStartId(null);
         match.setExternalPollId(null);
         matchRepository.save(match);
         matchRepository.deleteById(10000L);
@@ -100,12 +100,12 @@ class CascadingExternalIdTest {
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10004, 10005, 10006, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_submit_id, owner_id, mod_type, created_at) " +
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, created_at) " +
                 "values (10000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '2010-10-10') ");
 
         Match match = matchRepository.findById(10000L).orElseThrow();
         match.getExternalPollId().setChatId(12345L);
-        match.getExternalSubmitId().setChatId(12345L);
+        match.getExternalStartId().setChatId(12345L);
         matchRepository.save(match);
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where chat_id = 12345", Integer.class);
@@ -119,7 +119,7 @@ class CascadingExternalIdTest {
                 "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
         Match match = new Match();
         match.setExternalPollId(new ExternalPollId(10001, 10001L, "10001", 10001));
-        match.setExternalSubmitId(new ExternalPollId(10002, 10002L, "10002", 10002));
+        match.setExternalStartId(new ExternalPollId(10002, 10002L, "10002", 10002));
         match.setModType(ModType.CLASSIC);
         matchRepository.save(match);
         Player player = new Player();

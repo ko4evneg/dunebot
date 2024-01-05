@@ -69,7 +69,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> messagingService
                     .sendMessageAsync(getFullMatchMessage(match)).whenComplete((externalMessageDto, throwable) -> {
                         deleteExistingOldSubmitMessage(match);
-                        match.setExternalSubmitId(new ExternalMessageId(externalMessageDto));
+                        match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                         matchRepository.save(match);
                     }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
             scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
@@ -83,11 +83,11 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {
-        if (match.getExternalSubmitId() != null) {
-            Integer externalSubmitMessageId = match.getExternalSubmitId().getMessageId();
-            Long externalSubmitChatId = match.getExternalSubmitId().getChatId();
-            Integer submitReplyTopicId = match.getExternalSubmitId().getReplyId();
-            messagingService.deleteMessageAsync(new ExternalMessageId(externalSubmitMessageId, externalSubmitChatId, submitReplyTopicId));
+        if (match.getExternalStartId() != null) {
+            Integer externalStartMessageId = match.getExternalStartId().getMessageId();
+            Long externalStartMessageChatId = match.getExternalStartId().getChatId();
+            Integer startMessageReplyId = match.getExternalStartId().getReplyId();
+            messagingService.deleteMessageAsync(new ExternalMessageId(externalStartMessageId, externalStartMessageChatId, startMessageReplyId));
         }
     }
 

@@ -64,7 +64,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_submit_id, owner_id, mod_type, positive_answers_count, created_at) " +
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, created_at) " +
                 "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 15000, 10000, '2010-10-10')");
