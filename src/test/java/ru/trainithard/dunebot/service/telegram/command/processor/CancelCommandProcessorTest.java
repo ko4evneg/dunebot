@@ -46,8 +46,10 @@ class CancelCommandProcessorTest extends TestContextMock {
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, 12345, 9000, 'st_pl', 'name', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_message_id, external_chat_id, external_reply_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (10000, '12346', '" + MESSAGE_ID + "', '" + CHAT_ID + "', " + REPLY_ID + ", 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
+                "values (10000, 'ExternalPollId'," + MESSAGE_ID + ", " + CHAT_ID + ", " + REPLY_ID + ", '12346', '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, positive_answers_count, created_at) " +
+                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
     }
@@ -57,6 +59,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id = (select id from matches where id in (10000, 10001))");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id in (10000, 10001)");
+        jdbcTemplate.execute("delete from external_messages where id = 10000");
     }
 
     @Test

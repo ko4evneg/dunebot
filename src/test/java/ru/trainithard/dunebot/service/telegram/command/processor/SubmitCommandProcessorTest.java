@@ -44,7 +44,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     @MockBean
     private MessagingService messagingService;
 
-    private static final long CHAT_ID_1 = 12000L;
+    private static final long CHAT_ID = 12000L;
     private static final long USER_ID = 11000L;
     private final CommandMessage pollCommandMessage = getCommandMessage(11000L);
 
@@ -53,15 +53,19 @@ class SubmitCommandProcessorTest extends TestContextMock {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, " + USER_ID + ", '" + CHAT_ID_1 + "', 'st_pl1', 'name1', '2010-10-10') ");
+                "values (10000, " + USER_ID + ", '" + CHAT_ID + "', 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, 11001, 12001, 'st_pl2', 'name2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10002, 11002, 12002, 'st_pl3', 'name3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10003, 11003, 12003, 'st_pl4', 'name4', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_message_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (15000, '10000', '10000', 10000, '" + ModType.CLASSIC + "', 4, '2010-10-10') ");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
+                "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
+                "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_submit_id, owner_id, mod_type, positive_answers_count, created_at) " +
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 15000, 10000, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
@@ -77,6 +81,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
+        jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12004");
     }
 
     @ParameterizedTest
@@ -165,7 +170,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         Message replyMessage = new Message();
         replyMessage.setMessageId(111001);
         Chat chat = new Chat();
-        chat.setId(111002L);
+        chat.setId(CHAT_ID);
         Message message = new Message();
         message.setMessageId(111000);
         message.setReplyToMessage(replyMessage);
@@ -175,8 +180,8 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         commandProcessor.process(pollCommandMessage);
 
-        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
-                "external_chat_id = '111002' and external_message_id = 111000 and external_reply_id = 111001", Long.class);
+        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
+                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001)", Long.class);
 
         assertEquals(4, assignedIdsPlayerCount);
     }
@@ -184,7 +189,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldNotSaveSubmitMessageReplyIdToMatchPlayerFromPrivateChatSubmit() {
         Chat chat = new Chat();
-        chat.setId(111001L);
+        chat.setId(CHAT_ID);
         Message message = new Message();
         message.setMessageId(111000);
         message.setChat(chat);
@@ -193,8 +198,8 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         commandProcessor.process(pollCommandMessage);
 
-        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where " +
-                "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
+        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
+                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
 
         assertEquals(4, assignedIdsPlayerCount);
     }
@@ -207,7 +212,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 "values (10004, 15000, 10004, '2010-10-10')");
 
         Chat chat = new Chat();
-        chat.setId(111001L);
+        chat.setId(CHAT_ID);
         Message message = new Message();
         message.setMessageId(111000);
         message.setChat(chat);
@@ -216,8 +221,8 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         commandProcessor.process(pollCommandMessage);
 
-        List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where " +
-                "external_chat_id = '111001' and external_message_id = 111000 and external_reply_id is null", Long.class);
+        List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where external_submit_id in " +
+                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
 
         assertFalse(assignedIdsPlayers.contains(11004L));
     }
@@ -226,7 +231,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         User user = new User();
         user.setId(userId);
         Chat chat = new Chat();
-        chat.setId(CHAT_ID_1);
+        chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
         message.setMessageId(10000);
@@ -238,7 +243,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     
     private static class MockReplier implements Answer<CompletableFuture<ExternalMessageDto>> {
         private int externalId = 11000;
-        private long chatId = CHAT_ID_1;
+        private long chatId = CHAT_ID;
 
         @Override
         public CompletableFuture<ExternalMessageDto> answer(InvocationOnMock invocationOnMock) {

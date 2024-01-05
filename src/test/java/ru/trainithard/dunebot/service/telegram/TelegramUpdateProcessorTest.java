@@ -58,8 +58,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id = (select id from matches where external_poll_id = '100001')");
-        jdbcTemplate.execute("delete from matches where external_poll_id = '100001'");
+        jdbcTemplate.execute("delete from matches where external_poll_id = (select id from external_messages where poll_id = '100001')");
         jdbcTemplate.execute("delete from players where id in(10000, 10001)");
+        jdbcTemplate.execute("delete from external_messages where id in (" + TELEGRAM_CHAT_ID_1 + ", " + TELEGRAM_CHAT_ID_2 + ")");
     }
 
     @Test
