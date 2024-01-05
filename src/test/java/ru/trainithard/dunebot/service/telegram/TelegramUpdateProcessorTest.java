@@ -29,7 +29,8 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -41,7 +42,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @MockBean
     private TelegramMessageCommandValidator validator;
 
-    private static final String COMMAND_NEW_UP4 = "/" + Command.NEW + " up4";
+    private static final String COMMAND_REFRESH_PROFILE = "/refresh_profile";
     private static final long TELEGRAM_USER_ID_1 = 10000L;
     private static final long TELEGRAM_USER_ID_2 = 10001L;
     private static final long TELEGRAM_CHAT_ID_1 = 9000L;
@@ -57,24 +58,23 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from match_players where match_id = (select id from matches where external_poll_id = '100001')");
+        jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where external_poll_id = (select id from external_messages where poll_id = '100001')");
         jdbcTemplate.execute("delete from players where id in(10000, 10001)");
-        jdbcTemplate.execute("delete from external_messages where id in (" + TELEGRAM_CHAT_ID_1 + ", " + TELEGRAM_CHAT_ID_2 + ")");
+        jdbcTemplate.execute("delete from external_messages where id in (10000)");
     }
 
     @Test
     void shouldInvokeProcessorOnValidTextCommand() {
-        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/new up4")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE)).thenReturn(null);
         doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
         doNothing().when(validator).validate(any());
 
         updateProcessor.process();
 
-        Boolean isActualMatchExist = jdbcTemplate.queryForObject("select exists(select 1 from matches where external_poll_id = '100001')", Boolean.class);
+        String updatedName = jdbcTemplate.queryForObject("select first_name from players where id = 10000", String.class);
 
-        assertNotNull(isActualMatchExist);
-        assertTrue(isActualMatchExist);
+        assertEquals("newFirstName", updatedName);
     }
 
     @Test
@@ -82,8 +82,10 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         when(telegramBot.poll()).thenReturn(getPollAnswerUpdate()).thenReturn(null);
         doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
         doNothing().when(validator).validate(any());
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_message_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (10000, '100001', '10000', 10000, '" + ModType.CLASSIC + "', 0, '2010-10-10') ");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
+                "values (10000, 'ExternalPollId', 10000, 10000, '100001', '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, positive_answers_count, created_at) " +
+                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', 0, '2010-10-10') ");
 
         updateProcessor.process();
 
@@ -154,7 +156,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @ParameterizedTest
     @MethodSource("exceptionsProvider")
     void shouldMoveToNextUpdateOnException(Class<? extends Exception> aClass) {
-        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/up")).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, null, COMMAND_NEW_UP4)).thenReturn(null);
+        when(telegramBot.poll())
+                .thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/up"))
+                .thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, null, COMMAND_REFRESH_PROFILE)).thenReturn(null);
         doThrow(aClass).when(validator).validate(any(CommandMessage.class));
 
         updateProcessor.process();
@@ -162,8 +166,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         verify(validator, times(1)).validate(argThat(commandMessage ->
                 TELEGRAM_USER_ID_2 == commandMessage.getUserId() &&
                         TELEGRAM_CHAT_ID_2 == commandMessage.getChatId() &&
-                        commandMessage.getCommand() == Command.NEW &&
-                        "up4".equals(commandMessage.getArgument(1))));
+                        commandMessage.getCommand() == Command.REFRESH_PROFILE));
     }
 
     private static Stream<Arguments> exceptionsProvider() {
@@ -176,7 +179,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldMoveToNextUpdateWithoutException() {
-        when(telegramBot.poll()).thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_NEW_UP4)).thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, null, COMMAND_NEW_UP4)).thenReturn(null);
+        when(telegramBot.poll())
+                .thenReturn(getUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE))
+                .thenReturn(getUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, null, COMMAND_REFRESH_PROFILE)).thenReturn(null);
 
         updateProcessor.process();
 
@@ -189,6 +194,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     private Update getUpdate(long telegramUserId, long telegramChatId, Integer replyId, String text) {
         User user = new User();
         user.setId(telegramUserId);
+        user.setFirstName("newFirstName");
         Chat chat = new Chat();
         chat.setId(telegramChatId);
         chat.setType(ChatType.PRIVATE.getValue());
