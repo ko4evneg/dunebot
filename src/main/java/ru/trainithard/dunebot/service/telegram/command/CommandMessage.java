@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.telegram.command;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
@@ -23,6 +24,7 @@ public class CommandMessage {
     private long chatId;
     private int messageId;
     private PollVote pollVote;
+    private String callback;
     @Getter(AccessLevel.NONE)
     private String[] args;
 
@@ -53,6 +55,13 @@ public class CommandMessage {
         this.command = Command.VOTE;
         this.userId = pollAnswer.getUser().getId();
         this.pollVote = new PollVote(pollAnswer);
+    }
+
+    public CommandMessage(CallbackQuery callbackQuery) {
+        this.command = Command.ACCEPT_SUBMIT;
+        this.userId = callbackQuery.getFrom().getId();
+        this.callback = callbackQuery.getData();
+        this.replyMessageId = callbackQuery.getMessage().getMessageId();
     }
 
     /**

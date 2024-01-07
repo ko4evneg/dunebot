@@ -19,7 +19,7 @@ import java.util.Map;
 public class TelegramUpdateProcessor {
     private final TelegramBot telegramBot;
     private final MessagingService messagingService;
-    private final TelegramMessageCommandValidator telegramMessageCommandValidator;
+    private final TelegramTextCommandValidator telegramTextCommandValidator;
     private final Map<Command, CommandProcessor> commandProcessors;
 
     public void process() {
@@ -30,12 +30,15 @@ public class TelegramUpdateProcessor {
                 // TODO: validate only valid messages goes further [!!!] commands should contain all complete actions with valid arguments
                 if (message != null && message.getText() != null && message.getText().startsWith("/")) {
                     CommandMessage commandMessage = new CommandMessage(message);
-                    telegramMessageCommandValidator.validate(commandMessage);
+                    telegramTextCommandValidator.validate(commandMessage);
                     // TODO:  selection tests
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 } else if (update.hasPollAnswer()) {
                     CommandMessage commandMessage = new CommandMessage(update.getPollAnswer());
                     // TODO:   validate? ;
+                    commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
+                } else if (update.hasCallbackQuery()) {
+                    CommandMessage commandMessage = new CommandMessage(update.getCallbackQuery());
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 }
             } catch (AnswerableDuneBotException answerableException) {

@@ -14,7 +14,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-class TelegramMessageCommandValidator {
+class TelegramTextCommandValidator {
     private final PlayerRepository playerRepository;
     private final Map<Command, CommandProcessor> commandProcessors;
 

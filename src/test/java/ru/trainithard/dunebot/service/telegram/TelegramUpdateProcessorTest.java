@@ -10,10 +10,7 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
@@ -40,8 +37,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @MockBean
     private MessagingService messagingService;
     @MockBean
-    private TelegramMessageCommandValidator validator;
+    private TelegramTextCommandValidator validator;
 
+    private static final int TELEGRAM_REPLY_ID = 10010;
     private static final String COMMAND_REFRESH_PROFILE = "/refresh_profile";
     private static final long TELEGRAM_USER_ID_1 = 10000L;
     private static final long TELEGRAM_USER_ID_2 = 10001L;
@@ -59,7 +57,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
-        jdbcTemplate.execute("delete from matches where external_poll_id = (select id from external_messages where poll_id = '100001')");
+        jdbcTemplate.execute("delete from matches where id = 10000 or external_poll_id = (select id from external_messages where poll_id = '100001')");
         jdbcTemplate.execute("delete from players where id in(10000, 10001)");
         jdbcTemplate.execute("delete from external_messages where id in (10000)");
     }
@@ -120,6 +118,39 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         CompletableFuture<Message> completableFuture = new CompletableFuture<>();
         completableFuture.complete(message);
         return CompletableFuture.completedFuture(new ExternalPollDto(message));
+    }
+
+    @Test
+    void shouldInvokeProcessorOnValidCallbackQueryCommand() {
+        when(telegramBot.poll()).thenReturn(getCallbackQueryUpdate()).thenReturn(null);
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
+                "values (10000, 'ExternalPollId', 10000, 10000, '100001', '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, positive_answers_count, created_at) " +
+                "values (10000, 10000, '" + ModType.CLASSIC + "', 0, '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
+                "values (10000, 10000, 10000, 10000, '2020-10-10')");
+
+        updateProcessor.process();
+
+        Integer actualCandidatePlace = jdbcTemplate.queryForObject("select candidate_place from match_players where player_id = " +
+                "(select id from players where external_id = " + TELEGRAM_USER_ID_1 + ")", Integer.class);
+
+        assertEquals(-1, actualCandidatePlace);
+    }
+
+    private Update getCallbackQueryUpdate() {
+        User user = new User();
+        user.setId(TELEGRAM_USER_ID_1);
+        Message message = new Message();
+        message.setMessageId(TELEGRAM_REPLY_ID);
+        message.setFrom(user);
+        CallbackQuery callbackQuery = new CallbackQuery();
+        callbackQuery.setMessage(message);
+        callbackQuery.setData("10000__-1");
+        callbackQuery.setFrom(user);
+        Update update = new Update();
+        update.setCallbackQuery(callbackQuery);
+        return update;
     }
 
     @Test
