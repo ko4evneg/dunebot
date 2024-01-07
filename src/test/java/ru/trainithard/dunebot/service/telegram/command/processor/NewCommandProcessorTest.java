@@ -149,7 +149,8 @@ class NewCommandProcessorTest extends TestContextMock {
         } catch (TelegramApiCallException ignored) {
         }
 
-        Boolean isMatchExist = jdbcTemplate.queryForObject("select exists(select * from matches)", Boolean.class);
+        Boolean isMatchExist = jdbcTemplate.queryForObject("select exists(select * from matches where owner_id = " +
+                "(select id from players where external_id = " + USER_ID + "))", Boolean.class);
 
         assertNotNull(isMatchExist);
         assertFalse(isMatchExist);
