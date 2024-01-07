@@ -187,6 +187,27 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSetMatchOnSubmitFlag() {
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(111001);
+        Chat chat = new Chat();
+        chat.setId(CHAT_ID);
+        Message message = new Message();
+        message.setMessageId(111000);
+        message.setReplyToMessage(replyMessage);
+        message.setChat(chat);
+
+        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
+
+        commandProcessor.process(pollCommandMessage);
+
+        Boolean actualIsOnSubmit = jdbcTemplate.queryForObject("select is_onsubmit from matches where id = 15000", Boolean.class);
+
+        assertNotNull(actualIsOnSubmit);
+        assertTrue(actualIsOnSubmit);
+    }
+
+    @Test
     void shouldNotSaveSubmitMessageReplyIdToMatchPlayerFromPrivateChatSubmit() {
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
