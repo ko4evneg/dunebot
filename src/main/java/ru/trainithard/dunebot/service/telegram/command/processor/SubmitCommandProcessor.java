@@ -2,7 +2,6 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
@@ -32,7 +31,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
     private final MatchRepository matchRepository;
-    private final TaskScheduler taskScheduler;
     private final MatchFinishingService matchFinishingService;
     private final Clock clock;
 
@@ -40,7 +38,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        // TODO: 4 players validation
         Match match = getValidatedMatch(commandMessage);
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
@@ -55,7 +52,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                 }
             });
         }
-        taskScheduler.schedule(() -> matchFinishingService.finishMatch(match.getId()), Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
+        matchFinishingService.scheduleForceFinishMatch(match.getId(), Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
     }
 
     private Match getValidatedMatch(CommandMessage commandMessage) {

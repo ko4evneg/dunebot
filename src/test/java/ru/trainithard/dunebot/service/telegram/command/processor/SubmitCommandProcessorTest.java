@@ -270,31 +270,12 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldAddFinishMatchScheduledTaskOnPlayerSubmit() {
-        commandProcessor.process(getCommandMessage(USER_ID));
-
-        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
-        Instant actualInstant = instantCaptor.getValue();
-
-        assertEquals(NOW.plus(120, ChronoUnit.MINUTES), actualInstant);
-    }
-
-    @Test
-    void shouldInvokeMatchFinishingServiceOnFinishMatchScheduledTaskExecution() throws InterruptedException {
+    void shouldInvokeMatchFinishingServiceForceFinishScheduledTaskOnSubmit() {
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
         commandProcessor.process(getCommandMessage(USER_ID));
 
-        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
-        Runnable actualRunnable = runnableCaptor.getValue();
-
-        Thread thread = new Thread(actualRunnable);
-        thread.start();
-        thread.join();
-
-        verify(finishingService, times(1)).finishMatch(eq(15000L));
+        verify(finishingService, times(1)).scheduleForceFinishMatch(eq(15000L), eq(NOW.plus(120, ChronoUnit.MINUTES)));
     }
 
     private CommandMessage getCommandMessage(long userId) {

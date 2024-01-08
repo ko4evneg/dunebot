@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -79,6 +79,16 @@ class MatchFinishingServiceTest extends TestContextMock {
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
         assertThat(playersPlaces, contains(4, 2, 3, 1));
+    }
+
+    @Test
+    void shouldSetMatchFinishFlagOnMatchFinish() {
+        finishingService.finishMatch(15000L);
+
+        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and is_finished is true)", Boolean.class);
+
+        assertNotNull(isMatchFinished);
+        assertTrue(isMatchFinished);
     }
 
     @Test
