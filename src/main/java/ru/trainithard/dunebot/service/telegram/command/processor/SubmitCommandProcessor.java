@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
@@ -11,12 +12,16 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -27,9 +32,15 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
     private final MatchRepository matchRepository;
+    private final TaskScheduler taskScheduler;
+    private final MatchFinishingService matchFinishingService;
+    private final Clock clock;
+
+    private static final int FINISH_MATCH_TIMEOUT = 120;
 
     @Override
     public void process(CommandMessage commandMessage) {
+        // TODO: 4 players validation
         Match match = getValidatedMatch(commandMessage);
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
@@ -44,6 +55,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                 }
             });
         }
+        taskScheduler.schedule(() -> matchFinishingService.finishMatch(match.getId()), Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
     }
 
     private Match getValidatedMatch(CommandMessage commandMessage) {

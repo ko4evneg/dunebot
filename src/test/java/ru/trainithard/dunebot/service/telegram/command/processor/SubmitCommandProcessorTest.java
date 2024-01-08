@@ -12,6 +12,7 @@ import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.scheduling.TaskScheduler;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -19,6 +20,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
@@ -26,8 +28,14 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,6 +43,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -43,17 +52,29 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private SubmitCommandProcessor commandProcessor;
     @MockBean
     private MessagingService messagingService;
+    @MockBean
+    private Clock clock;
+    @MockBean
+    private TaskScheduler taskScheduler;
+    @MockBean
+    private MatchFinishingService finishingService;
 
     private static final long CHAT_ID = 12000L;
     private static final long USER_ID = 11000L;
-    private final CommandMessage pollCommandMessage = getCommandMessage(11000L);
-
+    private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
+            .toInstant(ZoneOffset.UTC);
+    private final CommandMessage pollCommandMessage = getCommandMessage(USER_ID);
     @BeforeEach
     void beforeEach() {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
+        Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
+        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
+        doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, " + USER_ID + ", '" + CHAT_ID + "', 'st_pl1', 'name1', '2010-10-10') ");
+                "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10001, 11001, 12001, 'st_pl2', 'name2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
@@ -81,7 +102,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
-        jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12004");
+        jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006");
     }
 
     @ParameterizedTest
@@ -246,6 +267,34 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
 
         assertFalse(assignedIdsPlayers.contains(11004L));
+    }
+
+    @Test
+    void shouldAddFinishMatchScheduledTaskOnPlayerSubmit() {
+        commandProcessor.process(getCommandMessage(USER_ID));
+
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        Instant actualInstant = instantCaptor.getValue();
+
+        assertEquals(NOW.plus(120, ChronoUnit.MINUTES), actualInstant);
+    }
+
+    @Test
+    void shouldInvokeMatchFinishingServiceOnFinishMatchScheduledTaskExecution() throws InterruptedException {
+        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+
+        commandProcessor.process(getCommandMessage(USER_ID));
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
+        Runnable actualRunnable = runnableCaptor.getValue();
+
+        Thread thread = new Thread(actualRunnable);
+        thread.start();
+        thread.join();
+
+        verify(finishingService, times(1)).finishMatch(eq(15000L));
     }
 
     private CommandMessage getCommandMessage(long userId) {
