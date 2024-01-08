@@ -31,6 +31,7 @@ public class MatchFinishingService {
         Match match = matchRepository.findById(matchId).orElseThrow();
         if (!match.isFinished()) {
             //messagingService.sendMessageAsync(getMatchFinishMessage(match));
+            // TODO:  tests
         }
     }
 

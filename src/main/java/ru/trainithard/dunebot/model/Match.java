@@ -36,6 +36,7 @@ public class Match extends BaseEntity {
     @Column(name = "is_finished")
     private boolean finished;
 
+    // TODO:  reset flag
     @Column(name = "is_onsubmit")
     private boolean onSubmit;
 
@@ -44,5 +45,9 @@ public class Match extends BaseEntity {
 
     public Match(ModType modType) {
         this.modType = modType;
+    }
+
+    public boolean areAllSubmitsReceived() {
+        return submitsCount == matchPlayers.size();
     }
 }
