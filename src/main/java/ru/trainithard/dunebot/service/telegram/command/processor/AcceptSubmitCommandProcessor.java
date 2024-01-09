@@ -32,7 +32,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 matchPlayerRepository.saveAll(match.getMatchPlayers());
             });
             if (match.areAllSubmitsReceived()) {
-                //validate
+                //todo validate/resubmit
                 matchFinishingService.finishMatch(match.getId());
             }
         }

@@ -31,12 +31,13 @@ public class MatchFinishingService {
         Match match = matchRepository.findById(matchId).orElseThrow();
         if (!match.isFinished()) {
             //messagingService.sendMessageAsync(getMatchFinishMessage(match));
-            // TODO:  tests
+            // TODO: logic, tests
         }
     }
 
     public void finishMatch(long matchId) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
+        // TODO:  resubmit
         match.setFinished(true);
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {
