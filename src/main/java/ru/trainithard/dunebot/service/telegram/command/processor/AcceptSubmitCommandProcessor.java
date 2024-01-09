@@ -25,17 +25,29 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 .filter(mPlayer -> mPlayer.getPlayer().getExternalId() == commandMessage.getUserId())
                 .findFirst().orElseThrow();
         if (matchPlayer.getCandidatePlace() == null) {
-            matchPlayer.setCandidatePlace(callback.candidatePlace);
-            match.setSubmitsCount(match.getSubmitsCount() + 1);
-            transactionTemplate.executeWithoutResult(status -> {
-                matchRepository.save(match);
-                matchPlayerRepository.saveAll(match.getMatchPlayers());
-            });
-            if (match.areAllSubmitsReceived()) {
-                //todo validate/resubmit
-                matchFinishingService.finishMatch(match.getId());
+            int candidatePlace = callback.candidatePlace;
+            if (isConflictSubmit(match, candidatePlace)) {
+
+            } else {
+                matchPlayer.setCandidatePlace(candidatePlace);
+                match.setSubmitsCount(match.getSubmitsCount() + 1);
+                transactionTemplate.executeWithoutResult(status -> {
+                    matchRepository.save(match);
+                    matchPlayerRepository.saveAll(match.getMatchPlayers());
+                });
+                if (match.areAllSubmitsReceived()) {
+                    matchFinishingService.finishMatch(match.getId());
+                }
             }
         }
+    }
+
+    private boolean isConflictSubmit(Match match, int candidatePlace) {
+        return match.getMatchPlayers().stream()
+                .anyMatch(matchPlayer -> {
+                    Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
+                    return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
+                });
     }
 
     @Override

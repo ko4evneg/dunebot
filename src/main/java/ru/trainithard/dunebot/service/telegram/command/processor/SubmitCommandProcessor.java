@@ -44,6 +44,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, commandMessage.getArgument(1));
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
+                // TODO: handle throwable (rollback)
                 matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                 matchPlayerRepository.save(matchPlayer);
                 if (!match.isOnSubmit()) {

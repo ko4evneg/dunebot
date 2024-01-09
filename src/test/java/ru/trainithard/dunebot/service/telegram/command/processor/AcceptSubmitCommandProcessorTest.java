@@ -19,7 +19,6 @@ import ru.trainithard.dunebot.service.telegram.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -124,7 +123,12 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotInvokeMatchFinishOnLastConflictCallbackReply() {
-        fail();
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        verify(matchFinishingService, never()).finishMatch(eq(15000L));
     }
 
     @Test
