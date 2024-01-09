@@ -42,6 +42,7 @@ public class Match extends BaseEntity {
 
     private int positiveAnswersCount;
     private int submitsCount;
+    private int submitsRetryCount;
 
     public Match(ModType modType) {
         this.modType = modType;
