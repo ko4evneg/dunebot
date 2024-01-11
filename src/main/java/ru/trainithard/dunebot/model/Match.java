@@ -51,4 +51,8 @@ public class Match extends BaseEntity {
     public boolean areAllSubmitsReceived() {
         return submitsCount == matchPlayers.size();
     }
+
+    public boolean isResubmitAllowed(int resubmitsLimit) {
+        return submitsRetryCount < resubmitsLimit;
+    }
 }

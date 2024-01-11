@@ -18,6 +18,7 @@ public enum Command {
     VOTE(false, 0),
     CANCEL(false, 0),
     SUBMIT(false, 1),
+    RESUBMIT(false, 1),
     ACCEPT_SUBMIT(false, 0);
 
     private static final Map<String, Command> availableCommands;
