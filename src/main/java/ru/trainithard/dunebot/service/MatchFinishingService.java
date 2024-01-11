@@ -1,7 +1,6 @@
 package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.model.Match;
@@ -25,7 +24,6 @@ public class MatchFinishingService {
     private final MatchPlayerRepository matchPlayerRepository;
     private final TransactionTemplate transactionTemplate;
     private final MessagingService messagingService;
-    private final TaskScheduler taskScheduler;
 
     public void scheduleForceFinishMatch(long matchId, Instant dateTime) {
         Match match = matchRepository.findById(matchId).orElseThrow();
@@ -60,6 +58,6 @@ public class MatchFinishingService {
         stringBuilder.deleteCharAt(stringBuilder.lastIndexOf("\n"));
 
         ExternalPollId externalPollId = match.getExternalPollId();
-        return new MessageDto(externalPollId.getChatId().toString(), stringBuilder.toString(), externalPollId.getReplyId(), null);
+        return new MessageDto(externalPollId.getChatId(), stringBuilder.toString(), externalPollId.getReplyId(), null);
     }
 }

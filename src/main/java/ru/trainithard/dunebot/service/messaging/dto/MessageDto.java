@@ -20,4 +20,11 @@ public class MessageDto {
         this.replyMessageId = replyMessageId;
         this.keyboard = linedButtons;
     }
+
+    public MessageDto(long chatId, String text, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
+        this.text = text;
+        this.chatId = Long.toString(chatId);
+        this.replyMessageId = replyMessageId;
+        this.keyboard = linedButtons;
+    }
 }
