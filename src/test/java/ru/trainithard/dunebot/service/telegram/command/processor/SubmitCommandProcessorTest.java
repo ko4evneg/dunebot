@@ -63,7 +63,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private static final long USER_ID = 11000L;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
-    private final CommandMessage pollCommandMessage = getCommandMessage(USER_ID);
+    private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID);
     @BeforeEach
     void beforeEach() {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
@@ -107,11 +107,11 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @ParameterizedTest
     @MethodSource("exceptionsSource")
-    void shouldThrowOnFinishedMatchSubmit(String query, String expectedException) {
+    void shouldThrowOnUnsuitableMatchSubmit(String query, String expectedException) {
         jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(pollCommandMessage));
+                () -> commandProcessor.process(submitCommandMessage));
 
         assertEquals(expectedException, actualException.getMessage());
     }
@@ -142,14 +142,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id = 15000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(pollCommandMessage));
+                () -> commandProcessor.process(submitCommandMessage));
 
         assertEquals("Матча с таким ID не существует!", actualException.getMessage());
     }
 
     @Test
     void shouldSendMessagesToEveryMatchPlayer() {
-        commandProcessor.process(pollCommandMessage);
+        commandProcessor.process(submitCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
@@ -165,7 +165,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendCorrectSubmitMessage() {
-        commandProcessor.process(pollCommandMessage);
+        commandProcessor.process(submitCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
@@ -199,7 +199,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(pollCommandMessage);
+        commandProcessor.process(submitCommandMessage);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001)", Long.class);
@@ -220,7 +220,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(pollCommandMessage);
+        commandProcessor.process(submitCommandMessage);
 
         Boolean actualIsOnSubmit = jdbcTemplate.queryForObject("select is_onsubmit from matches where id = 15000", Boolean.class);
 
@@ -238,7 +238,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(pollCommandMessage);
+        commandProcessor.process(submitCommandMessage);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
@@ -261,7 +261,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(pollCommandMessage);
+        commandProcessor.process(submitCommandMessage);
 
         List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where external_submit_id in " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
