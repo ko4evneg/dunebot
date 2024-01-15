@@ -18,10 +18,9 @@ class TelegramTextCommandValidator {
     private final PlayerRepository playerRepository;
     private final Map<Command, CommandProcessor> commandProcessors;
 
-    private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"";
+    private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
     private static final String WRONG_COMMAND = "Неверная команда!";
-    // TODO:  change name
-    private static final String WRONG_REGISTER_COMMAND = "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"";
+    private static final String WRONG_ARGUMENTS_COUNT = "Данная команда должна иметь как минимум один аргумент. Например '/register *steam_name*'";
     private static final String PUBLIC_PROHIBITED_COMMAND = "Команда запрещена в групповых чатах - напишите боту напрямую.";
 
     private static final Set<Command> publicChatProhibitedCommands = EnumSet.of(Command.REGISTER, Command.SUBMIT);
@@ -41,7 +40,7 @@ class TelegramTextCommandValidator {
             throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND, telegramChatId, replyMessageId);
         }
         if (command.getMinimalArgumentsCount() > commandMessage.getArgumentsCount()) {
-            throw new AnswerableDuneBotException(WRONG_REGISTER_COMMAND, telegramChatId, replyMessageId);
+            throw new AnswerableDuneBotException(WRONG_ARGUMENTS_COUNT, telegramChatId, replyMessageId);
         }
     }
 }

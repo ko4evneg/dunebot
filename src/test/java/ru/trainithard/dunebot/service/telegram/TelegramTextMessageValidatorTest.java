@@ -109,7 +109,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
                 Arguments.of("/registe", "Неверная команда!"),
                 Arguments.of("/registerX", "Неверная команда!"),
                 Arguments.of("/register_X", "Неверная команда!"),
-                Arguments.of("/register", "Неверный формат команды! Пример правильной команды: \"/register *steam_nickname*\"")
+                Arguments.of("/register", "Данная команда должна иметь как минимум один аргумент. Например '/register *steam_name*'")
         );
     }
 
@@ -120,7 +120,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(new CommandMessage(message)));
-        assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \"/register *steam_nickname*\"", actualException.getMessage());
+        assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'", actualException.getMessage());
     }
 
     @ParameterizedTest
