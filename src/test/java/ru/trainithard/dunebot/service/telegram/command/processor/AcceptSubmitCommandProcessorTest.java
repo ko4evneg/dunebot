@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -13,11 +14,19 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -27,6 +36,10 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     private AcceptSubmitCommandProcessor processor;
     @MockBean
     private MatchFinishingService matchFinishingService;
+    @MockBean
+    private ResubmitCommandProcessor resubmitCommandProcessor;
+    @MockBean
+    private MessagingService messagingService;
 
     private static final long USER_1_ID = 11000L;
     private static final long USER_2_ID = 11001L;
@@ -111,14 +124,14 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, times(1)).finishMatch(eq(15000L));
+        verify(matchFinishingService, times(1)).finishSuccessfullySubmittedMatch(eq(15000L));
     }
 
     @Test
     void shouldNotInvokeMatchFinishOnNotLastCallbackReply() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishMatch(anyLong());
+        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(anyLong());
     }
 
     @Test
@@ -128,11 +141,80 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishMatch(eq(15000L));
+        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(15000L));
+    }
+
+    @Test
+    void shouldInvokeUnsuccessfulMatchFinishOnLastConflictCallbackReply() {
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        verify(matchFinishingService, never()).finishUnsuccessfullySubmittedMatch(eq(15000L));
     }
 
     @Test
     void shouldInvokeMatchResubmitOnLastConflictCallbackReply() {
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        verify(resubmitCommandProcessor, times(1))
+                .process(argThat((Match match) -> match.getId().equals(15000L)));
+    }
+
+    @Test
+    void shouldNotInvokeMatchResubmitOnResubmitExceedLastConflictCallbackReply() {
+        jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + SettingConstants.RESUBMITS_LIMIT + " where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        verify(resubmitCommandProcessor, never()).process(argThat((Match match) -> match.getId().equals(15000L)));
+    }
+
+    @Test
+    void shouldSendMessageAboutResubmitOnLastConflictCallbackReply() {
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
+        List<MessageDto> actualMessages = messageCaptor.getAllValues();
+
+        String conflictText = """
+                Некоторые игроки не смогли поделить место:
+                2 место: st_pl2 (name2) и st_pl1 (name1)
+
+                Повторный опрос результата...""";
+        assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
+        assertThat(actualMessages, containsInAnyOrder(
+                hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
+                hasProperty("chatId", is("12002")), hasProperty("chatId", is("12003"))
+        ));
+    }
+
+    @Test
+    void shouldSendMessageAboutResubmitExceedLimitOnResubmitExceedLastConflictCallbackReply() {
+        jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + SettingConstants.RESUBMITS_LIMIT + " where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
+        List<MessageDto> actualMessages = messageCaptor.getAllValues();
+
+        String conflictText = "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
+        assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
+        assertThat(actualMessages, containsInAnyOrder(
+                hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
+                hasProperty("chatId", is("12002")), hasProperty("chatId", is("12003"))
+        ));
     }
 
     private CommandMessage getCommandMessage(long userId, int messageId, long chatId, String callbackData) {
