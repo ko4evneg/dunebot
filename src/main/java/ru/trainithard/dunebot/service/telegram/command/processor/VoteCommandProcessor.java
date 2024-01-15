@@ -30,7 +30,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
-    private final TaskScheduler taskScheduler;
+    private final TaskScheduler dunebotTaskScheduler;
     private final Clock clock;
 
     private static final int MATCH_START_DELAY = 60;
@@ -66,7 +66,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             if (existingScheduledTask != null) {
                 existingScheduledTask.cancel(false);
             }
-            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> messagingService
+            ScheduledFuture<?> scheduledTask = dunebotTaskScheduler.schedule(() -> messagingService
                     .sendMessageAsync(getFullMatchMessage(match)).whenComplete((externalMessageDto, throwable) -> {
                         deleteExistingOldSubmitMessage(match);
                         match.setExternalStartId(new ExternalMessageId(externalMessageDto));

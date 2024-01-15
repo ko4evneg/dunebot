@@ -13,11 +13,11 @@ import java.time.Duration;
 @Component
 @RequiredArgsConstructor
 public class ScheduledTasksConfiguration {
-    private final TaskScheduler taskScheduler;
+    private final TaskScheduler dunebotTaskScheduler;
     private final TelegramUpdateProcessor updateProcessor;
 
     @PostConstruct
     void createScheduledTasks() {
-        taskScheduler.scheduleWithFixedDelay(updateProcessor::process, Duration.ofMillis(5));
+        dunebotTaskScheduler.scheduleWithFixedDelay(updateProcessor::process, Duration.ofMillis(5));
     }
 }

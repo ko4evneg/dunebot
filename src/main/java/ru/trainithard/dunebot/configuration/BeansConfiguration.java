@@ -26,7 +26,7 @@ public class BeansConfiguration {
     }
 
     @Bean
-    TaskScheduler taskScheduler(Clock clock) {
+    TaskScheduler dunebotTaskScheduler(Clock clock) {
         ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
         taskScheduler.setPoolSize(1);
         taskScheduler.setClock(clock);
