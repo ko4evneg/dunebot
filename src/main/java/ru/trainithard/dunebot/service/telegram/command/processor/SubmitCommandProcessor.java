@@ -38,22 +38,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        Match match = getValidatedMatch(commandMessage);
-        List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
-        for (MatchPlayer matchPlayer : registeredMatchPlayers) {
-            MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, commandMessage.getArgument(1));
-            CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
-            messageCompletableFuture.whenComplete((message, throwable) -> {
-                // TODO: handle throwable (rollback)
-                matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
-                matchPlayerRepository.save(matchPlayer);
-                if (!match.isOnSubmit()) {
-                    match.setOnSubmit(true);
-                    matchRepository.save(match);
-                }
-            });
-        }
-        matchFinishingService.scheduleForceFinishMatch(match.getId(), Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
+        process(getValidatedMatch(commandMessage));
     }
 
     private Match getValidatedMatch(CommandMessage commandMessage) {
@@ -72,6 +57,24 @@ public class SubmitCommandProcessor extends CommandProcessor {
         } catch (NumberFormatException | MatchNotExistsException exception) {
             throw new AnswerableDuneBotException("Матча с таким ID не существует!", telegramChatId);
         }
+    }
+
+    void process(Match match) {
+        List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
+        for (MatchPlayer matchPlayer : registeredMatchPlayers) {
+            MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId().toString());
+            CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
+            messageCompletableFuture.whenComplete((message, throwable) -> {
+                // TODO: handle throwable (rollback)
+                matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
+                matchPlayerRepository.save(matchPlayer);
+                if (!match.isOnSubmit()) {
+                    match.setOnSubmit(true);
+                    matchRepository.save(match);
+                }
+            });
+        }
+        matchFinishingService.scheduleForceFinishMatch(match.getId(), Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
     }
 
     private static void validate(long telegramChatId, Match match) {
