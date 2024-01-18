@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
@@ -28,13 +29,15 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
+    private static final int FINISH_MATCH_TIMEOUT = 120;
+    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
+    private final TaskScheduler dunebotTaskScheduler;
     private final Clock clock;
-
-    private static final int FINISH_MATCH_TIMEOUT = 120;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -74,7 +77,10 @@ public class SubmitCommandProcessor extends CommandProcessor {
                 }
             });
         }
-        matchFinishingService.scheduleForceFinishMatch(match.getId(), Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
+
+        dunebotTaskScheduler.schedule(() -> matchFinishingService
+                        .finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId())),
+                Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
     }
 
     private static void validate(long telegramChatId, Match match) {

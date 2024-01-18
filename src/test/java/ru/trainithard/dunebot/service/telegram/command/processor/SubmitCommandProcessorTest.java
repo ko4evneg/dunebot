@@ -48,6 +48,14 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class SubmitCommandProcessorTest extends TestContextMock {
+    private static final long CHAT_ID = 12000L;
+    private static final long USER_ID = 11000L;
+    private static final int FINISH_MATCH_TIMEOUT = 120;
+    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
+            .toInstant(ZoneOffset.UTC);
+    private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID);
+
     @Autowired
     private SubmitCommandProcessor commandProcessor;
     @MockBean
@@ -59,11 +67,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
     @MockBean
     private MatchFinishingService finishingService;
 
-    private static final long CHAT_ID = 12000L;
-    private static final long USER_ID = 11000L;
-    private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
-            .toInstant(ZoneOffset.UTC);
-    private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID);
     @BeforeEach
     void beforeEach() {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
@@ -270,12 +273,33 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldInvokeMatchFinishingServiceForceFinishScheduledTaskOnSubmit() {
-        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnSubmit() {
+        jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
 
         commandProcessor.process(getCommandMessage(USER_ID));
 
-        verify(finishingService, times(1)).scheduleForceFinishMatch(eq(15000L), eq(NOW.plus(120, ChronoUnit.MINUTES)));
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        Instant actualInstant = instantCaptor.getValue();
+
+        assertEquals(NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES), actualInstant);
+    }
+
+    @Test
+    void shouldInvokeUnsuccessfullySubmittedMatchFinishOnScheduledTask() throws InterruptedException {
+        jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
+
+        commandProcessor.process(getCommandMessage(USER_ID));
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
+        Runnable actualRunnable = runnableCaptor.getValue();
+
+        Thread thread = new Thread(actualRunnable);
+        thread.start();
+        thread.join();
+
+        verify(finishingService, times(1)).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(TIMEOUT_MATCH_FINISH_MESSAGE));
     }
 
     private CommandMessage getCommandMessage(long userId) {
@@ -291,7 +315,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         message.setText("/" + Command.SUBMIT.name() + " 15000");
         return new CommandMessage(message);
     }
-    
+
     private static class MockReplier implements Answer<CompletableFuture<ExternalMessageDto>> {
         private int externalId = 11000;
         private long chatId = CHAT_ID;
