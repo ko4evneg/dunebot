@@ -11,7 +11,6 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,17 +24,8 @@ public class MatchFinishingService {
     private final TransactionTemplate transactionTemplate;
     private final MessagingService messagingService;
 
-    public void scheduleForceFinishMatch(long matchId, Instant dateTime) {
-        Match match = matchRepository.findById(matchId).orElseThrow();
-        if (!match.isFinished()) {
-            //messagingService.sendMessageAsync(getMatchFinishMessage(match));
-            // TODO: logic, tests
-        }
-    }
-
-    public void finishMatch(long matchId) {
+    public void finishSuccessfullySubmittedMatch(long matchId) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
-        // TODO:  resubmit
         match.setFinished(true);
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {
@@ -44,6 +34,21 @@ public class MatchFinishingService {
         });
 
         messagingService.sendMessageAsync(getMatchFinishMessage(match));
+    }
+
+    public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
+        Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
+        match.setFinished(true);
+        match.setOnSubmit(false);
+        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.saveAll(match.getMatchPlayers());
+        });
+
+        ExternalPollId externalPollId = match.getExternalPollId();
+        MessageDto finishMessage = new MessageDto(externalPollId.getChatId(), reason, externalPollId.getReplyId(), null);
+        messagingService.sendMessageAsync(finishMessage);
     }
 
     private MessageDto getMatchFinishMessage(Match match) {

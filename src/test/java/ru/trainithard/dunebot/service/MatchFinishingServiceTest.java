@@ -22,13 +22,14 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class MatchFinishingServiceTest extends TestContextMock {
+    private static final String MATCH_CHAT_ID = "12345";
+    private static final int MATCH_TOPIC_REPLY_ID = 9000;
+    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+
     @Autowired
     private MatchFinishingService finishingService;
     @MockBean
     private MessagingService messagingService;
-
-    private static final String MATCH_CHAT_ID = "12345";
-    private static final int MATCH_TOPIC_REPLY_ID = 9000;
 
     @BeforeEach
     void beforeEach() {
@@ -73,8 +74,8 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldFixCandidatePlacesOnMatchFinish() {
-        finishingService.finishMatch(15000L);
+    void shouldPersistCandidatePlacesOnMatchFinish() {
+        finishingService.finishSuccessfullySubmittedMatch(15000L);
 
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
@@ -82,18 +83,44 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchFinishFlagOnMatchFinish() {
-        finishingService.finishMatch(15000L);
+    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinish() {
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        List<Integer> actualPersistedPlacesCount = jdbcTemplate
+                .queryForList("select id from match_players where match_id = 15000 and place is not null", Integer.class);
+
+        assertTrue(actualPersistedPlacesCount.isEmpty());
+    }
+
+    @Test
+    void shouldSetMatchFlagsOnMatchFinish() {
+        finishingService.finishSuccessfullySubmittedMatch(15000L);
 
         Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and is_finished is true)", Boolean.class);
+        Boolean isMatchSubmitClosed = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and matches.is_onsubmit is false)", Boolean.class);
 
         assertNotNull(isMatchFinished);
         assertTrue(isMatchFinished);
+        assertNotNull(isMatchSubmitClosed);
+        assertTrue(isMatchSubmitClosed);
+    }
+
+    @Test
+    void shouldSetMatchFlagsOnUnsuccessfullySubmittedMatchFinish() {
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and is_finished is true)", Boolean.class);
+        Boolean isMatchSubmitClosed = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and matches.is_onsubmit is false)", Boolean.class);
+
+        assertNotNull(isMatchFinished);
+        assertTrue(isMatchFinished);
+        assertNotNull(isMatchSubmitClosed);
+        assertTrue(isMatchSubmitClosed);
     }
 
     @Test
     void shouldSendNotificationOnMatchFinish() {
-        finishingService.finishMatch(15000L);
+        finishingService.finishSuccessfullySubmittedMatch(15000L);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -107,5 +134,18 @@ class MatchFinishingServiceTest extends TestContextMock {
                 2. st_pl2 (name2)
                 3. st_pl3 (name3)
                 4. st_pl1 (name1)""", messageDto.getText());
+    }
+
+    @Test
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish() {
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
+        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
+        assertEquals("Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест", messageDto.getText());
     }
 }
