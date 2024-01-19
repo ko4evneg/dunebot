@@ -20,7 +20,21 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
+    private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
+    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
+    private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
+
     private final TelegramBot telegramBot;
+
+    @Override
+    public void deleteMessageAsync(ExternalMessageId externalMessageId) {
+        try {
+            DeleteMessage deleteMessage = new DeleteMessage(externalMessageId.getChatIdString(), externalMessageId.getMessageId());
+            telegramBot.executeAsync(deleteMessage);
+        } catch (TelegramApiException exception) {
+            throw new TelegramApiCallException(DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+        }
+    }
 
     @Override
     public CompletableFuture<ExternalPollDto> sendPollAsync(PollMessageDto pollMessage) {
@@ -28,13 +42,11 @@ public class TelegramMessagingService implements MessagingService {
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendPoll(pollMessage));
             sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                if (throwable != null) {
-                    throw new TelegramApiCallException("sendPollAsync() call encounters API exception", throwable);
-                }
+                rethrowRuntimeOnApiException(throwable, SEND_POLL_CALLBACK_EXCEPTION_MESSAGE);
                 telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
             });
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException("sendPollAsync() call encounters API exception", exception);
+            throw new TelegramApiCallException(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -53,13 +65,11 @@ public class TelegramMessagingService implements MessagingService {
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendMessage(messageDto));
             sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                if (throwable != null) {
-                    throw new TelegramApiCallException("sendMessageAsync() call encounters API exception", throwable);
-                }
+                rethrowRuntimeOnApiException(throwable, SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE);
                 telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
             });
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException("sendMessageAsync() call encounters API exception", exception);
+            throw new TelegramApiCallException(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -68,12 +78,16 @@ public class TelegramMessagingService implements MessagingService {
         SendMessage sendMessage = new SendMessage(message.getChatId(), message.getText());
         sendMessage.setReplyToMessageId(message.getReplyMessageId());
         if (message.getKeyboard() != null) {
-            List<List<InlineKeyboardButton>> inlineKeyboard = message.getKeyboard().stream()
-                    .map(buttonsRow -> buttonsRow.stream().map(TelegramMessagingService::getInlineKeyboardButton).toList())
-                    .toList();
-            sendMessage.setReplyMarkup(new InlineKeyboardMarkup(inlineKeyboard));
+            sendMessage.setReplyMarkup(getInlineKeyboard(message));
         }
         return sendMessage;
+    }
+
+    private InlineKeyboardMarkup getInlineKeyboard(MessageDto message) {
+        List<List<InlineKeyboardButton>> inlineKeyboard = message.getKeyboard().stream()
+                .map(buttonsRow -> buttonsRow.stream().map(TelegramMessagingService::getInlineKeyboardButton).toList())
+                .toList();
+        return new InlineKeyboardMarkup(inlineKeyboard);
     }
 
     private static InlineKeyboardButton getInlineKeyboardButton(ButtonDto button) {
@@ -82,13 +96,9 @@ public class TelegramMessagingService implements MessagingService {
         return inlineButton;
     }
 
-    @Override
-    public void deleteMessageAsync(ExternalMessageId externalMessageId) {
-        try {
-            DeleteMessage deleteMessage = new DeleteMessage(externalMessageId.getChatIdString(), externalMessageId.getMessageId());
-            telegramBot.executeAsync(deleteMessage);
-        } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException("deleteMessageAsync() call encounters API exception", exception);
+    private void rethrowRuntimeOnApiException(Throwable throwable, String message) {
+        if (throwable != null) {
+            throw new TelegramApiCallException(message, throwable);
         }
     }
 }

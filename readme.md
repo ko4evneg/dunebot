@@ -10,3 +10,4 @@
 | low      | consider making all commands private chats only                                        |
 | low      | check threadId usage in telegram                                                       |
 | high     | add TelegramMessagingService tests                                                     |
+| medium   | test TelegramApiException to runtime handling                                          |
