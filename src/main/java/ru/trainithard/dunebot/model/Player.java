@@ -40,4 +40,8 @@ public class Player extends BaseEntity {
     private String getFullName() {
         return lastName == null ? firstName : firstName + " " + lastName;
     }
+
+    public String getMention() {
+        return externalName == null ? "@" + firstName : "@" + externalName;
+    }
 }

@@ -23,4 +23,16 @@ class PlayerTest {
 
         assertEquals("st_name (f_name l_name)", player.getFriendlyName());
     }
+
+    @Test
+    void shouldReturnMentionWithoutExternalName() {
+        assertEquals("@f_name", player.getMention());
+    }
+
+    @Test
+    void shouldReturnMentionWithExternalName() {
+        player.setExternalName("e_name");
+
+        assertEquals("@e_name", player.getMention());
+    }
 }
