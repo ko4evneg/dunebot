@@ -82,7 +82,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
                 "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
 
         AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage));
-        assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME + "! Для смены ника выполните команду \"/change_steam_name *new_name*\"", exception.getMessage());
+        assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME + "! Для смены ника выполните команду '/change_steam_name *new_name*'", exception.getMessage());
     }
 
     @Test

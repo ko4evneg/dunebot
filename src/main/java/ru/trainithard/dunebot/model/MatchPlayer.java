@@ -50,4 +50,12 @@ public class MatchPlayer extends BaseEntity {
         this.match = match;
         this.player = player;
     }
+
+    public boolean hasCandidateVote() {
+        return candidatePlace != null;
+    }
+
+    public boolean hasSubmitMessage() {
+        return submitMessageId != null;
+    }
 }

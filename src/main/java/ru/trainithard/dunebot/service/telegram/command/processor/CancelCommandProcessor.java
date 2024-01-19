@@ -16,6 +16,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class CancelCommandProcessor extends CommandProcessor {
+    private static final String FINISHED_MATCH_EXCEPTION_MESSAGE = "Запрещено отменять завершенные матчи!";
+
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
@@ -28,7 +30,7 @@ public class CancelCommandProcessor extends CommandProcessor {
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
                 if (latestOwnedMatch.isFinished()) {
-                    throw new AnswerableDuneBotException("Запрещено отменять завершенные матчи!", player.getExternalChatId());
+                    throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
                 }
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
                 transactionTemplate.executeWithoutResult(status -> {

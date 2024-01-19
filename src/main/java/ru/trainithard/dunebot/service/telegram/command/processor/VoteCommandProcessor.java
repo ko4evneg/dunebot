@@ -40,43 +40,51 @@ public class VoteCommandProcessor extends CommandProcessor {
     public void process(CommandMessage commandMessage) {
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
         if (selectedPollAnswers.contains(POSITIVE_POLL_OPTION_ID)) {
-            registerMatchPlayer(commandMessage);
+            registerMatchPlayerVote(commandMessage);
         } else {
-            unregisterMatchPlayer(commandMessage);
+            unregisterMatchPlayerVote(commandMessage);
         }
     }
 
-    private void registerMatchPlayer(CommandMessage commandMessage) {
+    private void registerMatchPlayerVote(CommandMessage commandMessage) {
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
                 matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
-                        .ifPresent(match -> processPlayerRegistration(player, match)));
+                        .ifPresent(match -> processPlayerVoteRegistration(player, match)));
     }
 
-    private void processPlayerRegistration(Player player, Match match) {
-        int currentPositiveAnswersCount = match.getPositiveAnswersCount();
-        int actualCount = currentPositiveAnswersCount + 1;
-        match.setPositiveAnswersCount(actualCount);
+    private void processPlayerVoteRegistration(Player player, Match match) {
+        int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
+        match.setPositiveAnswersCount(updatedPositiveAnswersCount);
         MatchPlayer matchPlayer = new MatchPlayer(match, player);
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.save(matchPlayer);
         });
-        if (actualCount == match.getModType().getPlayersCount()) {
-            ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
-            if (existingScheduledTask != null) {
-                existingScheduledTask.cancel(false);
-            }
-            ScheduledFuture<?> scheduledTask = dunebotTaskScheduler.schedule(() -> messagingService
-                    .sendMessageAsync(getFullMatchMessage(match)).whenComplete((externalMessageDto, throwable) -> {
-                        deleteExistingOldSubmitMessage(match);
-                        match.setExternalStartId(new ExternalMessageId(externalMessageDto));
-                        matchRepository.save(match);
-                    }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
-            scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
+
+        if (match.isFull()) {
+            cancelScheduledMatchStart(match);
+            scheduleNewMatchStart(match);
         }
     }
 
-    private MessageDto getFullMatchMessage(Match match) {
+    private void cancelScheduledMatchStart(Match match) {
+        ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
+        if (existingScheduledTask != null) {
+            existingScheduledTask.cancel(false);
+        }
+    }
+
+    private void scheduleNewMatchStart(Match match) {
+        ScheduledFuture<?> scheduledTask = dunebotTaskScheduler.schedule(() -> messagingService
+                .sendMessageAsync(getMatchStartMessage(match)).whenComplete((externalMessageDto, throwable) -> {
+                    deleteExistingOldSubmitMessage(match);
+                    match.setExternalStartId(new ExternalMessageId(externalMessageDto));
+                    matchRepository.save(match);
+                }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
+        scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
+    }
+
+    private MessageDto getMatchStartMessage(Match match) {
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer replyTopicId = match.getExternalPollId().getReplyId();
         List<String> playerMentions = playerRepository.findByMatchId(match.getId()).stream()
@@ -96,7 +104,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void unregisterMatchPlayer(CommandMessage commandMessage) {
+    private void unregisterMatchPlayerVote(CommandMessage commandMessage) {
         matchPlayerRepository
                 .findByMatchExternalPollIdPollIdAndPlayerExternalId(commandMessage.getPollVote().pollId(), commandMessage.getUserId())
                 .ifPresent(matchPlayer -> {
@@ -107,7 +115,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                         matchRepository.save(match);
                         matchPlayerRepository.delete(matchPlayer);
                     });
-                    if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {
+                    if (match.hasMissingPlayers()) {
                         messagingService.deleteMessageAsync(match.getExternalStartId());
                     }
                 });

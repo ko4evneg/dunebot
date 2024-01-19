@@ -80,4 +80,12 @@ public class Match extends BaseEntity {
     public boolean isResubmitAllowed(int resubmitsLimit) {
         return submitsRetryCount < resubmitsLimit;
     }
+
+    public boolean isFull() {
+        return modType.getPlayersCount() == positiveAnswersCount;
+    }
+
+    public boolean hasMissingPlayers() {
+        return modType.getPlayersCount() > positiveAnswersCount;
+    }
 }

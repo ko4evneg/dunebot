@@ -19,19 +19,21 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class NewCommandProcessor extends CommandProcessor {
+    private static final String POSITIVE_ANSWER = "Да";
+    private static final List<String> POLL_OPTIONS = List.of(POSITIVE_ANSWER, "Нет", "Результат");
+    private static final String NEW_POLL_MESSAGE_TEMPLATE = "Игрок %s призывает всех на матч в %s";
+    private static final String UNSUPPORTED_MATCH_TYPE_MESSAGE_TEMPLATE = "Неподдерживаемый тип матча: %s";
+
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
-
-    public static final String POSITIVE_ANSWER = "Да";
-    private static final List<String> POLL_OPTIONS = List.of(POSITIVE_ANSWER, "Нет", "Результат");
 
     @Override
     public void process(CommandMessage commandMessage) {
         String modTypeString = commandMessage.getArgument(1);
         ModType modType = ModType.getByAlias(modTypeString);
         if (modType == null) {
-            throw new AnswerableDuneBotException("Неподдерживаемый тип матча: " + modTypeString, commandMessage);
+            throw new AnswerableDuneBotException(String.format(UNSUPPORTED_MATCH_TYPE_MESSAGE_TEMPLATE, modTypeString), commandMessage);
         }
         playerRepository.findByExternalId(commandMessage.getUserId())
                 .ifPresent(player -> messagingService.sendPollAsync(getNewPollMessage(player, modType))
@@ -44,7 +46,7 @@ public class NewCommandProcessor extends CommandProcessor {
     }
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
-        String text = String.format("Игрок %s призывает всех на матч в %s", initiator.getFriendlyName(), modType.getModName());
+        String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
         return new PollMessageDto(SettingConstants.CHAT_ID, text, getTopicId(modType), POLL_OPTIONS);
     }
 

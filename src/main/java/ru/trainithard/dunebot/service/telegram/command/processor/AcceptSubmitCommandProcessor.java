@@ -2,7 +2,6 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -20,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+import static ru.trainithard.dunebot.configuration.SettingConstants.RESUBMITS_LIMIT;
 
 @Service
 @RequiredArgsConstructor
@@ -39,32 +39,28 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         Callback callback = new Callback(commandMessage.getCallback());
         Match match = matchRepository.findByIdWithMatchPlayers(callback.matchId).orElseThrow();
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
-        MatchPlayer matchPlayer = matchPlayers.stream()
-                .filter(mPlayer -> mPlayer.getPlayer().getExternalId() == commandMessage.getUserId())
-                .findFirst().orElseThrow();
-        if (matchPlayer.getCandidatePlace() == null) {
-            if (matchPlayer.getSubmitMessageId() != null) {
-                messagingService.deleteMessageAsync(matchPlayer.getSubmitMessageId());
-            }
+        MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
+
+        if (!submittingPlayer.hasCandidateVote()) {
+            deleteOldSubmitMessage(submittingPlayer);
 
             int candidatePlace = callback.candidatePlace;
-            if (hasConflictInSubmit(matchPlayers, candidatePlace) && match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
-                String conflictText = getConflictMessage(matchPlayers, matchPlayer, candidatePlace);
+            if (isLastConflictSubmit(match, candidatePlace)) {
+                String conflictText = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
                 sendMessagesToMatchPlayers(matchPlayers, conflictText);
                 resubmitProcessor.process(match);
-            } else if (hasConflictInSubmit(matchPlayers, candidatePlace)) {
+            } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
                 sendMessagesToMatchPlayers(matchPlayers, RESUBMIT_LIMIT_EXCEEDED_MESSAGE);
                 matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, match.getId()));
             } else {
-                //todo retry submit field fix
-                matchPlayer.setCandidatePlace(candidatePlace);
+                submittingPlayer.setCandidatePlace(candidatePlace);
                 match.setSubmitsCount(match.getSubmitsCount() + 1);
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(matchPlayers);
                 });
                 String acceptedSubmitText = String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
-                messagingService.sendMessageAsync(new MessageDto(matchPlayer.getSubmitMessageId().getChatId(), acceptedSubmitText, null, null));
+                messagingService.sendMessageAsync(new MessageDto(submittingPlayer.getSubmitMessageId().getChatId(), acceptedSubmitText, null, null));
                 if (match.areAllSubmitsReceived()) {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId());
                 }
@@ -72,10 +68,28 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, String message) {
-        for (MatchPlayer matchPlayer : matchPlayers) {
-            messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
+    private MatchPlayer getSubmittingPlayer(long externalUserId, List<MatchPlayer> matchPlayers) {
+        return matchPlayers.stream()
+                .filter(mPlayer -> mPlayer.getPlayer().getExternalId() == externalUserId)
+                .findFirst().orElseThrow();
+    }
+
+    private void deleteOldSubmitMessage(MatchPlayer submittingPlayer) {
+        if (submittingPlayer.hasSubmitMessage()) {
+            messagingService.deleteMessageAsync(submittingPlayer.getSubmitMessageId());
         }
+    }
+
+    private boolean isLastConflictSubmit(Match match, int candidatePlace) {
+        return isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(RESUBMITS_LIMIT);
+    }
+
+    private boolean isConflictSubmit(List<MatchPlayer> matchPlayers, int candidatePlace) {
+        return matchPlayers.stream()
+                .anyMatch(matchPlayer -> {
+                    Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
+                    return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
+                });
     }
 
     private String getConflictMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {
@@ -99,12 +113,10 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         return conflictTextBuilder.toString();
     }
 
-    private boolean hasConflictInSubmit(Collection<MatchPlayer> matchPlayers, int candidatePlace) {
-        return matchPlayers.stream()
-                .anyMatch(matchPlayer -> {
-                    Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
-                    return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
-                });
+    private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, String message) {
+        for (MatchPlayer matchPlayer : matchPlayers) {
+            messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
+        }
     }
 
     @Override
@@ -116,7 +128,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         private final long matchId;
         private final int candidatePlace;
 
-        public Callback(String callbackText) {
+        private Callback(String callbackText) {
             String[] callbackData = callbackText.split("__");
             this.matchId = Long.parseLong(callbackData[0]);
             this.candidatePlace = Integer.parseInt(callbackData[1]);

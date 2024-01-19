@@ -11,6 +11,10 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 @Service
 @RequiredArgsConstructor
 public class RegisterCommandProcessor extends CommandProcessor {
+    private static final String NICKNAME_IS_BUSY_MESSAGE_TEMPLATE = "Пользователь со steam ником %s уже существует!";
+    private static final String ALREADY_REGISTERED_MESSAGE_TEMPLATE = "Вы уже зарегистрированы под steam ником %s! " +
+            "Для смены ника выполните команду '/change_steam_name *new_name*'";
+
     private final PlayerRepository playerRepository;
 
     @Override
@@ -24,9 +28,9 @@ public class RegisterCommandProcessor extends CommandProcessor {
         String steamName = commandMessage.getAllArguments();
         playerRepository.findByExternalIdOrSteamName(externalId, steamName).ifPresent(player -> {
             if (externalId == player.getExternalId()) {
-                throw new AnswerableDuneBotException("Вы уже зарегистрированы под steam ником " + player.getSteamName() + "! Для смены ника выполните команду \"/change_steam_name *new_name*\"", player.getExternalChatId());
+                throw new AnswerableDuneBotException(String.format(ALREADY_REGISTERED_MESSAGE_TEMPLATE, player.getSteamName()), player.getExternalChatId());
             } else if (steamName.equals(player.getSteamName())) {
-                throw new AnswerableDuneBotException("Пользователь со steam ником " + steamName + " уже существует!", player.getExternalChatId());
+                throw new AnswerableDuneBotException(String.format(NICKNAME_IS_BUSY_MESSAGE_TEMPLATE, steamName), player.getExternalChatId());
             }
         });
     }
