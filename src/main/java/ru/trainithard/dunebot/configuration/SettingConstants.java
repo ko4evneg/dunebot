@@ -12,5 +12,5 @@ public class SettingConstants {
     public static final int TOPIC_ID_UPRISING = 4;
     // TODO:  extract
     public static final int POSITIVE_POLL_OPTION_ID = 0;
-    public static final int STEAM_NAME_MAX_WORDS = 16;
+    public static final int RESUBMITS_LIMIT = 3;
 }

@@ -22,6 +22,7 @@ public class TelegramUpdateProcessor {
     private final TelegramTextCommandValidator telegramTextCommandValidator;
     private final Map<Command, CommandProcessor> commandProcessors;
 
+    // TODO: new and register produces same error
     public void process() {
         Update update = telegramBot.poll();
         while (update != null) {

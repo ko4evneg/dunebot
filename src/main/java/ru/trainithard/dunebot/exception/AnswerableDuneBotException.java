@@ -14,6 +14,7 @@ public class AnswerableDuneBotException extends DubeBotException {
         this.telegramTopicId = null;
     }
 
+    // TODO:  replace to command message
     public AnswerableDuneBotException(String message, long telegramChatId, @Nullable Integer telegramTopicId) {
         super(message);
         this.telegramChatId = telegramChatId;
