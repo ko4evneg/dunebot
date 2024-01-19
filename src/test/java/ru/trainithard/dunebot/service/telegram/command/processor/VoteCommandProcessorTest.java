@@ -53,8 +53,8 @@ class VoteCommandProcessorTest extends TestContextMock {
     private TaskScheduler taskScheduler;
 
     private static final String POLL_ID = "100500";
-    private static final Long CHAT_ID = 100501L;
-    private static final String REPLY_ID = "100500";
+    private static final long CHAT_ID = 100501L;
+    private static final int REPLY_ID = 100500;
     private static final long USER_2_ID = 12346L;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
@@ -89,7 +89,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id between 10000 and 10003 or external_id = " + USER_2_ID);
-        jdbcTemplate.execute("delete from external_messages where id = 10000 or chat_id between 12345 and 12348 or chat_id = " + CHAT_ID);
+        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10001 or chat_id between 12345 and 12348 or chat_id = " + CHAT_ID);
     }
 
     @Test
@@ -122,6 +122,33 @@ class VoteCommandProcessorTest extends TestContextMock {
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
         assertThat(actualPlayerIds, contains(10000L));
+    }
+
+    @Test
+    void shouldSendDeleteStartMessageOnPositiveRegistrationRevocationWhenNotEnoughPlayersLeft() {
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
+                "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 4, external_start_id = 10001 where id = 10000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                "values (10003, 10000, 10001, '2010-10-10')");
+
+        commandProcessor.process(getPollAnswerCommandMessage(1));
+
+        verify(messagingService, times(1)).deleteMessageAsync(argThat(message ->
+                message.getMessageId().equals(9000) && message.getChatId().equals(CHAT_ID) && message.getReplyId().equals(REPLY_ID)));
+    }
+
+    @Test
+    void shouldNotSendDeleteStartMessageOnPositiveRegistrationRevocationWhenEnoughPlayersLeft() {
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
+                "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = 10001 where id = 10000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                "values (10003, 10000, 10001, '2010-10-10')");
+
+        commandProcessor.process(getPollAnswerCommandMessage(1));
+
+        verify(messagingService, never()).deleteMessageAsync(any());
     }
 
     @ParameterizedTest
@@ -207,7 +234,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertEquals(SettingConstants.CHAT_ID, messageDto.getChatId());
-        assertEquals(REPLY_ID, Integer.toString(messageDto.getReplyMessageId()));
+        assertEquals(REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("""
                 Матч 10000 собран. Участники:
                 @en1, @name2, @en3, @en4""", messageDto.getText());

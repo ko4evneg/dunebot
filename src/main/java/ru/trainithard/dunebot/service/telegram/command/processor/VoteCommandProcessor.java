@@ -82,7 +82,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .map(Player::getMention)
                 .toList();
 
-        return new MessageDto(matchTopicChatId, "Матч 10000 собран. Участники:\n" + String.join(", ", playerMentions), replyTopicId, null);
+        return new MessageDto(matchTopicChatId, "Матч " + match.getId() + " собран. Участники:\n" + String.join(", ", playerMentions), replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {
@@ -105,9 +105,10 @@ public class VoteCommandProcessor extends CommandProcessor {
                         matchRepository.save(match);
                         matchPlayerRepository.delete(matchPlayer);
                     });
+                    if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {
+                        messagingService.deleteMessageAsync(match.getExternalStartId());
+                    }
                 });
-        //      if (match.getRegisteredPlayersCount() == 0) {
-        // TODO: delete start match if threshold crosses 4});
     }
 
     @Override
