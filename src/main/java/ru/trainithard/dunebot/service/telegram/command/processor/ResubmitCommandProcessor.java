@@ -11,10 +11,8 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.time.Clock;
 import java.util.List;
 
 @Service
@@ -23,10 +21,8 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест (%d)";
 
     private final MatchPlayerRepository matchPlayerRepository;
-    private final MessagingService messagingService;
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
-    private final Clock clock;
     private final SubmitCommandProcessor submitCommandProcessor;
 
 
