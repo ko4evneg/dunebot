@@ -3,8 +3,6 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.exception.MatchNotExistsException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -12,6 +10,7 @@ import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.validator.SubmitValidatedMatchRetriever;
 
 import java.util.List;
 
@@ -24,35 +23,17 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
     private final SubmitCommandProcessor submitCommandProcessor;
+    private final SubmitValidatedMatchRetriever validatedMatchRetriever;
 
 
     @Override
     public void process(CommandMessage commandMessage) {
-        Match match = getValidatedMatch(commandMessage);
+        Match match = validatedMatchRetriever.getValidatedMatch(commandMessage);
         if (!match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
             matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT));
         }
 
         process(match);
-    }
-
-    // TODO:  extract to abstact class
-    private Match getValidatedMatch(CommandMessage commandMessage) {
-        long telegramChatId = commandMessage.getChatId();
-        try {
-            long matchId = Long.parseLong(commandMessage.getArgument(1));
-            Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow(MatchNotExistsException::new);
-            validate(telegramChatId, match);
-
-            boolean isSubmitAllowed = match.getMatchPlayers().stream()
-                    .anyMatch(matchPlayer -> matchPlayer.getPlayer().getExternalId() == commandMessage.getUserId());
-            if (!isSubmitAllowed) {
-                throw new AnswerableDuneBotException("Вы не можете инициировать публикацию этого матча", telegramChatId);
-            }
-            return match;
-        } catch (NumberFormatException | MatchNotExistsException exception) {
-            throw new AnswerableDuneBotException("Матча с таким ID не существует!", telegramChatId);
-        }
     }
 
     void process(Match match) {
@@ -72,18 +53,6 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             matchPlayer.setCandidatePlace(null);
             matchPlayer.setSubmitMessageId(null);
         });
-    }
-
-    private static void validate(long telegramChatId, Match match) {
-        if (match.isFinished()) {
-            throw new AnswerableDuneBotException("Запрещено регистрировать результаты завершенных матчей", telegramChatId);
-        }
-        if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {
-            throw new AnswerableDuneBotException("В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос", telegramChatId);
-        }
-        if (match.isOnSubmit()) {
-            throw new AnswerableDuneBotException("Запрос на публикацию этого матча уже сделан", telegramChatId);
-        }
     }
 
     @Override

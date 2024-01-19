@@ -28,22 +28,25 @@ public class MatchFinishingService {
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
-        match.setFinished(true);
-        match.setOnSubmit(false);
-        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
-        transactionTemplate.executeWithoutResult(status -> {
-            matchRepository.save(match);
-            matchPlayerRepository.saveAll(match.getMatchPlayers());
-        });
+        if (!match.isFinished()) {
+            match.setFinished(true);
+            match.setOnSubmit(false);
+            match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
+            transactionTemplate.executeWithoutResult(status -> {
+                matchRepository.save(match);
+                matchPlayerRepository.saveAll(match.getMatchPlayers());
+            });
 
-        ExternalPollId externalPollId = match.getExternalPollId();
-        MessageDto finishMessage = new MessageDto(externalPollId.getChatId(), reason, externalPollId.getReplyId(), null);
-        messagingService.sendMessageAsync(finishMessage);
+            ExternalPollId externalPollId = match.getExternalPollId();
+            MessageDto finishMessage = new MessageDto(externalPollId.getChatId(), reason, externalPollId.getReplyId(), null);
+            messagingService.sendMessageAsync(finishMessage);
+        }
     }
 
     public void finishSuccessfullySubmittedMatch(long matchId) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
         match.setFinished(true);
+        match.setOnSubmit(false);
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);

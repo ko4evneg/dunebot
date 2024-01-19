@@ -197,7 +197,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         assertFalse(isAnyExternalMessageExist);
     }
 
-    // TODO:  finish match in service, check call invocation when resubmit limit reached
     @Test
     void shouldInvokeUnsuccessfulSubmitMatchFinishOnResubmitExceedingMessage() {
         jdbcTemplate.execute("update matches set positive_answers_count = 4, submits_retry_count = 3 where id = 15000");

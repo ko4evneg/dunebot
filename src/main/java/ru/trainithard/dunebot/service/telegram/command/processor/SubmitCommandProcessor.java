@@ -4,8 +4,7 @@ import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.exception.MatchNotExistsException;
+import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -18,6 +17,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.validator.SubmitValidatedMatchRetriever;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -29,45 +29,26 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
-    private static final int FINISH_MATCH_TIMEOUT = 120;
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
     private final TaskScheduler dunebotTaskScheduler;
+    private final SubmitValidatedMatchRetriever validatedMatchRetriever;
     private final Clock clock;
 
     @Override
     public void process(CommandMessage commandMessage) {
-        process(getValidatedMatch(commandMessage));
-    }
-
-    private Match getValidatedMatch(CommandMessage commandMessage) {
-        long telegramChatId = commandMessage.getChatId();
-        try {
-            long matchId = Long.parseLong(commandMessage.getArgument(1));
-            Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow(MatchNotExistsException::new);
-            validate(telegramChatId, match);
-
-            boolean isSubmitAllowed = match.getMatchPlayers().stream()
-                    .anyMatch(matchPlayer -> matchPlayer.getPlayer().getExternalId() == commandMessage.getUserId());
-            if (!isSubmitAllowed) {
-                throw new AnswerableDuneBotException("Вы не можете инициировать публикацию этого матча", telegramChatId);
-            }
-            return match;
-        } catch (NumberFormatException | MatchNotExistsException exception) {
-            throw new AnswerableDuneBotException("Матча с таким ID не существует!", telegramChatId);
-        }
+        process(validatedMatchRetriever.getValidatedMatch(commandMessage));
     }
 
     void process(Match match) {
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
-            if (matchPlayer.getSubmitMessageId() != null) {
-                messagingService.deleteMessageAsync(matchPlayer.getSubmitMessageId());
-            }
+            deleteOldSubmitMessage(matchPlayer);
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId().toString());
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
@@ -81,25 +62,20 @@ public class SubmitCommandProcessor extends CommandProcessor {
             });
         }
 
+        Instant forcedFinishTime = Instant.now(clock).plus(SettingConstants.FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
+        String forcedFinishMessage = String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
-                        .finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId())),
-                Instant.now(clock).plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
+                .finishUnsuccessfullySubmittedMatch(match.getId(), forcedFinishMessage), forcedFinishTime);
     }
 
-    private static void validate(long telegramChatId, Match match) {
-        if (match.isFinished()) {
-            throw new AnswerableDuneBotException("Запрещено регистрировать результаты завершенных матчей", telegramChatId);
-        }
-        if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {
-            throw new AnswerableDuneBotException("В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос", telegramChatId);
-        }
-        if (match.isOnSubmit()) {
-            throw new AnswerableDuneBotException("Запрос на публикацию этого матча уже сделан", telegramChatId);
+    private void deleteOldSubmitMessage(MatchPlayer matchPlayer) {
+        if (matchPlayer.getSubmitMessageId() != null) {
+            messagingService.deleteMessageAsync(matchPlayer.getSubmitMessageId());
         }
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, List<MatchPlayer> registeredMatchPlayers, String matchIdString) {
-        String text = String.format("Выберите место, которое вы заняли в матче %s:", matchIdString);
+        String text = String.format(MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE, matchIdString);
         List<List<ButtonDto>> pollKeyboard = getSubmitCallbackKeyboard(registeredMatchPlayers, matchIdString);
         String playersChatId = Long.toString(matchPlayer.getPlayer().getExternalChatId());
         return new MessageDto(playersChatId, text, null, pollKeyboard);
