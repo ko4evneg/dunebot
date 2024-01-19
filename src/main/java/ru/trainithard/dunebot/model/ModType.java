@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Enum describing available game modes.
+ */
 @Getter
 @RequiredArgsConstructor
 public enum ModType {
@@ -17,8 +20,17 @@ public enum ModType {
 
     private static final Map<String, ModType> modTypeByAlias;
 
+    /**
+     * Title to display in polls.
+     */
     private final String modName;
+    /**
+     * Name for command usage.
+     */
     private final String alias;
+    /**
+     * Maximum allowed players count.
+     */
     private final int playersCount;
 
     static {

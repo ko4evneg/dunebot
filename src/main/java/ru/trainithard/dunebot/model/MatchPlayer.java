@@ -7,6 +7,9 @@ import lombok.Setter;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 
+/**
+ * Entity for relation between specific <code>Match</code> and positively voted <code>Player</code>.
+ */
 @Getter
 @Setter
 @Entity
@@ -19,27 +22,23 @@ public class MatchPlayer extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "match_id")
     private Match match;
-
     /**
-     * Positively answered to match poll <code>Player</code>.
+     * Positively voted to match poll <code>Player</code>.
      */
     @OneToOne
     @JoinColumn(name = "player_id")
     private Player player;
-
     /**
-     * <code>ExternalMessageId</code> of message sent to a player for selection of his <code>candidatePlace</code>.
+     * External ID of a message sent to a player for selection of his <code>candidatePlace</code>.
      */
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
     private ExternalMessageId submitMessageId;
-
     /**
      * Place in the <code>Match</code>. Is set when all players sent their <code>candidatePlace</code> without conflicts.
      */
     @Nullable
     private Integer place;
-
     /**
      * Candidate place in the <code>Match</code>. Used as a buffer before setting actual <code>place</code> for resolving
      * conflicting places.

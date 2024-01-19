@@ -8,6 +8,9 @@ import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.model.BaseEntity;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 
+/**
+ * Class representing text message in external messenger.
+ */
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "EXTERNAL_MESSAGES")

@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Enum describing available bot commands.
+ */
 @Getter
 @RequiredArgsConstructor
 public enum Command {
@@ -23,7 +26,13 @@ public enum Command {
 
     private static final Map<String, Command> availableCommands;
 
+    /**
+     * Whether the command can be invoked by unregistered user.
+     */
     private final boolean anonymous;
+    /**
+     * Minimal arguments count required for the command.
+     */
     private final int minimalArgumentsCount;
 
     static {

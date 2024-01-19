@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
 
+/**
+ * Class representing poll in external messenger.
+ */
 @Entity
 @Getter
 @Setter
