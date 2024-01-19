@@ -17,6 +17,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;

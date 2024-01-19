@@ -2,7 +2,7 @@ package ru.trainithard.dunebot.service.dto;
 
 import lombok.Getter;
 import org.springframework.lang.Nullable;
-import ru.trainithard.dunebot.service.telegram.ChatType;
+import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 @Getter

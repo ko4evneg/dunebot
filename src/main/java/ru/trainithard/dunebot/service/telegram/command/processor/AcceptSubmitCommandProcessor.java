@@ -19,11 +19,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+
 @Service
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
-    private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE = "В матче %1$d за вами зафиксировано %2$d место.\nПри ошибке используйте команду '/resubmit %1$d'";
+    private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE = "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'";
     private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE = "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
 
     private final MatchPlayerRepository matchPlayerRepository;
@@ -61,7 +63,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(matchPlayers);
                 });
-                String acceptedSubmitText = String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace);
+                String acceptedSubmitText = String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
                 messagingService.sendMessageAsync(new MessageDto(matchPlayer.getSubmitMessageId().getChatId(), acceptedSubmitText, null, null));
                 if (match.areAllSubmitsReceived()) {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId());
@@ -82,13 +84,14 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 .collect(Collectors.groupingBy(MatchPlayer::getCandidatePlace));
         List<MatchPlayer> candidatePlaceMatchPlayers = playersByPlace.computeIfAbsent(candidatePlace, key -> new ArrayList<>());
         candidatePlaceMatchPlayers.add(candidate);
-        StringBuilder conflictTextBuilder = new StringBuilder("Некоторые игроки не смогли поделить место:\n");
+        StringBuilder conflictTextBuilder = new StringBuilder("Некоторые игроки не смогли поделить место:").append(EXTERNAL_LINE_SEPARATOR);
         for (Map.Entry<Integer, List<MatchPlayer>> entry : playersByPlace.entrySet()) {
             List<MatchPlayer> conflictMatchPlayers = entry.getValue();
             if (conflictMatchPlayers.size() > 1) {
                 List<String> playerNames = conflictMatchPlayers.stream().map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName()).toList();
                 String playerNamesString = String.join(" и ", playerNames);
-                conflictTextBuilder.append(entry.getKey()).append(" место: ").append(playerNamesString + "\n\n");
+                conflictTextBuilder.append(entry.getKey()).append(" место: ").append(playerNamesString)
+                        .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
             }
         }
         conflictTextBuilder.append("Повторный опрос результата...");

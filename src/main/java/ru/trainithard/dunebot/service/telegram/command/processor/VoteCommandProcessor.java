@@ -3,7 +3,6 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -23,6 +22,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+import static ru.trainithard.dunebot.configuration.SettingConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class VoteCommandProcessor extends CommandProcessor {
@@ -38,7 +39,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage) {
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
-        if (selectedPollAnswers.contains(SettingConstants.POSITIVE_POLL_OPTION_ID)) {
+        if (selectedPollAnswers.contains(POSITIVE_POLL_OPTION_ID)) {
             registerMatchPlayer(commandMessage);
         } else {
             unregisterMatchPlayer(commandMessage);
@@ -70,7 +71,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                         deleteExistingOldSubmitMessage(match);
                         match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                         matchRepository.save(match);
-                    }), Instant.now(clock).plusSeconds(SettingConstants.MATCH_START_DELAY));
+                    }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
             scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
         }
     }
@@ -82,7 +83,8 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .map(Player::getMention)
                 .toList();
 
-        return new MessageDto(matchTopicChatId, "Матч " + match.getId() + " собран. Участники:\n" + String.join(", ", playerMentions), replyTopicId, null);
+        return new MessageDto(matchTopicChatId, "Матч " + match.getId() + " собран. Участники:" +
+                EXTERNAL_LINE_SEPARATOR + String.join(", ", playerMentions), replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {

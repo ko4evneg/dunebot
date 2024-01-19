@@ -22,21 +22,17 @@ public class TelegramUpdateProcessor {
     private final TelegramTextCommandValidator telegramTextCommandValidator;
     private final Map<Command, CommandProcessor> commandProcessors;
 
-    // TODO: new and register produces same error
     public void process() {
         Update update = telegramBot.poll();
         while (update != null) {
             try {
                 Message message = update.getMessage();
-                // TODO: validate only valid messages goes further [!!!] commands should contain all complete actions with valid arguments
                 if (message != null && message.getText() != null && message.getText().startsWith("/")) {
                     CommandMessage commandMessage = new CommandMessage(message);
                     telegramTextCommandValidator.validate(commandMessage);
-                    // TODO:  selection tests
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 } else if (update.hasPollAnswer()) {
                     CommandMessage commandMessage = new CommandMessage(update.getPollAnswer());
-                    // TODO:   validate? ;
                     commandProcessors.get(commandMessage.getCommand()).process(commandMessage);
                 } else if (update.hasCallbackQuery()) {
                     CommandMessage commandMessage = new CommandMessage(update.getCallbackQuery());
@@ -45,8 +41,6 @@ public class TelegramUpdateProcessor {
             } catch (AnswerableDuneBotException answerableException) {
                 sendUserNotificationMessage(answerableException);
             } catch (Exception e) {
-                // TODO:
-                System.out.println(e.getMessage());
             } finally {
                 update = telegramBot.poll();
             }
@@ -58,12 +52,9 @@ public class TelegramUpdateProcessor {
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(answerableException.getTelegramChatId());
             sendMessage.setText(answerableException.getMessage());
-            // TODO:  test replyId null case
             MessageDto messageDto = new MessageDto(Long.toString(answerableException.getTelegramChatId()), answerableException.getMessage(), answerableException.getTelegramReplyId(), null);
             messagingService.sendMessageAsync(messageDto);
         } catch (Exception e) {
-            // TODO:
-            throw new RuntimeException(e);
         }
     }
 }

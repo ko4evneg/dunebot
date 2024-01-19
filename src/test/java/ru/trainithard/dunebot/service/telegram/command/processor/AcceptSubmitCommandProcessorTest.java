@@ -17,10 +17,10 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
-import ru.trainithard.dunebot.service.telegram.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
@@ -238,7 +238,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано " + place + " место.\n" +
+        assertEquals("В матче 15000 за вами зафиксировано " + place + " место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
                 "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
     }
 

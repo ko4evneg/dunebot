@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram;
+package ru.trainithard.dunebot.model.messaging;
 
 public enum ChatType {
     PRIVATE, GROUP, SUPERGROUP, CHANNEL;

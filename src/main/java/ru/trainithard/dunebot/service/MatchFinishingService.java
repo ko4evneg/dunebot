@@ -16,6 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+
 @Service
 @RequiredArgsConstructor
 public class MatchFinishingService {
@@ -23,19 +25,6 @@ public class MatchFinishingService {
     private final MatchPlayerRepository matchPlayerRepository;
     private final TransactionTemplate transactionTemplate;
     private final MessagingService messagingService;
-
-    public void finishSuccessfullySubmittedMatch(long matchId) {
-        Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
-        match.setFinished(true);
-        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
-        transactionTemplate.executeWithoutResult(status -> {
-            matchRepository.save(match);
-            matchPlayerRepository.saveAll(match.getMatchPlayers());
-        });
-
-        messagingService.sendMessageAsync(getMatchFinishMessage(match));
-        //todo add leader selection flow
-    }
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
@@ -52,16 +41,28 @@ public class MatchFinishingService {
         messagingService.sendMessageAsync(finishMessage);
     }
 
+    public void finishSuccessfullySubmittedMatch(long matchId) {
+        Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
+        match.setFinished(true);
+        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.saveAll(match.getMatchPlayers());
+        });
+
+        messagingService.sendMessageAsync(getMatchFinishMessage(match));
+    }
+
     private MessageDto getMatchFinishMessage(Match match) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Матч ").append(match.getId()).append(" завершился:\n");
+        stringBuilder.append("Матч ").append(match.getId()).append(" завершился:").append(EXTERNAL_LINE_SEPARATOR);
         Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
         match.getMatchPlayers().stream()
                 .filter(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace()) != -1)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
-        playerNamesByPlace.forEach((place, name) -> stringBuilder.append(place).append(". ").append(name).append("\n"));
-        stringBuilder.deleteCharAt(stringBuilder.lastIndexOf("\n"));
+        playerNamesByPlace.forEach((place, name) -> stringBuilder.append(place).append(". ").append(name).append(EXTERNAL_LINE_SEPARATOR));
+        stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR));
 
         ExternalPollId externalPollId = match.getExternalPollId();
         return new MessageDto(externalPollId.getChatId(), stringBuilder.toString(), externalPollId.getReplyId(), null);

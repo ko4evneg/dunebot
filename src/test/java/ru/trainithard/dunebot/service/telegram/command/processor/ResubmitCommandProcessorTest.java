@@ -18,8 +18,8 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.telegram.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.time.Clock;

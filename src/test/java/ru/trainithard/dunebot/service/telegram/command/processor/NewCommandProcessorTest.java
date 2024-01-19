@@ -20,10 +20,10 @@ import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
-import ru.trainithard.dunebot.service.telegram.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.concurrent.CompletableFuture;
