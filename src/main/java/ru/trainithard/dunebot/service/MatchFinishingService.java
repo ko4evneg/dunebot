@@ -34,6 +34,7 @@ public class MatchFinishingService {
         });
 
         messagingService.sendMessageAsync(getMatchFinishMessage(match));
+        //todo add leader selection flow
     }
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {

@@ -65,6 +65,9 @@ public class SubmitCommandProcessor extends CommandProcessor {
     void process(Match match) {
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
+            if (matchPlayer.getSubmitMessageId() != null) {
+                messagingService.deleteMessageAsync(matchPlayer.getSubmitMessageId());
+            }
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId().toString());
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
