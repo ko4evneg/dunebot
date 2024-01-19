@@ -32,6 +32,10 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AcceptSubmitCommandProcessorTest extends TestContextMock {
+    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final long USER_1_ID = 11000L;
+    private static final long USER_2_ID = 11001L;
+
     @Autowired
     private AcceptSubmitCommandProcessor processor;
     @MockBean
@@ -40,9 +44,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     private ResubmitCommandProcessor resubmitCommandProcessor;
     @MockBean
     private MessagingService messagingService;
-
-    private static final long USER_1_ID = 11000L;
-    private static final long USER_2_ID = 11001L;
 
     @BeforeEach
     void beforeEach() {
@@ -151,7 +152,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishUnsuccessfullySubmittedMatch(eq(15000L));
+        verify(matchFinishingService, never()).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE));
     }
 
     @Test
