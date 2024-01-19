@@ -1,23 +1,22 @@
 package ru.trainithard.dunebot.exception;
 
 import lombok.Getter;
-import org.springframework.lang.Nullable;
+import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 @Getter
-public class AnswerableDuneBotException extends DubeBotException {
+public class AnswerableDuneBotException extends DuneBotException {
     private final long telegramChatId;
-    private final Integer telegramTopicId;
+    private final Integer telegramReplyId;
 
     public AnswerableDuneBotException(String message, long telegramChatId) {
         super(message);
         this.telegramChatId = telegramChatId;
-        this.telegramTopicId = null;
+        this.telegramReplyId = null;
     }
 
-    // TODO:  replace to command message
-    public AnswerableDuneBotException(String message, long telegramChatId, @Nullable Integer telegramTopicId) {
+    public AnswerableDuneBotException(String message, CommandMessage commandMessage) {
         super(message);
-        this.telegramChatId = telegramChatId;
-        this.telegramTopicId = telegramTopicId;
+        this.telegramChatId = commandMessage.getChatId();
+        this.telegramReplyId = commandMessage.getReplyMessageId();
     }
 }

@@ -22,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 public class TelegramMessagingService implements MessagingService {
     private final TelegramBot telegramBot;
 
-    // TODO:  add tests
     @Override
     public CompletableFuture<ExternalPollDto> sendPollAsync(PollMessageDto pollMessage) {
         CompletableFuture<ExternalPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
@@ -43,8 +42,8 @@ public class TelegramMessagingService implements MessagingService {
     private SendPoll getSendPoll(PollMessageDto pollMessage) {
         SendPoll sendPoll = new SendPoll(pollMessage.getChatId(), pollMessage.getText(), pollMessage.getOptions());
         sendPoll.setReplyToMessageId(pollMessage.getReplyMessageId());
-        sendPoll.setIsAnonymous(pollMessage.isAnonymous());
-        sendPoll.setAllowMultipleAnswers(pollMessage.isAllowMultipleAnswers());
+        sendPoll.setIsAnonymous(false);
+        sendPoll.setAllowMultipleAnswers(false);
         return sendPoll;
     }
 

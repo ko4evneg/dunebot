@@ -31,7 +31,7 @@ public class NewCommandProcessor extends CommandProcessor {
         String modTypeString = commandMessage.getArgument(1);
         ModType modType = ModType.getByAlias(modTypeString);
         if (modType == null) {
-            throw new AnswerableDuneBotException("Неподдерживаемый тип матча: " + modTypeString, commandMessage.getChatId(), commandMessage.getReplyMessageId());
+            throw new AnswerableDuneBotException("Неподдерживаемый тип матча: " + modTypeString, commandMessage);
         }
         playerRepository.findByExternalId(commandMessage.getUserId())
                 .ifPresent(player -> messagingService.sendPollAsync(getNewPollMessage(player, modType))

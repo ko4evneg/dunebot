@@ -14,7 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.DubeBotException;
+import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -203,7 +203,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     private static Stream<Arguments> exceptionsProvider() {
         return Stream.of(
                 Arguments.of(RuntimeException.class),
-                Arguments.of(DubeBotException.class),
+                Arguments.of(DuneBotException.class),
                 Arguments.of(NullPointerException.class)
         );
     }

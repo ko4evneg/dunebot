@@ -111,8 +111,6 @@ class NewCommandProcessorTest extends TestContextMock {
         PollMessageDto actualPoll = pollCaptor.getValue();
 
         assertThat(actualPoll, allOf(
-                hasProperty("allowMultipleAnswers", is(false)),
-                hasProperty("anonymous", is(false)),
                 hasProperty("text", is("Игрок st_pl (name) призывает всех на матч в " + ModType.CLASSIC.getModName())),
                 hasProperty("options", contains("Да", "Нет", "Результат"))
         ));

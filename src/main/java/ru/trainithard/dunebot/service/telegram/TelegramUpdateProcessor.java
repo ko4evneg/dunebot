@@ -59,7 +59,7 @@ public class TelegramUpdateProcessor {
             sendMessage.setChatId(answerableException.getTelegramChatId());
             sendMessage.setText(answerableException.getMessage());
             // TODO:  test replyId null case
-            MessageDto messageDto = new MessageDto(Long.toString(answerableException.getTelegramChatId()), answerableException.getMessage(), answerableException.getTelegramTopicId(), null);
+            MessageDto messageDto = new MessageDto(Long.toString(answerableException.getTelegramChatId()), answerableException.getMessage(), answerableException.getTelegramReplyId(), null);
             messagingService.sendMessageAsync(messageDto);
         } catch (Exception e) {
             // TODO:

@@ -9,8 +9,6 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 public class PollMessageDto extends MessageDto {
-    private final boolean allowMultipleAnswers = false;
-    private final boolean anonymous = false;
     private List<String> options;
 
     public PollMessageDto(String chatId, String text, @Nullable Integer replyMessageId, List<String> options) {

@@ -9,14 +9,13 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Getter
 @NoArgsConstructor
 public class ExternalMessageDto {
-    protected Integer messageId;
-    protected Long chatId;
-    protected Integer replyId;
+    Integer messageId;
+    Long chatId;
+    Integer replyId;
 
     public ExternalMessageDto(Message message) {
         this.messageId = message.getMessageId();
         this.chatId = message.getChatId();
-        // TODO:   check threadId
         if (message.getReplyToMessage() != null) {
             this.replyId = message.getReplyToMessage().getMessageId();
         }

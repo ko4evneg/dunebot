@@ -10,7 +10,6 @@ import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 @Getter
 @NoArgsConstructor
 public final class ExternalPollDto extends ExternalMessageDto {
-
     private String pollId;
 
     public ExternalPollDto(Message message) {

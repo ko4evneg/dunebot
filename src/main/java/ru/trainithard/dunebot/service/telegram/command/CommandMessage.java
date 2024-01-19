@@ -14,17 +14,53 @@ import java.util.List;
 
 @Getter
 public class CommandMessage {
+    /**
+     * Represents external user ID.
+     */
     private final long userId;
+    /**
+     * Command to execute.
+     */
     private Command command;
+    /**
+     * Represent external messaging system chat type.
+     */
     private ChatType chatType;
+    /**
+     * External ID of the message, for which this message is a reply.
+     */
     private Integer replyMessageId;
+    /**
+     * External user first name.
+     */
     private String firstName;
+    /**
+     * External user last name.
+     */
     private String lastName;
+    /**
+     * External system user identifier (like tag, login etc...)
+     */
     private String userName;
+    /**
+     * External system chat ID to which message is belong.
+     */
     private long chatId;
+    /**
+     * External system message ID.
+     */
     private int messageId;
+    /**
+     * If a message is an answer to a poll, this field contains such an answer.
+     */
     private PollVote pollVote;
+    /**
+     * If a message is a callback, this field contains such a callback.
+     */
     private String callback;
+    /**
+     * Contains all arguments of the command. Parsed from the whole command text using any space as arguments separator.
+     */
     @Getter(AccessLevel.NONE)
     private String[] args;
 
