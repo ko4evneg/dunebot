@@ -134,8 +134,8 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         commandProcessor.process(getPollAnswerCommandMessage(1));
 
-        verify(messagingService, times(1)).deleteMessageAsync(argThat(message ->
-                message.getMessageId().equals(9000) && message.getChatId().equals(CHAT_ID) && message.getReplyId().equals(REPLY_ID)));
+        verify(messagingService, times(1)).deleteMessageAsync(argThat(messageDto ->
+                messageDto.getMessageId().equals(9000) && messageDto.getChatId().equals(CHAT_ID) && messageDto.getReplyId().equals(REPLY_ID)));
     }
 
     @Test

@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE = "В матче %1$d за вами зафиксировано %2$d место.\nПри ошибке используйте команду '/resubmit %1$d'";
+    private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE = "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
@@ -39,13 +41,17 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 .filter(mPlayer -> mPlayer.getPlayer().getExternalId() == commandMessage.getUserId())
                 .findFirst().orElseThrow();
         if (matchPlayer.getCandidatePlace() == null) {
+            if (matchPlayer.getSubmitMessageId() != null) {
+                messagingService.deleteMessageAsync(matchPlayer.getSubmitMessageId());
+            }
+
             int candidatePlace = callback.candidatePlace;
             if (hasConflictInSubmit(matchPlayers, candidatePlace) && match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
                 String conflictText = getConflictMessage(matchPlayers, matchPlayer, candidatePlace);
                 sendMessagesToMatchPlayers(matchPlayers, conflictText);
                 resubmitProcessor.process(match);
             } else if (hasConflictInSubmit(matchPlayers, candidatePlace)) {
-                sendMessagesToMatchPlayers(matchPlayers, "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.");
+                sendMessagesToMatchPlayers(matchPlayers, RESUBMIT_LIMIT_EXCEEDED_MESSAGE);
                 matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, match.getId()));
             } else {
                 //todo retry submit field fix
@@ -55,6 +61,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(matchPlayers);
                 });
+                String acceptedSubmitText = String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace);
+                messagingService.sendMessageAsync(new MessageDto(matchPlayer.getSubmitMessageId().getChatId(), acceptedSubmitText, null, null));
                 if (match.areAllSubmitsReceived()) {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId());
                 }
@@ -82,8 +90,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 String playerNamesString = String.join(" и ", playerNames);
                 conflictTextBuilder.append(entry.getKey()).append(" место: ").append(playerNamesString + "\n\n");
             }
-            conflictTextBuilder.append("Повторный опрос результата...");
         }
+        conflictTextBuilder.append("Повторный опрос результата...");
 
         return conflictTextBuilder.toString();
     }

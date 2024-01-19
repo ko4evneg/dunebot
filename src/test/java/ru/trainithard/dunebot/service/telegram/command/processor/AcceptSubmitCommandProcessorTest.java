@@ -28,6 +28,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -216,6 +217,29 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
                 hasProperty("chatId", is("12002")), hasProperty("chatId", is("12003"))
         ));
+    }
+
+    @Test
+    void shouldSendDeleteMessageForSubmitMessageOnCallbackReply() {
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__1"));
+
+        verify(messagingService, times(1)).deleteMessageAsync(argThat(messageDto ->
+                messageDto.getMessageId().equals(10002) && messageDto.getChatId().equals(11002L)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4})
+    void shouldSendMessageAboutCallbackAcceptOnCallbackReply(int place) {
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessages = messageCaptor.getValue();
+
+        assertNull(actualMessages.getReplyMessageId());
+        assertEquals("11002", actualMessages.getChatId());
+        assertEquals("В матче 15000 за вами зафиксировано " + place + " место.\n" +
+                "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
     }
 
     private CommandMessage getCommandMessage(long userId, int messageId, long chatId, String callbackData) {
