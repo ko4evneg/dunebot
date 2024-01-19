@@ -33,7 +33,6 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final TaskScheduler dunebotTaskScheduler;
     private final Clock clock;
 
-    private static final int MATCH_START_DELAY = 60;
     private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
 
     @Override
@@ -71,7 +70,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                         deleteExistingOldSubmitMessage(match);
                         match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                         matchRepository.save(match);
-                    }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
+                    }), Instant.now(clock).plusSeconds(SettingConstants.MATCH_START_DELAY));
             scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
         }
     }
@@ -79,7 +78,11 @@ public class VoteCommandProcessor extends CommandProcessor {
     private MessageDto getFullMatchMessage(Match match) {
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer replyTopicId = match.getExternalPollId().getReplyId();
-        return new MessageDto(matchTopicChatId, "notify match is full", replyTopicId, null);
+        List<String> playerMentions = playerRepository.findByMatchId(match.getId()).stream()
+                .map(Player::getMention)
+                .toList();
+
+        return new MessageDto(matchTopicChatId, "Матч 10000 собран. Участники:\n" + String.join(", ", playerMentions), replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {

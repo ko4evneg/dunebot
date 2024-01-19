@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.model.Player;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
@@ -15,5 +16,6 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     @Query("select (count(p) > 0) from Player p where p.externalId = :externalId")
     boolean existsByTelegramId(Long externalId);
 
-
+    @Query("select p from MatchPlayer mp left join mp.player p where mp.match.id = :matchId")
+    List<Player> findByMatchId(long matchId);
 }

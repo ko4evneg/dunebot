@@ -13,4 +13,5 @@ public class SettingConstants {
     // TODO:  extract
     public static final int POSITIVE_POLL_OPTION_ID = 0;
     public static final int RESUBMITS_LIMIT = 3;
+    public static final int MATCH_START_DELAY = 60;
 }
