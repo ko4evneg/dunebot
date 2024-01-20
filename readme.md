@@ -2,11 +2,14 @@
 
 | priority | issue                                                                                  |
 |----------|----------------------------------------------------------------------------------------|
+| critical | photo uploading                                                                        |
+| critical | rating                                                                                 |
 | critical | match finish check should exclude 5+ players from check when 4 already submitted votes |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                    |
 | high     | simultaneous matches spam control                                                      |
 | high     | match submits throttling                                                               |
 | high     | add leaders selection flow                                                             |
+| high     | leaders rating                                                                         |
 | high     | add TelegramMessagingService tests                                                     |
 | medium   | test TelegramApiException to runtime handling                                          |
 | medium   | test TelegramUpdateProcessor unknown exceptions handling for both methods              |
@@ -24,3 +27,6 @@
 | ID | issue                                | offer                                        |
 |----|--------------------------------------|----------------------------------------------|
 | 1  | new and register produces same error | replace message with abstract command + args |
+
+do i need processors map bean?
+what if i add plain text as command?
