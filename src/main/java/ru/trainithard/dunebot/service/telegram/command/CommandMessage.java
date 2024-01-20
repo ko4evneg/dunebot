@@ -105,7 +105,7 @@ public class CommandMessage {
      * @return argument <code>String</code> value
      */
     public String getArgument(int argumentNumber) {
-        return args.length > argumentNumber ? null : args[argumentNumber - 1];
+        return argumentNumber > args.length || argumentNumber < 1 ? null : args[argumentNumber - 1];
     }
 
     public String getAllArguments() {
