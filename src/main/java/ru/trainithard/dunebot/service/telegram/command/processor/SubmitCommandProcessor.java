@@ -12,12 +12,12 @@ import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.service.telegram.command.validator.SubmitValidatedMatchRetriever;
 
 import java.time.Clock;
 import java.time.Instant;

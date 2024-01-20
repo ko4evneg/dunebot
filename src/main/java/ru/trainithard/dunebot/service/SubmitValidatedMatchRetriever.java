@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.validator;
+package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
