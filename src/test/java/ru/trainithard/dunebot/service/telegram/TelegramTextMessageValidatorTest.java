@@ -17,6 +17,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.validator.TelegramTextCommandValidator;
 
 import java.util.stream.Stream;
 

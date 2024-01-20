@@ -21,7 +21,7 @@ import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
-import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactory;
+import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactoryImpl;
 import ru.trainithard.dunebot.service.telegram.factory.CommandProcessorFactory;
 import ru.trainithard.dunebot.service.telegram.factory.ValidationStrategyFactory;
 import ru.trainithard.dunebot.service.telegram.validator.DefaultCommandMessageValidator;
@@ -54,7 +54,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @MockBean
     private CommandProcessorFactory commandProcessorFactory;
     @MockBean
-    private CommandMessageFactory commandMessageFactory;
+    private CommandMessageFactoryImpl commandMessageFactory;
 
     @BeforeEach
     void beforeEach() {
