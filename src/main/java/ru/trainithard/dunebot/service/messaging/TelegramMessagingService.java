@@ -41,10 +41,7 @@ public class TelegramMessagingService implements MessagingService {
         CompletableFuture<ExternalPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendPoll(pollMessage));
-            sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                rethrowRuntimeOnApiException(throwable, SEND_POLL_CALLBACK_EXCEPTION_MESSAGE);
-                telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
-            });
+            sendMessageCompletableFuture.whenComplete((message, throwable) -> telegramMessageCompletableFuture.complete(new ExternalPollDto(message)));
         } catch (TelegramApiException exception) {
             throw new TelegramApiCallException(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
@@ -64,10 +61,7 @@ public class TelegramMessagingService implements MessagingService {
         CompletableFuture<ExternalMessageDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendMessage(messageDto));
-            sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                rethrowRuntimeOnApiException(throwable, SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE);
-                telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
-            });
+            sendMessageCompletableFuture.whenComplete((message, throwable) -> telegramMessageCompletableFuture.complete(new ExternalMessageDto(message)));
         } catch (TelegramApiException exception) {
             throw new TelegramApiCallException(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
@@ -94,11 +88,5 @@ public class TelegramMessagingService implements MessagingService {
         InlineKeyboardButton inlineButton = new InlineKeyboardButton(button.getText());
         inlineButton.setCallbackData(button.getCallback());
         return inlineButton;
-    }
-
-    private void rethrowRuntimeOnApiException(Throwable throwable, String message) {
-        if (throwable != null) {
-            throw new TelegramApiCallException(message, throwable);
-        }
     }
 }
