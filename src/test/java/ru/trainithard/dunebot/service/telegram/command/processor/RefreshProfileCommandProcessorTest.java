@@ -78,6 +78,6 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         user.setLastName("newLname");
         user.setUserName("newUname");
         message.setFrom(user);
-        return new CommandMessage(message);
+        return CommandMessage.getMessageInstance(message);
     }
 }

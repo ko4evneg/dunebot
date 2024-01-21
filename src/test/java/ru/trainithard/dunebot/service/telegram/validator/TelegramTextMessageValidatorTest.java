@@ -58,7 +58,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
     void shouldCorrectlyFillChatIdAndReplyIdForPersonalMessage() {
         message.setText("/fake_command");
 
-        CommandMessage commandMessage = new CommandMessage(message);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
         assertNull(actualException.getTelegramReplyId());
@@ -71,7 +71,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         message.setText("/fake_command");
         message.setReplyToMessage(replyMessage);
 
-        CommandMessage commandMessage = new CommandMessage(message);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
         assertEquals(9001, actualException.getTelegramReplyId());
@@ -82,7 +82,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
     void shouldNotThrowForValidCommandWithoutArguments(Command command) {
         message.setText("/" + command.name().toLowerCase());
 
-        assertDoesNotThrow(() -> validator.validate(new CommandMessage(message)));
+        assertDoesNotThrow(() -> validator.validate(CommandMessage.getMessageInstance(message)));
     }
 
     @ParameterizedTest
@@ -91,7 +91,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
 
-        assertDoesNotThrow(() -> validator.validate(new CommandMessage(message)));
+        assertDoesNotThrow(() -> validator.validate(CommandMessage.getMessageInstance(message)));
     }
 
     @ParameterizedTest
@@ -99,7 +99,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
     void shouldThrowForInvalidCommand(String commandText, String expectedReply) {
         message.setText(commandText);
 
-        CommandMessage commandMessage = new CommandMessage(message);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals(expectedReply, actualException.getMessage());
     }
@@ -123,7 +123,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
 
-        CommandMessage commandMessage = new CommandMessage(message);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'", actualException.getMessage());
     }
@@ -134,7 +134,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
 
-        CommandMessage commandMessage = new CommandMessage(message);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals("Команда запрещена в групповых чатах - напишите боту напрямую.", actualException.getMessage());
     }
@@ -145,7 +145,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.SUBMIT.name().toLowerCase() + " 1");
 
-        CommandMessage commandMessage = new CommandMessage(message);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals("Команда запрещена в групповых чатах - напишите боту напрямую.", actualException.getMessage());
     }

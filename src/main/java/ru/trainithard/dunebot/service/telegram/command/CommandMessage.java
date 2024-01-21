@@ -2,14 +2,13 @@ package ru.trainithard.dunebot.service.telegram.command;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 @Getter
@@ -59,12 +58,33 @@ public class CommandMessage {
      */
     private String callback;
     /**
+     * If a message is a document, this field contains such a document.
+     */
+    private File file;
+    /**
+     * If a message is a photo, this field contains such a photo.
+     */
+    private Photo photo;
+    /**
      * Contains all arguments of the command. Parsed from the whole command text using any space as arguments separator.
      */
     @Getter(AccessLevel.NONE)
     private String[] args;
 
-    public CommandMessage(Message message) {
+    private CommandMessage(PollAnswer pollAnswer) {
+        this.command = Command.VOTE;
+        this.userId = pollAnswer.getUser().getId();
+        this.pollVote = new PollVote(pollAnswer);
+    }
+
+    private CommandMessage(CallbackQuery callbackQuery) {
+        this.command = Command.ACCEPT_SUBMIT;
+        this.userId = callbackQuery.getFrom().getId();
+        this.callback = callbackQuery.getData();
+        this.replyMessageId = callbackQuery.getMessage().getMessageId();
+    }
+
+    private CommandMessage(Message message) {
         User user = message.getFrom();
         this.userId = user.getId();
         this.firstName = user.getFirstName();
@@ -85,19 +105,31 @@ public class CommandMessage {
         } else {
             this.args = new String[0];
         }
+        if (message.hasDocument()) {
+            this.file = new File(message.getDocument());
+            this.command = Command.UPLOAD_PHOTO;
+        }
+        if (message.hasPhoto()) {
+            this.photo = new Photo(getLargestPhoto(message.getPhoto()));
+            this.command = Command.UPLOAD_PHOTO;
+        }
     }
 
-    public CommandMessage(PollAnswer pollAnswer) {
-        this.command = Command.VOTE;
-        this.userId = pollAnswer.getUser().getId();
-        this.pollVote = new PollVote(pollAnswer);
+    private PhotoSize getLargestPhoto(List<PhotoSize> photoSizes) {
+        photoSizes.sort(Comparator.comparing(PhotoSize::getFileSize).reversed());
+        return photoSizes.get(0);
     }
 
-    public CommandMessage(CallbackQuery callbackQuery) {
-        this.command = Command.ACCEPT_SUBMIT;
-        this.userId = callbackQuery.getFrom().getId();
-        this.callback = callbackQuery.getData();
-        this.replyMessageId = callbackQuery.getMessage().getMessageId();
+    public static CommandMessage getMessageInstance(Message message) {
+        return new CommandMessage(message);
+    }
+
+    public static CommandMessage getCallbackInstance(CallbackQuery callbackQuery) {
+        return new CommandMessage(callbackQuery);
+    }
+
+    public static CommandMessage getPollAnswerInstance(PollAnswer pollAnswer) {
+        return new CommandMessage(pollAnswer);
     }
 
     /**
@@ -119,6 +151,18 @@ public class CommandMessage {
     public record PollVote(String pollId, List<Integer> selectedAnswerId) {
         private PollVote(PollAnswer pollAnswer) {
             this(pollAnswer.getPollId(), pollAnswer.getOptionIds());
+        }
+    }
+
+    public record File(String id, Long size, String mimeType) {
+        private File(Document document) {
+            this(document.getFileId(), document.getFileSize(), document.getMimeType());
+        }
+    }
+
+    public record Photo(String id, Integer size) {
+        private Photo(PhotoSize photo) {
+            this(photo.getFileId(), photo.getFileSize());
         }
     }
 }

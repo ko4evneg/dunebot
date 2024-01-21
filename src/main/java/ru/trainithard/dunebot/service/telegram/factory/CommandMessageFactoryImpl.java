@@ -9,19 +9,21 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 public class CommandMessageFactoryImpl implements CommandMessageFactory {
     @Override
     public CommandMessage getInstance(Update update) {
-        Message message = update.getMessage();
-        if (hasSlashPrefixedText(message)) {
-            return new CommandMessage(message);
+        if (update.hasMessage()) {
+            Message message = update.getMessage();
+            if (hasSlashPrefixedText(message) || hasAttachedPhoto(message)) {
+                return CommandMessage.getMessageInstance(message);
+            }
         } else if (hasPollAnswerOption(update)) {
-            return new CommandMessage(update.getPollAnswer());
+            return CommandMessage.getPollAnswerInstance(update.getPollAnswer());
         } else if (hasNotBlackCallbackQuery(update)) {
-            return new CommandMessage(update.getCallbackQuery());
+            return CommandMessage.getCallbackInstance(update.getCallbackQuery());
         }
         return null;
     }
 
     private boolean hasSlashPrefixedText(Message message) {
-        return message != null && message.getText() != null && message.getText().startsWith("/");
+        return message.getText() != null && message.getText().startsWith("/");
     }
 
     private boolean hasPollAnswerOption(Update update) {
@@ -30,5 +32,10 @@ public class CommandMessageFactoryImpl implements CommandMessageFactory {
 
     private boolean hasNotBlackCallbackQuery(Update update) {
         return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isBlank();
+    }
+
+    // TODO:  check need
+    private boolean hasAttachedPhoto(Message message) {
+        return message.hasDocument() || message.hasPhoto();
     }
 }

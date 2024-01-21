@@ -168,6 +168,6 @@ class CancelCommandProcessorTest extends TestContextMock {
         message.setChat(chat);
         message.setFrom(user);
         message.setReplyToMessage(reply);
-        return new CommandMessage(message);
+        return CommandMessage.getMessageInstance(message);
     }
 }

@@ -29,7 +29,7 @@ public class TelegramUpdateProcessor {
             try {
                 CommandMessage commandMessage = commandMessageFactory.getInstance(update);
                 if (commandMessage != null) {
-                    validateCommandMessage(commandMessage);
+                    validateCommand(commandMessage);
                     ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
                     validator.validate(commandMessage);
                     CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
@@ -44,7 +44,7 @@ public class TelegramUpdateProcessor {
         }
     }
 
-    private void validateCommandMessage(CommandMessage commandMessage) {
+    private void validateCommand(CommandMessage commandMessage) {
         if (commandMessage.getCommand() == null) {
             throw new AnswerableDuneBotException("Неверная команда!", commandMessage);
         }

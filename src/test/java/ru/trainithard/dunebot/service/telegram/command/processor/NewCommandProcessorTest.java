@@ -176,7 +176,7 @@ class NewCommandProcessorTest extends TestContextMock {
         User user = new User();
         user.setId(USER_ID);
         message.setFrom(user);
-        return new CommandMessage(message);
+        return CommandMessage.getMessageInstance(message);
     }
 
     private CompletableFuture<ExternalPollDto> getCompletableFuturePollMessage() {

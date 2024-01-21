@@ -288,6 +288,6 @@ class VoteCommandProcessorTest extends TestContextMock {
         pollAnswer.setUser(user);
         pollAnswer.setOptionIds(optionId == null ? Collections.emptyList() : Collections.singletonList(optionId));
         pollAnswer.setPollId(POLL_ID);
-        return new CommandMessage(pollAnswer);
+        return CommandMessage.getPollAnswerInstance(pollAnswer);
     }
 }

@@ -255,6 +255,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         callbackQuery.setMessage(message);
         callbackQuery.setFrom(user);
         callbackQuery.setData(callbackData);
-        return new CommandMessage(callbackQuery);
+        return CommandMessage.getCallbackInstance(callbackQuery);
     }
 }

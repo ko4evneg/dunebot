@@ -330,7 +330,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         message.setFrom(user);
         message.setChat(chat);
         message.setText("/" + Command.SUBMIT.name() + " 15000");
-        return new CommandMessage(message);
+        return CommandMessage.getMessageInstance(message);
     }
 
     private static class MockReplier implements Answer<CompletableFuture<ExternalMessageDto>> {

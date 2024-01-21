@@ -108,6 +108,6 @@ class RegisterCommandProcessorTest extends TestContextMock {
         message.setFrom(user);
         message.setChat(chat);
         message.setText("/register " + steamName);
-        return new CommandMessage(message);
+        return CommandMessage.getMessageInstance(message);
     }
 }
