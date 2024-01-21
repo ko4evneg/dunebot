@@ -2,9 +2,11 @@ package ru.trainithard.dunebot.service.messaging;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.File;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -22,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public class TelegramMessagingService implements MessagingService {
     private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
     private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
+    private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
     private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
 
     private final TelegramBot telegramBot;
@@ -41,7 +44,8 @@ public class TelegramMessagingService implements MessagingService {
         CompletableFuture<ExternalPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendPoll(pollMessage));
-            sendMessageCompletableFuture.whenComplete((message, throwable) -> telegramMessageCompletableFuture.complete(new ExternalPollDto(message)));
+            sendMessageCompletableFuture.whenComplete((message, throwable) ->
+                    telegramMessageCompletableFuture.complete(new ExternalPollDto(message)));
         } catch (TelegramApiException exception) {
             throw new TelegramApiCallException(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
@@ -61,7 +65,8 @@ public class TelegramMessagingService implements MessagingService {
         CompletableFuture<ExternalMessageDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendMessage(messageDto));
-            sendMessageCompletableFuture.whenComplete((message, throwable) -> telegramMessageCompletableFuture.complete(new ExternalMessageDto(message)));
+            sendMessageCompletableFuture.whenComplete((message, throwable) ->
+                    telegramMessageCompletableFuture.complete(new ExternalMessageDto(message)));
         } catch (TelegramApiException exception) {
             throw new TelegramApiCallException(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
@@ -88,5 +93,20 @@ public class TelegramMessagingService implements MessagingService {
         InlineKeyboardButton inlineButton = new InlineKeyboardButton(button.getText());
         inlineButton.setCallbackData(button.getCallback());
         return inlineButton;
+    }
+
+    @Override
+    public CompletableFuture<TelegramFileDetailsDto> getFileDetails(String fileId) {
+        CompletableFuture<TelegramFileDetailsDto> telegramMessageCompletableFuture = new CompletableFuture<>();
+        try {
+            GetFile getFile = new GetFile(fileId);
+            CompletableFuture<File> fileCompletableFuture = telegramBot.executeAsync(getFile);
+            fileCompletableFuture.whenComplete((message, throwable) -> telegramMessageCompletableFuture
+                    .complete(new TelegramFileDetailsDto(message)));
+        } catch (TelegramApiException exception) {
+            throw new TelegramApiCallException(GET_FILE_DETAILS_EXCEPTION_MESSAGE, exception);
+        }
+        return telegramMessageCompletableFuture;
+
     }
 }

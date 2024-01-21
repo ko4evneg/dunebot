@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.messaging;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -33,10 +34,13 @@ class TelegramMessagingServiceTest {
     private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
     private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
     private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
+    private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
+
     private static final Integer MESSAGE_ID = 123;
     private static final Long CHAT_ID = 456L;
     private static final Integer REPLY_ID = 789;
     private static final String POLL_ID = "9000";
+    private static final String FILE_ID = "randomFileId";
 
     private final TelegramBot telegramBot = mock(TelegramBot.class);
     private final TelegramMessagingService telegramMessagingService = new TelegramMessagingService(telegramBot);
@@ -162,5 +166,28 @@ class TelegramMessagingServiceTest {
                 List.of(new ButtonDto("t1", "c1")),
                 List.of(new ButtonDto("t2", "c2"), new ButtonDto("t3", "c3"))
         );
+    }
+
+    @Test
+    void shouldInvokeGetFileCall() throws TelegramApiException {
+        doReturn(CompletableFuture.completedFuture(new GetFile(FILE_ID))).when(telegramBot).executeAsync(ArgumentMatchers.any(GetFile.class));
+
+        telegramMessagingService.getFileDetails(FILE_ID);
+
+        ArgumentCaptor<GetFile> getFileCaptor = ArgumentCaptor.forClass(GetFile.class);
+        verify(telegramBot, times(1)).executeAsync(getFileCaptor.capture());
+        GetFile actualGetFile = getFileCaptor.getValue();
+
+        assertEquals(FILE_ID, actualGetFile.getFileId());
+    }
+
+    @Test
+    void shouldWrapApiExceptionOnGetFileCall() throws TelegramApiException {
+        doThrow(new TelegramApiException("abc")).when(telegramBot).executeAsync(ArgumentMatchers.any(GetFile.class));
+
+        TelegramApiCallException actualException = assertThrows(TelegramApiCallException.class, () -> telegramMessagingService.getFileDetails(FILE_ID));
+
+        assertEquals(GET_FILE_DETAILS_EXCEPTION_MESSAGE, actualException.getMessage());
+        assertEquals("abc", actualException.getCause().getMessage());
     }
 }
