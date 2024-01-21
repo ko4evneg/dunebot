@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static ru.trainithard.dunebot.model.CommandType.*;
+
 /**
  * Enum describing available bot commands.
  */
@@ -15,17 +17,22 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public enum Command {
 
-    REGISTER(true, 1),
-    REFRESH_PROFILE(false, 1),
-    NEW(false, 1),
-    VOTE(false, 0),
-    CANCEL(false, 0),
-    SUBMIT(false, 1),
-    RESUBMIT(false, 1),
-    ACCEPT_SUBMIT(false, 0);
+    REGISTER(TEXT, true, 1),
+    REFRESH_PROFILE(TEXT, false, 1),
+    NEW(TEXT, false, 1),
+    VOTE(POLL_VOTE, false, 0),
+    CANCEL(TEXT, false, 0),
+    SUBMIT(TEXT, false, 1),
+    RESUBMIT(TEXT, false, 1),
+    UPLOAD_PHOTO(FILE_UPLOAD, false, 0),
+    ACCEPT_SUBMIT(CALLBACK, false, 0);
 
     private static final Map<String, Command> availableCommands;
 
+    /**
+     * Type of the command.
+     */
+    private final CommandType commandType;
     /**
      * Whether the command can be invoked by unregistered user.
      */
