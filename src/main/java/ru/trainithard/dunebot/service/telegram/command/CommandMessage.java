@@ -8,7 +8,6 @@ import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 @Getter
@@ -64,7 +63,7 @@ public class CommandMessage {
     /**
      * If a message is a photo, this field contains such a photo.
      */
-    private Photo photo;
+    private List<Photo> photo;
     /**
      * Contains all arguments of the command. Parsed from the whole command text using any space as arguments separator.
      */
@@ -110,14 +109,9 @@ public class CommandMessage {
             this.command = Command.UPLOAD_PHOTO;
         }
         if (message.hasPhoto()) {
-            this.photo = new Photo(getLargestPhoto(message.getPhoto()));
+            this.photo = message.getPhoto().stream().map(Photo::new).toList();
             this.command = Command.UPLOAD_PHOTO;
         }
-    }
-
-    private PhotoSize getLargestPhoto(List<PhotoSize> photoSizes) {
-        photoSizes.sort(Comparator.comparing(PhotoSize::getFileSize).reversed());
-        return photoSizes.get(0);
     }
 
     public static CommandMessage getMessageInstance(Message message) {

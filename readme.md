@@ -12,6 +12,7 @@
 | high     | match submits throttling                                                               |
 | high     | add leaders selection flow                                                             |
 | high     | leaders rating                                                                         |
+| medium   | add menu buttons (SetMyCommands)                                                       |
 | medium   | test TelegramApiException to runtime handling                                          |
 | medium   | test TelegramUpdateProcessor unknown exceptions handling for both methods              |
 | medium   | add TelegramUpdateProcessor#sendUserNotificationMessage null replyId scenario          |

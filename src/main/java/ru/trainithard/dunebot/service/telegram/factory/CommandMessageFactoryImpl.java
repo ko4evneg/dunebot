@@ -34,7 +34,6 @@ public class CommandMessageFactoryImpl implements CommandMessageFactory {
         return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isBlank();
     }
 
-    // TODO:  check need
     private boolean hasAttachedPhoto(Message message) {
         return message.hasDocument() || message.hasPhoto();
     }

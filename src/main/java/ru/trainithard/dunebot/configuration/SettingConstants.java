@@ -16,4 +16,5 @@ public class SettingConstants {
     public static final int MATCH_START_DELAY = 60;
     public static final String EXTERNAL_LINE_SEPARATOR = "\n";
     public static final int FINISH_MATCH_TIMEOUT = 120;
+    public static final int MAX_FILE_SIZE = 1_000_000;
 }

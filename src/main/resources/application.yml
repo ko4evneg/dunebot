@@ -1,3 +1,6 @@
+bot:
+  photos-directory: photos
+---
 spring:
   config:
     activate:
@@ -33,3 +36,5 @@ spring:
     init:
       mode: always
       platform: postgresql
+bot:
+  token: fake_token
