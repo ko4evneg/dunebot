@@ -2,7 +2,6 @@ package ru.trainithard.dunebot.service.telegram;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -36,7 +35,10 @@ public class TelegramUpdateProcessor {
                     processor.process(commandMessage);
                 }
             } catch (AnswerableDuneBotException answerableException) {
-                sendUserNotificationMessage(answerableException);
+                try {
+                    messagingService.sendMessageAsync(new MessageDto(answerableException));
+                } catch (Exception ignored) {
+                }
             } catch (Exception ignored) {
             } finally {
                 update = telegramBot.poll();
@@ -50,14 +52,4 @@ public class TelegramUpdateProcessor {
         }
     }
 
-    private void sendUserNotificationMessage(AnswerableDuneBotException answerableException) {
-        try {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(answerableException.getTelegramChatId());
-            sendMessage.setText(answerableException.getMessage());
-            MessageDto messageDto = new MessageDto(Long.toString(answerableException.getTelegramChatId()), answerableException.getMessage(), answerableException.getTelegramReplyId(), null);
-            messagingService.sendMessageAsync(messageDto);
-        } catch (Exception ignored) {
-        }
-    }
 }

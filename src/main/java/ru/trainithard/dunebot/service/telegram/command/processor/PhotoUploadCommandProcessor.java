@@ -4,11 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
+import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -17,9 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZE;
@@ -28,8 +27,9 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZ
 @RequiredArgsConstructor
 public class PhotoUploadCommandProcessor extends CommandProcessor {
     private static final String FILE_DOWNLOAD_URI_PREFIX = "https://api.telegram.org/file/bot";
-    private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE_TEMPLATE = "Файл слишком большой. Разрешенный максимальный размер: %s КБ";
     private static final String PATH_SEPARATOR = "/";
+    private static final String UNSUPPORTED_UPDATE_TYPE = "Unsupported photo/document update type";
+    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
 
     private final MessagingService messagingService;
     private final RestTemplate restTemplate;
@@ -43,7 +43,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage) {
         Match match = matchRepository.findLatestPlayerOnSubmitMatch(commandMessage.getUserId()).iterator().next();
-        String fileId = getValidatedSizeFileId(commandMessage);
+        String fileId = getFileId(commandMessage);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
         file.whenComplete((telegramFileDetailsDto, throwable) -> {
             String filePath = telegramFileDetailsDto.path();
@@ -54,6 +54,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     LocalDate today = LocalDateTime.ofInstant(Instant.now(clock), ZoneId.systemDefault()).toLocalDate();
                     String monthYear = today.format(DateTimeFormatter.ofPattern("yy_MM"));
                     Path savePath = Path.of(getSaveDirectoryPath(monthYear) + getSaveFileName(match.getId(), filePath));
+                    validateIfExists(savePath, commandMessage);
                     Files.createDirectories(savePath.getParent());
                     Files.write(savePath, photoBytes);
                 }
@@ -63,27 +64,26 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         });
     }
 
-    private String getValidatedSizeFileId(CommandMessage commandMessage) {
+    private void validateIfExists(Path savePath, CommandMessage commandMessage) {
+        if (Files.exists(savePath)) {
+            MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
+            messagingService.sendMessageAsync(messageDto);
+            throw new DuneBotException(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
+        }
+    }
+
+    private String getFileId(CommandMessage commandMessage) {
         if (commandMessage.getPhoto() != null) {
-            List<CommandMessage.Photo> toSortPhotos = new ArrayList<>(commandMessage.getPhoto());
-            toSortPhotos.sort(Comparator.comparing(CommandMessage.Photo::size).reversed());
-            for (CommandMessage.Photo photo : toSortPhotos) {
-                if (photo.size() <= MAX_FILE_SIZE) {
-                    return photo.id();
-                }
-            }
-        } else if (commandMessage.getFile() != null && commandMessage.getFile().size() <= MAX_FILE_SIZE) {
+            CommandMessage.Photo largestPhoto = commandMessage.getPhoto().stream()
+                    .filter(photo -> photo.size() <= MAX_FILE_SIZE)
+                    .max(Comparator.comparing(CommandMessage.Photo::size))
+                    .orElseThrow();
+            return largestPhoto.id();
+        } else if (commandMessage.getFile() != null) {
             return commandMessage.getFile().id();
         }
-
-        throw new AnswerableDuneBotException(getFileSizeLimitExceptionMessage(), commandMessage);
+        throw new DuneBotException(UNSUPPORTED_UPDATE_TYPE);
     }
-
-    private String getFileSizeLimitExceptionMessage() {
-        int effectiveMaxFileSize = MAX_FILE_SIZE > 1000 ? MAX_FILE_SIZE / 1000 : MAX_FILE_SIZE;
-        return String.format(FILE_SIZE_LIMIT_EXCEPTION_MESSAGE_TEMPLATE, effectiveMaxFileSize);
-    }
-
 
     private String getFileUri(String filePath) {
         return FILE_DOWNLOAD_URI_PREFIX + botToken + filePath;

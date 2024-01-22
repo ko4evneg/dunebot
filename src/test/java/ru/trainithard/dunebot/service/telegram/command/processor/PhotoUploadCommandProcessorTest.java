@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -13,6 +14,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -27,7 +29,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -41,6 +42,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     private static final Path PHOTO_FILE_PATH = Path.of("photos/11_10/10000.jpeg");
     private static final java.time.Instant NOW = LocalDateTime.of(2011, 10, 20, 0, 1).toInstant(ZoneOffset.UTC);
     private static final TelegramFileDetailsDto fileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
+    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
+    private static final Long CHAT_ID = 100500L;
+    private static final Integer REPLY_ID = 9000;
 
     @Autowired
     PhotoUploadCommandProcessor processor;
@@ -137,15 +141,29 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldThrowIfPhotoAlreadyExists() {
-        fail();
+    void shouldSendNotificationWhenPhotoAlreadyExists() throws IOException {
+        Files.createDirectories(PHOTO_FILE_PATH.getParent());
+        Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID + "XX");
+        CommandMessage documentCommandMessage = getDocumentCommandMessage();
+
+        processor.process(documentCommandMessage);
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        String actualFileContent = Files.readString(PHOTO_FILE_PATH);
+        assertEquals("hehe", actualFileContent);
+        assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
+        assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
+        assertEquals(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, actualMessage.getText());
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {
         User user = new User();
         user.setId(EXTERNAL_USER_ID);
         Chat chat = new Chat();
-        chat.setId(100500L);
+        chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
         message.setMessageId(100501);
@@ -175,13 +193,16 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         document.setFileId(FILE_ID);
         document.setFileSize((long) MAX_FILE_SIZE);
         Chat chat = new Chat();
-        chat.setId(100500L);
+        chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
+        Message reply = new Message();
+        reply.setMessageId(REPLY_ID);
         Message message = new Message();
         message.setMessageId(100501);
         message.setFrom(user);
         message.setDocument(document);
         message.setChat(chat);
+        message.setReplyToMessage(reply);
         return CommandMessage.getMessageInstance(message);
     }
 }

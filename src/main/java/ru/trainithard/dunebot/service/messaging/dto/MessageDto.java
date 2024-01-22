@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.messaging.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 
 import java.util.List;
 
@@ -26,5 +27,11 @@ public class MessageDto {
         this.chatId = Long.toString(chatId);
         this.replyMessageId = replyMessageId;
         this.keyboard = linedButtons;
+    }
+
+    public MessageDto(AnswerableDuneBotException exception) {
+        this.text = exception.getMessage();
+        this.chatId = Long.toString(exception.getTelegramChatId());
+        this.replyMessageId = exception.getTelegramReplyId();
     }
 }
