@@ -40,6 +40,8 @@ class MatchFinishingServiceTest extends TestContextMock {
                 "values (10002, 11002, 12002, 'st_pl3', 'name3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10003, 11003, 12003, 'st_pl4', 'name4', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
+                "values (10004, 11004, 12004, 'st_pl5', 'name5', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, reply_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, " + MATCH_CHAT_ID + ", '10000', " + MATCH_TOPIC_REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -54,6 +56,8 @@ class MatchFinishingServiceTest extends TestContextMock {
                 "values (10004, 'ExternalMessageId', 10004, 11004, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10005, 'ExternalMessageId', 10005, 11005, '2020-10-10')");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
+                "values (10006, 'ExternalMessageId', 10006, 11006, '2020-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                 "values (10000, 15000, 10000, 10002, 4, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
@@ -69,7 +73,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id in (15000)");
         jdbcTemplate.execute("delete from matches where id in (15000)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
-        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10005");
+        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10006");
     }
 
     @Test
@@ -95,7 +99,9 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinish() {
+    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
         List<Integer> actualPersistedPlacesCount = jdbcTemplate

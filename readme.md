@@ -4,7 +4,6 @@
 |----------|----------------------------------------------------------------------------------------|
 | critical | delay match finish until photo received                                                |
 | critical | spread public commands prohibition to all kinds of commands                            |
-| critical | photo uploading                                                                        |
 | critical | rating                                                                                 |
 | critical | match finish check should exclude 5+ players from check when 4 already submitted votes |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                    |

@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 public class SubmitCommandProcessor extends CommandProcessor {
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
+    private static final String NOT_PARTICIPATED_CANDIDATE_PLACE = "-1";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
@@ -83,11 +84,13 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     private List<List<ButtonDto>> getSubmitCallbackKeyboard(List<MatchPlayer> registeredMatchPlayers, String matchIdString) {
         List<ButtonDto> buttons = new ArrayList<>();
+        String callbackPrefix = matchIdString + "__";
         for (int i = 0; i < registeredMatchPlayers.size(); i++) {
-            ButtonDto buttonDto = new ButtonDto(Integer.toString(i + 1), matchIdString + "__" + (i + 1));
+            int callbackCandidatePlace = i + 1;
+            ButtonDto buttonDto = new ButtonDto(Integer.toString(callbackCandidatePlace), callbackPrefix + callbackCandidatePlace);
             buttons.add(buttonDto);
         }
-        buttons.add(new ButtonDto("не участвовал(а)", matchIdString + "__-1"));
+        buttons.add(new ButtonDto("не участвовал(а)", callbackPrefix + NOT_PARTICIPATED_CANDIDATE_PLACE));
         return Lists.partition(buttons, 2);
     }
 

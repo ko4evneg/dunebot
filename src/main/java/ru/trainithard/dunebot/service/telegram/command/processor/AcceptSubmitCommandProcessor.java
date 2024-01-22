@@ -57,7 +57,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 match.setSubmitsCount(match.getSubmitsCount() + 1);
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
-                    matchPlayerRepository.saveAll(matchPlayers);
+                    matchPlayerRepository.save(submittingPlayer);
                 });
                 String acceptedSubmitText = String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
                 messagingService.sendMessageAsync(new MessageDto(submittingPlayer.getSubmitMessageId().getChatId(), acceptedSubmitText, null, null));
