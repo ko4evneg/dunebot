@@ -186,7 +186,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 both(hasProperty("text", is("4"))).and(hasProperty("callback", is("15000__4"))))
         );
         assertThat(linedButtons.get(2), contains(
-                both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callback", is("15000__-1"))))
+                both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callback", is("15000__0"))))
         );
     }
 

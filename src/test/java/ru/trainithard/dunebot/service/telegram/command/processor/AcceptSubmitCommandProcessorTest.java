@@ -91,7 +91,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {-1, 1, 4, 6})
+    @ValueSource(ints = {0, 1, 4, 6})
     void shouldSetCandidatePlaceOnCallbackReply(int expectedPlace) {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + expectedPlace));
 

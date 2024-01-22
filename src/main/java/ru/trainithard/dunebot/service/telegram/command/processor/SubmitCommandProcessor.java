@@ -26,12 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_CANDIDATE_PLACE;
+
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
-    private static final String NOT_PARTICIPATED_CANDIDATE_PLACE = "-1";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;

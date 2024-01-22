@@ -47,7 +47,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, is_onsubmit, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, true, '2010-10-10') ");
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 3, true, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -59,7 +59,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10006, 'ExternalMessageId', 10006, 11006, '2020-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                "values (10000, 15000, 10000, 10002, 4, '2010-10-10')");
+                "values (10000, 15000, 10000, 10002, null, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                 "values (10001, 15000, 10001, 10003, 2, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
@@ -78,6 +78,9 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldPersistCandidatePlacesOnMatchFinish() {
+        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+
         finishingService.finishSuccessfullySubmittedMatch(15000L);
 
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
@@ -100,8 +103,6 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
-        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
-
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
         List<Integer> actualPersistedPlacesCount = jdbcTemplate
@@ -112,6 +113,9 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSetMatchFlagsOnMatchFinish() {
+        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+
         finishingService.finishSuccessfullySubmittedMatch(15000L);
 
         Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and is_finished is true)", Boolean.class);
@@ -138,6 +142,9 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSendNotificationOnMatchFinish() {
+        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+
         finishingService.finishSuccessfullySubmittedMatch(15000L);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
