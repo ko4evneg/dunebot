@@ -112,6 +112,41 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
+    void shouldPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissing() {
+        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
+                "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
+
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
+
+        assertThat(playersPlaces, contains(null, 2, 3, 1, 4));
+    }
+
+    @Test
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish() {
+        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
+                "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
+
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
+        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
+        assertEquals("""
+                Матч 15000 завершился:
+                1. st_pl4 (name4)
+                2. st_pl2 (name2)
+                3. st_pl3 (name3)
+                4. st_pl5 (name5)""", messageDto.getText());
+    }
+
+    @Test
     void shouldSetMatchFlagsOnMatchFinish() {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
@@ -162,7 +197,7 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish() {
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWithoutResults() {
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);

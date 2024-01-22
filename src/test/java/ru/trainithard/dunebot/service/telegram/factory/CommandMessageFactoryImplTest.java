@@ -15,6 +15,7 @@ import java.util.Collections;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 class CommandMessageFactoryImplTest {
     private static final long USER_ID = 100L;
@@ -22,7 +23,7 @@ class CommandMessageFactoryImplTest {
     private static final int REPLY_ID = 300;
     private static final int MESSAGE_ID = 400;
     private static final String POLL_ID = "100001";
-    private static final String CALLBACK_DATA = "10000__-1";
+    private static final String CALLBACK_DATA = "10000__" + NOT_PARTICIPATED_MATCH_PLACE;
     private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl();
 
     @Test

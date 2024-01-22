@@ -14,9 +14,12 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 @Service
 @RequiredArgsConstructor
@@ -29,22 +32,37 @@ public class MatchFinishingService {
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
         if (!match.isFinished()) {
-            match.setFinished(true);
-            match.setOnSubmit(false);
-            match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
-            transactionTemplate.executeWithoutResult(status -> {
-                matchRepository.save(match);
-                matchPlayerRepository.saveAll(match.getMatchPlayers());
-            });
+            if (hasAllPlacesSubmitted(match)) {
+                finishSuccessfullyAndSave(match);
+            } else {
+                match.setFinished(true);
+                match.setOnSubmit(false);
+                match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
+                transactionTemplate.executeWithoutResult(status -> {
+                    matchRepository.save(match);
+                    matchPlayerRepository.saveAll(match.getMatchPlayers());
+                });
 
-            ExternalPollId externalPollId = match.getExternalPollId();
-            MessageDto finishMessage = new MessageDto(externalPollId.getChatId(), reason, externalPollId.getReplyId(), null);
-            messagingService.sendMessageAsync(finishMessage);
+                ExternalPollId externalPollId = match.getExternalPollId();
+                MessageDto finishMessage = new MessageDto(externalPollId.getChatId(), reason, externalPollId.getReplyId(), null);
+                messagingService.sendMessageAsync(finishMessage);
+            }
         }
+    }
+
+    private boolean hasAllPlacesSubmitted(Match match) {
+        int requiredPlaceSubmits = match.getModType().getPlayersCount();
+        Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());
+        match.getMatchPlayers().forEach(matchPlayer -> possibleMatchPlaces.remove(matchPlayer.getCandidatePlace()));
+        return possibleMatchPlaces.isEmpty();
     }
 
     public void finishSuccessfullySubmittedMatch(long matchId) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
+        finishSuccessfullyAndSave(match);
+    }
+
+    private void finishSuccessfullyAndSave(Match match) {
         match.setFinished(true);
         match.setOnSubmit(false);
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
@@ -52,7 +70,6 @@ public class MatchFinishingService {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(match.getMatchPlayers());
         });
-
         messagingService.sendMessageAsync(getMatchFinishMessage(match));
     }
 
@@ -61,7 +78,8 @@ public class MatchFinishingService {
         stringBuilder.append("Матч ").append(match.getId()).append(" завершился:").append(EXTERNAL_LINE_SEPARATOR);
         Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
         match.getMatchPlayers().stream()
-                .filter(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace()) != -1)
+                .filter(matchPlayer -> matchPlayer.getPlace() != null &&
+                        matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
         playerNamesByPlace.forEach((place, name) -> stringBuilder.append(place).append(". ").append(name).append(EXTERNAL_LINE_SEPARATOR));

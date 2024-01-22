@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_CANDIDATE_PLACE;
+import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 @Service
 @RequiredArgsConstructor
@@ -91,7 +91,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
             ButtonDto buttonDto = new ButtonDto(Integer.toString(callbackCandidatePlace), callbackPrefix + callbackCandidatePlace);
             buttons.add(buttonDto);
         }
-        buttons.add(new ButtonDto("не участвовал(а)", callbackPrefix + NOT_PARTICIPATED_CANDIDATE_PLACE));
+        buttons.add(new ButtonDto("не участвовал(а)", callbackPrefix + NOT_PARTICIPATED_MATCH_PLACE));
         return Lists.partition(buttons, 2);
     }
 
