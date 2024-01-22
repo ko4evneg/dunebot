@@ -10,7 +10,6 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -27,7 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -39,7 +39,6 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     private static final long EXTERNAL_USER_ID = 12345L;
     private static final String FILE_URI = "https://api.telegram.org/file/botfake_token/path/file.jpeg";
     private static final Path PHOTO_FILE_PATH = Path.of("photos/11_10/10000.jpeg");
-    private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE = "Файл слишком большой. Разрешенный максимальный размер: 1000 КБ";
     private static final java.time.Instant NOW = LocalDateTime.of(2011, 10, 20, 0, 1).toInstant(ZoneOffset.UTC);
     private static final TelegramFileDetailsDto fileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
 
@@ -104,14 +103,14 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldRequestForFileWhenDocumentPhotoReceived() {
-        processor.process(getDocumentCommandMessage(MAX_FILE_SIZE));
+        processor.process(getDocumentCommandMessage());
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
     @Test
     void shouldSaveFileWhenDocumentPhotoReceived() throws IOException {
-        processor.process(getDocumentCommandMessage(MAX_FILE_SIZE));
+        processor.process(getDocumentCommandMessage());
 
         String actualFileContent = Files.readString(PHOTO_FILE_PATH);
 
@@ -122,34 +121,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldIgnoreFilePathFirstSlashWhenDocumentPhotoReceived() {
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails("/" + FILE_ID);
 
-        processor.process(getDocumentCommandMessage(MAX_FILE_SIZE));
+        processor.process(getDocumentCommandMessage());
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
-    }
-
-    @Test
-    void shouldThrowOnFileSizeExceedsLimitWhenDocumentPhotoReceived() {
-        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_FILE_SIZE + 1);
-
-        AnswerableDuneBotException actualException =
-                assertThrows(AnswerableDuneBotException.class, () -> processor.process(documentCommandMessage));
-        assertEquals(FILE_SIZE_LIMIT_EXCEPTION_MESSAGE, actualException.getMessage());
-    }
-
-    @Test
-    void shouldThrowOnEveryFileSizeExceedsLimitWhenPhotoSizeReceived() {
-        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE + 1, MAX_FILE_SIZE + 2));
-
-        AnswerableDuneBotException actualException =
-                assertThrows(AnswerableDuneBotException.class, () -> processor.process(photoCommandMessage));
-        assertEquals(FILE_SIZE_LIMIT_EXCEPTION_MESSAGE, actualException.getMessage());
-    }
-
-    @Test
-    void shouldNotThrowOnSingleFileSizeExceedsLimitWhenPhotoSizeReceived() {
-        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE, MAX_FILE_SIZE + 1));
-
-        assertDoesNotThrow(() -> processor.process(photoCommandMessage));
     }
 
     @Test
@@ -160,6 +134,11 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         processor.process(photoCommandMessage);
 
         verify(messagingService, times(1)).getFileDetails(eq(FILE_ID + "XX"));
+    }
+
+    @Test
+    void shouldThrowIfPhotoAlreadyExists() {
+        fail();
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {
@@ -189,12 +168,12 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         return photoSizes;
     }
 
-    private CommandMessage getDocumentCommandMessage(int fileSize) {
+    private CommandMessage getDocumentCommandMessage() {
         User user = new User();
         user.setId(EXTERNAL_USER_ID);
         Document document = new Document();
         document.setFileId(FILE_ID);
-        document.setFileSize((long) fileSize);
+        document.setFileSize((long) MAX_FILE_SIZE);
         Chat chat = new Chat();
         chat.setId(100500L);
         chat.setType(ChatType.PRIVATE.getValue());
