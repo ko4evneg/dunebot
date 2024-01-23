@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command;
 
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
@@ -10,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Getter
+@EqualsAndHashCode
 public class CommandMessage {
     /**
      * Represents external user ID.

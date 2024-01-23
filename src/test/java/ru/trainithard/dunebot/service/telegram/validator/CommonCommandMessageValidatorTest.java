@@ -9,23 +9,26 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.telegram.telegrambots.meta.api.objects.Chat;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
+import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.util.Collections;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class TelegramTextMessageValidatorTest extends TestContextMock {
+class CommonCommandMessageValidatorTest extends TestContextMock {
+    private static final String PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT = "Команда запрещена в групповых чатах - напишите боту напрямую.";
+    private static final String ANONYMOUS_COMMAND_TEXT = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
+
     @Autowired
-    private TelegramTextCommandValidator validator;
+    private CommonCommandMessageValidator validator;
 
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
@@ -43,22 +46,11 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
         jdbcTemplate.execute("delete from players where id = 10000");
     }
 
-    private void fillMessage() {
-        User user = new User();
-        user.setId(TELEGRAM_USER_ID);
-        Chat chat = new Chat();
-        chat.setId(TELEGRAM_CHAT_ID);
-        chat.setType(ChatType.PRIVATE.getValue());
-        message.setMessageId(10000);
-        message.setFrom(user);
-        message.setChat(chat);
-    }
-
     @Test
     void shouldCorrectlyFillChatIdAndReplyIdForPersonalMessage() {
         message.setText("/fake_command");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
         assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
         assertNull(actualException.getTelegramReplyId());
@@ -112,8 +104,7 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
                 Arguments.of("/", "Неверная команда!"),
                 Arguments.of("/registe", "Неверная команда!"),
                 Arguments.of("/registerX", "Неверная команда!"),
-                Arguments.of("/register_X", "Неверная команда!"),
-                Arguments.of("/register", "Данная команда должна иметь как минимум один аргумент. Например '/register *steam_name*'")
+                Arguments.of("/register_X", "Неверная команда!")
         );
     }
 
@@ -125,28 +116,71 @@ class TelegramTextMessageValidatorTest extends TestContextMock {
 
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals("Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'", actualException.getMessage());
+        assertEquals(ANONYMOUS_COMMAND_TEXT, actualException.getMessage());
     }
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldThrowOnCommandsInNonPrivateChat(ChatType chatType) {
+    void shouldThrowOnTextCommandsInNonPrivateChat(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
 
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals("Команда запрещена в групповых чатах - напишите боту напрямую.", actualException.getMessage());
+        assertEquals(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT, actualException.getMessage());
     }
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldThrowOnCommandsInPublicChat(ChatType chatType) {
+    void shouldThrowOnTextCommandsInPublicChat(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.SUBMIT.name().toLowerCase() + " 1");
 
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals("Команда запрещена в групповых чатах - напишите боту напрямую.", actualException.getMessage());
+        assertEquals(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT, actualException.getMessage());
+    }
+
+    @Test
+    void shouldNotThrowOnPollAnswerCommandsInPublicChat() {
+        PollAnswer pollAnswer = new PollAnswer();
+        pollAnswer.setUser(getUser());
+        pollAnswer.setOptionIds(Collections.singletonList(0));
+        pollAnswer.setPollId("100001");
+        Update update = new Update();
+        update.setPollAnswer(pollAnswer);
+        CommandMessage pollAnswerMessage = CommandMessage.getPollAnswerInstance(pollAnswer);
+
+        assertDoesNotThrow(() -> validator.validate(pollAnswerMessage));
+    }
+
+    @Test
+    void shouldNotThrowOnCallbackCommandsInPublicChat() {
+        Message message = new Message();
+        message.setMessageId(123);
+        message.setFrom(getUser());
+        CallbackQuery callbackQuery = new CallbackQuery();
+        callbackQuery.setMessage(message);
+        callbackQuery.setData("10000__-1");
+        callbackQuery.setFrom(getUser());
+        ;
+        CommandMessage callbackMessage = CommandMessage.getCallbackInstance(callbackQuery);
+
+        assertDoesNotThrow(() -> validator.validate(callbackMessage));
+    }
+
+    private void fillMessage() {
+        Chat chat = new Chat();
+        chat.setId(TELEGRAM_CHAT_ID);
+        chat.setType(ChatType.PRIVATE.getValue());
+        message.setMessageId(10000);
+        message.setFrom(getUser());
+        message.setChat(chat);
+    }
+
+    private User getUser() {
+        User user = new User();
+        user.setId(TELEGRAM_USER_ID);
+        return user;
     }
 }

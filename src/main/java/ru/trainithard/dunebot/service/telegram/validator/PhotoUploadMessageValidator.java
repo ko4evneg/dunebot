@@ -19,7 +19,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZ
 public class PhotoUploadMessageValidator implements ValidationStrategy {
     private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE_TEMPLATE = "Файл дюже большой. Разрешенный максимальный размер: %s КБ";
     private static final String MULTIPLE_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE =
-            "У вас более одного матча (%s) в процессе регистрации результата. Выйдите из неактуальных опросов.";
+            "У вас более одного матча (%s) в процессе регистрации результата. Выйдите из неактуальных опросов и загрузите скриншот вновь.";
     private static final String NO_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE =
             "У вас нет матчей в процессе регистрации результата. Для запуска регистрации выполните команду: '/submit *ID матча*'";
 

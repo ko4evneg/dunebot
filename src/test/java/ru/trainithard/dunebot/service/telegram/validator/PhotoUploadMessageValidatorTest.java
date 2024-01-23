@@ -37,7 +37,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
     private static final long FILE_SIZE = 540000;
     private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE = "Файл дюже большой. Разрешенный максимальный размер: 6500 КБ";
     private static final String MULTIPLE_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE =
-            "У вас более одного матча (10000, 10001) в процессе регистрации результата. Выйдите из неактуальных опросов.";
+            "У вас более одного матча (10000, 10001) в процессе регистрации результата. Выйдите из неактуальных опросов и загрузите скриншот вновь.";
     private static final String NOT_SUBMITTED_MATCH_EXCEPTION_MESSAGE =
             "У вас нет матчей в процессе регистрации результата. Для запуска регистрации выполните команду: '/submit *ID матча*'";
     private static final TelegramFileDetailsDto fileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);

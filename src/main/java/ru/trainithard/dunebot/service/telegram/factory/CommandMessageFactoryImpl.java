@@ -27,7 +27,7 @@ public class CommandMessageFactoryImpl implements CommandMessageFactory {
     }
 
     private boolean hasPollAnswerOption(Update update) {
-        return update.hasPollAnswer() && !update.getPollAnswer().getOptionIds().isEmpty();
+        return update.hasPollAnswer();
     }
 
     private boolean hasNotBlackCallbackQuery(Update update) {

@@ -2,9 +2,12 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | spread public commands prohibition to all kinds of commands                         |
+| critical | register user feedback                                                              |
+| critical | screenshot upload feedback                                                          |
 | critical | rating                                                                              |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                 |
+| critical | after match start exit                                                              |
+| critical | finish match after screenshot upload                                                |
 | high     | simultaneous matches spam control                                                   |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |

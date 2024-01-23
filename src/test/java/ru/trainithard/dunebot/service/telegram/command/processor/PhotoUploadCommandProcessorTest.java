@@ -46,7 +46,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     private static final java.time.Instant NOW = LocalDateTime.of(2011, 10, 20, 0, 1).toInstant(ZoneOffset.UTC);
     private static final TelegramFileDetailsDto fileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
     private static final TelegramFileDetailsDto wrongExtensionFileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.bmp", FILE_SIZE);
-    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
+    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Ошибка: скриншот уже загружен";
     private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
     private static final Long CHAT_ID = 100500L;
     private static final Integer REPLY_ID = 9000;

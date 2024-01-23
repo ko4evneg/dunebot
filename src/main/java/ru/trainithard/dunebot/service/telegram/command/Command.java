@@ -17,15 +17,15 @@ import static ru.trainithard.dunebot.service.telegram.command.CommandType.*;
 @RequiredArgsConstructor
 public enum Command {
 
-    REGISTER(TEXT, true, 1),
-    REFRESH_PROFILE(TEXT, false, 1),
-    NEW(TEXT, false, 1),
-    VOTE(POLL_VOTE, false, 0),
-    CANCEL(TEXT, false, 0),
-    SUBMIT(TEXT, false, 1),
-    RESUBMIT(TEXT, false, 1),
-    UPLOAD_PHOTO(FILE_UPLOAD, false, 0),
-    ACCEPT_SUBMIT(CALLBACK, false, 0);
+    REGISTER(TEXT, true, false, 1),
+    REFRESH_PROFILE(TEXT, false, false, 1),
+    NEW(TEXT, false, false, 1),
+    VOTE(POLL_VOTE, false, true, 0),
+    CANCEL(TEXT, false, false, 0),
+    SUBMIT(TEXT, false, false, 1),
+    RESUBMIT(TEXT, false, false, 1),
+    UPLOAD_PHOTO(FILE_UPLOAD, false, false, 0),
+    ACCEPT_SUBMIT(CALLBACK, false, false, 0);
 
     private static final Map<String, Command> availableCommands;
 
@@ -37,6 +37,10 @@ public enum Command {
      * Whether the command can be invoked by unregistered user.
      */
     private final boolean anonymous;
+    /**
+     * Whether a public chat could be a source of the command.
+     */
+    private final boolean publicCommand;
     /**
      * Minimal arguments count required for the command.
      */

@@ -31,7 +31,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private static final String FILE_DOWNLOAD_URI_PREFIX = "https://api.telegram.org/file/bot";
     private static final String PATH_SEPARATOR = "/";
     private static final String UNSUPPORTED_UPDATE_TYPE = "Unsupported photo/document update type";
-    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
+    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Ошибка: скриншот уже загружен";
     private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
 
     private final MessagingService messagingService;

@@ -11,6 +11,7 @@ import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcesso
 import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactory;
 import ru.trainithard.dunebot.service.telegram.factory.CommandProcessorFactory;
 import ru.trainithard.dunebot.service.telegram.factory.ValidationStrategyFactory;
+import ru.trainithard.dunebot.service.telegram.validator.CommonCommandMessageValidator;
 import ru.trainithard.dunebot.service.telegram.validator.ValidationStrategy;
 
 @Service
@@ -21,6 +22,7 @@ public class TelegramUpdateProcessor {
     private final CommandMessageFactory commandMessageFactory;
     private final ValidationStrategyFactory validationStrategyFactory;
     private final CommandProcessorFactory commandProcessorFactory;
+    private final CommonCommandMessageValidator commonCommandMessageValidator;
 
     public void process() {
         Update update = telegramBot.poll();
@@ -28,9 +30,11 @@ public class TelegramUpdateProcessor {
             try {
                 CommandMessage commandMessage = commandMessageFactory.getInstance(update);
                 if (commandMessage != null) {
-                    validateCommand(commandMessage);
+                    commonCommandMessageValidator.validate(commandMessage);
+
                     ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
                     validator.validate(commandMessage);
+
                     CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
                     processor.process(commandMessage);
                 }
@@ -45,11 +49,4 @@ public class TelegramUpdateProcessor {
             }
         }
     }
-
-    private void validateCommand(CommandMessage commandMessage) {
-        if (commandMessage.getCommand() == null) {
-            throw new AnswerableDuneBotException("Неверная команда!", commandMessage);
-        }
-    }
-
 }

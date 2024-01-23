@@ -10,6 +10,7 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
@@ -20,10 +21,12 @@ import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
+import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandType;
 import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactoryImpl;
 import ru.trainithard.dunebot.service.telegram.factory.CommandProcessorFactory;
 import ru.trainithard.dunebot.service.telegram.factory.ValidationStrategyFactory;
+import ru.trainithard.dunebot.service.telegram.validator.CommonCommandMessageValidator;
 import ru.trainithard.dunebot.service.telegram.validator.DefaultCommandMessageValidator;
 
 import java.util.Collections;
@@ -55,10 +58,13 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     private CommandProcessorFactory commandProcessorFactory;
     @MockBean
     private CommandMessageFactoryImpl commandMessageFactory;
+    @SpyBean
+    private CommonCommandMessageValidator commonCommandMessageValidator;
 
     @BeforeEach
     void beforeEach() {
         doCallRealMethod().when(commandMessageFactory).getInstance(any());
+        doCallRealMethod().when(commonCommandMessageValidator).validate(any());
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', '2010-10-10') ");
@@ -161,7 +167,30 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         return Stream.of(
                 Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE), CommandType.TEXT),
                 Arguments.of(getPollAnswerUpdate(), CommandType.POLL_VOTE),
-                Arguments.of(getCallbackQueryUpdate(), CommandType.CALLBACK)
+                Arguments.of(getCallbackQueryUpdate(), CommandType.CALLBACK),
+                Arguments.of(getFileUploadUpdate(), CommandType.FILE_UPLOAD)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource({"commonValidatorSource"})
+    void shouldCallCommonCommandMessageValidatorOnUpdate(Update update, CommandMessage expectedCommandMessage) {
+        when(telegramBot.poll()).thenReturn(update).thenReturn(null);
+        doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
+
+        updateProcessor.process();
+
+        verify(commonCommandMessageValidator, times(1)).validate(eq(expectedCommandMessage));
+    }
+
+    private static Stream<Arguments> commonValidatorSource() {
+        Update textUpdate = getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE);
+        return Stream.of(
+                Arguments.of(textUpdate, CommandMessage.getMessageInstance(textUpdate.getMessage())),
+                Arguments.of(textUpdate, CommandMessage.getMessageInstance(textUpdate.getMessage())),
+                Arguments.of(getFileUploadUpdate(), CommandMessage.getMessageInstance(getFileUploadUpdate().getMessage())),
+                Arguments.of(getPollAnswerUpdate(), CommandMessage.getPollAnswerInstance(getPollAnswerUpdate().getPollAnswer())),
+                Arguments.of(getCallbackQueryUpdate(), CommandMessage.getCallbackInstance(getCallbackQueryUpdate().getCallbackQuery()))
         );
     }
 
@@ -181,7 +210,8 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         return Stream.of(
                 Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE), Command.REFRESH_PROFILE),
                 Arguments.of(getPollAnswerUpdate(), Command.VOTE),
-                Arguments.of(getCallbackQueryUpdate(), Command.ACCEPT_SUBMIT)
+                Arguments.of(getCallbackQueryUpdate(), Command.ACCEPT_SUBMIT),
+                Arguments.of(getFileUploadUpdate(), Command.UPLOAD_PHOTO)
         );
     }
 
@@ -206,10 +236,8 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     }
 
     private static Update getPollAnswerUpdate() {
-        User user = new User();
-        user.setId(TELEGRAM_USER_ID_1);
         PollAnswer pollAnswer = new PollAnswer();
-        pollAnswer.setUser(user);
+        pollAnswer.setUser(getUser());
         pollAnswer.setOptionIds(Collections.singletonList(0));
         pollAnswer.setPollId("100001");
         Update update = new Update();
@@ -218,18 +246,43 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     }
 
     private static Update getCallbackQueryUpdate() {
-        User user = new User();
-        user.setId(TELEGRAM_USER_ID_1);
         Message message = new Message();
         message.setMessageId(TELEGRAM_REPLY_ID);
-        message.setFrom(user);
+        message.setFrom(getUser());
         CallbackQuery callbackQuery = new CallbackQuery();
         callbackQuery.setMessage(message);
         callbackQuery.setData("10000__-1");
-        callbackQuery.setFrom(user);
+        callbackQuery.setFrom(getUser());
         Update update = new Update();
         update.setCallbackQuery(callbackQuery);
         return update;
+    }
+
+    private static Update getFileUploadUpdate() {
+        Chat chat = new Chat();
+        chat.setId(TelegramUpdateProcessorTest.TELEGRAM_CHAT_ID_1);
+        chat.setType(ChatType.PRIVATE.getValue());
+        Message reply = new Message();
+        reply.setMessageId(null);
+        Document document = new Document();
+        document.setFileId("123");
+        document.setFileSize(12345L);
+        Message message = new Message();
+        message.setMessageId(10000);
+        message.setChat(chat);
+        message.setFrom(getUser());
+        message.setDocument(document);
+        message.setReplyToMessage(reply);
+        Update update = new Update();
+        update.setMessage(message);
+        return update;
+    }
+
+    private static User getUser() {
+        User user = new User();
+        user.setId(TelegramUpdateProcessorTest.TELEGRAM_USER_ID_1);
+        user.setFirstName("newFirstName");
+        return user;
     }
 
     private CompletableFuture<ExternalPollDto> getCompletableFuturePollMessage() {
