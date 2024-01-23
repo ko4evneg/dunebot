@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchState;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,9 +20,9 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query("""
             select m from Match m
             left join fetch m.matchPlayers mp
-            where mp.player.externalId = :externalPlayerId and m.onSubmit = true
+            where mp.player.externalId = :externalPlayerId and m.state = :matchState
             """)
-    List<Match> findLatestPlayerOnSubmitMatch(long externalPlayerId);
+    List<Match> findLatestPlayerMatch(long externalPlayerId, MatchState matchState);
 
     Optional<Match> findByExternalPollIdPollId(String telegramPollId);
 

@@ -125,7 +125,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         return Stream.of(
                 Arguments.of("update matches set state = '" + MatchState.FAILED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
                 Arguments.of("update matches set state = '" + MatchState.FINISHED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
-                Arguments.of("update matches set is_onsubmit = true where id = 15000", "Запрос на публикацию этого матча уже сделан"),
+                Arguments.of("update matches set state = '" + MatchState.ON_SUBMIT + "' where id = 15000", "Запрос на публикацию этого матча уже сделан"),
                 Arguments.of("update matches set positive_answers_count = 3 where id = 15000", "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос")
         );
     }
@@ -230,7 +230,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchOnSubmitFlag() {
+    void shouldSetMatchOnSubmitState() {
         Message replyMessage = new Message();
         replyMessage.setMessageId(111001);
         Chat chat = new Chat();
@@ -244,10 +244,10 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         commandProcessor.process(submitCommandMessage);
 
-        Boolean actualIsOnSubmit = jdbcTemplate.queryForObject("select is_onsubmit from matches where id = 15000", Boolean.class);
+        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
-        assertNotNull(actualIsOnSubmit);
-        assertTrue(actualIsOnSubmit);
+        assertNotNull(actualState);
+        assertEquals(MatchState.ON_SUBMIT, actualState);
     }
 
     @Test

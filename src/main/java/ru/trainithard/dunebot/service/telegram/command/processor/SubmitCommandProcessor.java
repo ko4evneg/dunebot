@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -57,8 +58,8 @@ public class SubmitCommandProcessor extends CommandProcessor {
                 // TODO: handle throwable (rollback)
                 matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                 matchPlayerRepository.save(matchPlayer);
-                if (!match.isOnSubmit()) {
-                    match.setOnSubmit(true);
+                if (match.getState() == MatchState.NEW) {
+                    match.setState(MatchState.ON_SUBMIT);
                     matchRepository.save(match);
                 }
             });

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -44,7 +45,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        Match match = matchRepository.findLatestPlayerOnSubmitMatch(commandMessage.getUserId()).iterator().next();
+        Match match = matchRepository.findLatestPlayerMatch(commandMessage.getUserId(), MatchState.ON_SUBMIT).iterator().next();
         String fileId = getFileId(commandMessage);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
         file.whenComplete((telegramFileDetailsDto, throwable) -> {

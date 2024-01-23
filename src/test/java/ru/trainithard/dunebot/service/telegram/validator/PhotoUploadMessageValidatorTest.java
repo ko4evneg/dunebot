@@ -56,8 +56,8 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl', 'name', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state,positive_answers_count, is_onsubmit, created_at) " +
-                "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 0, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state,positive_answers_count, created_at) " +
+                "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 0, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
 
@@ -73,7 +73,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenSavingNotOnSubmitMatchOnPhotoSizeUpload() {
-        jdbcTemplate.execute("update matches set is_onsubmit = false where id = 10000");
+        jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
         CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE));
 
         AnswerableDuneBotException actualException =
@@ -83,7 +83,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenSavingNotOnSubmitMatchOnDocumentUpload() {
-        jdbcTemplate.execute("update matches set is_onsubmit = false where id = 10000");
+        jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
         CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_FILE_SIZE);
 
         AnswerableDuneBotException actualException =
@@ -93,8 +93,8 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenMultipleOnSubmitMatchesExistOnPhotoSizeUpload() {
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, is_onsubmit, created_at) " +
-                "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 0, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 0,  '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10001, 10000, '2010-10-10')");
         CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE));
@@ -106,8 +106,8 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenMultipleOnSubmitMatchesExistOnDocumentUpload() {
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, is_onsubmit, created_at) " +
-                "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 0, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 0, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10001, 10000, '2010-10-10')");
         CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_FILE_SIZE);

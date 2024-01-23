@@ -36,7 +36,6 @@ public class MatchFinishingService {
                 finishSuccessfullyAndSave(match);
             } else {
                 match.setState(MatchState.FAILED);
-                match.setOnSubmit(false);
                 match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
@@ -64,7 +63,6 @@ public class MatchFinishingService {
 
     private void finishSuccessfullyAndSave(Match match) {
         match.setState(MatchState.FINISHED);
-        match.setOnSubmit(false);
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);

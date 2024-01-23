@@ -9,6 +9,10 @@ public enum MatchState {
      */
     NEW,
     /**
+     * Submit command was executed for the match.
+     */
+    ON_SUBMIT,
+    /**
      * Match is successfully finished.
      */
     FINISHED,

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandType;
@@ -38,7 +39,7 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
     }
 
     private void validateOnSubmitMatchesCount(CommandMessage commandMessage) {
-        List<Match> onSubmitMatches = matchRepository.findLatestPlayerOnSubmitMatch(commandMessage.getUserId());
+        List<Match> onSubmitMatches = matchRepository.findLatestPlayerMatch(commandMessage.getUserId(), MatchState.ON_SUBMIT);
         if (onSubmitMatches.isEmpty()) {
             throw new AnswerableDuneBotException(NO_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE, commandMessage);
         }

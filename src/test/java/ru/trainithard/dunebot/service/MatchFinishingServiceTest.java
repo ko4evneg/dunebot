@@ -49,8 +49,8 @@ class MatchFinishingServiceTest extends TestContextMock {
                 "values (10000, 'ExternalPollId', 10000, " + MATCH_CHAT_ID + ", '10000', " + MATCH_TOPIC_REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, is_onsubmit, has_onsubmit_photo, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 3, true, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, has_onsubmit_photo, created_at) " +
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 3, true, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -94,7 +94,7 @@ class MatchFinishingServiceTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
     void shouldNotDoAnythingWithFinishedMatchOnUnsuccessfullySubmittedMatchFinish(MatchState matchState) {
-        jdbcTemplate.execute("update matches set state = '" + matchState + "', is_onsubmit = false where id = 15000");
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
 
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
@@ -165,32 +165,26 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchFlagsOnMatchFinish() {
+    void shouldSetMatchFinishedStateOnMatchFinish() {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
 
         finishingService.finishSuccessfullySubmittedMatch(15000L);
 
-        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and state = '" + MatchState.FINISHED + "')", Boolean.class);
-        Boolean isMatchSubmitClosed = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and matches.is_onsubmit is false)", Boolean.class);
+        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
-        assertNotNull(isMatchFinished);
-        assertTrue(isMatchFinished);
-        assertNotNull(isMatchSubmitClosed);
-        assertTrue(isMatchSubmitClosed);
+        assertNotNull(actualState);
+        assertEquals(MatchState.FINISHED, actualState);
     }
 
     @Test
-    void shouldSetMatchFlagsOnUnsuccessfullySubmittedMatchFinish() {
+    void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish() {
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
-        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and state = '" + MatchState.FAILED + "')", Boolean.class);
-        Boolean isMatchSubmitClosed = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and matches.is_onsubmit is false)", Boolean.class);
+        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
-        assertNotNull(isMatchFinished);
-        assertTrue(isMatchFinished);
-        assertNotNull(isMatchSubmitClosed);
-        assertTrue(isMatchSubmitClosed);
+        assertNotNull(actualState);
+        assertEquals(MatchState.FAILED, actualState);
     }
 
     @Test

@@ -54,11 +54,6 @@ public class Match extends BaseEntity {
     @Column(name = "state")
     private MatchState state;
     /**
-     * Describes whether submit command was invoked for the match.
-     */
-    @Column(name = "is_onsubmit")
-    private boolean onSubmit;
-    /**
      * Describes whether the match have results photo submitted.
      */
     @Getter(AccessLevel.NONE)
