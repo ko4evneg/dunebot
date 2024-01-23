@@ -36,12 +36,13 @@ public class MatchPlayer extends BaseEntity {
     private ExternalMessageId submitMessageId;
     /**
      * Place in the <code>Match</code>. Is set when all players sent their <code>candidatePlace</code> without conflicts.
+     * May have value of integer between 1 and max number of match participants, or <code>null</code> if not set.
      */
     @Nullable
     private Integer place;
     /**
      * Candidate place in the <code>Match</code>. Used as a buffer before setting actual <code>place</code> for resolving
-     * conflicting places.
+     * conflicting places. May have value of integer between 1 and max number of match participants, or <code>null</code> if not set.
      */
     @Nullable
     private Integer candidatePlace;

@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.model;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -57,6 +58,12 @@ public class Match extends BaseEntity {
     @Column(name = "is_onsubmit")
     private boolean onSubmit;
     /**
+     * Describes whether the match have results photo submitted.
+     */
+    @Getter(AccessLevel.NONE)
+    @Column(name = "has_onsubmit_photo")
+    private boolean hasSubmitPhoto;
+    /**
      * Count of positive votes in the match poll.
      */
     private int positiveAnswersCount;
@@ -71,6 +78,10 @@ public class Match extends BaseEntity {
 
     public Match(ModType modType) {
         this.modType = modType;
+    }
+
+    public boolean hasSubmitPhoto() {
+        return hasSubmitPhoto;
     }
 
     public boolean areAllSubmitsReceived() {
@@ -88,4 +99,5 @@ public class Match extends BaseEntity {
     public boolean hasMissingPlayers() {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
+
 }
