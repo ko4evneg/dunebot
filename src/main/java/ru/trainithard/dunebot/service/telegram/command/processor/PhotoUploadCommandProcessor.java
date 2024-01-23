@@ -33,6 +33,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private static final String UNSUPPORTED_UPDATE_TYPE = "Unsupported photo/document update type";
     private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Ошибка: скриншот уже загружен";
     private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
+    private static final String SUCCESSFUL_UPLOAD_TEXT = "Скриншот успешно загружен.";
 
     private final MessagingService messagingService;
     private final RestTemplate restTemplate;
@@ -57,13 +58,14 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     LocalDate today = LocalDateTime.ofInstant(Instant.now(clock), ZoneId.systemDefault()).toLocalDate();
                     String monthYear = today.format(DateTimeFormatter.ofPattern("yy_MM"));
                     String dottedFileExtension = getFileExtension(filePath);
-                    validateAllowedExtension(dottedFileExtension, commandMessage);
                     Path savePath = Path.of(getSaveDirectoryPath(monthYear) + match.getId() + dottedFileExtension);
-                    validateIfExists(savePath, commandMessage);
+
+                    validate(commandMessage, dottedFileExtension, savePath);
                     Files.createDirectories(savePath.getParent());
                     Files.write(savePath, photoBytes);
                     match.setHasSubmitPhoto(true);
                     matchRepository.save(match);
+                    messagingService.sendMessageAsync(new MessageDto(commandMessage.getChatId(), SUCCESSFUL_UPLOAD_TEXT, commandMessage.getReplyMessageId(), null));
                 }
             } catch (IOException ignored) {
                 // TODO: log?
@@ -71,12 +73,17 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         });
     }
 
-    private void validateIfExists(Path savePath, CommandMessage commandMessage) {
+    private void validate(CommandMessage commandMessage, String dottedFileExtension, Path savePath) {
+        boolean hasValidExtension = !PHOTO_ALLOWED_EXTENSIONS.contains(dottedFileExtension);
+        if (hasValidExtension) {
+            MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
+            messagingService.sendMessageAsync(messageDto);
+        }
         if (Files.exists(savePath)) {
             MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
             messagingService.sendMessageAsync(messageDto);
-            throw new DuneBotException(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
         }
+        throw new DuneBotException();
     }
 
     private String getFileId(CommandMessage commandMessage) {
@@ -103,14 +110,6 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private String getFileExtension(String filePath) {
         int lastSlashIndex = filePath.lastIndexOf(".");
         return filePath.substring(lastSlashIndex);
-    }
-
-    private void validateAllowedExtension(String dottedFileExtension, CommandMessage commandMessage) {
-        if (!PHOTO_ALLOWED_EXTENSIONS.contains(dottedFileExtension)) {
-            MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
-            messagingService.sendMessageAsync(messageDto);
-            throw new DuneBotException(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
-        }
     }
 
     @Override

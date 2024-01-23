@@ -2,8 +2,6 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | register user feedback                                                              |
-| critical | screenshot upload feedback                                                          |
 | critical | rating                                                                              |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                 |
 | critical | after match start exit                                                              |

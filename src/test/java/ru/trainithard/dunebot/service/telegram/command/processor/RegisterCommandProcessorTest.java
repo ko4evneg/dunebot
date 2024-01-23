@@ -2,8 +2,10 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.lang.Nullable;
 import org.telegram.telegrambots.meta.api.objects.Chat;
@@ -13,19 +15,26 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class RegisterCommandProcessorTest extends TestContextMock {
     @Autowired
     private RegisterCommandProcessor commandProcessor;
+    @MockBean
+    private MessagingService messagingService;
 
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
     private static final String FIRST_NAME = "fName";
     private static final String STEAM_NAME = "stName";
+    private static final String REGISTRATION_MESSAGE = "Вы зарегистрированы под steam-именем " + STEAM_NAME;
     private final CommandMessage commandMessage = getCommandMessage(STEAM_NAME, null, null);
 
     @AfterEach
@@ -92,6 +101,18 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
         AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage));
         assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exception.getMessage());
+    }
+
+    @Test
+    void shouldSendTelegramMessageOnUserRegistration() {
+        commandProcessor.process(commandMessage);
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessages = messageCaptor.getValue();
+
+        assertEquals(TELEGRAM_CHAT_ID.toString(), actualMessages.getChatId());
+        assertEquals(REGISTRATION_MESSAGE, actualMessages.getText());
     }
 
     private CommandMessage getCommandMessage(String steamName, @Nullable String lastName, @Nullable String userName) {

@@ -48,6 +48,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     private static final TelegramFileDetailsDto wrongExtensionFileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.bmp", FILE_SIZE);
     private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Ошибка: скриншот уже загружен";
     private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
+    private static final String SUCCESSFUL_UPLOAD_TEXT = "Скриншот успешно загружен.";
     private static final Long CHAT_ID = 100500L;
     private static final Integer REPLY_ID = 9000;
 
@@ -251,6 +252,22 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         String actualFileContent = Files.readString(PHOTO_FILE_PATH);
         assertEquals("hehe", actualFileContent);
+    }
+
+    @Test
+    void shouldSendTelegramMessageOnSuccessfulUpload() {
+        TelegramFileDetailsDto fileDetails = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
+        doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
+
+        processor.process(getDocumentCommandMessage());
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessages = messageCaptor.getValue();
+
+        assertEquals(CHAT_ID.toString(), actualMessages.getChatId());
+        assertEquals(SUCCESSFUL_UPLOAD_TEXT, actualMessages.getText());
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {
