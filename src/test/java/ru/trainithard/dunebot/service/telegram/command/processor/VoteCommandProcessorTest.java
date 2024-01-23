@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
@@ -79,8 +80,8 @@ class VoteCommandProcessorTest extends TestContextMock {
                 "values (10003, 12348, 12348, 'st_pl4', 'name4', 'en4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 123, " + SettingConstants.CHAT_ID + ", " + REPLY_ID + ", '" + POLL_ID + "', '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "','" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
     }

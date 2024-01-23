@@ -2,7 +2,7 @@ package ru.trainithard.dunebot.service.telegram.factory;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.model.CommandType;
+import ru.trainithard.dunebot.service.telegram.command.CommandType;
 import ru.trainithard.dunebot.service.telegram.validator.DefaultCommandMessageValidator;
 import ru.trainithard.dunebot.service.telegram.validator.ValidationStrategy;
 

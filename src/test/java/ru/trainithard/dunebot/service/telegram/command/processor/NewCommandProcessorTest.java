@@ -19,6 +19,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -83,11 +84,11 @@ class NewCommandProcessorTest extends TestContextMock {
 
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where chat_id = " +
                 CHAT_ID + " and poll_id = '" + POLL_ID + "' and message_id = " + MESSAGE_ID + " and reply_id = " + REPLY_ID, Long.class);
-        Boolean isFilledMatchPresented = jdbcTemplate.queryForObject("select is_finished from matches where external_poll_id = " + actualMessageId +
-                " and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and submits_retry_count = 0", Boolean.class);
+        MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where external_poll_id = " + actualMessageId +
+                " and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and submits_retry_count = 0", MatchState.class);
 
-        assertNotNull(isFilledMatchPresented);
-        assertFalse(isFilledMatchPresented);
+        assertNotNull(actualMatchState);
+        assertEquals(MatchState.NEW, actualMatchState);
     }
 
     @Test

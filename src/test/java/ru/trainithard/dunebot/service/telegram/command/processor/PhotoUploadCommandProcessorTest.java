@@ -13,6 +13,7 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -69,8 +70,8 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl', 'name', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, positive_answers_count, is_onsubmit, created_at) " +
-                "values (10000, 10000, '" + ModType.CLASSIC + "', 0, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, is_onsubmit, created_at) " +
+                "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 0, true, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
 

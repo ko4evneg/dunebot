@@ -5,16 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -24,6 +22,8 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 @Service
 @RequiredArgsConstructor
 public class MatchFinishingService {
+    private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
+
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final TransactionTemplate transactionTemplate;
@@ -31,11 +31,11 @@ public class MatchFinishingService {
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
-        if (!match.isFinished()) {
+        if (!finishedMatchStates.contains(match.getState())) {
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
             } else {
-                match.setFinished(true);
+                match.setState(MatchState.FAILED);
                 match.setOnSubmit(false);
                 match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
                 transactionTemplate.executeWithoutResult(status -> {
@@ -63,7 +63,7 @@ public class MatchFinishingService {
     }
 
     private void finishSuccessfullyAndSave(Match match) {
-        match.setFinished(true);
+        match.setState(MatchState.FINISHED);
         match.setOnSubmit(false);
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {

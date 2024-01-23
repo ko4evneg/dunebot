@@ -3,10 +3,10 @@ package ru.trainithard.dunebot.service.telegram.validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.CommandType;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.CommandType;
 
 import java.util.Comparator;
 import java.util.List;

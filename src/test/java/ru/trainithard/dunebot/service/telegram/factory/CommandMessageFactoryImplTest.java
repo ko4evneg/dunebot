@@ -6,8 +6,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
-import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Collections;

@@ -4,7 +4,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
-import ru.trainithard.dunebot.model.Command;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 
 import java.util.Arrays;

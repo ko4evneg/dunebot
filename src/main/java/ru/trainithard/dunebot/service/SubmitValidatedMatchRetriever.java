@@ -5,8 +5,12 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +20,7 @@ public class SubmitValidatedMatchRetriever {
     private static final String NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE = "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос";
     private static final String ALREADY_SUBMITTED_EXCEPTION_MESSAGE = "Запрос на публикацию этого матча уже сделан";
     private static final String MATCH_NOT_EXISTS_EXCEPTION = "Матча с таким ID не существует!";
+    private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
 
     private final MatchRepository matchRepository;
 
@@ -33,7 +38,7 @@ public class SubmitValidatedMatchRetriever {
     }
 
     private void validateMatch(long telegramChatId, Match match) {
-        if (match.isFinished()) {
+        if (finishedMatchStates.contains(match.getState())) {
             throw new AnswerableDuneBotException(FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE, telegramChatId);
         }
         if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {

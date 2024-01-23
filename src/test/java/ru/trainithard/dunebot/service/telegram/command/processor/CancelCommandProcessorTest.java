@@ -4,6 +4,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
@@ -48,8 +51,8 @@ class CancelCommandProcessorTest extends TestContextMock {
                 "values (10000, 12345, 9000, 'st_pl', 'name', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId'," + MESSAGE_ID + ", " + CHAT_ID + ", " + REPLY_ID + ", '12346', '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', 1, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10000, 10000, 10000, '2010-10-10')");
     }
@@ -118,9 +121,10 @@ class CancelCommandProcessorTest extends TestContextMock {
         assertEquals(1, actualMatchPlayersCount);
     }
 
-    @Test
-    void shouldNotDeleteMatchAndMatchPlayersOnFinishedMatchCancelRequest() {
-        jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
+    void shouldNotDeleteMatchAndMatchPlayersOnFinishedMatchCancelRequest(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         try {
             commandProcessor.process(commandMessage);
@@ -134,9 +138,10 @@ class CancelCommandProcessorTest extends TestContextMock {
         assertEquals(1, actualMatchPlayersCount);
     }
 
-    @Test
-    void shouldNotSendTelegramDeleteRequestOnFinishedMatchCancelRequest() {
-        jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
+    void shouldNotSendTelegramDeleteRequestOnFinishedMatchCancelRequest(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         try {
             commandProcessor.process(commandMessage);
@@ -146,9 +151,10 @@ class CancelCommandProcessorTest extends TestContextMock {
         verifyNoInteractions(messagingService);
     }
 
-    @Test
-    void shouldThrowOnFinishedMatchCancelRequest() {
-        jdbcTemplate.execute("update matches set is_finished = true where id = 10000");
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
+    void shouldThrowOnFinishedMatchCancelRequest(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage));
 

@@ -50,8 +50,9 @@ public class Match extends BaseEntity {
     /**
      * Describes whether match is finished.
      */
-    @Column(name = "is_finished")
-    private boolean finished;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state")
+    private MatchState state;
     /**
      * Describes whether submit command was invoked for the match.
      */
@@ -78,6 +79,7 @@ public class Match extends BaseEntity {
 
     public Match(ModType modType) {
         this.modType = modType;
+        this.state = MatchState.NEW;
     }
 
     public boolean hasSubmitPhoto() {

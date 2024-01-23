@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.model;
+package ru.trainithard.dunebot.service.telegram.command;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static ru.trainithard.dunebot.model.CommandType.*;
+import static ru.trainithard.dunebot.service.telegram.command.CommandType.*;
 
 /**
  * Enum describing available bot commands.

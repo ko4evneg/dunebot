@@ -3,11 +3,14 @@ package ru.trainithard.dunebot.service;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -46,8 +49,8 @@ class MatchFinishingServiceTest extends TestContextMock {
                 "values (10000, 'ExternalPollId', 10000, " + MATCH_CHAT_ID + ", '10000', " + MATCH_TOPIC_REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, is_onsubmit, has_onsubmit_photo, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 3, true, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, is_onsubmit, has_onsubmit_photo, created_at) " +
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 3, true, true, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -88,9 +91,10 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(playersPlaces, contains(4, 2, 3, 1));
     }
 
-    @Test
-    void shouldNotDoAnythingWithFinishedMatchOnUnsuccessfullySubmittedMatchFinish() {
-        jdbcTemplate.execute("update matches set is_finished = true, is_onsubmit = false where id = 15000");
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
+    void shouldNotDoAnythingWithFinishedMatchOnUnsuccessfullySubmittedMatchFinish(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "', is_onsubmit = false where id = 15000");
 
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
@@ -167,7 +171,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
         finishingService.finishSuccessfullySubmittedMatch(15000L);
 
-        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and is_finished is true)", Boolean.class);
+        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and state = '" + MatchState.FINISHED + "')", Boolean.class);
         Boolean isMatchSubmitClosed = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and matches.is_onsubmit is false)", Boolean.class);
 
         assertNotNull(isMatchFinished);
@@ -180,7 +184,7 @@ class MatchFinishingServiceTest extends TestContextMock {
     void shouldSetMatchFlagsOnUnsuccessfullySubmittedMatchFinish() {
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
-        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and is_finished is true)", Boolean.class);
+        Boolean isMatchFinished = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and state = '" + MatchState.FAILED + "')", Boolean.class);
         Boolean isMatchSubmitClosed = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 15000 and matches.is_onsubmit is false)", Boolean.class);
 
         assertNotNull(isMatchFinished);
