@@ -4,7 +4,7 @@
 |----------|-------------------------------------------------------------------------------------|
 | critical | rating                                                                              |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                 |
-| critical | after match start exit                                                              |
+| critical | after match start revocation                                                        |
 | critical | finish match after screenshot upload                                                |
 | high     | simultaneous matches spam control                                                   |
 | high     | match submits throttling                                                            |
@@ -23,6 +23,7 @@
 | low      | check whether validation is required for TelegramUpdateProcessor pollAnswer updates |
 | low      | add runtime validator selection to TelegramUpdateProcessor                          |
 | low      | add logging                                                                         |
+| low      | check all callbacks thrown                                                          |
 
 ### Known bugs
 

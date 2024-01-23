@@ -43,7 +43,7 @@ public class MatchFinishingService {
                 });
 
                 ExternalPollId externalPollId = match.getExternalPollId();
-                MessageDto finishMessage = new MessageDto(externalPollId.getChatId(), reason, externalPollId.getReplyId(), null);
+                MessageDto finishMessage = new MessageDto(externalPollId, reason);
                 messagingService.sendMessageAsync(finishMessage);
             }
         }
@@ -84,6 +84,6 @@ public class MatchFinishingService {
         stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR));
 
         ExternalPollId externalPollId = match.getExternalPollId();
-        return new MessageDto(externalPollId.getChatId(), stringBuilder.toString(), externalPollId.getReplyId(), null);
+        return new MessageDto(externalPollId, stringBuilder.toString());
     }
 }

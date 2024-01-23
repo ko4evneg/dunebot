@@ -65,7 +65,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     Files.write(savePath, photoBytes);
                     match.setHasSubmitPhoto(true);
                     matchRepository.save(match);
-                    messagingService.sendMessageAsync(new MessageDto(commandMessage.getChatId(), SUCCESSFUL_UPLOAD_TEXT, commandMessage.getReplyMessageId(), null));
+                    messagingService.sendMessageAsync(new MessageDto(commandMessage, SUCCESSFUL_UPLOAD_TEXT, null));
                 }
             } catch (IOException ignored) {
                 // TODO: log?
@@ -76,12 +76,12 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private void validate(CommandMessage commandMessage, String dottedFileExtension, Path savePath) {
         boolean hasValidExtension = !PHOTO_ALLOWED_EXTENSIONS.contains(dottedFileExtension);
         if (hasValidExtension) {
-            MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
+            MessageDto messageDto = new MessageDto(commandMessage, WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, null);
             messagingService.sendMessageAsync(messageDto);
             throw new DuneBotException();
         }
         if (Files.exists(savePath)) {
-            MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
+            MessageDto messageDto = new MessageDto(commandMessage, SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, null);
             messagingService.sendMessageAsync(messageDto);
             throw new DuneBotException();
         }
