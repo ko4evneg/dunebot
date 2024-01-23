@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZE;
+import static ru.trainithard.dunebot.configuration.SettingConstants.PHOTO_ALLOWED_EXTENSIONS;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private static final String PATH_SEPARATOR = "/";
     private static final String UNSUPPORTED_UPDATE_TYPE = "Unsupported photo/document update type";
     private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
+    private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
 
     private final MessagingService messagingService;
     private final RestTemplate restTemplate;
@@ -53,7 +55,9 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                 if (photoBytes != null) {
                     LocalDate today = LocalDateTime.ofInstant(Instant.now(clock), ZoneId.systemDefault()).toLocalDate();
                     String monthYear = today.format(DateTimeFormatter.ofPattern("yy_MM"));
-                    Path savePath = Path.of(getSaveDirectoryPath(monthYear) + getSaveFileName(match.getId(), filePath));
+                    String dottedFileExtension = getFileExtension(filePath);
+                    validateAllowedExtension(dottedFileExtension, commandMessage);
+                    Path savePath = Path.of(getSaveDirectoryPath(monthYear) + match.getId() + dottedFileExtension);
                     validateIfExists(savePath, commandMessage);
                     Files.createDirectories(savePath.getParent());
                     Files.write(savePath, photoBytes);
@@ -93,10 +97,17 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         return photosDirectoryPath + PATH_SEPARATOR + monthYear + PATH_SEPARATOR;
     }
 
-    private String getSaveFileName(long matchId, String filePath) {
+    private String getFileExtension(String filePath) {
         int lastSlashIndex = filePath.lastIndexOf(".");
-        String fileExtension = filePath.substring(lastSlashIndex);
-        return matchId + fileExtension;
+        return filePath.substring(lastSlashIndex);
+    }
+
+    private void validateAllowedExtension(String dottedFileExtension, CommandMessage commandMessage) {
+        if (!PHOTO_ALLOWED_EXTENSIONS.contains(dottedFileExtension)) {
+            MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
+            messagingService.sendMessageAsync(messageDto);
+            throw new DuneBotException(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
+        }
     }
 
     @Override

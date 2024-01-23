@@ -3,6 +3,8 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,7 +44,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     private static final Path PHOTO_FILE_PATH = Path.of("photos/11_10/10000.jpeg");
     private static final java.time.Instant NOW = LocalDateTime.of(2011, 10, 20, 0, 1).toInstant(ZoneOffset.UTC);
     private static final TelegramFileDetailsDto fileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
+    private static final TelegramFileDetailsDto wrongExtensionFileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.bmp", FILE_SIZE);
     private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
+    private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
     private static final Long CHAT_ID = 100500L;
     private static final Integer REPLY_ID = 9000;
 
@@ -87,11 +91,18 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
-    @Test
-    void shouldSaveFileWhenCompressedPhotoReceived() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"jpg", "jpeg", "png"})
+    void shouldSaveFileWhenCompressedPhotoReceived(String extension) throws IOException {
+        TelegramFileDetailsDto fileDetails = new TelegramFileDetailsDto(FILE_ID, "path/file." + extension, FILE_SIZE);
+        Path expectedFilePath = Path.of("photos/11_10/10000." + extension);
+        String fileUri = FILE_URI.replace(".jpeg", "." + extension);
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(fileUri), eq(byte[].class));
+        doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
+
         processor.process(getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE)));
 
-        String actualFileContent = Files.readString(PHOTO_FILE_PATH);
+        String actualFileContent = Files.readString(expectedFilePath);
 
         assertEquals("this_file", actualFileContent);
     }
@@ -112,11 +123,18 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
-    @Test
-    void shouldSaveFileWhenDocumentPhotoReceived() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"jpg", "jpeg", "png"})
+    void shouldSaveFileWhenDocumentPhotoReceived(String extension) throws IOException {
+        TelegramFileDetailsDto fileDetails = new TelegramFileDetailsDto(FILE_ID, "path/file." + extension, FILE_SIZE);
+        Path expectedFilePath = Path.of("photos/11_10/10000." + extension);
+        doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
+        String fileUri = FILE_URI.replace(".jpeg", "." + extension);
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(fileUri), eq(byte[].class));
+
         processor.process(getDocumentCommandMessage());
 
-        String actualFileContent = Files.readString(PHOTO_FILE_PATH);
+        String actualFileContent = Files.readString(expectedFilePath);
 
         assertEquals("this_file", actualFileContent);
     }
@@ -144,19 +162,61 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldSendNotificationWhenPhotoAlreadyExists() throws IOException {
         Files.createDirectories(PHOTO_FILE_PATH.getParent());
         Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
-        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID + "XX");
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
         CommandMessage documentCommandMessage = getDocumentCommandMessage();
 
         processor.process(documentCommandMessage);
+
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
-        String actualFileContent = Files.readString(PHOTO_FILE_PATH);
-        assertEquals("hehe", actualFileContent);
         assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
         assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
         assertEquals(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, actualMessage.getText());
+    }
+
+    @Test
+    void shouldNotChangeExistingFileWhenPhotoAlreadyExists() throws IOException {
+        Files.createDirectories(PHOTO_FILE_PATH.getParent());
+        Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        CommandMessage documentCommandMessage = getDocumentCommandMessage();
+
+        processor.process(documentCommandMessage);
+
+        String actualFileContent = Files.readString(PHOTO_FILE_PATH);
+        assertEquals("hehe", actualFileContent);
+    }
+
+    @Test
+    void shouldSendNotificationWhenFileExtensionNotAllowed() {
+        doReturn(CompletableFuture.completedFuture(wrongExtensionFileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI.replace(".jpeg", ".bmp")), eq(byte[].class));
+        CommandMessage documentCommandMessage = getDocumentCommandMessage();
+
+        processor.process(documentCommandMessage);
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
+        assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
+        assertEquals(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, actualMessage.getText());
+    }
+
+    @Test
+    void shouldNotChangeExistingFileWhenFileExtensionNotAllowed() throws IOException {
+        Files.createDirectories(PHOTO_FILE_PATH.getParent());
+        Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
+        doReturn(CompletableFuture.completedFuture(wrongExtensionFileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        CommandMessage documentCommandMessage = getDocumentCommandMessage();
+
+        processor.process(documentCommandMessage);
+
+        String actualFileContent = Files.readString(PHOTO_FILE_PATH);
+        assertEquals("hehe", actualFileContent);
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {

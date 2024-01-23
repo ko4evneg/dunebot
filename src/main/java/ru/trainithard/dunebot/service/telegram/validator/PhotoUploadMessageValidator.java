@@ -15,7 +15,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZ
 
 @Service
 @RequiredArgsConstructor
-public class FileUploadMessageValidator implements ValidationStrategy {
+public class PhotoUploadMessageValidator implements ValidationStrategy {
     private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE_TEMPLATE = "Файл дюже большой. Разрешенный максимальный размер: %s КБ";
     private static final String MULTIPLE_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE =
             "У вас более одного матча (%s) в процессе регистрации результата. Выйдите из неактуальных опросов.";

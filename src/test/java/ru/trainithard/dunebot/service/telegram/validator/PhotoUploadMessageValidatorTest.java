@@ -26,15 +26,15 @@ import java.util.concurrent.CompletableFuture;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZE;
 
 @SpringBootTest
-class FileUploadMessageValidatorTest extends TestContextMock {
+class PhotoUploadMessageValidatorTest extends TestContextMock {
     private static final long EXTERNAL_USER_ID = 12345L;
-    private static final int MAX_FILE_SIZE = 1_000_000;
     private static final String FILE_URI = "https://api.telegram.org/file/botfake_token/path/file.jpeg";
     private static final String FILE_ID = "fileId123_4%";
     private static final long FILE_SIZE = 540000;
-    private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE = "Файл дюже большой. Разрешенный максимальный размер: 1000 КБ";
+    private static final String FILE_SIZE_LIMIT_EXCEPTION_MESSAGE = "Файл дюже большой. Разрешенный максимальный размер: 6500 КБ";
     private static final String MULTIPLE_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE =
             "У вас более одного матча (10000, 10001) в процессе регистрации результата. Выйдите из неактуальных опросов.";
     private static final String NOT_SUBMITTED_MATCH_EXCEPTION_MESSAGE =
@@ -42,7 +42,7 @@ class FileUploadMessageValidatorTest extends TestContextMock {
     private static final TelegramFileDetailsDto fileDetailsDto = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
 
     @Autowired
-    private FileUploadMessageValidator validator;
+    private PhotoUploadMessageValidator validator;
     @MockBean
     private MessagingService messagingService;
     @MockBean
