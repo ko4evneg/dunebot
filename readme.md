@@ -2,7 +2,6 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | delay match finish until photo received                                             |
 | critical | spread public commands prohibition to all kinds of commands                         |
 | critical | rating                                                                              |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                 |

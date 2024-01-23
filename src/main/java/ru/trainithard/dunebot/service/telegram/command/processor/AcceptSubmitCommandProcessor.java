@@ -24,9 +24,15 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.RESUBMITS_LI
 @Service
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
-    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
-    private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE = "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'";
-    private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE = "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
+    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE =
+            "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE =
+            "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'";
+    private static final String ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE =
+            "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'." +
+                    EXTERNAL_LINE_SEPARATOR + "Теперь загрузите в этот чат скриншот победы.";
+    private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE =
+            "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
@@ -45,7 +51,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             deleteOldSubmitMessage(submittingPlayer);
 
             int candidatePlace = callback.candidatePlace;
-            if (isLastConflictSubmit(match, candidatePlace)) {
+            if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(RESUBMITS_LIMIT)) {
                 String conflictText = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
                 sendMessagesToMatchPlayers(matchPlayers, conflictText);
                 resubmitProcessor.process(match);
@@ -59,9 +65,9 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                     matchRepository.save(match);
                     matchPlayerRepository.save(submittingPlayer);
                 });
-                String acceptedSubmitText = String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
-                messagingService.sendMessageAsync(new MessageDto(submittingPlayer.getSubmitMessageId().getChatId(), acceptedSubmitText, null, null));
-                if (match.areAllSubmitsReceived()) {
+                Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
+                messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match, candidatePlace), null, null));
+                if (match.areAllSubmitsReceived() && match.hasSubmitPhoto()) {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId());
                 }
             }
@@ -78,10 +84,6 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         if (submittingPlayer.hasSubmitMessage()) {
             messagingService.deleteMessageAsync(submittingPlayer.getSubmitMessageId());
         }
-    }
-
-    private boolean isLastConflictSubmit(Match match, int candidatePlace) {
-        return isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(RESUBMITS_LIMIT);
     }
 
     private boolean isConflictSubmit(List<MatchPlayer> matchPlayers, int candidatePlace) {
@@ -113,6 +115,12 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         return conflictTextBuilder.toString();
     }
 
+    private String getSubmitText(Match match, int candidatePlace) {
+        return candidatePlace == 1 ?
+                String.format(ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR) :
+                String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
+    }
+
     private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, String message) {
         for (MatchPlayer matchPlayer : matchPlayers) {
             messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
@@ -125,6 +133,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private static class Callback {
+
         private final long matchId;
         private final int candidatePlace;
 

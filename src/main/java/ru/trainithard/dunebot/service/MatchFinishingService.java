@@ -32,7 +32,7 @@ public class MatchFinishingService {
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
         Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
         if (!match.isFinished()) {
-            if (hasAllPlacesSubmitted(match)) {
+            if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
             } else {
                 match.setFinished(true);

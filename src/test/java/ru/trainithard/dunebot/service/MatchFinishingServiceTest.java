@@ -46,8 +46,8 @@ class MatchFinishingServiceTest extends TestContextMock {
                 "values (10000, 'ExternalPollId', 10000, " + MATCH_CHAT_ID + ", '10000', " + MATCH_TOPIC_REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, is_onsubmit, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 3, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, is_onsubmit, has_onsubmit_photo, created_at) " +
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 3, true, true, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -122,6 +122,20 @@ class MatchFinishingServiceTest extends TestContextMock {
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
         assertThat(playersPlaces, contains(null, 2, 3, 1, 4));
+    }
+
+    @Test
+    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissingAndNoPhotoSubmitted() {
+        jdbcTemplate.execute("update matches set submits_count = 4, has_onsubmit_photo = false where id = 15000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
+                "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
+
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        Boolean wasAnyPlaceSaved = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 15000 and place is not null)", Boolean.class);
+
+        assertNotNull(wasAnyPlaceSaved);
+        assertFalse(wasAnyPlaceSaved);
     }
 
     @Test

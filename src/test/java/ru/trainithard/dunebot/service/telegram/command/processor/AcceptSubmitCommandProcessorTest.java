@@ -48,8 +48,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-//        doAnswer(new SubmitCommandProcessorTest.MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, " + USER_1_ID + ", 12000, 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
@@ -62,8 +60,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 "values (10000, 'ExternalPollId', 10000, 10000, '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, has_onsubmit_photo,created_at) " +
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, true, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -130,6 +128,15 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldNotInvokeMatchFinishOnLastCallbackReplyWhenMatchHasNoPhoto() {
+        jdbcTemplate.execute("update matches set submits_count = 3, has_onsubmit_photo = false where id = 15000");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
+
+        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(15000L));
+    }
+
+    @Test
     void shouldNotInvokeMatchFinishOnNotLastCallbackReply() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
@@ -147,7 +154,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldInvokeUnsuccessfulMatchFinishOnLastConflictCallbackReply() {
+    void shouldNotInvokeUnsuccessfulMatchFinishOnLastConflictCallbackReply() {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
@@ -228,7 +235,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {1, 2, 3, 4})
+    @ValueSource(ints = {2, 3, 4})
     void shouldSendMessageAboutCallbackAcceptOnCallbackReply(int place) {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
 
@@ -240,6 +247,21 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         assertEquals("11002", actualMessages.getChatId());
         assertEquals("В матче 15000 за вами зафиксировано " + place + " место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
                 "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
+    }
+
+    @Test
+    void shouldSendMessageAboutCallbackAcceptOnCallbackReply() {
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessages = messageCaptor.getValue();
+
+        assertNull(actualMessages.getReplyMessageId());
+        assertEquals("11002", actualMessages.getChatId());
+        assertEquals("В матче 15000 за вами зафиксировано 1 место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
+                "При ошибке используйте команду '/resubmit 15000'." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
+                "Теперь загрузите в этот чат скриншот победы.", actualMessages.getText());
     }
 
     private CommandMessage getCommandMessage(long userId, int messageId, long chatId, String callbackData) {

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -108,17 +108,36 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSetMatchSubmitPhotoFlagWhenCompressedPhotoReceived() {
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE)));
+
+        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
+
+        assertNotNull(actualSubmitPhotoFlag);
+        assertTrue(actualSubmitPhotoFlag);
+    }
+
+    @Test
+    void shouldSetMatchSubmitPhotoFlagWhenDocumentReceived() {
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+
+        processor.process(getDocumentCommandMessage());
+
+        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
+
+        assertNotNull(actualSubmitPhotoFlag);
+        assertTrue(actualSubmitPhotoFlag);
+    }
+
+    @Test
     void shouldIgnoreFilePathFirstSlashWhenCompressedPhotoReceived() {
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails("/" + FILE_ID);
 
         processor.process(getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE)));
-
-        verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
-    }
-
-    @Test
-    void shouldRequestForFileWhenDocumentPhotoReceived() {
-        processor.process(getDocumentCommandMessage());
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
@@ -204,6 +223,20 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
         assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
         assertEquals(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, actualMessage.getText());
+    }
+
+    @Test
+    void shouldNotSetMatchSubmitPhotoFlagWhenFileExtensionNotAllowed() {
+        doReturn(CompletableFuture.completedFuture(wrongExtensionFileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI.replace(".jpeg", ".bmp")), eq(byte[].class));
+        CommandMessage documentCommandMessage = getDocumentCommandMessage();
+
+        processor.process(documentCommandMessage);
+
+        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
+
+        assertNotNull(actualSubmitPhotoFlag);
+        assertFalse(actualSubmitPhotoFlag);
     }
 
     @Test

@@ -61,6 +61,8 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     validateIfExists(savePath, commandMessage);
                     Files.createDirectories(savePath.getParent());
                     Files.write(savePath, photoBytes);
+                    match.setHasSubmitPhoto(true);
+                    matchRepository.save(match);
                 }
             } catch (IOException ignored) {
                 // TODO: log?
