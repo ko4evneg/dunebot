@@ -78,12 +78,13 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         if (hasValidExtension) {
             MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
             messagingService.sendMessageAsync(messageDto);
+            throw new DuneBotException();
         }
         if (Files.exists(savePath)) {
             MessageDto messageDto = new MessageDto(Long.toString(commandMessage.getChatId()), SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, commandMessage.getReplyMessageId(), null);
             messagingService.sendMessageAsync(messageDto);
+            throw new DuneBotException();
         }
-        throw new DuneBotException();
     }
 
     private String getFileId(CommandMessage commandMessage) {

@@ -132,13 +132,18 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
-    void shouldCreateNullCommandMessageForPollAnswerWithoutOptionsCommandUpdate() {
+    void shouldCreateCommandMessageForPollAnswerWithoutOptionsCommandUpdate() {
         Update pollAnswerUpdate = getPollAnswerUpdate();
         pollAnswerUpdate.getPollAnswer().setOptionIds(Collections.emptyList());
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
+        CommandMessage.PollVote pollVote = commandMessage.getPollVote();
 
-        assertNull(commandMessage);
+        assertNotNull(commandMessage);
+        assertEquals(USER_ID, commandMessage.getUserId());
+        assertEquals(Command.VOTE, commandMessage.getCommand());
+        assertEquals(POLL_ID, pollVote.pollId());
+        assertTrue(pollVote.selectedAnswerId().isEmpty());
     }
 
     @Test
