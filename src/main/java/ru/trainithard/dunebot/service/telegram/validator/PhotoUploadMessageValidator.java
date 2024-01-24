@@ -12,7 +12,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandType;
 import java.util.Comparator;
 import java.util.List;
 
-import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZE;
+import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
 
     private void validateFileSize(CommandMessage commandMessage) {
         if (commandMessage.getPhoto() != null && !hasPhotoBelowSizeLimit(commandMessage) ||
-                commandMessage.getFile() != null && commandMessage.getFile().size() > MAX_FILE_SIZE) {
+                commandMessage.getFile() != null && commandMessage.getFile().size() > MAX_SCREENSHOT_SIZE) {
             throw new AnswerableDuneBotException(getFileSizeLimitExceptionMessage(), commandMessage);
         }
     }
@@ -54,11 +54,11 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
     }
 
     private boolean hasPhotoBelowSizeLimit(CommandMessage commandMessage) {
-        return commandMessage.getPhoto().stream().anyMatch(photo -> photo.size() <= MAX_FILE_SIZE);
+        return commandMessage.getPhoto().stream().anyMatch(photo -> photo.size() <= MAX_SCREENSHOT_SIZE);
     }
 
     private String getFileSizeLimitExceptionMessage() {
-        int effectiveMaxFileSize = MAX_FILE_SIZE > 1000 ? MAX_FILE_SIZE / 1000 : MAX_FILE_SIZE;
+        int effectiveMaxFileSize = MAX_SCREENSHOT_SIZE > 1000 ? MAX_SCREENSHOT_SIZE / 1000 : MAX_SCREENSHOT_SIZE;
         return String.format(FILE_SIZE_LIMIT_EXCEPTION_MESSAGE_TEMPLATE, effectiveMaxFileSize);
     }
 

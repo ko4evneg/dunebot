@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.ScreenshotSavingException;
-import ru.trainithard.dunebot.model.Match;
-import ru.trainithard.dunebot.repository.MatchRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,23 +21,19 @@ public class ScreenshotService {
     private static final String FILE_PATH_SEPARATOR = "/";
 
     private final Clock clock;
-    private final MatchRepository matchRepository;
 
     @Value("${bot.photos-directory}")
     private String photosDirectoryPath;
 
-    public void save(Match match, String dottedFileExtension, byte[] screenshot) throws IOException {
+    public void save(long matchId, String dottedFileExtension, byte[] screenshot) throws IOException {
         LocalDate today = LocalDateTime.ofInstant(Instant.now(clock), ZoneId.systemDefault()).toLocalDate();
         String monthYear = today.format(DateTimeFormatter.ofPattern("yy_MM"));
-        Path savePath = Path.of(getSaveDirectoryPath(monthYear) + match.getId() + dottedFileExtension);
+        Path savePath = Path.of(getSaveDirectoryPath(monthYear) + matchId + dottedFileExtension);
 
         validate(dottedFileExtension, savePath);
 
         Files.createDirectories(savePath.getParent());
         Files.write(savePath, screenshot);
-
-        match.setHasSubmitPhoto(true);
-        matchRepository.save(match);
     }
 
     private void validate(String dottedFileExtension, Path savePath) {

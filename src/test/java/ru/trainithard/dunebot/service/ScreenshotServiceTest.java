@@ -11,10 +11,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.util.FileSystemUtils;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.ScreenshotSavingException;
-import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.repository.MatchRepository;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,7 +21,8 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest
@@ -37,8 +36,6 @@ class ScreenshotServiceTest extends TestContextMock {
 
     @Autowired
     private ScreenshotService screenshotService;
-    @Autowired
-    private MatchRepository matchRepository;
     @MockBean
     private Clock clock;
 
@@ -67,9 +64,7 @@ class ScreenshotServiceTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(strings = {".jpg", FILE_EXTENSION, ".png"})
     void shouldSaveFileWithCorrectExtension(String extension) throws IOException {
-        Match match = matchRepository.findById(10000L).orElseThrow();
-
-        screenshotService.save(match, extension, "this_file".getBytes());
+        screenshotService.save(10000L, extension, "this_file".getBytes());
 
         String actualFileContent = Files.readString(Path.of("photos/11_10/10000" + extension));
 
@@ -77,24 +72,10 @@ class ScreenshotServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchSubmitPhotoFlagOnSave() throws IOException {
-        Match match = matchRepository.findById(10000L).orElseThrow();
-
-        screenshotService.save(match, FILE_EXTENSION, "this_file".getBytes());
-
-        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
-
-        assertNotNull(actualSubmitPhotoFlag);
-        assertTrue(actualSubmitPhotoFlag);
-    }
-
-    @Test
     void shouldThrowWhenFileExtensionNotAllowed() {
-        Match match = matchRepository.findById(10000L).orElseThrow();
-
         byte[] file = "this_file".getBytes();
         ScreenshotSavingException actualException = assertThrows(ScreenshotSavingException.class,
-                () -> screenshotService.save(match, ".bmp", file));
+                () -> screenshotService.save(10000L, ".bmp", file));
         assertEquals(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, actualException.getMessage());
     }
 
@@ -102,10 +83,9 @@ class ScreenshotServiceTest extends TestContextMock {
     void shouldNotSaveFileWhenFileExtensionNotAllowed() throws IOException {
         Files.createDirectories(PHOTO_FILE_PATH.getParent());
         Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
-        Match match = matchRepository.findById(10000L).orElseThrow();
 
         try {
-            screenshotService.save(match, ".bmp", "this_file".getBytes());
+            screenshotService.save(10000L, ".bmp", "this_file".getBytes());
         } catch (Exception ignored) {
         }
 
@@ -115,29 +95,13 @@ class ScreenshotServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotSetMatchPhotoFlagWhenFileExtensionNotAllowed() {
-        Match match = matchRepository.findById(10000L).orElseThrow();
-
-        try {
-            screenshotService.save(match, ".bmp", "this_file".getBytes());
-        } catch (Exception ignored) {
-        }
-
-        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
-
-        assertNotNull(actualSubmitPhotoFlag);
-        assertFalse(actualSubmitPhotoFlag);
-    }
-
-    @Test
     void shouldThrowWhenPhotoAlreadyExists() throws IOException {
         Files.createDirectories(PHOTO_FILE_PATH.getParent());
         Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
-        Match match = matchRepository.findById(10000L).orElseThrow();
 
         byte[] file = "this_file".getBytes();
         ScreenshotSavingException actualException = assertThrows(ScreenshotSavingException.class,
-                () -> screenshotService.save(match, FILE_EXTENSION, file));
+                () -> screenshotService.save(10000L, FILE_EXTENSION, file));
         assertEquals(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, actualException.getMessage());
     }
 
@@ -145,10 +109,9 @@ class ScreenshotServiceTest extends TestContextMock {
     void shouldNotReplaceFileWhenPhotoAlreadyExists() throws IOException {
         Files.createDirectories(PHOTO_FILE_PATH.getParent());
         Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
-        Match match = matchRepository.findById(10000L).orElseThrow();
 
         try {
-            screenshotService.save(match, FILE_EXTENSION, "this_file".getBytes());
+            screenshotService.save(10000L, FILE_EXTENSION, "this_file".getBytes());
         } catch (Exception ignored) {
         }
 

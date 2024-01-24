@@ -28,7 +28,7 @@ public class SubmitValidatedMatchRetriever {
         long telegramChatId = commandMessage.getChatId();
         try {
             long matchId = Long.parseLong(commandMessage.getArgument(1));
-            Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow(MatchNotExistsException::new);
+            Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
             validateMatch(telegramChatId, match);
             validateSubmitAllowed(commandMessage, match, telegramChatId);
             return match;

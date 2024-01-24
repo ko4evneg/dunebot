@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_FILE_SIZE;
+import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
 
 @SpringBootTest
 class PhotoUploadMessageValidatorTest extends TestContextMock {
@@ -74,7 +74,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
     @Test
     void shouldThrowWhenSavingNotOnSubmitMatchOnPhotoSizeUpload() {
         jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
-        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE));
+        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE));
 
         AnswerableDuneBotException actualException =
                 assertThrows(AnswerableDuneBotException.class, () -> validator.validate(photoCommandMessage));
@@ -84,7 +84,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
     @Test
     void shouldThrowWhenSavingNotOnSubmitMatchOnDocumentUpload() {
         jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
-        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_FILE_SIZE);
+        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_SCREENSHOT_SIZE);
 
         AnswerableDuneBotException actualException =
                 assertThrows(AnswerableDuneBotException.class, () -> validator.validate(documentCommandMessage));
@@ -97,7 +97,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
                 "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 0,  '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10001, 10000, '2010-10-10')");
-        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE));
+        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE));
 
         AnswerableDuneBotException actualException =
                 assertThrows(AnswerableDuneBotException.class, () -> validator.validate(photoCommandMessage));
@@ -110,7 +110,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
                 "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 0, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10001, 10001, 10000, '2010-10-10')");
-        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_FILE_SIZE);
+        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_SCREENSHOT_SIZE);
 
         AnswerableDuneBotException actualException =
                 assertThrows(AnswerableDuneBotException.class, () -> validator.validate(documentCommandMessage));
@@ -119,7 +119,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowOnFileSizeExceedsLimitWhenDocumentPhotoReceived() {
-        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_FILE_SIZE + 1);
+        CommandMessage documentCommandMessage = getDocumentCommandMessage(MAX_SCREENSHOT_SIZE + 1);
 
         AnswerableDuneBotException actualException =
                 assertThrows(AnswerableDuneBotException.class, () -> validator.validate(documentCommandMessage));
@@ -128,7 +128,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowOnEveryFileSizeExceedsLimitWhenPhotoSizeReceived() {
-        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE + 1, MAX_FILE_SIZE + 2));
+        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE + 1, MAX_SCREENSHOT_SIZE + 2));
 
         AnswerableDuneBotException actualException =
                 assertThrows(AnswerableDuneBotException.class, () -> validator.validate(photoCommandMessage));
@@ -137,7 +137,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowOnSingleFileSizeExceedsLimitWhenPhotoSizeReceived() {
-        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_FILE_SIZE, MAX_FILE_SIZE + 1));
+        CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE, MAX_SCREENSHOT_SIZE + 1));
 
         assertDoesNotThrow(() -> validator.validate(photoCommandMessage));
     }

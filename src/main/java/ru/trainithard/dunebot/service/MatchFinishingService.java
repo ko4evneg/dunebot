@@ -30,7 +30,7 @@ public class MatchFinishingService {
     private final MessagingService messagingService;
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
-        Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
+        Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         if (!finishedMatchStates.contains(match.getState())) {
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
@@ -57,7 +57,7 @@ public class MatchFinishingService {
     }
 
     public void finishSuccessfullySubmittedMatch(long matchId) {
-        Match match = matchRepository.findByIdWithMatchPlayers(matchId).orElseThrow();
+        Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         finishSuccessfullyAndSave(match);
     }
 

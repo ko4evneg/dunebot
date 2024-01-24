@@ -81,8 +81,8 @@ public class Match extends BaseEntity {
         return hasSubmitPhoto;
     }
 
-    public boolean areAllSubmitsReceived() {
-        return submitsCount == matchPlayers.size();
+    public boolean canBeFinished() {
+        return submitsCount == matchPlayers.size() && hasSubmitPhoto;
     }
 
     public boolean isResubmitAllowed(int resubmitsLimit) {

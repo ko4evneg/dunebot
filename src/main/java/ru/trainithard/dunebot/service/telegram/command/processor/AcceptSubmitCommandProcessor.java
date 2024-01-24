@@ -43,7 +43,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage) {
         Callback callback = new Callback(commandMessage.getCallback());
-        Match match = matchRepository.findByIdWithMatchPlayers(callback.matchId).orElseThrow();
+        Match match = matchRepository.findWithMatchPlayersBy(callback.matchId).orElseThrow();
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
         MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
 
@@ -67,7 +67,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 });
                 Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
                 messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match, candidatePlace), null, null));
-                if (match.areAllSubmitsReceived() && match.hasSubmitPhoto()) {
+                if (match.canBeFinished()) {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId());
                 }
             }
