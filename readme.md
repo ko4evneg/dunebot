@@ -3,7 +3,6 @@
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
 | critical | rating                                                                              |
-| critical | recheck validation conditions and orders in TelegramUpdateProcessor                 |
 | high     | simultaneous matches spam control                                                   |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |

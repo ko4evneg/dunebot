@@ -12,6 +12,8 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -28,6 +30,7 @@ public class MatchFinishingService {
     private final MatchPlayerRepository matchPlayerRepository;
     private final TransactionTemplate transactionTemplate;
     private final MessagingService messagingService;
+    private final Clock clock;
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason) {
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
@@ -36,6 +39,7 @@ public class MatchFinishingService {
                 finishSuccessfullyAndSave(match);
             } else {
                 match.setState(MatchState.FAILED);
+                match.setFinishDate(LocalDate.now(clock));
                 match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
@@ -63,6 +67,7 @@ public class MatchFinishingService {
 
     private void finishSuccessfullyAndSave(Match match) {
         match.setState(MatchState.FINISHED);
+        match.setFinishDate(LocalDate.now(clock));
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);

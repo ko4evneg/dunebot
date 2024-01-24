@@ -8,6 +8,7 @@ import lombok.Setter;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -71,6 +72,10 @@ public class Match extends BaseEntity {
      * Count of <b>retries</b> to submit this match (does not include initial submit).
      */
     private int submitsRetryCount;
+    /**
+     * Finish match date.
+     */
+    private LocalDate finishDate;
 
     public Match(ModType modType) {
         this.modType = modType;

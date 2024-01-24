@@ -22,7 +22,6 @@ public class RegisterCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
     @Override
-
     public void process(CommandMessage commandMessage) {
         validate(commandMessage);
         Player player = playerRepository.save(new Player(commandMessage));

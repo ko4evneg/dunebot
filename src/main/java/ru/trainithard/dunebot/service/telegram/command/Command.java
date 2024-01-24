@@ -18,7 +18,7 @@ import static ru.trainithard.dunebot.service.telegram.command.CommandType.*;
 public enum Command {
 
     REGISTER(TEXT, true, false, 1),
-    REFRESH_PROFILE(TEXT, false, false, 1),
+    REFRESH_PROFILE(TEXT, false, false, 0),
     NEW(TEXT, false, false, 1),
     VOTE(POLL_VOTE, false, true, 0),
     CANCEL(TEXT, false, false, 0),

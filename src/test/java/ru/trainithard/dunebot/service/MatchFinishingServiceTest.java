@@ -8,11 +8,16 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,12 +30,19 @@ class MatchFinishingServiceTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID = 9000;
     private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final LocalDate FINISH_DATE = LocalDate.of(2012, 12, 12);
 
     @Autowired
     private MatchFinishingService finishingService;
+    @MockBean
+    private Clock clock;
 
     @BeforeEach
     void beforeEach() {
+        Clock fixedClock = Clock.fixed(FINISH_DATE.atTime(LocalTime.of(1, 0)).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
+
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
                 "values (10000, 11000, 12000, 'st_pl1', 'name1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
@@ -174,6 +186,19 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
+    void shouldSetMatchFinishDateOnMatchFinish() {
+        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+
+        finishingService.finishSuccessfullySubmittedMatch(15000L);
+
+        LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
+
+        assertNotNull(actualDate);
+        assertEquals(FINISH_DATE, actualDate);
+    }
+
+    @Test
     void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish() {
         finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
 
@@ -181,6 +206,16 @@ class MatchFinishingServiceTest extends TestContextMock {
 
         assertNotNull(actualState);
         assertEquals(MatchState.FAILED, actualState);
+    }
+
+    @Test
+    void shouldSetMatchFinishDateOnUnsuccessfullySubmittedMatchFinish() {
+        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+
+        LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
+
+        assertNotNull(actualDate);
+        assertEquals(FINISH_DATE, actualDate);
     }
 
     @Test
