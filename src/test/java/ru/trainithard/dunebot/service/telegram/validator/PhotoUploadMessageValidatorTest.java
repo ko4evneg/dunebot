@@ -14,7 +14,6 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -44,8 +43,6 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
 
     @Autowired
     private PhotoUploadMessageValidator validator;
-    @MockBean
-    private MessagingService messagingService;
     @MockBean
     private RestTemplate restTemplate;
 

@@ -8,11 +8,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
 import java.util.List;
@@ -30,8 +28,6 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Autowired
     private MatchFinishingService finishingService;
-    @MockBean
-    private MessagingService messagingService;
 
     @BeforeEach
     void beforeEach() {

@@ -17,7 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -50,8 +49,6 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     private TelegramUpdateProcessor updateProcessor;
     @Autowired
     private DefaultCommandMessageValidator defaultValidator;
-    @MockBean
-    private MessagingService messagingService;
     @MockBean
     private ValidationStrategyFactory validationStrategyFactory;
     @MockBean

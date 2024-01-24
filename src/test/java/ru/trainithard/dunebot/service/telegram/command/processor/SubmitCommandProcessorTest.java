@@ -23,7 +23,6 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -60,8 +59,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Autowired
     private SubmitCommandProcessor commandProcessor;
-    @MockBean
-    private MessagingService messagingService;
     @MockBean
     private Clock clock;
     @MockBean

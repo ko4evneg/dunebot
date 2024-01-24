@@ -19,7 +19,6 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -51,8 +50,6 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     private PhotoUploadCommandProcessor processor;
     @MockBean
     private ScreenshotService screenshotService;
-    @MockBean
-    private MessagingService messagingService;
     @MockBean
     private MatchFinishingService matchFinishingService;
     @MockBean

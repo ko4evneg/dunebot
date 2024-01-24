@@ -20,7 +20,6 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -44,8 +43,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     private MatchFinishingService matchFinishingService;
     @MockBean
     private ResubmitCommandProcessor resubmitCommandProcessor;
-    @MockBean
-    private MessagingService messagingService;
 
     @BeforeEach
     void beforeEach() {

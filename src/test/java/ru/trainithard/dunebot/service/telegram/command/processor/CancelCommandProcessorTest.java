@@ -10,7 +10,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -22,7 +21,6 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,8 +32,6 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 class CancelCommandProcessorTest extends TestContextMock {
     @Autowired
     private CancelCommandProcessor commandProcessor;
-    @MockBean
-    private MessagingService messagingService;
 
     private static final Integer REPLY_ID = 9000;
     private static final int MESSAGE_ID = 100500;

@@ -19,7 +19,6 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -47,8 +46,6 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Autowired
     private VoteCommandProcessor commandProcessor;
-    @MockBean
-    private MessagingService messagingService;
     @MockBean
     private Clock clock;
     @MockBean
