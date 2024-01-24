@@ -5,6 +5,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
@@ -109,14 +110,16 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .findByMatchExternalPollIdPollIdAndPlayerExternalId(commandMessage.getPollVote().pollId(), commandMessage.getUserId())
                 .ifPresent(matchPlayer -> {
                     Match match = matchPlayer.getMatch();
-                    int currentPositiveAnswersCount = match.getPositiveAnswersCount();
-                    match.setPositiveAnswersCount(currentPositiveAnswersCount - 1);
-                    transactionTemplate.executeWithoutResult(status -> {
-                        matchRepository.save(match);
-                        matchPlayerRepository.delete(matchPlayer);
-                    });
-                    if (match.hasMissingPlayers()) {
-                        messagingService.deleteMessageAsync(match.getExternalStartId());
+                    if (match.getState() == MatchState.NEW) {
+                        int currentPositiveAnswersCount = match.getPositiveAnswersCount();
+                        match.setPositiveAnswersCount(currentPositiveAnswersCount - 1);
+                        transactionTemplate.executeWithoutResult(status -> {
+                            matchRepository.save(match);
+                            matchPlayerRepository.delete(matchPlayer);
+                        });
+                        if (match.hasMissingPlayers()) {
+                            messagingService.deleteMessageAsync(match.getExternalStartId());
+                        }
                     }
                 });
     }

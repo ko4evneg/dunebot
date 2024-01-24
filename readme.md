@@ -4,7 +4,6 @@
 |----------|-------------------------------------------------------------------------------------|
 | critical | rating                                                                              |
 | critical | recheck validation conditions and orders in TelegramUpdateProcessor                 |
-| critical | after match start revocation                                                        |
 | high     | simultaneous matches spam control                                                   |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |

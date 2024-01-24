@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +122,20 @@ class VoteCommandProcessorTest extends TestContextMock {
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
         assertThat(actualPlayerIds, contains(10000L));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"NEW"})
+    void shouldNotDeleteNotNewStateMatchPlayerOnPositiveRegistrationRevocation(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                "values (10003, 10000, 10001, '2010-10-10')");
+
+        commandProcessor.process(getPollAnswerCommandMessage(1));
+
+        List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
+
+        assertThat(actualPlayerIds, contains(10000L, 10001L));
     }
 
     @Test
