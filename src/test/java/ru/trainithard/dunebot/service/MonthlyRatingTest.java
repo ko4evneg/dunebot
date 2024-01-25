@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MonthlyRatingTest {
-    private List<MatchPlayer> matchPlayers = new ArrayList<>();
+    private final List<MatchPlayer> matchPlayers = new ArrayList<>();
 
     @BeforeEach
     void beforeEach() {
@@ -52,61 +52,61 @@ class MonthlyRatingTest {
 
     @Test
     void shouldCountAllPlayerMatches() {
-        MonthlyRating monthlyRating = new MonthlyRating("report", matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
 
         assertEquals(6, monthlyRating.getMatchesCount());
     }
 
     @Test
     void shouldReturnEachPlayerMatchesCounts() {
-        MonthlyRating monthlyRating = new MonthlyRating("report", matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerName", is("s6 (f6)"))).and(hasProperty("matchesCount", is(2L))),
-                both(hasProperty("playerName", is("s1 (f1)"))).and(hasProperty("matchesCount", is(6L))),
-                both(hasProperty("playerName", is("s4 (f4)"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerName", is("s3 (f3)"))).and(hasProperty("matchesCount", is(5L))),
-                both(hasProperty("playerName", is("s2 (f2)"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerName", is("s5 (f5)"))).and(hasProperty("matchesCount", is(3L)))
+                both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("matchesCount", is(2L))),
+                both(hasProperty("playerFriendlyName", is("s1 (f1)"))).and(hasProperty("matchesCount", is(6L))),
+                both(hasProperty("playerFriendlyName", is("s4 (f4)"))).and(hasProperty("matchesCount", is(4L))),
+                both(hasProperty("playerFriendlyName", is("s3 (f3)"))).and(hasProperty("matchesCount", is(5L))),
+                both(hasProperty("playerFriendlyName", is("s2 (f2)"))).and(hasProperty("matchesCount", is(4L))),
+                both(hasProperty("playerFriendlyName", is("s5 (f5)"))).and(hasProperty("matchesCount", is(3L)))
         ));
     }
 
     @Test
     void shouldReturnEachPlayerWinRates() {
-        MonthlyRating monthlyRating = new MonthlyRating("report", matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerName", is("s6 (f6)"))).and(hasProperty("winRate", is(50.0))),
-                both(hasProperty("playerName", is("s1 (f1)"))).and(hasProperty("winRate", is(33.33))),
-                both(hasProperty("playerName", is("s4 (f4)"))).and(hasProperty("winRate", is(25.0))),
-                both(hasProperty("playerName", is("s3 (f3)"))).and(hasProperty("winRate", is(20.0))),
-                both(hasProperty("playerName", is("s2 (f2)"))).and(hasProperty("winRate", is(0.0))),
-                both(hasProperty("playerName", is("s5 (f5)"))).and(hasProperty("winRate", is(0.0)))
+                both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("winRate", is(50.0))),
+                both(hasProperty("playerFriendlyName", is("s1 (f1)"))).and(hasProperty("winRate", is(33.33))),
+                both(hasProperty("playerFriendlyName", is("s4 (f4)"))).and(hasProperty("winRate", is(25.0))),
+                both(hasProperty("playerFriendlyName", is("s3 (f3)"))).and(hasProperty("winRate", is(20.0))),
+                both(hasProperty("playerFriendlyName", is("s2 (f2)"))).and(hasProperty("winRate", is(0.0))),
+                both(hasProperty("playerFriendlyName", is("s5 (f5)"))).and(hasProperty("winRate", is(0.0)))
         ));
     }
 
     @Test
     void shouldReturnEachPlayerEfficiencies() {
-        MonthlyRating monthlyRating = new MonthlyRating("report", matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerName", is("s6 (f6)"))).and(hasProperty("efficiency", is(0.7))),
-                both(hasProperty("playerName", is("s1 (f1)"))).and(hasProperty("efficiency", is(0.58))),
-                both(hasProperty("playerName", is("s4 (f4)"))).and(hasProperty("efficiency", is(0.45))),
-                both(hasProperty("playerName", is("s3 (f3)"))).and(hasProperty("efficiency", is(0.44))),
-                both(hasProperty("playerName", is("s2 (f2)"))).and(hasProperty("efficiency", is(0.37))),
-                both(hasProperty("playerName", is("s5 (f5)"))).and(hasProperty("efficiency", is(0.53)))
+                both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("efficiency", is(0.7))),
+                both(hasProperty("playerFriendlyName", is("s1 (f1)"))).and(hasProperty("efficiency", is(0.58))),
+                both(hasProperty("playerFriendlyName", is("s4 (f4)"))).and(hasProperty("efficiency", is(0.45))),
+                both(hasProperty("playerFriendlyName", is("s3 (f3)"))).and(hasProperty("efficiency", is(0.44))),
+                both(hasProperty("playerFriendlyName", is("s2 (f2)"))).and(hasProperty("efficiency", is(0.37))),
+                both(hasProperty("playerFriendlyName", is("s5 (f5)"))).and(hasProperty("efficiency", is(0.53)))
         ));
     }
 
     @Test
     void shouldReturnCorrectlyOrderedPlayers() {
-        MonthlyRating monthlyRating = new MonthlyRating("report", matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
 
         assertThat(monthlyRating.getPlayerRatings(), contains(
-                hasProperty("playerName", is("s6 (f6)")), hasProperty("playerName", is("s1 (f1)")),
-                hasProperty("playerName", is("s5 (f5)")), hasProperty("playerName", is("s4 (f4)")),
-                hasProperty("playerName", is("s3 (f3)")), hasProperty("playerName", is("s2 (f2)"))
+                hasProperty("playerFriendlyName", is("s6 (f6)")), hasProperty("playerFriendlyName", is("s1 (f1)")),
+                hasProperty("playerFriendlyName", is("s5 (f5)")), hasProperty("playerFriendlyName", is("s4 (f4)")),
+                hasProperty("playerFriendlyName", is("s3 (f3)")), hasProperty("playerFriendlyName", is("s2 (f2)"))
         ));
     }
 

@@ -1,5 +1,6 @@
 bot:
   photos-directory: photos
+  pdf-directory: pdf
 ---
 spring:
   config:
