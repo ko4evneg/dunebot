@@ -14,6 +14,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class MonthlyRatingTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
@@ -40,6 +41,7 @@ class MonthlyRatingTest {
         matchPlayers.add(getMatchPlayer(match4, 1, 2));
         matchPlayers.add(getMatchPlayer(match4, 2, 4));
         matchPlayers.add(getMatchPlayer(match4, 3, 1));
+        matchPlayers.add(getMatchPlayer(match4, 6, 0));
         Match match5 = getMatch(5);
         matchPlayers.add(getMatchPlayer(match5, 5, 2));
         matchPlayers.add(getMatchPlayer(match5, 6, 1));
@@ -50,6 +52,7 @@ class MonthlyRatingTest {
         matchPlayers.add(getMatchPlayer(match6, 6, 3));
         matchPlayers.add(getMatchPlayer(match6, 3, 4));
         matchPlayers.add(getMatchPlayer(match6, 1, 3));
+        matchPlayers.add(getMatchPlayer(match6, 7, 0));
     }
 
     @Test
@@ -125,6 +128,28 @@ class MonthlyRatingTest {
         assertEquals(0, player6Places.get(2));
         assertEquals(1, player6Places.get(3));
         assertEquals(0, player6Places.get(4));
+    }
+
+    @Test
+    void shouldExcludeZeroPlacesFromRating() {
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
+
+        Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
+                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("s6 (f6)"))
+                .findFirst().orElseThrow()
+                .getOrderedPlaceCountByPlaceNames();
+
+        assertEquals(4, player6Places.size());
+    }
+
+    @Test
+    void shouldNotConsiderNoWinsPlayersInRating() {
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
+
+        boolean isPlayer7Present = monthlyRating.getPlayerRatings().stream()
+                .anyMatch(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("s7 (f7)"));
+
+        assertFalse(isPlayer7Present);
     }
 
     private MatchPlayer getMatchPlayer(Match match, int playerId, int place) {

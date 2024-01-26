@@ -25,6 +25,7 @@ public class MonthlyRating {
 
     private int getMatchesCount(List<MatchPlayer> monthMatchPlayers) {
         return (int) monthMatchPlayers.stream()
+                .filter(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace()) != 0)
                 .map(matchPlayer -> matchPlayer.getMatch().getId())
                 .distinct()
                 .count();
@@ -36,17 +37,19 @@ public class MonthlyRating {
         Map<Player, List<MatchPlayer>> matchPlayersByPlayer = monthMatchPlayers.stream()
                 .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
 
-        matchPlayersByPlayer.forEach((player, matchPlayers) -> {
-            Map<Integer, Long> orderedPlaceCountByPlaceNames = getOrderedPlaceCountByPlaceNames(matchPlayers, matchPlayersCount);
-            long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
-            long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
-            double winRate = calculateWinRate(firstPlacesCount, playerMatchesCount);
-            double efficiency = calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
+        matchPlayersByPlayer.entrySet().stream()
+                .filter(entry -> entry.getValue().stream().anyMatch(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace()) != 0))
+                .forEach(entry -> {
+                    Map<Integer, Long> orderedPlaceCountByPlaceNames = getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
+                    long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
+                    long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
+                    double winRate = calculateWinRate(firstPlacesCount, playerMatchesCount);
+                    double efficiency = calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
 
-            PlayerMonthlyRating playerMonthlyRating =
-                    new PlayerMonthlyRating(player.getFriendlyName(), orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
-            playerRatings.add(playerMonthlyRating);
-        });
+                    PlayerMonthlyRating playerMonthlyRating =
+                            new PlayerMonthlyRating(entry.getKey().getFriendlyName(), orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
+                    playerRatings.add(playerMonthlyRating);
+                });
     }
 
     private void fillDefaultEfficiencies() {
@@ -59,7 +62,9 @@ public class MonthlyRating {
     private TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers, int matchPlayersCount) {
         TreeMap<Integer, Long> result = new TreeMap<>();
         for (MatchPlayer matchPlayer : matchPlayers) {
-            result.merge(matchPlayer.getPlace(), 1L, Long::sum);
+            if (Objects.requireNonNull(matchPlayer.getPlace()) != 0) {
+                result.merge(matchPlayer.getPlace(), 1L, Long::sum);
+            }
         }
         for (int i = 1; i <= matchPlayersCount; i++) {
             result.putIfAbsent(i, 0L);
