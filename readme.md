@@ -2,8 +2,6 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | rating                                                                              |
-| critical | unregistered players votes                                                          |
 | high     | simultaneous matches spam control                                                   |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
