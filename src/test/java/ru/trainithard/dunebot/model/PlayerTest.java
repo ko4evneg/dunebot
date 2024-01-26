@@ -10,29 +10,32 @@ class PlayerTest {
     {
         player.setSteamName("st_name");
         player.setFirstName("f_name");
+        player.setLastName("l_name");
+        player.setExternalName("ex_name");
     }
 
     @Test
     void shouldReturnMinimalRequiredName() {
-        assertEquals("st_name (f_name)", player.getFriendlyName());
+        assertEquals("f_name (st_name) l_name", player.getFriendlyName());
     }
 
     @Test
-    void shouldReturnNameWithLastName() {
-        player.setLastName("l_name");
-
-        assertEquals("st_name (f_name l_name)", player.getFriendlyName());
+    void shouldReturnMentionWithoutWhenExternalFirstNameMissing() {
+        assertEquals("@ex_name", player.getMention());
     }
 
     @Test
-    void shouldReturnMentionWithoutExternalName() {
-        assertEquals("@f_name", player.getMention());
+    void shouldReturnMentionWithExternalNameWhenExternalFirstNamePresented() {
+        player.setExternalFirstName("ex_f_name");
+
+        assertEquals("@ex_name", player.getMention());
     }
 
     @Test
-    void shouldReturnMentionWithExternalName() {
-        player.setExternalName("e_name");
+    void shouldReturnMentionWithExternalFirstNameWhenExternalNameMissing() {
+        player.setExternalFirstName("ex_f_name");
+        player.setExternalName(null);
 
-        assertEquals("@e_name", player.getMention());
+        assertEquals("@ex_f_name", player.getMention());
     }
 }

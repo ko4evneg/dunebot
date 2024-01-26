@@ -55,8 +55,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldDeleteExternalIdWithMatch() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
@@ -73,8 +73,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldDeleteDetachedExternalIdWithMatch() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
@@ -95,8 +95,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldUpdateExternalIdWithMatch() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
@@ -116,8 +116,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldSaveExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         Match match = new Match();
         match.setExternalPollId(new ExternalPollId(10001, 10001L, "10001", 10001));
         match.setExternalStartId(new ExternalPollId(10002, 10002L, "10002", 10002));
@@ -139,8 +139,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldDeleteExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, created_at) " +
@@ -157,8 +157,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldDeleteDetachedExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, created_at) " +
@@ -177,8 +177,8 @@ class CascadingExternalIdTest {
 
     @Test
     void shouldUpdateExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, created_at) " +

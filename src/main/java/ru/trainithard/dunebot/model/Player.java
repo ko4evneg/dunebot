@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.util.ParsedNames;
 
 @Getter
 @Setter
@@ -18,30 +19,27 @@ public class Player extends BaseEntity {
     private long externalChatId;
     private String firstName;
     private String steamName;
-    @Nullable
     private String lastName;
+    private String externalFirstName;
     @Nullable
     private String externalName;
 
-    public Player(CommandMessage commandMessage) {
+    public Player(CommandMessage commandMessage, ParsedNames parsedNames) {
         this.externalId = commandMessage.getUserId();
         this.externalChatId = commandMessage.getChatId();
-        this.firstName = commandMessage.getFirstName();
-        this.lastName = commandMessage.getLastName();
+        this.externalFirstName = commandMessage.getExternalFirstName();
+        this.firstName = parsedNames.getFirstName();
+        this.lastName = parsedNames.getLastName();
+        this.steamName = parsedNames.getSteamName();
         this.externalName = commandMessage.getUserName();
-        this.steamName = commandMessage.getAllArguments();
     }
 
     public String getFriendlyName() {
 
-        return String.format("%s (%s)", steamName, getFullName());
-    }
-
-    private String getFullName() {
-        return lastName == null ? firstName : firstName + " " + lastName;
+        return String.format("%s (%s) %s", firstName, steamName, lastName);
     }
 
     public String getMention() {
-        return externalName == null ? "@" + firstName : "@" + externalName;
+        return externalName == null ? "@" + externalFirstName : "@" + externalName;
     }
 }

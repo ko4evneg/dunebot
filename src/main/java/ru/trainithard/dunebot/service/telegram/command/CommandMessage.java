@@ -30,13 +30,9 @@ public class CommandMessage {
      */
     private Integer replyMessageId;
     /**
-     * External user first name.
+     * External system user first name
      */
-    private String firstName;
-    /**
-     * External user last name.
-     */
-    private String lastName;
+    private String externalFirstName;
     /**
      * External system user identifier (like tag, login etc...)
      */
@@ -87,9 +83,8 @@ public class CommandMessage {
     private CommandMessage(Message message) {
         User user = message.getFrom();
         this.userId = user.getId();
-        this.firstName = user.getFirstName();
-        this.lastName = user.getLastName();
         this.userName = user.getUserName();
+        this.externalFirstName = user.getFirstName();
         this.chatId = message.getChatId();
         this.messageId = message.getMessageId();
         this.chatType = ChatType.valueOf(message.getChat().getType().toUpperCase());
