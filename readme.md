@@ -13,6 +13,7 @@
 | medium   | test TelegramUpdateProcessor unknown exceptions handling for both methods           |
 | medium   | add TelegramUpdateProcessor#sendUserNotificationMessage null replyId scenario       |
 | medium   | handle infra errors in MessagingService callbacks                                   |
+| medium   | extract settings to service + repo                                                  |
 | low      | add processor selection test for TelegramUpdateProcessor                            |
 | low      | move settings to separate repo, add settings command                                |
 | low      | move settings to separate repo, add settings command                                |
@@ -22,6 +23,7 @@
 | low      | add runtime validator selection to TelegramUpdateProcessor                          |
 | low      | add logging                                                                         |
 | low      | check all callbacks thrown                                                          |
+| low      | use tempdir in save screenshot service                                              |
 
 # Known bugs
 

@@ -26,6 +26,8 @@ class MonthlyRatingPdfTest {
         byte[] actualBytes = reader.getPageContent(1);
         byte[] expectedBytes = referenceReader.getPageContent(1);
 
+        reader.close();
+        referenceReader.close();
         assertArrayEquals(expectedBytes, actualBytes);
     }
 }

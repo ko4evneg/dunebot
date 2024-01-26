@@ -55,7 +55,7 @@ class ScreenshotServiceTest extends TestContextMock {
 
     @AfterEach
     void afterEach() throws IOException {
-        FileSystemUtils.deleteRecursively(Path.of("photos/11_10"));
+        FileSystemUtils.deleteRecursively(Path.of("photos"));
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id between 10000 and 10003");

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
@@ -17,8 +16,6 @@ import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -61,8 +58,7 @@ class PhotoUploadMessageValidatorTest extends TestContextMock {
     }
 
     @AfterEach
-    void afterEach() throws IOException {
-        FileSystemUtils.deleteRecursively(Path.of("photos/11_10"));
+    void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id in (select id from matches where id between 10000 and 10001)");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
         jdbcTemplate.execute("delete from players where id = 10000");
