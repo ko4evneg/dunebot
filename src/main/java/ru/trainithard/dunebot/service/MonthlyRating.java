@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 
 import java.util.*;
@@ -17,9 +18,9 @@ public class MonthlyRating {
     @Getter(AccessLevel.NONE)
     private final Map<Integer, Double> efficiencyRateByPlaceNames = new HashMap<>();
 
-    public MonthlyRating(@NotEmpty List<MatchPlayer> monthMatchPlayers) {
+    public MonthlyRating(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType) {
         this.matchesCount = getMatchesCount(monthMatchPlayers);
-        fillPlayerRatings(monthMatchPlayers);
+        fillPlayerRatings(monthMatchPlayers, modType.getPlayersCount());
     }
 
     private int getMatchesCount(List<MatchPlayer> monthMatchPlayers) {
@@ -29,15 +30,14 @@ public class MonthlyRating {
                 .count();
     }
 
-    private void fillPlayerRatings(List<MatchPlayer> monthMatchPlayers) {
+    private void fillPlayerRatings(List<MatchPlayer> monthMatchPlayers, int matchPlayersCount) {
         fillDefaultEfficiencies();
 
         Map<Player, List<MatchPlayer>> matchPlayersByPlayer = monthMatchPlayers.stream()
                 .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
 
         matchPlayersByPlayer.forEach((player, matchPlayers) -> {
-            Map<Integer, Long> orderedPlaceCountByPlaceNames = matchPlayers.stream()
-                    .collect(Collectors.groupingBy(Objects.requireNonNull(MatchPlayer::getPlace), TreeMap::new, Collectors.counting()));
+            Map<Integer, Long> orderedPlaceCountByPlaceNames = getOrderedPlaceCountByPlaceNames(matchPlayers, matchPlayersCount);
             long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
             long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
             double winRate = calculateWinRate(firstPlacesCount, playerMatchesCount);
@@ -54,6 +54,17 @@ public class MonthlyRating {
         efficiencyRateByPlaceNames.put(2, 0.6);
         efficiencyRateByPlaceNames.put(3, 0.4);
         efficiencyRateByPlaceNames.put(4, 0.1);
+    }
+
+    private TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers, int matchPlayersCount) {
+        TreeMap<Integer, Long> result = new TreeMap<>();
+        for (MatchPlayer matchPlayer : matchPlayers) {
+            result.merge(matchPlayer.getPlace(), 1L, Long::sum);
+        }
+        for (int i = 1; i <= matchPlayersCount; i++) {
+            result.putIfAbsent(i, 0L);
+        }
+        return result;
     }
 
     private double calculateWinRate(double firstPlacesCount, long matchesCount) {

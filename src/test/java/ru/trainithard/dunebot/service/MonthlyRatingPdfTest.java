@@ -22,7 +22,7 @@ class MonthlyRatingPdfTest {
         ));
 
         PdfReader reader = new PdfReader(monthlyRatingPdf.getPdfBytes());
-        PdfReader referenceReader = new PdfReader("src/test/resources/rate_example.pdf");
+        PdfReader referenceReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_1.pdf");
         byte[] actualBytes = reader.getPageContent(1);
         byte[] expectedBytes = referenceReader.getPageContent(1);
 

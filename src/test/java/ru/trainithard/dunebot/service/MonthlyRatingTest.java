@@ -4,10 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -52,14 +54,14 @@ class MonthlyRatingTest {
 
     @Test
     void shouldCountAllPlayerMatches() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertEquals(6, monthlyRating.getMatchesCount());
     }
 
     @Test
     void shouldReturnEachPlayerMatchesCounts() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("matchesCount", is(2L))),
@@ -73,7 +75,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldReturnEachPlayerWinRates() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("winRate", is(50.0))),
@@ -87,7 +89,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldReturnEachPlayerEfficiencies() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("efficiency", is(0.7))),
@@ -101,13 +103,28 @@ class MonthlyRatingTest {
 
     @Test
     void shouldReturnCorrectlyOrderedPlayers() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers);
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), contains(
                 hasProperty("playerFriendlyName", is("s6 (f6)")), hasProperty("playerFriendlyName", is("s1 (f1)")),
                 hasProperty("playerFriendlyName", is("s5 (f5)")), hasProperty("playerFriendlyName", is("s4 (f4)")),
                 hasProperty("playerFriendlyName", is("s3 (f3)")), hasProperty("playerFriendlyName", is("s2 (f2)"))
         ));
+    }
+
+    @Test
+    void shouldSetZeroPlacesCountForMissingPlaces() {
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
+
+        Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
+                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("s6 (f6)"))
+                .findFirst().orElseThrow()
+                .getOrderedPlaceCountByPlaceNames();
+
+        assertEquals(1, player6Places.get(1));
+        assertEquals(0, player6Places.get(2));
+        assertEquals(1, player6Places.get(3));
+        assertEquals(0, player6Places.get(4));
     }
 
     private MatchPlayer getMatchPlayer(Match match, int playerId, int place) {
