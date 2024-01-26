@@ -43,8 +43,8 @@ class CancelCommandProcessorTest extends TestContextMock {
     void beforeEach() {
         doNothing().when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
 
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, 12345, 9000, 'st_pl', 'name', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, 12345, 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId'," + MESSAGE_ID + ", " + CHAT_ID + ", " + REPLY_ID + ", '12346', '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
@@ -85,8 +85,8 @@ class CancelCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldDeleteMatchPlayers() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10001, 12346, 9000, 'st_pl2', 'name2', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10001, 12346, 9000, 'st_pl2', 'name2', 'l1', 'e1', '2010-10-10') ");
 
         commandProcessor.process(commandMessage, mockLoggingId);
 

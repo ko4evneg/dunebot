@@ -48,8 +48,8 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, " + USER_ID + ", 9000, 'st_pl', 'name', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, " + USER_ID + ", 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
 
         doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
     }
@@ -108,7 +108,7 @@ class NewCommandProcessorTest extends TestContextMock {
         PollMessageDto actualPoll = pollCaptor.getValue();
 
         assertThat(actualPoll, allOf(
-                hasProperty("text", is("Игрок st_pl (name) призывает всех на матч в " + ModType.CLASSIC.getModName())),
+                hasProperty("text", is("Игрок name (st_pl) l1 призывает всех на матч в " + ModType.CLASSIC.getModName())),
                 hasProperty("options", contains("Да", "Нет", "Результат"))
         ));
     }

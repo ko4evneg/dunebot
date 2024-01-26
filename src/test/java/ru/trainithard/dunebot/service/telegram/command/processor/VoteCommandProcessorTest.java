@@ -44,13 +44,12 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.POSITIVE_POL
 
 @SpringBootTest
 class VoteCommandProcessorTest extends TestContextMock {
-
     @Autowired
     private VoteCommandProcessor commandProcessor;
     @MockBean
-    private Clock clock;
-    @MockBean
     private TaskScheduler taskScheduler;
+    @MockBean
+    private Clock clock;
 
     private static final String POLL_ID = "100500";
     private static final long CHAT_ID = 100501L;
@@ -68,14 +67,18 @@ class VoteCommandProcessorTest extends TestContextMock {
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
 
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, external_name, created_at) " +
-                "values (10000, 12345, 12345, 'st_pl1', 'name1', 'en1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10001, " + USER_2_ID + ", 12346, 'st_pl2', 'name2', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, external_name, created_at) " +
-                "values (10002, 12347, 12347, 'st_pl3', 'name3', 'en3', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, external_name, created_at) " +
-                "values (10003, 12348, 12348, 'st_pl4', 'name4', 'en4', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                "last_name, external_first_name, external_name, created_at) " +
+                "values (10000, 12345, 12345, 'st_pl1', 'name1', 'l1', 'ef1', 'en1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                "last_name, external_first_name, created_at) " +
+                "values (10001, " + USER_2_ID + ", 12346, 'st_pl2', 'name2', 'l2', 'ef2', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                "last_name, external_first_name, external_name, created_at) " +
+                "values (10002, 12347, 12347, 'st_pl3', 'name3', 'l3', 'ef3', 'en3', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                "last_name, external_first_name, external_name, created_at) " +
+                "values (10003, 12348, 12348, 'st_pl4', 'name4', 'l4', 'ef4', 'en4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 123, " + SettingConstants.CHAT_ID + ", " + REPLY_ID + ", '" + POLL_ID + "', '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
@@ -252,7 +255,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         assertEquals(SettingConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("Матч 10000 собран. Участники:", textRows[0]);
-        assertThat(names, containsInAnyOrder("@en1", "@name2", "@en3", "@en4"));
+        assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
         assertNull(messageDto.getKeyboard());
     }
 

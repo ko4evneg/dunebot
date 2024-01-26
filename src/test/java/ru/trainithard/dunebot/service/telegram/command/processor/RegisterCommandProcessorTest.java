@@ -26,9 +26,12 @@ class RegisterCommandProcessorTest extends TestContextMock {
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
     private static final String FIRST_NAME = "fName";
+    private static final String LAST_NAME = "lName";
     private static final String STEAM_NAME = "stName";
-    private static final String REGISTRATION_MESSAGE = "Вы зарегистрированы под steam-именем " + STEAM_NAME;
-    private static final CommandMessage commandMessage = getCommandMessage(STEAM_NAME, null, null);
+    private static final String REGISTRATION_MESSAGE =
+            String.format("Вы зарегистрированы как %s (%s) %s", FIRST_NAME, STEAM_NAME, LAST_NAME);
+    private static final CommandMessage commandMessage = getCommandMessage(STEAM_NAME, null);
+    private static final String EXTERNAL_FIRST_NAME = "extName";
 
     @Autowired
     private RegisterCommandProcessor commandProcessor;
@@ -43,13 +46,25 @@ class RegisterCommandProcessorTest extends TestContextMock {
         commandProcessor.process(commandMessage, mockLoggingId);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
-                "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", Long.class);
+                "where first_name = '" + FIRST_NAME + "' and last_name = '" + LAST_NAME + "' " +
+                "and steam_name = '" + STEAM_NAME + "' and external_first_name = '" + EXTERNAL_FIRST_NAME + "'", Long.class);
 
         assertEquals(1, actualPlayersCount);
     }
 
     @Test
-    void shouldSaveTelegramIdAndTelegramIdForNewPlayer() {
+    void shouldSaveCompletelyFilledNewPlayer() {
+        commandProcessor.process(getCommandMessage(STEAM_NAME, "uName"), mockLoggingId);
+
+        Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
+                "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "' and last_name = '" +
+                LAST_NAME + "' and external_name = 'uName' and external_first_name = '" + EXTERNAL_FIRST_NAME + "'", Long.class);
+
+        assertEquals(1, actualPlayersCount);
+    }
+
+    @Test
+    void shouldSaveTelegramIdAndTelegramChatIdForNewPlayer() {
         commandProcessor.process(commandMessage, mockLoggingId);
 
         Player actualPlayer = jdbcTemplate.queryForObject("select external_id, external_chat_id from players " +
@@ -61,19 +76,8 @@ class RegisterCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSaveCompletelyFilledNewPlayer() {
-        commandProcessor.process(getCommandMessage(STEAM_NAME, "lName", "uName"), mockLoggingId);
-
-        Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
-                "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'" +
-                "and last_name = 'lName' and external_name = 'uName'", Long.class);
-
-        assertEquals(1, actualPlayersCount);
-    }
-
-    @Test
     void shouldSaveNewPlayerWithMultipleWordsSteamName() {
-        commandProcessor.process(getCommandMessage("Vasiliy Prostoy V", "lName", "uName"), mockLoggingId);
+        commandProcessor.process(getCommandMessage("Vasiliy Prostoy V", "uName"), mockLoggingId);
 
         String actualSteamName = jdbcTemplate.queryForObject("select steam_name from players " +
                 "where first_name = '" + FIRST_NAME + "' and last_name = 'lName' and external_name = 'uName'", String.class);
@@ -83,17 +87,20 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenSameTelegramIdUserExists() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" +
+                FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
 
         AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage, mockLoggingId));
-        assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME + "! Для смены ника выполните команду '/change_steam_name *new_name*'", exception.getMessage());
+        assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME +
+                "! Для смены ника выполните команду '/refresh_profile *Имя* (*steam никнейм*) *Фамилия*'", exception.getMessage());
     }
 
     @Test
     void shouldThrowWhenSameSteamNameUserExists() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + (TELEGRAM_CHAT_ID + 1) + ", '" + STEAM_NAME + "', '" + FIRST_NAME + "', '2000-10-10')");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + (TELEGRAM_CHAT_ID + 1) + ", '" + STEAM_NAME + "', '" +
+                FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
 
         AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage, mockLoggingId));
         assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exception.getMessage());
@@ -111,12 +118,11 @@ class RegisterCommandProcessorTest extends TestContextMock {
         assertEquals(REGISTRATION_MESSAGE, actualMessages.getText());
     }
 
-    private static CommandMessage getCommandMessage(String steamName, @Nullable String lastName, @Nullable String userName) {
+    private static CommandMessage getCommandMessage(String steamName, @Nullable String userName) {
         User user = new User();
         user.setId(TELEGRAM_USER_ID);
-        user.setFirstName(FIRST_NAME);
-        user.setLastName(lastName);
         user.setUserName(userName);
+        user.setFirstName(EXTERNAL_FIRST_NAME);
         Chat chat = new Chat();
         chat.setId(TELEGRAM_CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
@@ -124,7 +130,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
         message.setMessageId(10000);
         message.setFrom(user);
         message.setChat(chat);
-        message.setText("/register " + steamName);
+        message.setText(String.format("/register %s (%s) %s", FIRST_NAME, steamName, LAST_NAME));
         return CommandMessage.getMessageInstance(message);
     }
 }

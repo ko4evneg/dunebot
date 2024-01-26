@@ -46,14 +46,14 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10000, " + USER_1_ID + ", 12000, 'st_pl1', 'name1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10001, " + USER_2_ID + ", 12001, 'st_pl2', 'name2', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10002, 11002, 12002, 'st_pl3', 'name3', '2010-10-10') ");
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, created_at) " +
-                "values (10003, 11003, 12003, 'st_pl4', 'name4', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10000, " + USER_1_ID + ", 12000, 'st_pl1', 'name1', 'l1', 'ef1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10001, " + USER_2_ID + ", 12001, 'st_pl2', 'name2', 'l2', 'ef2', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'ef3', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'ef4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
                 "values (10000, 'ExternalPollId', 10000, 10000, '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -195,7 +195,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         String conflictText = """
                 Некоторые игроки не смогли поделить место:
-                2 место: st_pl2 (name2) и st_pl1 (name1)
+                2 место: name2 (st_pl2) l2 и name1 (st_pl1) l1
 
                 Повторный опрос результата...""";
         assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
