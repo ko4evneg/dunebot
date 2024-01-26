@@ -10,6 +10,8 @@ public interface MessagingService {
 
     CompletableFuture<ExternalMessageDto> sendMessageAsync(MessageDto message);
 
+    CompletableFuture<ExternalMessageDto> sendFileAsync(FileMessageDto fileMessage);
+
     void deleteMessageAsync(ExternalMessageId externalMessageId);
 
     CompletableFuture<TelegramFileDetailsDto> getFileDetails(String fileId);

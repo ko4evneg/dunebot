@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.File;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -16,6 +18,8 @@ import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -93,6 +97,24 @@ public class TelegramMessagingService implements MessagingService {
         InlineKeyboardButton inlineButton = new InlineKeyboardButton(button.getText());
         inlineButton.setCallbackData(button.getCallback());
         return inlineButton;
+    }
+
+    @Override
+    public CompletableFuture<ExternalMessageDto> sendFileAsync(FileMessageDto fileMessage) {
+        CompletableFuture<ExternalMessageDto> telegramMessageCompletableFuture = new CompletableFuture<>();
+        CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendDocument(fileMessage));
+        sendMessageCompletableFuture.whenComplete((message, throwable) ->
+                telegramMessageCompletableFuture.complete(new ExternalMessageDto(message)));
+        return telegramMessageCompletableFuture;
+    }
+
+    private SendDocument getSendDocument(FileMessageDto fileMessageDto) {
+        InputStream fileInputStream = new ByteArrayInputStream(fileMessageDto.getFile());
+        InputFile inputFile = new InputFile(fileInputStream, fileMessageDto.getFileName());
+        SendDocument sendDocument = new SendDocument(fileMessageDto.getChatId(), inputFile);
+        sendDocument.setReplyToMessageId(fileMessageDto.getReplyMessageId());
+        sendDocument.setCaption(fileMessageDto.getText());
+        return sendDocument;
     }
 
     @Override

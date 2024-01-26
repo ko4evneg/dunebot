@@ -5,6 +5,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
@@ -16,10 +17,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
+import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -138,18 +141,6 @@ class TelegramMessagingServiceTest {
         ));
     }
 
-    private Message getTextMessageReply() {
-        Message replyMessage = new Message();
-        replyMessage.setMessageId(REPLY_ID);
-        Chat chat = new Chat();
-        chat.setId(CHAT_ID);
-        Message message = new Message();
-        message.setMessageId(100500);
-        message.setText("the text");
-        message.setReplyToMessage(replyMessage);
-        return message;
-    }
-
     @Test
     void shouldWrapApiExceptionOnSendMessageCall() throws TelegramApiException {
         doThrow(new TelegramApiException("abc")).when(telegramBot).executeAsync(ArgumentMatchers.any(SendMessage.class));
@@ -189,5 +180,36 @@ class TelegramMessagingServiceTest {
 
         assertEquals(GET_FILE_DETAILS_EXCEPTION_MESSAGE, actualException.getMessage());
         assertEquals("abc", actualException.getCause().getMessage());
+    }
+
+    @Test
+    void shouldInvokeSendMessageCallOnFileSend() throws IOException {
+        byte[] referenceFileContent = "la_file_content".getBytes();
+        doReturn(CompletableFuture.completedFuture(getTextMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendDocument.class));
+        FileMessageDto fileMessageDto = new FileMessageDto(CHAT_ID.toString(), "la text", REPLY_ID, referenceFileContent, "file.txt");
+
+        telegramMessagingService.sendFileAsync(fileMessageDto);
+
+        ArgumentCaptor<SendDocument> sendDocumentCaptor = ArgumentCaptor.forClass(SendDocument.class);
+        verify(telegramBot, times(1)).executeAsync(sendDocumentCaptor.capture());
+        SendDocument actualDocument = sendDocumentCaptor.getValue();
+        byte[] actualFile = actualDocument.getFile().getNewMediaStream().readAllBytes();
+
+        assertEquals("la text", actualDocument.getCaption());
+        assertEquals(REPLY_ID, actualDocument.getReplyToMessageId());
+        assertEquals(CHAT_ID.toString(), actualDocument.getChatId());
+        assertArrayEquals(referenceFileContent, actualFile);
+    }
+
+    private Message getTextMessageReply() {
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(REPLY_ID);
+        Chat chat = new Chat();
+        chat.setId(CHAT_ID);
+        Message message = new Message();
+        message.setMessageId(100500);
+        message.setText("the text");
+        message.setReplyToMessage(replyMessage);
+        return message;
     }
 }
