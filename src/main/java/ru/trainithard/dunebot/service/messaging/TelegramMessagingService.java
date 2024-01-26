@@ -1,6 +1,8 @@
 package ru.trainithard.dunebot.service.messaging;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
@@ -13,7 +15,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
@@ -26,10 +27,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
-    private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
-    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
-    private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
-    private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
+    private static final Logger logger = LoggerFactory.getLogger(TelegramMessagingService.class);
 
     private final TelegramBot telegramBot;
 
@@ -39,7 +37,7 @@ public class TelegramMessagingService implements MessagingService {
             DeleteMessage deleteMessage = new DeleteMessage(externalMessageId.getChatIdString(), externalMessageId.getMessageId());
             telegramBot.executeAsync(deleteMessage);
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException(DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+            logger.error("executeAsync(DeleteMessage) encounters an exception", exception);
         }
     }
 
@@ -48,10 +46,16 @@ public class TelegramMessagingService implements MessagingService {
         CompletableFuture<ExternalPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendPoll(pollMessage));
-            sendMessageCompletableFuture.whenComplete((message, throwable) ->
-                    telegramMessageCompletableFuture.complete(new ExternalPollDto(message)));
+            sendMessageCompletableFuture.whenComplete((message, throwable) -> {
+                if (throwable == null) {
+                    telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
+                } else {
+                    telegramMessageCompletableFuture.isCompletedExceptionally();
+                    logger.error("callback of executeAsync(SendPoll) encounters an exception", throwable);
+                }
+            });
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
+            logger.error("executeAsync(SendPoll) encounters an exception", exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -69,10 +73,16 @@ public class TelegramMessagingService implements MessagingService {
         CompletableFuture<ExternalMessageDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         try {
             CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendMessage(messageDto));
-            sendMessageCompletableFuture.whenComplete((message, throwable) ->
-                    telegramMessageCompletableFuture.complete(new ExternalMessageDto(message)));
+            sendMessageCompletableFuture.whenComplete((message, throwable) -> {
+                if (throwable == null) {
+                    telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
+                } else {
+                    telegramMessageCompletableFuture.isCompletedExceptionally();
+                    logger.error("callback of executeAsync(SendMessage) encounters an exception", throwable);
+                }
+            });
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+            logger.error("executeAsync(SendMessage) encounters an exception", exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -88,12 +98,12 @@ public class TelegramMessagingService implements MessagingService {
 
     private InlineKeyboardMarkup getInlineKeyboard(MessageDto message) {
         List<List<InlineKeyboardButton>> inlineKeyboard = message.getKeyboard().stream()
-                .map(buttonsRow -> buttonsRow.stream().map(TelegramMessagingService::getInlineKeyboardButton).toList())
+                .map(buttonsRow -> buttonsRow.stream().map(this::getInlineKeyboardButton).toList())
                 .toList();
         return new InlineKeyboardMarkup(inlineKeyboard);
     }
 
-    private static InlineKeyboardButton getInlineKeyboardButton(ButtonDto button) {
+    private InlineKeyboardButton getInlineKeyboardButton(ButtonDto button) {
         InlineKeyboardButton inlineButton = new InlineKeyboardButton(button.getText());
         inlineButton.setCallbackData(button.getCallback());
         return inlineButton;
@@ -103,8 +113,14 @@ public class TelegramMessagingService implements MessagingService {
     public CompletableFuture<ExternalMessageDto> sendFileAsync(FileMessageDto fileMessage) {
         CompletableFuture<ExternalMessageDto> telegramMessageCompletableFuture = new CompletableFuture<>();
         CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendDocument(fileMessage));
-        sendMessageCompletableFuture.whenComplete((message, throwable) ->
-                telegramMessageCompletableFuture.complete(new ExternalMessageDto(message)));
+        sendMessageCompletableFuture.whenComplete((message, throwable) -> {
+            if (throwable == null) {
+                telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
+            } else {
+                telegramMessageCompletableFuture.isCompletedExceptionally();
+                logger.error("callback of executeAsync(SendDocument) encounters an exception", throwable);
+            }
+        });
         return telegramMessageCompletableFuture;
     }
 
@@ -123,10 +139,16 @@ public class TelegramMessagingService implements MessagingService {
         try {
             GetFile getFile = new GetFile(fileId);
             CompletableFuture<File> fileCompletableFuture = telegramBot.executeAsync(getFile);
-            fileCompletableFuture.whenComplete((message, throwable) -> telegramMessageCompletableFuture
-                    .complete(new TelegramFileDetailsDto(message)));
+            fileCompletableFuture.whenComplete((message, throwable) -> {
+                if (throwable == null) {
+                    telegramMessageCompletableFuture.complete(new TelegramFileDetailsDto(message));
+                } else {
+                    telegramMessageCompletableFuture.isCompletedExceptionally();
+                    logger.error("callback of executeAsync(GetFile) encounters an exception", throwable);
+                }
+            });
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException(GET_FILE_DETAILS_EXCEPTION_MESSAGE, exception);
+            logger.error("executeAsync(GetFile) encounters an exception", exception);
         }
         return telegramMessageCompletableFuture;
 

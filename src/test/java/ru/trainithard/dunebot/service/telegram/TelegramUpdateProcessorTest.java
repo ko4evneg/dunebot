@@ -33,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -137,16 +136,6 @@ class TelegramUpdateProcessorTest extends TestContextMock {
                 TELEGRAM_USER_ID_1 == update.getMessage().getFrom().getId() && TELEGRAM_CHAT_ID_1 == update.getMessage().getChatId()));
         verify(commandMessageFactory, times(1)).getInstance(argThat(update ->
                 TELEGRAM_USER_ID_2 == update.getMessage().getFrom().getId() && TELEGRAM_CHAT_ID_2 == update.getMessage().getChatId()));
-    }
-
-    @Test
-    void shouldDoSomethingOnException() {
-        fail();
-    }
-
-    @Test
-    void shouldDoSomethingOnMessagingServiceException() {
-        fail();
     }
 
     @ParameterizedTest

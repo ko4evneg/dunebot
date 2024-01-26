@@ -1,6 +1,19 @@
 bot:
   photos-directory: photos
   pdf-directory: pdf
+
+logging:
+  level:
+    root: error
+    ru.trainithard.dunebot: debug
+  charset:
+    console: UTF-8
+    file: UTF-8
+  file:
+    name: logs/dunebot.log
+  logback:
+    rollingpolicy:
+      max-file-size: 1MB
 ---
 spring:
   config:
@@ -41,3 +54,5 @@ spring:
       platform: postgresql
 bot:
   token: fake_token
+  photos-directory: photos
+  pdf-directory: pdf

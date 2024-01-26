@@ -14,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
@@ -34,11 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class TelegramMessagingServiceTest {
-    private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
-    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
-    private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
-    private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
-
     private static final Integer MESSAGE_ID = 123;
     private static final Long CHAT_ID = 456L;
     private static final Integer REPLY_ID = 789;
@@ -60,16 +54,6 @@ class TelegramMessagingServiceTest {
 
         assertEquals(MESSAGE_ID, actualDeleteMessage.getMessageId());
         assertEquals(CHAT_ID.toString(), actualDeleteMessage.getChatId());
-    }
-
-    @Test
-    void shouldWrapApiExceptionOnDeleteCall() throws TelegramApiException {
-        doThrow(new TelegramApiException("abc")).when(telegramBot).executeAsync(ArgumentMatchers.any(DeleteMessage.class));
-        ExternalMessageId externalMessageId = new ExternalMessageId(MESSAGE_ID, CHAT_ID, REPLY_ID);
-
-        TelegramApiCallException actualException = assertThrows(TelegramApiCallException.class, () -> telegramMessagingService.deleteMessageAsync(externalMessageId));
-        assertEquals(DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, actualException.getMessage());
-        assertEquals("abc", actualException.getCause().getMessage());
     }
 
     @Test
@@ -108,17 +92,6 @@ class TelegramMessagingServiceTest {
     }
 
     @Test
-    void shouldWrapApiExceptionOnSendPollCall() throws TelegramApiException {
-        doThrow(new TelegramApiException("abc")).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
-        PollMessageDto pollMessageDto = new PollMessageDto(MESSAGE_ID.toString(), "Poll question", REPLY_ID, List.of("1", "2", "3"));
-
-        TelegramApiCallException actualException = assertThrows(TelegramApiCallException.class, () -> telegramMessagingService.sendPollAsync(pollMessageDto));
-
-        assertEquals(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, actualException.getMessage());
-        assertEquals("abc", actualException.getCause().getMessage());
-    }
-
-    @Test
     void shouldInvokeSendMessageCall() throws TelegramApiException {
         doReturn(CompletableFuture.completedFuture(getTextMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendMessage.class));
         MessageDto messageDto = new MessageDto(CHAT_ID, "la text", REPLY_ID, getKeyboard());
@@ -141,17 +114,6 @@ class TelegramMessagingServiceTest {
         ));
     }
 
-    @Test
-    void shouldWrapApiExceptionOnSendMessageCall() throws TelegramApiException {
-        doThrow(new TelegramApiException("abc")).when(telegramBot).executeAsync(ArgumentMatchers.any(SendMessage.class));
-        MessageDto messageDto = new MessageDto(CHAT_ID, "la text", REPLY_ID, getKeyboard());
-
-        TelegramApiCallException actualException = assertThrows(TelegramApiCallException.class, () -> telegramMessagingService.sendMessageAsync(messageDto));
-
-        assertEquals(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, actualException.getMessage());
-        assertEquals("abc", actualException.getCause().getMessage());
-    }
-
     private List<List<ButtonDto>> getKeyboard() {
         return List.of(
                 List.of(new ButtonDto("t1", "c1")),
@@ -170,16 +132,6 @@ class TelegramMessagingServiceTest {
         GetFile actualGetFile = getFileCaptor.getValue();
 
         assertEquals(FILE_ID, actualGetFile.getFileId());
-    }
-
-    @Test
-    void shouldWrapApiExceptionOnGetFileCall() throws TelegramApiException {
-        doThrow(new TelegramApiException("abc")).when(telegramBot).executeAsync(ArgumentMatchers.any(GetFile.class));
-
-        TelegramApiCallException actualException = assertThrows(TelegramApiCallException.class, () -> telegramMessagingService.getFileDetails(FILE_ID));
-
-        assertEquals(GET_FILE_DETAILS_EXCEPTION_MESSAGE, actualException.getMessage());
-        assertEquals("abc", actualException.getCause().getMessage());
     }
 
     @Test
