@@ -1,4 +1,5 @@
 bot:
+  #TODO: split file locs for test/prod
   photos-directory: photos
   pdf-directory: pdf
 
@@ -10,10 +11,11 @@ logging:
     console: UTF-8
     file: UTF-8
   file:
+    #TODO: split file locs for test/prod
     name: logs/dunebot.log
   logback:
     rollingpolicy:
-      max-file-size: 1MB
+      max-file-size: 10MB
 ---
 spring:
   config:

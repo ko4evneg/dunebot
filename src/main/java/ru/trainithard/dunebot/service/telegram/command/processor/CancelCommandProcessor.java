@@ -1,6 +1,8 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
@@ -19,6 +21,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class CancelCommandProcessor extends CommandProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(CancelCommandProcessor.class);
     private static final String FINISHED_MATCH_EXCEPTION_MESSAGE = "Запрещено отменять завершенные матчи!";
     private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
 
@@ -28,14 +31,19 @@ public class CancelCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
     @Override
-    public void process(CommandMessage commandMessage) {
+    public void process(CommandMessage commandMessage, int loggingId) {
+        logger.debug("{}: cancel started", loggingId);
+
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player -> {
             Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(player.getId());
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
+                logger.debug("{}: to-cancel match found, id {}", loggingId, latestOwnedMatch.getId());
+
                 if (finishedMatchStates.contains(latestOwnedMatch.getState())) {
                     throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
                 }
+
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.delete(latestOwnedMatch);
@@ -43,6 +51,8 @@ public class CancelCommandProcessor extends CommandProcessor {
                 });
             }
         });
+
+        logger.debug("{}: cancel ended", loggingId);
     }
 
     @Override

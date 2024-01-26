@@ -13,4 +13,5 @@ public abstract class TestContextMock {
     protected TelegramBot telegramBot;
     @MockBean
     protected MessagingService messagingService;
+    protected int mockLoggingId;
 }

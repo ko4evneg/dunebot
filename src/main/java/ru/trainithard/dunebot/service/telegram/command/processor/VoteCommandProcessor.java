@@ -1,6 +1,8 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
@@ -28,6 +30,8 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.*;
 @Service
 @RequiredArgsConstructor
 public class VoteCommandProcessor extends CommandProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(VoteCommandProcessor.class);
+
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
@@ -38,22 +42,30 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
 
     @Override
-    public void process(CommandMessage commandMessage) {
+    public void process(CommandMessage commandMessage, int loggingId) {
+        logger.debug("{}: vote started", loggingId);
+
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
         if (selectedPollAnswers.contains(POSITIVE_POLL_OPTION_ID)) {
-            registerMatchPlayerVote(commandMessage);
+            registerMatchPlayerVote(commandMessage, loggingId);
         } else {
-            unregisterMatchPlayerVote(commandMessage);
+            unregisterMatchPlayerVote(commandMessage, loggingId);
         }
+
+        logger.debug("{}: vote ended", loggingId);
     }
 
-    private void registerMatchPlayerVote(CommandMessage commandMessage) {
+    private void registerMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
+        logger.debug("{}: vote registration started", loggingId);
+
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
                 matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
-                        .ifPresent(match -> processPlayerVoteRegistration(player, match)));
+                        .ifPresent(match -> processPlayerVoteRegistration(player, match, loggingId)));
     }
 
-    private void processPlayerVoteRegistration(Player player, Match match) {
+    private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
+        logger.debug("{}: vote registration found player id: {}, match id: {}", loggingId, player.getId(), match.getId());
+
         int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
         match.setPositiveAnswersCount(updatedPositiveAnswersCount);
         MatchPlayer matchPlayer = new MatchPlayer(match, player);
@@ -64,7 +76,10 @@ public class VoteCommandProcessor extends CommandProcessor {
 
         if (match.isFull()) {
             cancelScheduledMatchStart(match);
+            logger.debug("{}: vote match start message unscheduled", loggingId);
+
             scheduleNewMatchStart(match);
+            logger.debug("{}: vote match start message scheduled", loggingId);
         }
     }
 
@@ -72,6 +87,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
         if (existingScheduledTask != null) {
             existingScheduledTask.cancel(false);
+
         }
     }
 
@@ -105,11 +121,15 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void unregisterMatchPlayerVote(CommandMessage commandMessage) {
+    private void unregisterMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
+        logger.debug("{}: vote unregister started", loggingId);
+
         matchPlayerRepository
                 .findByMatchExternalPollIdPollIdAndPlayerExternalId(commandMessage.getPollVote().pollId(), commandMessage.getUserId())
                 .ifPresent(matchPlayer -> {
                     Match match = matchPlayer.getMatch();
+
+                    logger.debug("{}: vote unregister found match id: {}, player id: {}", loggingId, match.getId(), matchPlayer.getPlayer().getId());
                     if (match.getState() == MatchState.NEW) {
                         int currentPositiveAnswersCount = match.getPositiveAnswersCount();
                         match.setPositiveAnswersCount(currentPositiveAnswersCount - 1);

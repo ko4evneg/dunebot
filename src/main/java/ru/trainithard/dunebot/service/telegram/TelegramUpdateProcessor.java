@@ -34,7 +34,7 @@ public class TelegramUpdateProcessor {
     public void process() {
         Update update = telegramBot.poll();
         while (update != null) {
-            long loggingId = random.nextLong();
+            int loggingId = random.nextInt(0, Integer.MAX_VALUE);
             try {
                 CommandMessage commandMessage = commandMessageFactory.getInstance(update);
                 if (commandMessage != null) {
@@ -48,7 +48,7 @@ public class TelegramUpdateProcessor {
                     logger.debug("{}: successfully passed specific validation", loggingId);
 
                     CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
-                    processor.process(commandMessage);
+                    processor.process(commandMessage, loggingId);
                     logger.debug("{}: successfully processed", loggingId);
                 }
             } catch (AnswerableDuneBotException answerableException) {

@@ -1,6 +1,8 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +28,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSH
 @Service
 @RequiredArgsConstructor
 public class PhotoUploadCommandProcessor extends CommandProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(PhotoUploadCommandProcessor.class);
     private static final String FILE_DOWNLOAD_URI_PREFIX = "https://api.telegram.org/file/bot";
     private static final String PATH_SEPARATOR = "/";
     private static final String UNSUPPORTED_UPDATE_TYPE = "Unsupported photo/document update type";
@@ -41,15 +44,22 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private String botToken;
 
     @Override
-    public void process(CommandMessage commandMessage) {
+    public void process(CommandMessage commandMessage, int loggingId) {
+        logger.debug("{}: new started", loggingId);
+
         Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT).iterator().next();
+        logger.debug("{}: match found, id: {}", loggingId, match.getId());
 
         String fileId = getFileId(commandMessage);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
         file.whenComplete((telegramFileDetailsDto, throwable) -> {
+            logger.debug("{}: file received from telegram", loggingId);
+
             String filePath = telegramFileDetailsDto.path();
             String effectiveFilePath = filePath.startsWith(PATH_SEPARATOR) ? filePath : PATH_SEPARATOR + filePath;
             byte[] photoBytes = restTemplate.getForObject(getFileUri(effectiveFilePath), byte[].class);
+            logger.debug("{}: file bytes array received from telegram", loggingId);
+
             try {
                 if (photoBytes != null) {
                     String dottedFileExtension = getFileExtension(filePath);
@@ -57,17 +67,20 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     match.setHasSubmitPhoto(true);
                     matchRepository.save(match);
                     if (match.canBeFinished()) {
-                        matchFinishingService.finishSuccessfullySubmittedMatch(match.getId());
+                        matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
                     }
 
                     messagingService.sendMessageAsync(new MessageDto(commandMessage, SUCCESSFUL_UPLOAD_TEXT, null));
                 }
             } catch (ScreenshotSavingException exception) {
+                logger.error(loggingId + ": screenshot save failed due to an exception", exception);
                 messagingService.sendMessageAsync(new MessageDto(commandMessage, exception.getMessage(), null));
             } catch (IOException exception) {
-                // TODO: log?
+                logger.error(loggingId + ": encountered an exception", exception);
             }
         });
+
+        logger.debug("{}: new ended", loggingId);
     }
 
     private String getFileId(CommandMessage commandMessage) {

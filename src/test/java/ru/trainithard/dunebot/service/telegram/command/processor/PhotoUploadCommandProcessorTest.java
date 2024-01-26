@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
@@ -90,7 +91,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldRequestForFileWhenCompressedPhotoReceived() {
-        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)), mockLoggingId);
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
@@ -103,7 +104,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn(MOCK_FILE).when(restTemplate).getForObject(eq(fileUri), eq(byte[].class));
         doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
 
-        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)), mockLoggingId);
 
         verify(screenshotService, times(1)).save(eq(10000L), eq(extension), eq(MOCK_FILE));
     }
@@ -112,7 +113,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldIgnoreFilePathFirstSlashWhenCompressedPhotoReceived() {
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails("/" + FILE_ID);
 
-        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)), mockLoggingId);
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
@@ -125,7 +126,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         String fileUri = FILE_URI.replace(".jpeg", extension);
         doReturn(MOCK_FILE).when(restTemplate).getForObject(eq(fileUri), eq(byte[].class));
 
-        processor.process(getDocumentCommandMessage());
+        processor.process(getDocumentCommandMessage(), mockLoggingId);
 
         verify(screenshotService, times(1)).save(eq(10000L), eq(extension), eq(MOCK_FILE));
     }
@@ -134,7 +135,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldIgnoreFilePathFirstSlashWhenDocumentPhotoReceived() {
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails("/" + FILE_ID);
 
-        processor.process(getDocumentCommandMessage());
+        processor.process(getDocumentCommandMessage(), mockLoggingId);
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
     }
@@ -144,7 +145,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID + "XX");
         CommandMessage photoCommandMessage = getPhotoCommandMessage(getPhotos(1, 2, 3));
 
-        processor.process(photoCommandMessage);
+        processor.process(photoCommandMessage, mockLoggingId);
 
         verify(messagingService, times(1)).getFileDetails(eq(FILE_ID + "XX"));
     }
@@ -155,7 +156,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
         CommandMessage documentCommandMessage = getDocumentCommandMessage();
 
-        processor.process(documentCommandMessage);
+        processor.process(documentCommandMessage, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -172,7 +173,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
 
-        processor.process(getDocumentCommandMessage());
+        processor.process(getDocumentCommandMessage(), mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -187,7 +188,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
 
-        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)), mockLoggingId);
 
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
 
@@ -200,7 +201,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
 
-        processor.process(getDocumentCommandMessage());
+        processor.process(getDocumentCommandMessage(), mockLoggingId);
 
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
 
@@ -214,7 +215,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI.replace(".jpeg", ".bmp")), eq(byte[].class));
         CommandMessage documentCommandMessage = getDocumentCommandMessage();
 
-        processor.process(documentCommandMessage);
+        processor.process(documentCommandMessage, mockLoggingId);
 
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
 
@@ -228,9 +229,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
 
-        processor.process(getDocumentCommandMessage());
+        processor.process(getDocumentCommandMessage(), mockLoggingId);
 
-        verify(matchFinishingService, times(1)).finishSuccessfullySubmittedMatch(eq(10000L));
+        verify(matchFinishingService, times(1)).finishSuccessfullySubmittedMatch(eq(10000L), anyInt());
     }
 
     @Test
@@ -240,9 +241,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
 
-        processor.process(getDocumentCommandMessage());
+        processor.process(getDocumentCommandMessage(), mockLoggingId);
 
-        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(10000L));
+        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(10000L), anyInt());
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {

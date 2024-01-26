@@ -35,7 +35,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(strings = {"newName", "new Name X X"})
     void shouldChangeSteamName(String newName) {
-        commandProcessor.process(getCommandMessage(newName));
+        commandProcessor.process(getCommandMessage(newName), mockLoggingId);
 
         String actualName = jdbcTemplate.queryForObject("select steam_name from players where id = 10000", String.class);
 
@@ -44,7 +44,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotChangeSteamNameWhenNoNewNameProvided() {
-        commandProcessor.process(getCommandMessage(""));
+        commandProcessor.process(getCommandMessage(""), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and steam_name = 'st_pl')", Boolean.class);
@@ -55,7 +55,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldChangeTelegramNames() {
-        commandProcessor.process(getCommandMessage(""));
+        commandProcessor.process(getCommandMessage(""), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and first_name = 'newFname' and last_name = 'newLname' and external_name = 'newUname')", Boolean.class);

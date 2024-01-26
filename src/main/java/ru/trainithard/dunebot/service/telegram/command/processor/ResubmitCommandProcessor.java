@@ -1,6 +1,8 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
@@ -17,6 +19,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ResubmitCommandProcessor extends CommandProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(ResubmitCommandProcessor.class);
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест (%d)";
 
     private final MatchPlayerRepository matchPlayerRepository;
@@ -27,23 +30,31 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
 
     @Override
-    public void process(CommandMessage commandMessage) {
+    public void process(CommandMessage commandMessage, int loggingId) {
+        logger.debug("{}: resubmit started", loggingId);
+
         Match match = validatedMatchRetriever.getValidatedMatch(commandMessage);
         if (!match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
-            matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT));
+            matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT), loggingId);
         }
 
-        process(match);
+        process(match, loggingId);
+
+        logger.debug("{}: resubmit ended", loggingId);
     }
 
-    void process(Match match) {
+    void process(Match match, int loggingId) {
+        logger.debug("{}: resubmit processing started", loggingId);
+
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         updateSubmitsData(match);
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(registeredMatchPlayers);
         });
-        submitCommandProcessor.process(match);
+        submitCommandProcessor.process(match, loggingId);
+
+        logger.debug("{}: resubmit processing ended", loggingId);
     }
 
     private void updateSubmitsData(Match match) {

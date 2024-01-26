@@ -2,10 +2,11 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| high     | simultaneous matches spam control                                                   |
+| critical | add unknown command /info advice                                                    |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
 | high     | leaders rating                                                                      |
+| medium   | simultaneous matches spam control                                                   |
 | medium   | add menu buttons (SetMyCommands)                                                    |
 | medium   | test TelegramApiException to runtime handling                                       |
 | medium   | test TelegramUpdateProcessor unknown exceptions handling for both methods           |
@@ -25,9 +26,10 @@
 
 # Known bugs
 
-| ID | issue                                | offer                                        |
-|----|--------------------------------------|----------------------------------------------|
-| 1  | new and register produces same error | replace message with abstract command + args |
+| ID | issue                                                                 | offer        |
+|----|-----------------------------------------------------------------------|--------------|
+| 1  | /cancel missing feedback when no match (if match exists - check also) | change logic |
+| 1  | /cancel not working                                                   | change logic |
 
 # Design considerations
 
