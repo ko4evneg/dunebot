@@ -35,7 +35,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
     private static final Logger logger = LoggerFactory.getLogger(SubmitCommandProcessor.class);
-    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
 
     private final MatchPlayerRepository matchPlayerRepository;

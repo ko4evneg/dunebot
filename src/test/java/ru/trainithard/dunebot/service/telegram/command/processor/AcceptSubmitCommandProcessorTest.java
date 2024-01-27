@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AcceptSubmitCommandProcessorTest extends TestContextMock {
-    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final long USER_1_ID = 11000L;
     private static final long USER_2_ID = 11001L;
 

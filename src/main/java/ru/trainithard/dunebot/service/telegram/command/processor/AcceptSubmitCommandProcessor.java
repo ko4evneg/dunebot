@@ -28,7 +28,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.RESUBMITS_LI
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private static final Logger logger = LoggerFactory.getLogger(AcceptSubmitCommandProcessor.class);
     private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE =
-            "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+            "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE =
             "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'";
     private static final String ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE =

@@ -94,7 +94,8 @@ public class MatchFinishingService {
 
     private MessageDto getMatchFinishMessage(Match match) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Матч ").append(match.getId()).append(" завершился:").append(EXTERNAL_LINE_SEPARATOR);
+        stringBuilder.append("*Матч ").append(match.getId()).append("* завершился:")
+                .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
         Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
         match.getMatchPlayers().stream()
                 .filter(matchPlayer -> matchPlayer.getPlace() != null &&

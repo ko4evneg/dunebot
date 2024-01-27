@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 class MatchFinishingServiceTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID = 9000;
-    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final LocalDate FINISH_DATE = LocalDate.of(2012, 12, 12);
 
     @Autowired
@@ -165,7 +165,8 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
         assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("""
-                Матч 15000 завершился:
+                *Матч 15000* завершился:
+                                
                 1. f4 (st_pl4) l4
                 2. f2 (st_pl2) l2
                 3. f3 (st_pl3) l3
@@ -232,7 +233,8 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
         assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("""
-                Матч 15000 завершился:
+                *Матч 15000* завершился:
+                                
                 1. f4 (st_pl4) l4
                 2. f2 (st_pl2) l2
                 3. f3 (st_pl3) l3
@@ -249,6 +251,6 @@ class MatchFinishingServiceTest extends TestContextMock {
 
         assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
         assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("Матч 15000 завершен без результата, так как превышено максимальное количество попыток регистрации мест", messageDto.getText());
+        assertEquals("*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест", messageDto.getText());
     }
 }

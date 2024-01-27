@@ -20,7 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ResubmitCommandProcessor extends CommandProcessor {
     private static final Logger logger = LoggerFactory.getLogger(ResubmitCommandProcessor.class);
-    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "Матч %d завершен без результата, так как превышено максимальное количество попыток регистрации мест (%d)";
+    private static final String TIMEOUT_MATCH_FINISH_MESSAGE =
+            "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест (%d)";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
@@ -35,7 +36,8 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         if (!match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
-            matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT), loggingId);
+            matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(),
+                    String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT), loggingId);
         }
 
         process(match, loggingId);
