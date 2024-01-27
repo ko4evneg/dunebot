@@ -35,8 +35,7 @@ class CommandMessageFactoryImplTest {
         assertNotNull(commandMessage);
         assertThat(commandMessage, allOf(
                 hasProperty("userId", is(USER_ID)),
-                hasProperty("firstName", is("fName")),
-                hasProperty("lastName", is("lName")),
+                hasProperty("externalFirstName", is("fName")),
                 hasProperty("userName", is("uName")),
                 hasProperty("chatId", is(CHAT_ID)),
                 hasProperty("messageId", is(MESSAGE_ID)),
@@ -57,12 +56,12 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
-    void shouldGetNullCommandArgsForSlashWordTextUpdate() {
+    void shouldGetEmptyStringCommandArgsForSlashWordTextUpdate() {
         Update textUpdate = getTextUpdate("/" + Command.REGISTER);
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertNull(commandMessage.getAllArguments());
+        assertTrue(commandMessage.getAllArguments().isBlank());
         assertEquals(0, commandMessage.getArgumentsCount());
     }
 
@@ -183,7 +182,6 @@ class CommandMessageFactoryImplTest {
         User user = new User();
         user.setId(USER_ID);
         user.setFirstName("fName");
-        user.setLastName("lName");
         user.setUserName("uName");
         Chat chat = new Chat();
         chat.setId(CHAT_ID);

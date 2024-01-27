@@ -67,12 +67,12 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("matchesCount", is(2L))),
-                both(hasProperty("playerFriendlyName", is("s1 (f1)"))).and(hasProperty("matchesCount", is(6L))),
-                both(hasProperty("playerFriendlyName", is("s4 (f4)"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerFriendlyName", is("s3 (f3)"))).and(hasProperty("matchesCount", is(5L))),
-                both(hasProperty("playerFriendlyName", is("s2 (f2)"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerFriendlyName", is("s5 (f5)"))).and(hasProperty("matchesCount", is(3L)))
+                both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("matchesCount", is(2L))),
+                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("matchesCount", is(6L))),
+                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("matchesCount", is(4L))),
+                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("matchesCount", is(5L))),
+                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("matchesCount", is(4L))),
+                both(hasProperty("playerFriendlyName", is("f5 (s5) l5"))).and(hasProperty("matchesCount", is(3L)))
         ));
     }
 
@@ -81,12 +81,12 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("winRate", is(50.0))),
-                both(hasProperty("playerFriendlyName", is("s1 (f1)"))).and(hasProperty("winRate", is(33.33))),
-                both(hasProperty("playerFriendlyName", is("s4 (f4)"))).and(hasProperty("winRate", is(25.0))),
-                both(hasProperty("playerFriendlyName", is("s3 (f3)"))).and(hasProperty("winRate", is(20.0))),
-                both(hasProperty("playerFriendlyName", is("s2 (f2)"))).and(hasProperty("winRate", is(0.0))),
-                both(hasProperty("playerFriendlyName", is("s5 (f5)"))).and(hasProperty("winRate", is(0.0)))
+                both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("winRate", is(50.0))),
+                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("winRate", is(33.33))),
+                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("winRate", is(25.0))),
+                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("winRate", is(20.0))),
+                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("winRate", is(0.0))),
+                both(hasProperty("playerFriendlyName", is("f5 (s5) l5"))).and(hasProperty("winRate", is(0.0)))
         ));
     }
 
@@ -95,12 +95,12 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("s6 (f6)"))).and(hasProperty("efficiency", is(0.7))),
-                both(hasProperty("playerFriendlyName", is("s1 (f1)"))).and(hasProperty("efficiency", is(0.58))),
-                both(hasProperty("playerFriendlyName", is("s4 (f4)"))).and(hasProperty("efficiency", is(0.45))),
-                both(hasProperty("playerFriendlyName", is("s3 (f3)"))).and(hasProperty("efficiency", is(0.44))),
-                both(hasProperty("playerFriendlyName", is("s2 (f2)"))).and(hasProperty("efficiency", is(0.37))),
-                both(hasProperty("playerFriendlyName", is("s5 (f5)"))).and(hasProperty("efficiency", is(0.53)))
+                both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("efficiency", is(0.7))),
+                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("efficiency", is(0.58))),
+                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("efficiency", is(0.45))),
+                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("efficiency", is(0.44))),
+                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("efficiency", is(0.37))),
+                both(hasProperty("playerFriendlyName", is("f5 (s5) l5"))).and(hasProperty("efficiency", is(0.53)))
         ));
     }
 
@@ -109,9 +109,9 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         assertThat(monthlyRating.getPlayerRatings(), contains(
-                hasProperty("playerFriendlyName", is("s6 (f6)")), hasProperty("playerFriendlyName", is("s1 (f1)")),
-                hasProperty("playerFriendlyName", is("s5 (f5)")), hasProperty("playerFriendlyName", is("s4 (f4)")),
-                hasProperty("playerFriendlyName", is("s3 (f3)")), hasProperty("playerFriendlyName", is("s2 (f2)"))
+                hasProperty("playerFriendlyName", is("f6 (s6) l6")), hasProperty("playerFriendlyName", is("f1 (s1) l1")),
+                hasProperty("playerFriendlyName", is("f5 (s5) l5")), hasProperty("playerFriendlyName", is("f4 (s4) l4")),
+                hasProperty("playerFriendlyName", is("f3 (s3) l3")), hasProperty("playerFriendlyName", is("f2 (s2) l2"))
         ));
     }
 
@@ -120,7 +120,7 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
-                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("s6 (f6)"))
+                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f6 (s6) l6"))
                 .findFirst().orElseThrow()
                 .getOrderedPlaceCountByPlaceNames();
 
@@ -135,7 +135,7 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
-                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("s6 (f6)"))
+                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f6 (s6) l6"))
                 .findFirst().orElseThrow()
                 .getOrderedPlaceCountByPlaceNames();
 
@@ -147,7 +147,7 @@ class MonthlyRatingTest {
         MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
 
         boolean isPlayer7Present = monthlyRating.getPlayerRatings().stream()
-                .anyMatch(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("s7 (f7)"));
+                .anyMatch(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f7 (s7) l7"));
 
         assertFalse(isPlayer7Present);
     }
@@ -169,6 +169,7 @@ class MonthlyRatingTest {
         player.setId((long) playerId);
         player.setFirstName("f" + playerId);
         player.setSteamName("s" + playerId);
+        player.setLastName("l" + playerId);
         return player;
     }
 }
