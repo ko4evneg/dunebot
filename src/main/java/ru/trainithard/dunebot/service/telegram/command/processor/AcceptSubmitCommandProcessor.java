@@ -35,7 +35,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'." +
                     EXTERNAL_LINE_SEPARATOR + "Теперь загрузите в этот чат скриншот победы.";
     private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE =
-            "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
+            "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;

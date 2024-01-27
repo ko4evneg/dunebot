@@ -218,7 +218,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
         List<MessageDto> actualMessages = messageCaptor.getAllValues();
 
-        String conflictText = "Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
+        String conflictText = "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. " +
+                "Результаты не сохранены, регистрация запрещена.";
         assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
         assertThat(actualMessages, containsInAnyOrder(
                 hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
