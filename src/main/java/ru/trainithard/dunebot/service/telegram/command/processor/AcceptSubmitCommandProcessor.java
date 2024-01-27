@@ -121,17 +121,17 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 .collect(Collectors.groupingBy(MatchPlayer::getCandidatePlace));
         List<MatchPlayer> candidatePlaceMatchPlayers = playersByPlace.computeIfAbsent(candidatePlace, key -> new ArrayList<>());
         candidatePlaceMatchPlayers.add(candidate);
-        StringBuilder conflictTextBuilder = new StringBuilder("Некоторые игроки не смогли поделить место:").append(EXTERNAL_LINE_SEPARATOR);
+        StringBuilder conflictTextBuilder = new StringBuilder("Некоторые игроки не смогли поделить *");
         for (Map.Entry<Integer, List<MatchPlayer>> entry : playersByPlace.entrySet()) {
             List<MatchPlayer> conflictMatchPlayers = entry.getValue();
             if (conflictMatchPlayers.size() > 1) {
-                List<String> playerNames = conflictMatchPlayers.stream().map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName()).toList();
-                String playerNamesString = String.join(" и ", playerNames);
-                conflictTextBuilder.append(entry.getKey()).append(" место: ").append(playerNamesString)
-                        .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
+                conflictTextBuilder.append(entry.getKey()).append(" место*:").append(EXTERNAL_LINE_SEPARATOR);
+                conflictMatchPlayers.stream()
+                        .map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName())
+                        .forEach(playerFriendlyName -> conflictTextBuilder.append(playerFriendlyName).append(EXTERNAL_LINE_SEPARATOR));
             }
         }
-        conflictTextBuilder.append("Повторный опрос результата...");
+        conflictTextBuilder.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
 
         return conflictTextBuilder.toString();
     }

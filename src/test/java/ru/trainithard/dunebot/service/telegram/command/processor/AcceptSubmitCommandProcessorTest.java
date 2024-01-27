@@ -195,8 +195,9 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         List<MessageDto> actualMessages = messageCaptor.getAllValues();
 
         String conflictText = """
-                Некоторые игроки не смогли поделить место:
-                2 место: name2 (st_pl2) l2 и name1 (st_pl1) l1
+                Некоторые игроки не смогли поделить *2 место*:
+                name2 (st_pl2) l2
+                name1 (st_pl1) l1
 
                 Повторный опрос результата...""";
         assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));

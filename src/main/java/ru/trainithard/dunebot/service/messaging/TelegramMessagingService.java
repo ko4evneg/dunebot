@@ -28,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
     private static final Logger logger = LoggerFactory.getLogger(TelegramMessagingService.class);
+    private static final String MARKDOWN_PARSE_MODE = "Markdown";
 
     private final TelegramBot telegramBot;
 
@@ -89,6 +90,7 @@ public class TelegramMessagingService implements MessagingService {
 
     private SendMessage getSendMessage(MessageDto message) {
         SendMessage sendMessage = new SendMessage(message.getChatId(), message.getText());
+        sendMessage.setParseMode(MARKDOWN_PARSE_MODE);
         sendMessage.setReplyToMessageId(message.getReplyMessageId());
         if (message.getKeyboard() != null) {
             sendMessage.setReplyMarkup(getInlineKeyboard(message));
