@@ -35,7 +35,7 @@ public class CancelCommandProcessor extends CommandProcessor {
         logger.debug("{}: cancel started", loggingId);
 
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player -> {
-            Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatch(player.getId());
+            Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatchWithMatchPlayersBy(player.getId());
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
                 logger.debug("{}: to-cancel match found, id {}", loggingId, latestOwnedMatch.getId());
@@ -46,8 +46,8 @@ public class CancelCommandProcessor extends CommandProcessor {
 
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
                 transactionTemplate.executeWithoutResult(status -> {
-                    matchRepository.delete(latestOwnedMatch);
                     matchPlayerRepository.deleteAll(latestOwnedMatch.getMatchPlayers());
+                    matchRepository.delete(latestOwnedMatch);
                 });
             }
         });

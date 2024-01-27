@@ -29,7 +29,6 @@
 | ID | issue                                                                 | offer        |
 |----|-----------------------------------------------------------------------|--------------|
 | 1  | /cancel missing feedback when no match (if match exists - check also) | change logic |
-| 1  | /cancel not working                                                   | change logic |
 
 # Design considerations
 

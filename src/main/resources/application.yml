@@ -2,7 +2,6 @@ bot:
   #TODO: split file locs for test/prod
   photos-directory: photos
   pdf-directory: pdf
-
 logging:
   level:
     root: error
@@ -16,6 +15,12 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 10MB
+#spring:
+#  jpa:
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
 ---
 spring:
   config:

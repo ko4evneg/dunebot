@@ -130,8 +130,11 @@ public class CommandMessage {
         return argumentNumber > args.length || argumentNumber < 1 ? null : args[argumentNumber - 1];
     }
 
+    /**
+     * @return all provided arguments. Empty string if no arguments in command
+     */
     public String getAllArguments() {
-        return args.length == 0 ? null : String.join(" ", args);
+        return args.length == 0 ? "" : String.join(" ", args);
     }
 
     public int getArgumentsCount() {
