@@ -21,6 +21,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +32,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 @SpringBootTest
 class CancelCommandProcessorTest extends TestContextMock {
     @Autowired
-    private CancelCommandProcessor commandProcessor;
+    private CancelCommandProcessor processor;
 
     private static final Integer REPLY_ID = 9000;
     private static final int MESSAGE_ID = 100500;
@@ -63,7 +64,7 @@ class CancelCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendCorrectDeleteMessageRequest() {
-        commandProcessor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage, mockLoggingId);
 
         ArgumentCaptor<ExternalMessageId> messageIdCaptor = ArgumentCaptor.forClass(ExternalMessageId.class);
         verify(messagingService).deleteMessageAsync(messageIdCaptor.capture());
@@ -76,7 +77,7 @@ class CancelCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldDeleteMatch() {
-        commandProcessor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage, mockLoggingId);
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
 
@@ -88,7 +89,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10001, 12346, 9000, 'st_pl2', 'name2', 'l1', 'e1', '2010-10-10') ");
 
-        commandProcessor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage, mockLoggingId);
 
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
@@ -99,14 +100,14 @@ class CancelCommandProcessorTest extends TestContextMock {
     void shouldThrowOnFailedCancel() {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
 
-        assertThrows(TelegramApiCallException.class, () -> commandProcessor.process(commandMessage, mockLoggingId));
+        assertThrows(TelegramApiCallException.class, () -> processor.process(commandMessage, mockLoggingId));
     }
 
     @Test
     void shouldNotDeleteMatchAndMatchPlayersOnFailedCancel() {
         try {
             doThrow(new TelegramApiCallException("", new TelegramApiException())).when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
-            commandProcessor.process(commandMessage, mockLoggingId);
+            processor.process(commandMessage, mockLoggingId);
         } catch (TelegramApiCallException ignored) {
         }
 
@@ -123,7 +124,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         try {
-            commandProcessor.process(commandMessage, mockLoggingId);
+            processor.process(commandMessage, mockLoggingId);
         } catch (AnswerableDuneBotException ignored) {
         }
 
@@ -140,7 +141,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         try {
-            commandProcessor.process(commandMessage, mockLoggingId);
+            processor.process(commandMessage, mockLoggingId);
         } catch (AnswerableDuneBotException ignored) {
         }
 
@@ -152,9 +153,16 @@ class CancelCommandProcessorTest extends TestContextMock {
     void shouldThrowOnFinishedMatchCancelRequest(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage, mockLoggingId));
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
 
         assertEquals("Запрещено отменять завершенные матчи!", actualException.getMessage());
+    }
+
+    @Test
+    void shouldReturnCancelCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.CANCEL, actualCommand);
     }
 
     private CommandMessage getCommandMessage() {

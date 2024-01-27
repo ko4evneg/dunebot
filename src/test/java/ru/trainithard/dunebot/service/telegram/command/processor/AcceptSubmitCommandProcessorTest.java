@@ -21,6 +21,7 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
@@ -260,6 +261,13 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         assertEquals("В матче 15000 за вами зафиксировано 1 место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
                 "При ошибке используйте команду '/resubmit 15000'." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
                 "Теперь загрузите в этот чат скриншот победы.", actualMessages.getText());
+    }
+
+    @Test
+    void shouldReturnAcceptSubmitCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.ACCEPT_SUBMIT, actualCommand);
     }
 
     private CommandMessage getCommandMessage(long userId, int messageId, long chatId, String callbackData) {

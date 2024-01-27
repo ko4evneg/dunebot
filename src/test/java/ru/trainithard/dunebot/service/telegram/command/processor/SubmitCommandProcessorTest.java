@@ -58,7 +58,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID);
 
     @Autowired
-    private SubmitCommandProcessor commandProcessor;
+    private SubmitCommandProcessor processor;
     @MockBean
     private Clock clock;
     @MockBean
@@ -113,7 +113,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(submitCommandMessage, mockLoggingId));
+                () -> processor.process(submitCommandMessage, mockLoggingId));
 
         assertEquals(expectedException, actualException.getMessage());
     }
@@ -134,7 +134,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         CommandMessage commandMessage = getCommandMessage(11004L);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(commandMessage, mockLoggingId));
+                () -> processor.process(commandMessage, mockLoggingId));
 
         assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
     }
@@ -145,14 +145,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id = 15000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> commandProcessor.process(submitCommandMessage, mockLoggingId));
+                () -> processor.process(submitCommandMessage, mockLoggingId));
 
         assertEquals("Матча с таким ID не существует!", actualException.getMessage());
     }
 
     @Test
     void shouldSendMessagesToEveryMatchPlayer() {
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
@@ -168,7 +168,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendCorrectSubmitMessage() {
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
@@ -195,7 +195,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 "values (10002, 'ExternalMessageId', 12345, " + CHAT_ID + ", '2020-10-10')");
         jdbcTemplate.execute("update match_players set external_submit_id = 10002 where id = 10000");
 
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         ArgumentCaptor<ExternalMessageId> messageDtoCaptor = ArgumentCaptor.forClass(ExternalMessageId.class);
         verify(messagingService, times(1)).deleteMessageAsync(messageDtoCaptor.capture());
@@ -218,7 +218,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001)", Long.class);
@@ -239,7 +239,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
@@ -257,7 +257,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
@@ -280,7 +280,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        commandProcessor.process(submitCommandMessage, mockLoggingId);
+        processor.process(submitCommandMessage, mockLoggingId);
 
         List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where external_submit_id in " +
                 "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
@@ -292,7 +292,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnSubmit() {
         jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
 
-        commandProcessor.process(getCommandMessage(USER_ID), mockLoggingId);
+        processor.process(getCommandMessage(USER_ID), mockLoggingId);
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
         verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
@@ -305,7 +305,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void shouldInvokeUnsuccessfullySubmittedMatchFinishOnScheduledTask() throws InterruptedException {
         jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
 
-        commandProcessor.process(getCommandMessage(USER_ID), mockLoggingId);
+        processor.process(getCommandMessage(USER_ID), mockLoggingId);
 
         ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
         verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
@@ -316,6 +316,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
         thread.join();
 
         verify(finishingService, times(1)).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(TIMEOUT_MATCH_FINISH_MESSAGE), anyInt());
+    }
+
+    @Test
+    void shouldReturnSubmitCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.SUBMIT, actualCommand);
     }
 
     private CommandMessage getCommandMessage(long userId) {

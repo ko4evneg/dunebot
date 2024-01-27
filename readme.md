@@ -29,6 +29,7 @@
 | ID | issue                                                                 | offer        |
 |----|-----------------------------------------------------------------------|--------------|
 | 1  | /cancel missing feedback when no match (if match exists - check also) | change logic |
+| 2  | check screenshot saving (may be not invoked)                          | change logic |
 
 # Design considerations
 

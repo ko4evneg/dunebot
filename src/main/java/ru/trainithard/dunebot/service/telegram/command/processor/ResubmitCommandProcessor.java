@@ -33,7 +33,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     public void process(CommandMessage commandMessage, int loggingId) {
         logger.debug("{}: resubmit started", loggingId);
 
-        Match match = validatedMatchRetriever.getValidatedMatch(commandMessage);
+        Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         if (!match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
             matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT), loggingId);
         }

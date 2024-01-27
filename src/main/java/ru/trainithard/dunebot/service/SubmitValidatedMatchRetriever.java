@@ -24,12 +24,12 @@ public class SubmitValidatedMatchRetriever {
 
     private final MatchRepository matchRepository;
 
-    public Match getValidatedMatch(CommandMessage commandMessage) {
+    public Match getValidatedResubmitMatch(CommandMessage commandMessage) {
         long telegramChatId = commandMessage.getChatId();
         try {
             long matchId = Long.parseLong(commandMessage.getArgument(1));
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
-            validateMatch(telegramChatId, match);
+            validateMatch(telegramChatId, match, true);
             validateSubmitAllowed(commandMessage, match, telegramChatId);
             return match;
         } catch (NumberFormatException | MatchNotExistsException exception) {
@@ -37,14 +37,27 @@ public class SubmitValidatedMatchRetriever {
         }
     }
 
-    private void validateMatch(long telegramChatId, Match match) {
+    public Match getValidatedSubmitMatch(CommandMessage commandMessage) {
+        long telegramChatId = commandMessage.getChatId();
+        try {
+            long matchId = Long.parseLong(commandMessage.getArgument(1));
+            Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
+            validateMatch(telegramChatId, match, false);
+            validateSubmitAllowed(commandMessage, match, telegramChatId);
+            return match;
+        } catch (NumberFormatException | MatchNotExistsException exception) {
+            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, telegramChatId);
+        }
+    }
+
+    private void validateMatch(long telegramChatId, Match match, boolean isResubmit) {
         if (finishedMatchStates.contains(match.getState())) {
             throw new AnswerableDuneBotException(FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE, telegramChatId);
         }
         if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {
             throw new AnswerableDuneBotException(NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE, telegramChatId);
         }
-        if (match.getState() == MatchState.ON_SUBMIT) {
+        if (!isResubmit && match.getState() == MatchState.ON_SUBMIT) {
             throw new AnswerableDuneBotException(ALREADY_SUBMITTED_EXCEPTION_MESSAGE, telegramChatId);
         }
     }

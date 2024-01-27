@@ -76,7 +76,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, submits_retry_count, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, 1, '2010-10-10') ");
+                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10012, 10022, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -118,7 +118,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         return Stream.of(
                 Arguments.of("update matches set state = '" + MatchState.FAILED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
                 Arguments.of("update matches set state = '" + MatchState.FINISHED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
-                Arguments.of("update matches set state = '" + MatchState.ON_SUBMIT + "' where id = 15000", "Запрос на публикацию этого матча уже сделан"),
                 Arguments.of("update matches set positive_answers_count = 3 where id = 15000", "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос")
         );
     }
@@ -206,6 +205,13 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
 
         verify(finishingService, times(1)).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE), anyInt());
+    }
+
+    @Test
+    void shouldReturnResubmitCommand() {
+        Command actualCommand = resubmitProcessor.getCommand();
+
+        assertEquals(Command.RESUBMIT, actualCommand);
     }
 
     private CommandMessage getCommandMessage(long userId) {

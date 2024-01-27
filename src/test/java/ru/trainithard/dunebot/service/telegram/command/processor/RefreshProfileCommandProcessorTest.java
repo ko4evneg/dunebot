@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.stream.Stream;
@@ -22,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class RefreshProfileCommandProcessorTest extends TestContextMock {
     @Autowired
-    private RefreshProfileCommandProcessor commandProcessor;
+    private RefreshProfileCommandProcessor processor;
 
     @BeforeEach
     void beforeEach() {
@@ -38,7 +39,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @MethodSource(value = "inputNamesSource")
     void shouldChangeSteamName(String newName, String expectedName) {
-        commandProcessor.process(getCommandMessage(newName), mockLoggingId);
+        processor.process(getCommandMessage(newName), mockLoggingId);
 
         String actualName = jdbcTemplate.queryForObject("select steam_name from players where id = 10000", String.class);
 
@@ -54,7 +55,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotChangeSteamNameWhenNoNewNameProvided() {
-        commandProcessor.process(getCommandMessage(""), mockLoggingId);
+        processor.process(getCommandMessage(""), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and steam_name = 'st_pl')", Boolean.class);
@@ -65,7 +66,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldChangeProvidedNames() {
-        commandProcessor.process(getCommandMessage("abc (stm) cde"), mockLoggingId);
+        processor.process(getCommandMessage("abc (stm) cde"), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and first_name = 'abc' and last_name = 'cde' and steam_name = 'stm')", Boolean.class);
@@ -76,7 +77,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldChangeTelegramFirstName() {
-        commandProcessor.process(getCommandMessage("abc (stm) cde"), mockLoggingId);
+        processor.process(getCommandMessage("abc (stm) cde"), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and external_first_name = 'newEFname' and external_name = 'newUname')", Boolean.class);
@@ -87,13 +88,20 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldChangeTelegramFirstNameWhenNoArgsProvided() {
-        commandProcessor.process(getCommandMessage(""), mockLoggingId);
+        processor.process(getCommandMessage(""), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and external_first_name = 'newEFname' and external_name = 'newUname')", Boolean.class);
 
         assertNotNull(isChangedUserExist);
         assertTrue(isChangedUserExist);
+    }
+
+    @Test
+    void shouldReturnRefreshCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.REFRESH_PROFILE, actualCommand);
     }
 
     private CommandMessage getCommandMessage(String newSteamName) {

@@ -48,7 +48,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        process(validatedMatchRetriever.getValidatedMatch(commandMessage), loggingId);
+        process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage), loggingId);
     }
 
     void process(Match match, int loggingId) {

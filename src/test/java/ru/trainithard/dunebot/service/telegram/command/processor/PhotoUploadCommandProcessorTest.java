@@ -21,6 +21,7 @@ import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.io.IOException;
@@ -244,6 +245,13 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         processor.process(getDocumentCommandMessage(), mockLoggingId);
 
         verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(10000L), anyInt());
+    }
+
+    @Test
+    void shouldReturnPhotoUploadCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.UPLOAD_PHOTO, actualCommand);
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {

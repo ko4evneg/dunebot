@@ -15,6 +15,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +35,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
     private static final String EXTERNAL_FIRST_NAME = "extName";
 
     @Autowired
-    private RegisterCommandProcessor commandProcessor;
+    private RegisterCommandProcessor processor;
 
     @AfterEach
     void afterEach() {
@@ -43,7 +44,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveMinimallyFilledNewPlayer() {
-        commandProcessor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage, mockLoggingId);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
                 "where first_name = '" + FIRST_NAME + "' and last_name = '" + LAST_NAME + "' " +
@@ -54,7 +55,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveCompletelyFilledNewPlayer() {
-        commandProcessor.process(getCommandMessage(STEAM_NAME, "uName"), mockLoggingId);
+        processor.process(getCommandMessage(STEAM_NAME, "uName"), mockLoggingId);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "' and last_name = '" +
@@ -65,7 +66,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveTelegramIdAndTelegramChatIdForNewPlayer() {
-        commandProcessor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage, mockLoggingId);
 
         Player actualPlayer = jdbcTemplate.queryForObject("select external_id, external_chat_id from players " +
                 "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", new BeanPropertyRowMapper<>(Player.class));
@@ -77,7 +78,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveNewPlayerWithMultipleWordsSteamName() {
-        commandProcessor.process(getCommandMessage("Vasiliy Prostoy V", "uName"), mockLoggingId);
+        processor.process(getCommandMessage("Vasiliy Prostoy V", "uName"), mockLoggingId);
 
         String actualSteamName = jdbcTemplate.queryForObject("select steam_name from players " +
                 "where first_name = '" + FIRST_NAME + "' and last_name = 'lName' and external_name = 'uName'", String.class);
@@ -91,7 +92,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
                 "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" +
                 FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
 
-        AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage, mockLoggingId));
+        AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
         assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME +
                 "! Для смены ника выполните команду '/refresh_profile *Имя* (*steam никнейм*) *Фамилия*'", exception.getMessage());
     }
@@ -102,13 +103,13 @@ class RegisterCommandProcessorTest extends TestContextMock {
                 "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + (TELEGRAM_CHAT_ID + 1) + ", '" + STEAM_NAME + "', '" +
                 FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
 
-        AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> commandProcessor.process(commandMessage, mockLoggingId));
+        AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
         assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exception.getMessage());
     }
 
     @Test
     void shouldSendTelegramMessageOnUserRegistration() {
-        commandProcessor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -116,6 +117,13 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
         assertEquals(TELEGRAM_CHAT_ID.toString(), actualMessages.getChatId());
         assertEquals(REGISTRATION_MESSAGE, actualMessages.getText());
+    }
+
+    @Test
+    void shouldReturnRegisterCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.REGISTER, actualCommand);
     }
 
     private static CommandMessage getCommandMessage(String steamName, @Nullable String userName) {
