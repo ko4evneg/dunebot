@@ -167,10 +167,10 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertEquals("""
                 *Матч 15000* завершился:
                                 
-                1. f4 (st_pl4) l4
-                2. f2 (st_pl2) l2
-                3. f3 (st_pl3) l3
-                4. f5 (st_pl5) l5""", messageDto.getText());
+                1️⃣ f4 (st_pl4) l4
+                2️⃣ f2 (st_pl2) l2
+                3️⃣ f3 (st_pl3) l3
+                4️⃣ f5 (st_pl5) l5""", messageDto.getText());
     }
 
     @Test
@@ -235,10 +235,10 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertEquals("""
                 *Матч 15000* завершился:
                                 
-                1. f4 (st_pl4) l4
-                2. f2 (st_pl2) l2
-                3. f3 (st_pl3) l3
-                4. f1 (st_pl1) l1""", messageDto.getText());
+                1️⃣ f4 (st_pl4) l4
+                2️⃣ f2 (st_pl2) l2
+                3️⃣ f3 (st_pl3) l3
+                4️⃣ f1 (st_pl1) l1""", messageDto.getText());
     }
 
     @Test

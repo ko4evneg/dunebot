@@ -102,10 +102,22 @@ public class MatchFinishingService {
                         matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
-        playerNamesByPlace.forEach((place, name) -> stringBuilder.append(place).append(". ").append(name).append(EXTERNAL_LINE_SEPARATOR));
+        playerNamesByPlace.forEach((place, name) -> stringBuilder.append(getPlaceEmoji(place)).append(" ").append(name).append(EXTERNAL_LINE_SEPARATOR));
         stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR));
 
         ExternalPollId externalPollId = match.getExternalPollId();
         return new MessageDto(externalPollId, stringBuilder.toString());
+    }
+
+    private String getPlaceEmoji(Integer place) {
+        return switch (place) {
+            case 1 -> "1️⃣";
+            case 2 -> "2️⃣";
+            case 3 -> "3️⃣";
+            case 4 -> "4️⃣";
+            case 5 -> "5️⃣";
+            case 6 -> "6️⃣";
+            default -> "";
+        };
     }
 }
