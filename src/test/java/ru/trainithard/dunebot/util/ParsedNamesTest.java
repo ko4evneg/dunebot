@@ -64,7 +64,9 @@ class ParsedNamesTest {
                 Arguments.of("А Б (ВГ) ДЕ"),
                 Arguments.of("АБ (ВГ) Д Е"),
                 Arguments.of("АБ (ВГ)) ДЕ"),
-                Arguments.of("АБ(ВГ)ДЕ")
+                Arguments.of("АБ(ВГ)ДЕ"),
+                Arguments.of("АБ (ВГ)2 Д"),
+                Arguments.of("АБ D(ВГ) Д")
         );
     }
 }
