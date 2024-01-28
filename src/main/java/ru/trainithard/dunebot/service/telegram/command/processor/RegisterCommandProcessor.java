@@ -12,7 +12,6 @@ import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.util.MarkdownEscaper;
 import ru.trainithard.dunebot.util.ParsedNames;
 
 @Service
@@ -36,9 +35,8 @@ public class RegisterCommandProcessor extends CommandProcessor {
 
         Player player = playerRepository.save(new Player(commandMessage, parsedNames));
         String messageText = String.format(REGISTRATION_MESSAGE_TEMPLATE, player.getFriendlyName());
-        MessageDto messageDto = new MessageDto(commandMessage.getChatId(), MarkdownEscaper.getEscaped(messageText),
-                commandMessage.getReplyMessageId(), null);
-        messagingService.sendMessageAsync(messageDto);
+        messagingService.sendMessageAsync(
+                new MessageDto(commandMessage.getChatId(), messageText, commandMessage.getReplyMessageId(), null));
 
         logger.debug("{}: register ended", loggingId);
     }

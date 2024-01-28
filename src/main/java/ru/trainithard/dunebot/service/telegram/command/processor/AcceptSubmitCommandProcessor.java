@@ -13,7 +13,6 @@ import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -139,14 +138,13 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
     private String getSubmitText(Match match, int candidatePlace) {
         return candidatePlace == 1 ?
-                MarkdownEscaper.getEscaped(String.format(ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR)) :
-                MarkdownEscaper.getEscaped(String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR));
+                String.format(ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR) :
+                String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
     }
 
     private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, String message) {
         for (MatchPlayer matchPlayer : matchPlayers) {
-            MessageDto messageDto = new MessageDto(matchPlayer.getPlayer().getExternalChatId(), MarkdownEscaper.getEscaped(message), null, null);
-            messagingService.sendMessageAsync(messageDto);
+            messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
         }
     }
 
