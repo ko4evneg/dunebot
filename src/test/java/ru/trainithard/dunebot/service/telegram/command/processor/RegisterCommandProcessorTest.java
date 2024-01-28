@@ -30,7 +30,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
     private static final String LAST_NAME = "lName";
     private static final String STEAM_NAME = "stName";
     private static final String REGISTRATION_MESSAGE =
-            String.format("Вы зарегистрированы как %s (%s) %s", FIRST_NAME, STEAM_NAME, LAST_NAME);
+            String.format("Вы зарегистрированы как '%s (%s) %s'", FIRST_NAME, STEAM_NAME, LAST_NAME);
     private static final CommandMessage commandMessage = getCommandMessage(STEAM_NAME, null);
     private static final String EXTERNAL_FIRST_NAME = "extName";
 
@@ -94,7 +94,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
         AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
         assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME +
-                "! Для смены ника выполните команду '/refresh_profile *Имя* (*steam никнейм*) *Фамилия*'", exception.getMessage());
+                     "! Для смены ника выполните команду *'/refresh_profile Имя (steam никнейм) Фамилия'*", exception.getMessage());
     }
 
     @Test

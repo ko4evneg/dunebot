@@ -20,8 +20,8 @@ public class RegisterCommandProcessor extends CommandProcessor {
     private static final Logger logger = LoggerFactory.getLogger(RegisterCommandProcessor.class);
     private static final String NICKNAME_IS_BUSY_MESSAGE_TEMPLATE = "Пользователь со steam ником %s уже существует!";
     private static final String ALREADY_REGISTERED_MESSAGE_TEMPLATE = "Вы уже зарегистрированы под steam ником %s! " +
-            "Для смены ника выполните команду '/refresh_profile *Имя* (*steam никнейм*) *Фамилия*'";
-    private static final String REGISTRATION_MESSAGE_TEMPLATE = "Вы зарегистрированы как ";
+                                                                      "Для смены ника выполните команду *'/refresh_profile Имя (steam никнейм) Фамилия'*";
+    private static final String REGISTRATION_MESSAGE_TEMPLATE = "Вы зарегистрированы как '%s'";
 
     private final PlayerRepository playerRepository;
     private final MessagingService messagingService;
@@ -34,7 +34,7 @@ public class RegisterCommandProcessor extends CommandProcessor {
         logger.debug("{}: validation passed", loggingId);
 
         Player player = playerRepository.save(new Player(commandMessage, parsedNames));
-        String messageText = REGISTRATION_MESSAGE_TEMPLATE + player.getFriendlyName();
+        String messageText = String.format(REGISTRATION_MESSAGE_TEMPLATE, player.getFriendlyName());
         messagingService.sendMessageAsync(
                 new MessageDto(commandMessage.getChatId(), messageText, commandMessage.getReplyMessageId(), null));
 

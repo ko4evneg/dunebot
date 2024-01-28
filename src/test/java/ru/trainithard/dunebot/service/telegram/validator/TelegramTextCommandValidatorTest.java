@@ -43,7 +43,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals("Данная команда должна иметь как минимум один аргумент. Например '/register *steam_name*'", actualException.getMessage());
+        assertEquals("Данная команда должна иметь 3 параметр(а).", actualException.getMessage());
     }
 
 
