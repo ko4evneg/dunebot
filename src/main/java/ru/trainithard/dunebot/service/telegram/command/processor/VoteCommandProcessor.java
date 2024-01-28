@@ -17,6 +17,7 @@ import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -108,8 +109,9 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .map(Player::getMention)
                 .toList();
 
-        return new MessageDto(matchTopicChatId, "Матч " + match.getId() + " собран. Участники:" +
-                EXTERNAL_LINE_SEPARATOR + String.join(", ", playerMentions), replyTopicId, null);
+        String text = "Матч " + match.getId() + " собран. Участники:" +
+                      EXTERNAL_LINE_SEPARATOR + String.join(", ", playerMentions);
+        return new MessageDto(matchTopicChatId, MarkdownEscaper.getEscaped(text), replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {

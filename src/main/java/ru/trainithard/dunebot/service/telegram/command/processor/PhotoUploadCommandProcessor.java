@@ -18,6 +18,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -70,11 +71,13 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                         matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
                     }
 
-                    messagingService.sendMessageAsync(new MessageDto(commandMessage, SUCCESSFUL_UPLOAD_TEXT, null));
+                    MessageDto messageDto = new MessageDto(commandMessage, MarkdownEscaper.getEscaped(SUCCESSFUL_UPLOAD_TEXT), null);
+                    messagingService.sendMessageAsync(messageDto);
                 }
             } catch (ScreenshotSavingException exception) {
                 logger.error(loggingId + ": screenshot save failed due to an exception", exception);
-                messagingService.sendMessageAsync(new MessageDto(commandMessage, exception.getMessage(), null));
+                MessageDto messageDto = new MessageDto(commandMessage, MarkdownEscaper.getEscaped(exception.getMessage()), null);
+                messagingService.sendMessageAsync(messageDto);
             } catch (IOException exception) {
                 logger.error(loggingId + ": encountered an exception", exception);
             }

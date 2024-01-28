@@ -15,6 +15,7 @@ import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class NewCommandProcessor extends CommandProcessor {
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
         String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
-        return new PollMessageDto(SettingConstants.CHAT_ID, text, getTopicId(modType), POLL_OPTIONS);
+        return new PollMessageDto(SettingConstants.CHAT_ID, MarkdownEscaper.getEscaped(text), getTopicId(modType), POLL_OPTIONS);
     }
 
     private int getTopicId(ModType modType) {

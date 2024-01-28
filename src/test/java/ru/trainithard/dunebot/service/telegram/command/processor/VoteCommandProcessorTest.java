@@ -255,7 +255,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         assertEquals(SettingConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("Матч 10000 собран. Участники:", textRows[0]);
+        assertEquals("Матч 10000 собран\\. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
         assertNull(messageDto.getKeyboard());
     }

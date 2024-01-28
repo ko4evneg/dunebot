@@ -13,6 +13,7 @@ import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -57,7 +58,7 @@ public class MatchFinishingService {
                 });
 
                 ExternalPollId externalPollId = match.getExternalPollId();
-                MessageDto finishMessage = new MessageDto(externalPollId, reason);
+                MessageDto finishMessage = new MessageDto(externalPollId, MarkdownEscaper.getEscaped(reason));
                 messagingService.sendMessageAsync(finishMessage);
             }
         }
@@ -106,7 +107,7 @@ public class MatchFinishingService {
         stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR));
 
         ExternalPollId externalPollId = match.getExternalPollId();
-        return new MessageDto(externalPollId, stringBuilder.toString());
+        return new MessageDto(externalPollId, MarkdownEscaper.getEscaped(stringBuilder.toString()));
     }
 
     private String getPlaceEmoji(Integer place) {
