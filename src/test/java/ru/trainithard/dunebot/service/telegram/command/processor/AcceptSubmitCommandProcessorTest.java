@@ -199,7 +199,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 name2 (st_pl2) l2
                 name1 (st_pl1) l1
 
-                Повторный опрос результата\\.\\.\\.""";
+                Повторный опрос результата...""";
         assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
         assertThat(actualMessages, containsInAnyOrder(
                 hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
@@ -218,8 +218,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
         List<MessageDto> actualMessages = messageCaptor.getAllValues();
 
-        String conflictText = "Игроки не смогли верно обозначить свои места\\! Превышено количество запросов на регистрацию результатов\\. " +
-                              "Результаты не сохранены, регистрация запрещена\\.";
+        String conflictText = "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. " +
+                              "Результаты не сохранены, регистрация запрещена.";
         assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
         assertThat(actualMessages, containsInAnyOrder(
                 hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
@@ -246,7 +246,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано " + place + " место\\." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
+        assertEquals("В матче 15000 за вами зафиксировано " + place + " место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
                 "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
     }
 
@@ -260,9 +260,9 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано 1 место\\." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'\\." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
-                     "Теперь загрузите в этот чат скриншот победы\\.", actualMessages.getText());
+        assertEquals("В матче 15000 за вами зафиксировано 1 место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
+                     "При ошибке используйте команду '/resubmit 15000'." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
+                     "Теперь загрузите в этот чат скриншот победы.", actualMessages.getText());
     }
 
     @Test

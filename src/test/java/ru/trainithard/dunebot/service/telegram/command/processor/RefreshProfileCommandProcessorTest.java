@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest
 class RefreshProfileCommandProcessorTest extends TestContextMock {
     private static final Long CHAT_ID = 9000L;
-    private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены\\.";
+    private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены.";
 
     @Autowired
     private RefreshProfileCommandProcessor processor;
@@ -62,7 +62,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotChangeSteamNameWhenNoNewNameProvided() {
-        processor.process(getCommandMessage(SUCCESSFUL_UPDATE_MESSAGE), mockLoggingId);
+        processor.process(getCommandMessage(""), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and steam_name = 'st_pl')", Boolean.class);
@@ -107,7 +107,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldChangeTelegramFirstNameWhenNoArgsProvided() {
-        processor.process(getCommandMessage(SUCCESSFUL_UPDATE_MESSAGE), mockLoggingId);
+        processor.process(getCommandMessage(""), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and external_first_name = 'newEFname' and external_name = 'newUname')", Boolean.class);
@@ -126,7 +126,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
     private CommandMessage getCommandMessage(String newSteamName) {
         Message message = new Message();
         message.setMessageId(10000);
-        message.setText("/change_steam_name " + newSteamName);
+        message.setText("/refresh_profile " + newSteamName);
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());

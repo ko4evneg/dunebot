@@ -109,7 +109,8 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .map(Player::getMention)
                 .toList();
 
-        String text = "Матч " + match.getId() + " собран. Участники:" + EXTERNAL_LINE_SEPARATOR + String.join(", ", playerMentions);
+        String text = "*Матч " + match.getId() + "* собран. Участники:" + EXTERNAL_LINE_SEPARATOR +
+                      EXTERNAL_LINE_SEPARATOR + String.join(", ", playerMentions);
         return new MessageDto(matchTopicChatId, MarkdownEscaper.getEscaped(text), replyTopicId, null);
     }
 

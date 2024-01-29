@@ -251,11 +251,11 @@ class VoteCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
         String[] textRows = messageDto.getText().split("\n");
-        List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
+        List<String> names = Arrays.stream(textRows[2].split(", ")).toList();
 
         assertEquals(SettingConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("Матч 10000 собран\\. Участники:", textRows[0]);
+        assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
         assertNull(messageDto.getKeyboard());
     }
