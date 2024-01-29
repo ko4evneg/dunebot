@@ -26,10 +26,12 @@
 
 # Known bugs
 
-| ID | issue                                                                 | offer        |
-|----|-----------------------------------------------------------------------|--------------|
-| 1  | /cancel missing feedback when no match (if match exists - check also) | change logic |
-| 2  | check screenshot saving (may be not invoked)                          | change logic |
+| ID | issue                                                                 |
+|----|-----------------------------------------------------------------------|
+| 1  | /cancel missing feedback when no match (if match exists - check also) | 
+| 2  | check screenshot saving (may be not invoked)                          |
+| 3  | /register x (y) z.           (no output)                              |
+| 3  | /cancel           (no output)                                         |
 
 # Design considerations
 

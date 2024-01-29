@@ -48,7 +48,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @Autowired
     private VoteCommandProcessor processor;
     @MockBean
-    private TaskScheduler taskScheduler;
+    private TaskScheduler dunebotTaskScheduler;
     @MockBean
     private Clock clock;
 
@@ -66,7 +66,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
-        doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
+        doReturn(scheduledFuture).when(dunebotTaskScheduler).schedule(any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
                 "last_name, external_first_name, external_name, created_at) " +
@@ -228,7 +228,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         processor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID), mockLoggingId);
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        verify(dunebotTaskScheduler, times(1)).schedule(any(), instantCaptor.capture());
         Instant actualInstant = instantCaptor.getValue();
 
         assertEquals(NOW.plusSeconds(60), actualInstant);
@@ -285,7 +285,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     private void syncRunScheduledTaskAction() throws InterruptedException {
         ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
+        verify(dunebotTaskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
         Runnable actualRunnable = runnableCaptor.getValue();
 
         Thread thread = new Thread(actualRunnable);

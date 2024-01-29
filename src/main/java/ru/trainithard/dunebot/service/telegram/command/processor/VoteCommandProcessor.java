@@ -139,6 +139,10 @@ public class VoteCommandProcessor extends CommandProcessor {
                             matchPlayerRepository.delete(matchPlayer);
                         });
                         if (match.hasMissingPlayers()) {
+                            ScheduledFuture<?> oldScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
+                            if (oldScheduledTask != null) {
+                                oldScheduledTask.cancel(false);
+                            }
                             messagingService.deleteMessageAsync(match.getExternalStartId());
                         }
                     }

@@ -66,6 +66,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
                     match.setHasSubmitPhoto(true);
                     matchRepository.save(match);
+                    logger.debug("{}: match finish conditions checking", loggingId);
                     if (match.canBeFinished()) {
                         matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
                     }
