@@ -8,6 +8,8 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.WrongNamesInputException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.util.ParsedNames;
@@ -16,8 +18,10 @@ import ru.trainithard.dunebot.util.ParsedNames;
 @RequiredArgsConstructor
 public class RefreshProfileCommandProcessor extends CommandProcessor {
     private static final Logger logger = LoggerFactory.getLogger(RefreshProfileCommandProcessor.class);
+    private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены.";
 
     private final PlayerRepository playerRepository;
+    private final MessagingService messagingService;
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
@@ -36,6 +40,8 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
                             throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
                         } finally {
                             updateAndSaveTelegramProperties(commandMessage, player, loggingId);
+                            MessageDto messageDto = new MessageDto(commandMessage, SUCCESSFUL_UPDATE_MESSAGE, null);
+                            messagingService.sendMessageAsync(messageDto);
                         }
                     }
                 });

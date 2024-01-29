@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.Chat;
@@ -13,15 +14,21 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class RefreshProfileCommandProcessorTest extends TestContextMock {
+    private static final Long CHAT_ID = 9000L;
+    private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены\\.";
+
     @Autowired
     private RefreshProfileCommandProcessor processor;
 
@@ -55,7 +62,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotChangeSteamNameWhenNoNewNameProvided() {
-        processor.process(getCommandMessage(""), mockLoggingId);
+        processor.process(getCommandMessage(SUCCESSFUL_UPDATE_MESSAGE), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and steam_name = 'st_pl')", Boolean.class);
@@ -76,6 +83,18 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSendMessageOnProvidedNamesChange() {
+        processor.process(getCommandMessage("abc (stm) cde"), mockLoggingId);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertEquals(CHAT_ID.toString(), messageDto.getChatId());
+        assertEquals(SUCCESSFUL_UPDATE_MESSAGE, messageDto.getText());
+    }
+
+    @Test
     void shouldChangeTelegramFirstName() {
         processor.process(getCommandMessage("abc (stm) cde"), mockLoggingId);
 
@@ -88,7 +107,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldChangeTelegramFirstNameWhenNoArgsProvided() {
-        processor.process(getCommandMessage(""), mockLoggingId);
+        processor.process(getCommandMessage(SUCCESSFUL_UPDATE_MESSAGE), mockLoggingId);
 
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                 "and external_first_name = 'newEFname' and external_name = 'newUname')", Boolean.class);
@@ -109,7 +128,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         message.setMessageId(10000);
         message.setText("/change_steam_name " + newSteamName);
         Chat chat = new Chat();
-        chat.setId(9000L);
+        chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
         message.setChat(chat);
         User user = new User();
