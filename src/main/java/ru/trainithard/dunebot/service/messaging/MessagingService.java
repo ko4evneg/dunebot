@@ -15,4 +15,6 @@ public interface MessagingService {
     void deleteMessageAsync(ExternalMessageId externalMessageId);
 
     CompletableFuture<TelegramFileDetailsDto> getFileDetails(String fileId);
+
+    void sendSetCommands(SetCommandsDto setCommandsDto);
 }
