@@ -8,7 +8,7 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SettingConstants {
     // TODO:  replace to prod
-    public static final String ADMIN_USER_ID = "193506662";
+    public static final long ADMIN_USER_ID = 193506662L;
     public static final String CHAT_ID = "-1002139068680";
     public static final int TOPIC_ID_CLASSIC = 2;
     public static final int TOPIC_ID_UPRISING = 4;

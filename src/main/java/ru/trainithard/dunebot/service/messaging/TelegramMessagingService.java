@@ -18,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScope
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
@@ -168,15 +167,14 @@ public class TelegramMessagingService implements MessagingService {
 
     @Override
     public void sendSetCommands(SetCommandsDto setCommandsDto) {
-        List<BotCommand> botCommands = setCommandsDto.getCommandDescriptionsByName().entrySet().stream()
-                .map(entry -> new BotCommand(entry.getKey(), entry.getValue()))
-                .toList();
-        SetMyCommands setMyCommands = new SetMyCommands(botCommands, new BotCommandScopeDefault(), null);
-
         try {
+            List<BotCommand> botCommands = setCommandsDto.getCommandDescriptionsByName().entrySet().stream()
+                    .map(entry -> new BotCommand(entry.getKey(), entry.getValue()))
+                    .toList();
+            SetMyCommands setMyCommands = new SetMyCommands(botCommands, new BotCommandScopeDefault(), null);
             telegramBot.executeAsync(setMyCommands);
         } catch (TelegramApiException exception) {
-            throw new TelegramApiCallException(SET_COMMANDS_LIST_EXCEPTION_MESSAGE, exception);
+            logger.error(SET_COMMANDS_LIST_EXCEPTION_MESSAGE, exception);
         }
     }
 }
