@@ -16,7 +16,7 @@ public class CommandMessageFactoryImpl implements CommandMessageFactory {
             }
         } else if (hasPollAnswerOption(update)) {
             return CommandMessage.getPollAnswerInstance(update.getPollAnswer());
-        } else if (hasNotBlackCallbackQuery(update)) {
+        } else if (hasNotBlankCallbackQuery(update)) {
             return CommandMessage.getCallbackInstance(update.getCallbackQuery());
         }
         return null;
@@ -30,7 +30,7 @@ public class CommandMessageFactoryImpl implements CommandMessageFactory {
         return update.hasPollAnswer();
     }
 
-    private boolean hasNotBlackCallbackQuery(Update update) {
+    private boolean hasNotBlankCallbackQuery(Update update) {
         return update.hasCallbackQuery() && update.getCallbackQuery().getData() != null && !update.getCallbackQuery().getData().isBlank();
     }
 

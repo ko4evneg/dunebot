@@ -4,26 +4,26 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
-import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
-import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
-import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
-import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -151,6 +151,23 @@ class TelegramMessagingServiceTest {
         assertEquals(REPLY_ID, actualDocument.getReplyToMessageId());
         assertEquals(CHAT_ID.toString(), actualDocument.getChatId());
         assertArrayEquals(referenceFileContent, actualFile);
+    }
+
+    @Test
+    void shouldInvokeSendCommands() throws TelegramApiException {
+        SetCommandsDto setCommandsDto = new SetCommandsDto(Map.of("1", "a", "2", "b"));
+
+        telegramMessagingService.sendSetCommands(setCommandsDto);
+
+        ArgumentCaptor<SetMyCommands> setMyCommandsCaptor = ArgumentCaptor.forClass(SetMyCommands.class);
+        verify(telegramBot, times(1)).executeAsync(setMyCommandsCaptor.capture());
+        SetMyCommands actualSetMyCommands = setMyCommandsCaptor.getValue();
+
+        assertEquals(new BotCommandScopeDefault(), actualSetMyCommands.getScope());
+        assertThat(actualSetMyCommands.getCommands(), containsInAnyOrder(
+                both(hasProperty("command", is("1"))).and(hasProperty("description", is("a"))),
+                both(hasProperty("command", is("2"))).and(hasProperty("description", is("b")))
+        ));
     }
 
     private Message getTextMessageReply() {

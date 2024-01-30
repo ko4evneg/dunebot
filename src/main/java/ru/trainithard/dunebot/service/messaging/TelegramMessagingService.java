@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -12,9 +13,12 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.File;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
@@ -28,6 +32,12 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
     private static final Logger logger = LoggerFactory.getLogger(TelegramMessagingService.class);
+    private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
+    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
+    private static final String SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE = "sendDocumentAsync() call encounters API exception";
+    private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
+    private static final String SET_COMMANDS_LIST_EXCEPTION_MESSAGE = "sendSetCommands() call encounters API exception";
+    private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
     private static final String MARKDOWN_PARSE_MODE = "Markdown";
 
     private final TelegramBot telegramBot;
@@ -38,7 +48,7 @@ public class TelegramMessagingService implements MessagingService {
             DeleteMessage deleteMessage = new DeleteMessage(externalMessageId.getChatIdString(), externalMessageId.getMessageId());
             telegramBot.executeAsync(deleteMessage);
         } catch (TelegramApiException exception) {
-            logger.error("executeAsync(DeleteMessage) encounters an exception", exception);
+            logger.error(DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
     }
 
@@ -52,11 +62,11 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
                 } else {
                     telegramMessageCompletableFuture.isCompletedExceptionally();
-                    logger.error("callback of executeAsync(SendPoll) encounters an exception", throwable);
+                    logger.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            logger.error("executeAsync(SendPoll) encounters an exception", exception);
+            logger.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -79,11 +89,11 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
                 } else {
                     telegramMessageCompletableFuture.isCompletedExceptionally();
-                    logger.error("callback of executeAsync(SendMessage) encounters an exception", throwable);
+                    logger.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            logger.error("executeAsync(SendMessage) encounters an exception", exception);
+            logger.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -120,7 +130,7 @@ public class TelegramMessagingService implements MessagingService {
                 telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
             } else {
                 telegramMessageCompletableFuture.isCompletedExceptionally();
-                logger.error("callback of executeAsync(SendDocument) encounters an exception", throwable);
+                logger.error(SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE, throwable);
             }
         });
         return telegramMessageCompletableFuture;
@@ -146,13 +156,27 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new TelegramFileDetailsDto(message));
                 } else {
                     telegramMessageCompletableFuture.isCompletedExceptionally();
-                    logger.error("callback of executeAsync(GetFile) encounters an exception", throwable);
+                    logger.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            logger.error("executeAsync(GetFile) encounters an exception", exception);
+            logger.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
 
+    }
+
+    @Override
+    public void sendSetCommands(SetCommandsDto setCommandsDto) {
+        List<BotCommand> botCommands = setCommandsDto.getCommandDescriptionsByName().entrySet().stream()
+                .map(entry -> new BotCommand(entry.getKey(), entry.getValue()))
+                .toList();
+        SetMyCommands setMyCommands = new SetMyCommands(botCommands, new BotCommandScopeDefault(), null);
+
+        try {
+            telegramBot.executeAsync(setMyCommands);
+        } catch (TelegramApiException exception) {
+            throw new TelegramApiCallException(SET_COMMANDS_LIST_EXCEPTION_MESSAGE, exception);
+        }
     }
 }
