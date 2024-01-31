@@ -14,4 +14,9 @@ import lombok.Setter;
 public class Setting extends BaseEntity {
     private String key;
     private String value;
+
+    public Setting(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
 }

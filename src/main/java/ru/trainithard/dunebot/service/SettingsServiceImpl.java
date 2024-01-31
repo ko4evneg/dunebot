@@ -50,12 +50,13 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Override
     public void saveSetting(String key, String value) {
-        Setting setting = new Setting();
         Setting existingSetting = settingRepository.findByKeyIgnoreCase(key);
         if (existingSetting != null) {
-            setting.setId(existingSetting.getId());
+            existingSetting.setValue(value);
+            settingRepository.save(existingSetting);
+        } else {
+            settingRepository.save(new Setting(key, value));
         }
         simpleCache.put(key.toLowerCase(), value);
-        settingRepository.save(setting);
     }
 }
