@@ -109,7 +109,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "ADMIN"})
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "ADMIN", "HELP", "START"})
     void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");

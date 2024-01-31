@@ -27,6 +27,7 @@ public enum Command {
     UPLOAD_PHOTO(FILE_UPLOAD, false, false, 0),
     ACCEPT_SUBMIT(CALLBACK, false, false, 0),
     HELP(TEXT, true, false, 0),
+    START(TEXT, true, false, 0),
     ADMIN(TEXT, true, true, 1);
 
     private static final Map<String, Command> availableCommands;
