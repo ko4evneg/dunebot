@@ -9,15 +9,17 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class TelegramTextCommandValidatorTest extends TestContextMock {
+    private static final String NOT_AUTHORIZED_EXCEPTION_MESSAGE = "Команда требует прав администратора.";
+    private static final String NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE = "Данная команда должна иметь 3 параметр(а).";
     @Autowired
     private TelegramTextCommandValidator validator;
 
@@ -43,7 +45,27 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals("Данная команда должна иметь 3 параметр(а).", actualException.getMessage());
+        assertEquals(NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE, actualException.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenNonAdminInvokesAdminCommand() {
+        message.setText("/admin init");
+
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
+        assertEquals(NOT_AUTHORIZED_EXCEPTION_MESSAGE, actualException.getMessage());
+    }
+
+
+    @Test
+    void shouldNotThrowWhenAdminInvokesAdminCommand() {
+        message.setText("/admin init");
+        message.getFrom().setId(SettingConstants.ADMIN_USER_ID);
+
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertDoesNotThrow(() -> validator.validate(commandMessage));
     }
 
 
