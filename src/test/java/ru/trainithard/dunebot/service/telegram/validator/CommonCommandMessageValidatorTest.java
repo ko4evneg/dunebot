@@ -38,7 +38,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void beforeEach() {
         fillMessage();
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
     }
 
     @AfterEach
@@ -109,7 +109,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER"})
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE, names = {"REGISTER", "ADMIN"})
     void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
@@ -163,7 +163,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         callbackQuery.setMessage(message);
         callbackQuery.setData("10000__-1");
         callbackQuery.setFrom(getUser());
-        ;
+
         CommandMessage callbackMessage = CommandMessage.getCallbackInstance(callbackQuery);
 
         assertDoesNotThrow(() -> validator.validate(callbackMessage));
