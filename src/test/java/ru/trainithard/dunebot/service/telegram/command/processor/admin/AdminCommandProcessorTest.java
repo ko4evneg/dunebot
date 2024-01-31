@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -11,6 +12,7 @@ import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -32,9 +34,12 @@ class AdminCommandProcessorTest extends TestContextMock {
     @Autowired
     private AdminCommandProcessor processor;
 
+    @MockBean
+    private SettingsService settingsService;
+
     @Test
     void shouldInvokeSetCommandsServiceOnInitSubcommand() {
-        processor.process(getCommandMessage("init"), mockLoggingId);
+        processor.process(getCommandMessage("init", 10000), mockLoggingId);
 
         ArgumentCaptor<SetCommandsDto> setCommandsDtoCaptor = ArgumentCaptor.forClass(SetCommandsDto.class);
         verify(messagingService, times(1)).sendSetCommands(setCommandsDtoCaptor.capture());
@@ -46,26 +51,54 @@ class AdminCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldInvokeSaveChatIdSettingOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set_chat", 10000), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingsService.CHAT_ID_KEY, "10011");
+    }
+
+    @Test
+    void shouldInvokeSaveClassicTopicIdSettingOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set_topic_dune", 12345), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingsService.TOPIC_ID_CLASSIC_KEY, "12345");
+    }
+
+    @Test
+    void shouldInvokeSaveUprisingTopicIdSettingOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set_topic_up4", 12121), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingsService.TOPIC_ID_UPRISING_KEY, "12121");
+    }
+
+    @Test
     void shouldThrowOnUnknownSubcommand() {
-        CommandMessage commandMessage = getCommandMessage("zzz");
+        CommandMessage commandMessage = getCommandMessage("zzz", 10000);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
         assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualException.getMessage());
     }
 
-    private CommandMessage getCommandMessage(String arg) {
-        Message message = new Message();
-        message.setMessageId(10000);
-        message.setText("/admin " + arg);
+    private CommandMessage getCommandMessage(String arg, int replyId) {
+        Message replyMessage = new Message();
+        replyMessage.setMessageId(replyId);
+
         Chat chat = new Chat();
-        chat.setId(10000L);
+        chat.setId(10011L);
         chat.setType(ChatType.GROUP.getValue());
-        message.setChat(chat);
+
         User user = new User();
         user.setId(TestConstants.ADMIN_USER_ID);
         user.setFirstName("EFname");
         user.setUserName("Uname");
+
+        Message message = new Message();
+        message.setReplyToMessage(replyMessage);
+        message.setMessageId(10000);
+        message.setText("/admin " + arg);
+        message.setChat(chat);
         message.setFrom(user);
+
         return CommandMessage.getMessageInstance(message);
     }
 }
