@@ -14,8 +14,8 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.MatchState;
@@ -50,7 +50,7 @@ class NewCommandProcessorTest extends TestContextMock {
     @BeforeEach
     void beforeEach() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + USER_ID + ", 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + USER_ID + ", 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
 
         doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
     }
@@ -59,7 +59,7 @@ class NewCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where player_id = 10000");
         jdbcTemplate.execute("delete from matches where external_poll_id is null or external_poll_id = " +
-                "(select id from external_messages where chat_id = '" + CHAT_ID + "')");
+                             "(select id from external_messages where chat_id = '" + CHAT_ID + "')");
         jdbcTemplate.execute("delete from players where id = 10000");
         jdbcTemplate.execute("delete from external_messages where message_id = " + MESSAGE_ID);
     }
@@ -80,9 +80,9 @@ class NewCommandProcessorTest extends TestContextMock {
         processor.process(pollCommandMessage, mockLoggingId);
 
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where chat_id = " +
-                CHAT_ID + " and poll_id = '" + POLL_ID + "' and message_id = " + MESSAGE_ID + " and reply_id = " + REPLY_ID, Long.class);
+                                                           CHAT_ID + " and poll_id = '" + POLL_ID + "' and message_id = " + MESSAGE_ID + " and reply_id = " + REPLY_ID, Long.class);
         MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where external_poll_id = " + actualMessageId +
-                " and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and submits_retry_count = 0", MatchState.class);
+                                                                  " and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and submits_retry_count = 0", MatchState.class);
 
         assertNotNull(actualMatchState);
         assertEquals(MatchState.NEW, actualMatchState);
@@ -94,7 +94,7 @@ class NewCommandProcessorTest extends TestContextMock {
 
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where poll_id = '" + POLL_ID + "'", Long.class);
         Boolean isMatchPlayerExist = jdbcTemplate.queryForObject("select exists(select 1 from match_players " +
-                "where match_id = (select id from matches where external_poll_id = " + actualMessageId + "))", Boolean.class);
+                                                                 "where match_id = (select id from matches where external_poll_id = " + actualMessageId + "))", Boolean.class);
 
         assertNotNull(isMatchPlayerExist);
         assertFalse(isMatchPlayerExist);
@@ -124,15 +124,15 @@ class NewCommandProcessorTest extends TestContextMock {
         PollMessageDto actualPoll = pollCaptor.getValue();
 
         assertThat(actualPoll,
-                both(hasProperty("chatId", is(SettingConstants.CHAT_ID)))
+                both(hasProperty("chatId", is(TestConstants.CHAT_ID)))
                         .and(hasProperty("replyMessageId", is(expectedTopicId))));
     }
 
     private static Stream<Arguments> chatIdSource() {
         return Stream.of(
-                Arguments.of(ModType.CLASSIC, SettingConstants.TOPIC_ID_CLASSIC),
-                Arguments.of(ModType.UPRISING_4, SettingConstants.TOPIC_ID_UPRISING),
-                Arguments.of(ModType.UPRISING_6, SettingConstants.TOPIC_ID_UPRISING)
+                Arguments.of(ModType.CLASSIC, TestConstants.TOPIC_ID_CLASSIC),
+                Arguments.of(ModType.UPRISING_4, TestConstants.TOPIC_ID_UPRISING),
+                Arguments.of(ModType.UPRISING_6, TestConstants.TOPIC_ID_UPRISING)
         );
     }
 
@@ -146,7 +146,7 @@ class NewCommandProcessorTest extends TestContextMock {
         }
 
         Boolean isMatchExist = jdbcTemplate.queryForObject("select exists(select * from matches where owner_id = " +
-                "(select id from players where external_id = " + USER_ID + "))", Boolean.class);
+                                                           "(select id from players where external_id = " + USER_ID + "))", Boolean.class);
 
         assertNotNull(isMatchExist);
         assertFalse(isMatchExist);

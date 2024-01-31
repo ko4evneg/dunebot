@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
@@ -27,7 +28,6 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-import static ru.trainithard.dunebot.configuration.SettingConstants.CHAT_ID;
 
 @SpringBootTest
 class CancelCommandProcessorTest extends TestContextMock {
@@ -47,7 +47,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10000, 12345, 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId'," + MESSAGE_ID + ", " + CHAT_ID + ", " + REPLY_ID + ", '12346', '2020-10-10')");
+                             "values (10000, 'ExternalPollId'," + MESSAGE_ID + ", " + TestConstants.CHAT_ID + ", " + REPLY_ID + ", '12346', '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
                 "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
@@ -71,7 +71,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         ExternalMessageId actualMessageId = messageIdCaptor.getValue();
 
         assertEquals(MESSAGE_ID, actualMessageId.getMessageId());
-        assertEquals(CHAT_ID, actualMessageId.getChatId().toString());
+        assertEquals(TestConstants.CHAT_ID, actualMessageId.getChatId().toString());
         assertEquals(REPLY_ID, actualMessageId.getReplyId());
     }
 
@@ -167,7 +167,7 @@ class CancelCommandProcessorTest extends TestContextMock {
 
     private CommandMessage getCommandMessage() {
         Chat chat = new Chat();
-        chat.setId(Long.parseLong(CHAT_ID));
+        chat.setId(Long.parseLong(TestConstants.CHAT_ID));
         chat.setType(ChatType.PRIVATE.getValue());
         Message reply = new Message();
         reply.setMessageId(REPLY_ID);

@@ -13,8 +13,8 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -48,35 +48,35 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     @BeforeEach
     void beforeEach() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + USER_1_ID + ", 12000, 'st_pl1', 'name1', 'l1', 'ef1', '2010-10-10') ");
+                             "values (10000, " + USER_1_ID + ", 12000, 'st_pl1', 'name1', 'l1', 'ef1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, " + USER_2_ID + ", 12001, 'st_pl2', 'name2', 'l2', 'ef2', '2010-10-10') ");
+                             "values (10001, " + USER_2_ID + ", 12001, 'st_pl2', 'name2', 'l2', 'ef2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'ef3', '2010-10-10') ");
+                             "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'ef3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'ef4', '2010-10-10') ");
+                             "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'ef4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 10000, 10000, '10000', '2020-10-10')");
+                             "values (10000, 'ExternalPollId', 10000, 10000, '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, has_onsubmit_photo, state, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, true, '" + MatchState.NEW + "','2010-10-10') ");
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, true, '" + MatchState.NEW + "','2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
+                             "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10003, 'ExternalMessageId', 10003, 11003, '2020-10-10')");
+                             "values (10003, 'ExternalMessageId', 10003, 11003, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10004, 'ExternalMessageId', 10004, 11004, '2020-10-10')");
+                             "values (10004, 'ExternalMessageId', 10004, 11004, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10005, 'ExternalMessageId', 10005, 11005, '2020-10-10')");
+                             "values (10005, 'ExternalMessageId', 10005, 11005, '2020-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10000, 15000, 10000, 10002, '2010-10-10')");
+                             "values (10000, 15000, 10000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10001, 15000, 10001, 10003, '2010-10-10')");
+                             "values (10001, 15000, 10001, 10003, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10002, 15000, 10002, 10004, '2010-10-10')");
+                             "values (10002, 15000, 10002, 10004, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10003, 15000, 10003, 10005, '2010-10-10')");
+                             "values (10003, 15000, 10003, 10005, '2010-10-10')");
     }
 
     @AfterEach
@@ -175,7 +175,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotInvokeMatchResubmitOnResubmitExceedLastConflictCallbackReply() {
-        jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + SettingConstants.RESUBMITS_LIMIT + " where id = 15000");
+        jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + TestConstants.RESUBMITS_LIMIT + " where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
@@ -209,7 +209,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendMessageAboutResubmitExceedLimitOnResubmitExceedLastConflictCallbackReply() {
-        jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + SettingConstants.RESUBMITS_LIMIT + " where id = 15000");
+        jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + TestConstants.RESUBMITS_LIMIT + " where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
@@ -246,8 +246,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано " + place + " место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
-                "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
+        assertEquals("В матче 15000 за вами зафиксировано " + place + " место." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                     "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
     }
 
     @Test
@@ -260,8 +260,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано 1 место." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'." + SettingConstants.EXTERNAL_LINE_SEPARATOR +
+        assertEquals("В матче 15000 за вами зафиксировано 1 место." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                     "При ошибке используйте команду '/resubmit 15000'." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                      "Теперь загрузите в этот чат скриншот победы.", actualMessages.getText());
     }
 

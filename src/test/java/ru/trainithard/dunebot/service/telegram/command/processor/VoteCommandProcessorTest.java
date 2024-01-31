@@ -16,8 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
@@ -41,7 +41,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static ru.trainithard.dunebot.configuration.SettingConstants.POSITIVE_POLL_OPTION_ID;
 
 @SpringBootTest
 class VoteCommandProcessorTest extends TestContextMock {
@@ -69,23 +68,23 @@ class VoteCommandProcessorTest extends TestContextMock {
         doReturn(scheduledFuture).when(dunebotTaskScheduler).schedule(any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
-                "last_name, external_first_name, external_name, created_at) " +
-                "values (10000, 12345, 12345, 'st_pl1', 'name1', 'l1', 'ef1', 'en1', '2010-10-10') ");
+                             "last_name, external_first_name, external_name, created_at) " +
+                             "values (10000, 12345, 12345, 'st_pl1', 'name1', 'l1', 'ef1', 'en1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
-                "last_name, external_first_name, created_at) " +
-                "values (10001, " + USER_2_ID + ", 12346, 'st_pl2', 'name2', 'l2', 'ef2', '2010-10-10') ");
+                             "last_name, external_first_name, created_at) " +
+                             "values (10001, " + USER_2_ID + ", 12346, 'st_pl2', 'name2', 'l2', 'ef2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
-                "last_name, external_first_name, external_name, created_at) " +
-                "values (10002, 12347, 12347, 'st_pl3', 'name3', 'l3', 'ef3', 'en3', '2010-10-10') ");
+                             "last_name, external_first_name, external_name, created_at) " +
+                             "values (10002, 12347, 12347, 'st_pl3', 'name3', 'l3', 'ef3', 'en3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
-                "last_name, external_first_name, external_name, created_at) " +
-                "values (10003, 12348, 12348, 'st_pl4', 'name4', 'l4', 'ef4', 'en4', '2010-10-10') ");
+                             "last_name, external_first_name, external_name, created_at) " +
+                             "values (10003, 12348, 12348, 'st_pl4', 'name4', 'l4', 'ef4', 'en4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 123, " + SettingConstants.CHAT_ID + ", " + REPLY_ID + ", '" + POLL_ID + "', '2020-10-10')");
+                             "values (10000, 'ExternalPollId', 123, " + TestConstants.CHAT_ID + ", " + REPLY_ID + ", '" + POLL_ID + "', '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
-                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "','" + MatchState.NEW + "', 1, '2010-10-10') ");
+                             "values (10000, 10000, 10000, '" + ModType.CLASSIC + "','" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10000, 10000, 10000, '2010-10-10')");
+                             "values (10000, 10000, 10000, '2010-10-10')");
     }
 
     @AfterEach
@@ -98,7 +97,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveNewMatchPlayerOnPositiveReplyRegistration() {
-        processor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID), mockLoggingId);
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -119,7 +118,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ValueSource(ints = {1, 2, 100000})
     void shouldDeleteMatchPlayerOnPositiveRegistrationRevocation(int optionId) {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10003, 10000, 10001, '2010-10-10')");
+                             "values (10003, 10000, 10001, '2010-10-10')");
 
         processor.process(getPollAnswerCommandMessage(optionId), mockLoggingId);
 
@@ -133,7 +132,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     void shouldNotDeleteNotNewStateMatchPlayerOnPositiveRegistrationRevocation(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10003, 10000, 10001, '2010-10-10')");
+                             "values (10003, 10000, 10001, '2010-10-10')");
 
         processor.process(getPollAnswerCommandMessage(1), mockLoggingId);
 
@@ -145,10 +144,10 @@ class VoteCommandProcessorTest extends TestContextMock {
     @Test
     void shouldSendDeleteStartMessageOnPositiveRegistrationRevocationWhenNotEnoughPlayersLeft() {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
-                "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 4, external_start_id = 10001 where id = 10000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10003, 10000, 10001, '2010-10-10')");
+                             "values (10003, 10000, 10001, '2010-10-10')");
 
         processor.process(getPollAnswerCommandMessage(1), mockLoggingId);
 
@@ -159,10 +158,10 @@ class VoteCommandProcessorTest extends TestContextMock {
     @Test
     void shouldNotSendDeleteStartMessageOnPositiveRegistrationRevocationWhenEnoughPlayersLeft() {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
-                "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = 10001 where id = 10000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10003, 10000, 10001, '2010-10-10')");
+                             "values (10003, 10000, 10001, '2010-10-10')");
 
         processor.process(getPollAnswerCommandMessage(1), mockLoggingId);
 
@@ -181,7 +180,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnPositiveReplyRegistration() {
-        processor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID), mockLoggingId);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -201,7 +200,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @Test
     void shouldDecreaseMatchRegisteredPlayersCountOnPositiveReplyRegistrationRevocation() {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10003, 10000, 10001, '2010-10-10')");
+                             "values (10003, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 2 where id = 10000");
 
         processor.process(getPollAnswerCommandMessage(null), mockLoggingId);
@@ -225,7 +224,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     void shouldAddScheduledTaskOnFourthPlayerRegistration() {
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID), mockLoggingId);
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
         verify(dunebotTaskScheduler, times(1)).schedule(any(), instantCaptor.capture());
@@ -239,12 +238,12 @@ class VoteCommandProcessorTest extends TestContextMock {
         doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10001, 10000, 10002, '2010-10-10')");
+                             "values (10001, 10000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10002, 10000, 10003, '2010-10-10')");
+                             "values (10002, 10000, 10003, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID), mockLoggingId);
         syncRunScheduledTaskAction();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -253,7 +252,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         String[] textRows = messageDto.getText().split("\n");
         List<String> names = Arrays.stream(textRows[2].split(", ")).toList();
 
-        assertEquals(SettingConstants.CHAT_ID, messageDto.getChatId());
+        assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
@@ -266,11 +265,11 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(POSITIVE_POLL_OPTION_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID), mockLoggingId);
         syncRunScheduledTaskAction();
 
         Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_start_id = " +
-                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001))", Boolean.class);
+                                                              "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001))", Boolean.class);
 
         assertNotNull(isExternalIsSet);
         assertTrue(isExternalIsSet);

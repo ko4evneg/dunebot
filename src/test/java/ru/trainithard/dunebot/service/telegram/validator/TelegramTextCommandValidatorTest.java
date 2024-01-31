@@ -8,8 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -77,7 +77,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
     @Test
     void shouldNotThrowWhenAdminInvokesAdminCommand() {
         message.setText("/admin init");
-        message.getFrom().setId(SettingConstants.ADMIN_USER_ID);
+        message.getFrom().setId(TestConstants.ADMIN_USER_ID);
 
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 

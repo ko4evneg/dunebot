@@ -9,8 +9,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
@@ -163,8 +163,8 @@ class MonthlyRatingCalculationServiceTest extends TestContextMock {
         ByteArrayInputStream actualInputStream = new ByteArrayInputStream(actualMessage.getFile());
         PdfReader actualPdfReader = new PdfReader(actualInputStream);
 
-        assertEquals(SettingConstants.TOPIC_ID_UPRISING, actualMessage.getReplyMessageId());
-        assertEquals(SettingConstants.CHAT_ID, actualMessage.getChatId());
+        assertEquals(TestConstants.TOPIC_ID_UPRISING, actualMessage.getReplyMessageId());
+        assertEquals(TestConstants.CHAT_ID, actualMessage.getChatId());
         assertEquals("Рейтинг за 10.2010:", actualMessage.getText());
         assertArrayEquals(referenceFileBytes, actualPdfReader.getPageContent(1));
 

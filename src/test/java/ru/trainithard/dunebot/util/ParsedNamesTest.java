@@ -3,7 +3,7 @@ package ru.trainithard.dunebot.util;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import ru.trainithard.dunebot.configuration.SettingConstants;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.exception.WrongNamesInputException;
 
 import java.util.stream.Stream;
@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ParsedNamesTest {
     private static final String WRONG_INPUT_EXCEPTION_TEXT = "Неверный формат ввода имен. Пример верного формата:" +
-            SettingConstants.EXTERNAL_LINE_SEPARATOR + "/register Иван (УБИЙЦА ЛОСЕЙ) Петров" +
-            SettingConstants.EXTERNAL_LINE_SEPARATOR + "/refresh_profile Иван (УБИЙЦА ЛОСЕЙ) Петров";
+                                                             TestConstants.EXTERNAL_LINE_SEPARATOR + "/register Иван (УБИЙЦА ЛОСЕЙ) Петров" +
+                                                             TestConstants.EXTERNAL_LINE_SEPARATOR + "/refresh_profile Иван (УБИЙЦА ЛОСЕЙ) Петров";
 
     @ParameterizedTest
     @MethodSource("validInputsSource")

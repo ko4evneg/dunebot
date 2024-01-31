@@ -7,8 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -51,7 +51,7 @@ class AdminCommandProcessorTest extends TestContextMock {
         chat.setType(ChatType.GROUP.getValue());
         message.setChat(chat);
         User user = new User();
-        user.setId(SettingConstants.ADMIN_USER_ID);
+        user.setId(TestConstants.ADMIN_USER_ID);
         user.setFirstName("EFname");
         user.setUserName("Uname");
         message.setFrom(user);
