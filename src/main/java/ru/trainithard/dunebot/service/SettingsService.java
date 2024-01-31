@@ -14,4 +14,6 @@ public interface SettingsService {
     long getLongSetting(String key);
 
     String getStringSetting(String key);
+
+    void saveSetting(String key, String value);
 }

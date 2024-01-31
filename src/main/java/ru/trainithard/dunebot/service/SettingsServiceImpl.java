@@ -2,25 +2,60 @@ package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.Setting;
 import ru.trainithard.dunebot.repository.SettingRepository;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class SettingsServiceImpl implements SettingsService {
     private final SettingRepository settingRepository;
+    //todo replace with L2 cache
+    private final Map<String, String> simpleCache = new ConcurrentHashMap<>();
 
     @Override
     public int getIntSetting(String key) {
-        return Integer.parseInt(settingRepository.findByKeyIgnoreCase(key).getValue());
+        String cachedSetting = simpleCache.get(key.toLowerCase());
+        if (cachedSetting != null) {
+            return Integer.parseInt(cachedSetting);
+        }
+        String value = settingRepository.findByKeyIgnoreCase(key).getValue();
+        simpleCache.put(key.toLowerCase(), value);
+        return Integer.parseInt(value);
     }
 
     @Override
     public long getLongSetting(String key) {
-        return Long.parseLong(settingRepository.findByKeyIgnoreCase(key).getValue());
+        String cachedSetting = simpleCache.get(key.toLowerCase());
+        if (cachedSetting != null) {
+            return Long.parseLong(cachedSetting);
+        }
+        String value = settingRepository.findByKeyIgnoreCase(key).getValue();
+        simpleCache.put(key.toLowerCase(), value);
+        return Long.parseLong(value);
     }
 
     @Override
     public String getStringSetting(String key) {
-        return settingRepository.findByKeyIgnoreCase(key).getValue();
+        String cachedSetting = simpleCache.get(key.toLowerCase());
+        if (cachedSetting != null) {
+            return cachedSetting;
+        }
+        String value = settingRepository.findByKeyIgnoreCase(key).getValue();
+        simpleCache.put(key.toLowerCase(), value);
+        return value;
+    }
+
+    @Override
+    public void saveSetting(String key, String value) {
+        Setting setting = new Setting();
+        Setting existingSetting = settingRepository.findByKeyIgnoreCase(key);
+        if (existingSetting != null) {
+            setting.setId(existingSetting.getId());
+        }
+        simpleCache.put(key.toLowerCase(), value);
+        settingRepository.save(setting);
     }
 }
