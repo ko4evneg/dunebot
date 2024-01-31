@@ -37,7 +37,7 @@ spring:
   task:
     scheduling:
       pool:
-        size: 1
+        size: 2
 ---
 spring:
   config:
@@ -57,7 +57,7 @@ spring:
       ddl-auto: none
   sql:
     init:
-      mode: always
+      mode: never
       platform: postgresql
 bot:
   token: fake_token
