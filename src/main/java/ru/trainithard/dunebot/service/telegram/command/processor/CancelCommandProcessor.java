@@ -39,7 +39,7 @@ public class CancelCommandProcessor extends CommandProcessor {
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
                 logger.debug("{}: to-cancel match found, id {}", loggingId, latestOwnedMatch.getId());
-
+// TODO:  onsubmit
                 if (finishedMatchStates.contains(latestOwnedMatch.getState())) {
                     throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
                 }

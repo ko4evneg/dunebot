@@ -1,6 +1,7 @@
-package ru.trainithard.dunebot.service.telegram.command.processor.admin;
+package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -8,10 +9,10 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminCommandProcessor extends CommandProcessor {
@@ -31,7 +32,10 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
+        log.debug("{}: admin command started with args: '{}'", loggingId, commandMessage.getAllArguments());
+
         String subCommand = commandMessage.getArgument(1).toLowerCase();
+
         MessageDto messageDto = new MessageDto(commandMessage, SUCCESSFUL_COMMAND_TEXT, null);
 
         switch (subCommand) {
@@ -42,10 +46,14 @@ public class AdminCommandProcessor extends CommandProcessor {
                     settingsService.saveSetting(SettingsService.TOPIC_ID_CLASSIC_KEY, commandMessage.getReplyMessageId().toString());
             case SET_TOPIC_UPRISING4 ->
                     settingsService.saveSetting(SettingsService.TOPIC_ID_UPRISING_KEY, commandMessage.getReplyMessageId().toString());
-            default -> messageDto.setText(WRONG_COMMAND_EXCEPTION_MESSAGE);
+            default -> {
+                log.debug("{}: wronad admin command subcommand {}", loggingId, subCommand);
+                messageDto.setText(WRONG_COMMAND_EXCEPTION_MESSAGE);
+            }
         }
 
         messagingService.sendMessageAsync(messageDto);
+        log.debug("{}: admin command sucsessfuly finished execution", loggingId, commandMessage, subCommand);
     }
 
     private void sendSetCommands() {

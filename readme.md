@@ -3,6 +3,8 @@
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
 | critical | add unknown command /info advice                                                    |
+| critical | guest user vote in rating poll                                                      |
+| critical | not-bot polls votes processing                                                      |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
 | high     | leaders rating                                                                      |
@@ -23,6 +25,7 @@
 | low      | add logging                                                                         |
 | low      | check all callbacks thrown                                                          |
 | low      | use tempdir in save screenshot service                                              |
+| low      | add admin commands for timeouts                                                     |
 
 # Known bugs
 

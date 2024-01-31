@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.processor.admin;
+package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -14,6 +14,7 @@ import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Map;
@@ -94,6 +95,13 @@ class AdminCommandProcessorTest extends TestContextMock {
         assertEquals("10011", actualMessageDto.getChatId());
         assertEquals(10020, actualMessageDto.getReplyMessageId());
         assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
+    }
+
+    @Test
+    void shouldReturnAdminCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertEquals(Command.ADMIN, actualCommand);
     }
 
     private CommandMessage getCommandMessage(String arg, int replyId) {
