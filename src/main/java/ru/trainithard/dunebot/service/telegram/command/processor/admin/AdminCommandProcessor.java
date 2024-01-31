@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -22,6 +23,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String SET_TOPIC_DUNE = "dune_topic";
     // TODO:
     private static final String SET_TOPIC_UPRISING4 = "uprising_topic";
+    private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда!";
 
     private final MessagingService messagingService;
 
@@ -31,6 +33,8 @@ public class AdminCommandProcessor extends CommandProcessor {
             Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
                     COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
             messagingService.sendSetCommands(new SetCommandsDto(commands));
+        } else {
+            throw new AnswerableDuneBotException(WRONG_COMMAND_EXCEPTION_MESSAGE, commandMessage);
         }
     }
 

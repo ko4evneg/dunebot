@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -16,6 +17,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -25,13 +27,14 @@ class AdminCommandProcessorTest extends TestContextMock {
     private static final String COMMANDS_LIST_DESCRIPTION = "Показать список доступных команд";
     private static final String HELP_COMMAND_TEXT = "/help";
     private static final String COMMANDS_LIST_COMMAND_TEXT = "/commands";
+    private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда!";
 
     @Autowired
     private AdminCommandProcessor processor;
 
     @Test
     void shouldInvokeSetCommandsServiceOnInitSubcommand() {
-        processor.process(getCommandMessage(), mockLoggingId);
+        processor.process(getCommandMessage("init"), mockLoggingId);
 
         ArgumentCaptor<SetCommandsDto> setCommandsDtoCaptor = ArgumentCaptor.forClass(SetCommandsDto.class);
         verify(messagingService, times(1)).sendSetCommands(setCommandsDtoCaptor.capture());
@@ -42,10 +45,18 @@ class AdminCommandProcessorTest extends TestContextMock {
         assertEquals(COMMANDS_LIST_DESCRIPTION, actualCommands.get(COMMANDS_LIST_COMMAND_TEXT));
     }
 
-    private CommandMessage getCommandMessage() {
+    @Test
+    void shouldThrowOnUnknownSubcommand() {
+        CommandMessage commandMessage = getCommandMessage("zzz");
+
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
+        assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualException.getMessage());
+    }
+
+    private CommandMessage getCommandMessage(String arg) {
         Message message = new Message();
         message.setMessageId(10000);
-        message.setText("/admin init");
+        message.setText("/admin " + arg);
         Chat chat = new Chat();
         chat.setId(10000L);
         chat.setType(ChatType.GROUP.getValue());
