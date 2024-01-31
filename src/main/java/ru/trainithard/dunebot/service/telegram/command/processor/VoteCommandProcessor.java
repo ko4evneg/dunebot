@@ -13,6 +13,7 @@ import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -26,18 +27,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
-import static ru.trainithard.dunebot.configuration.SettingConstants.*;
+import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 
 @Service
 @RequiredArgsConstructor
 public class VoteCommandProcessor extends CommandProcessor {
     private static final Logger logger = LoggerFactory.getLogger(VoteCommandProcessor.class);
+    private static final int POSITIVE_POLL_OPTION_ID = 0;
 
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
     private final TaskScheduler dunebotTaskScheduler;
+    private final SettingsService settingsService;
     private final Clock clock;
 
     private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
@@ -98,7 +101,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                     deleteExistingOldSubmitMessage(match);
                     match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                     matchRepository.save(match);
-                }), Instant.now(clock).plusSeconds(MATCH_START_DELAY));
+                }), Instant.now(clock).plusSeconds(settingsService.getIntSetting(SettingsService.MATCH_START_DELAY_KEY)));
         scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
     }
 

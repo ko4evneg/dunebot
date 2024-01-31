@@ -9,6 +9,7 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
-import static ru.trainithard.dunebot.configuration.SettingConstants.RESUBMITS_LIMIT;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +42,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private final MatchFinishingService matchFinishingService;
     private final ResubmitCommandProcessor resubmitProcessor;
     private final MessagingService messagingService;
+    private final SettingsService settingsService;
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
@@ -58,7 +59,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             deleteOldSubmitMessage(submittingPlayer);
 
             int candidatePlace = callback.candidatePlace;
-            if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(RESUBMITS_LIMIT)) {
+            int resubmitsLimit = settingsService.getIntSetting(SettingsService.RESUBMITS_LIMIT_KEY);
+            if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
                 logger.debug("{}: not exceeding resubmits conflict resolution started", loggingId);
 
                 String conflictText = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);

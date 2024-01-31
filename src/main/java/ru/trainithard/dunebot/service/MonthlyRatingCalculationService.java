@@ -3,7 +3,6 @@ package ru.trainithard.dunebot.service;
 import com.itextpdf.text.DocumentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -19,11 +18,14 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.trainithard.dunebot.service.SettingsService.CHAT_ID_KEY;
+
 @Service
 @RequiredArgsConstructor
 public class MonthlyRatingCalculationService {
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
+    private final SettingsService settingsService;
 
     public void storeAndSendMonthRating(YearMonth month, ModType modType, Path dir) throws DocumentException, IOException {
         LocalDate from = month.atDay(1);
@@ -39,8 +41,9 @@ public class MonthlyRatingCalculationService {
         Files.write(dir.resolve(getPdfFileName(month)), pdfFile);
 
         String ratingName = "Рейтинг за " + getDateString(month);
+        String chatId = settingsService.getStringSetting(CHAT_ID_KEY);
         FileMessageDto fileMessageDto =
-                new FileMessageDto(SettingConstants.CHAT_ID, ratingName + ":", getTopicId(modType), pdfFile, ratingName);
+                new FileMessageDto(chatId, ratingName + ":", getTopicId(modType), pdfFile, ratingName);
         messagingService.sendFileAsync(fileMessageDto);
     }
 
@@ -70,8 +73,8 @@ public class MonthlyRatingCalculationService {
 
     private int getTopicId(ModType modType) {
         return switch (modType) {
-            case CLASSIC -> SettingConstants.TOPIC_ID_CLASSIC;
-            case UPRISING_4, UPRISING_6 -> SettingConstants.TOPIC_ID_UPRISING;
+            case CLASSIC -> settingsService.getIntSetting(SettingsService.TOPIC_ID_CLASSIC_KEY);
+            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingsService.TOPIC_ID_UPRISING_KEY);
         };
     }
 

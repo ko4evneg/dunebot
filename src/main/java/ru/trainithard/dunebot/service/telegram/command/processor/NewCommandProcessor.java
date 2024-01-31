@@ -4,19 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
+
+import static ru.trainithard.dunebot.service.SettingsService.CHAT_ID_KEY;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class NewCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
+    private final SettingsService settingsService;
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
@@ -54,13 +57,14 @@ public class NewCommandProcessor extends CommandProcessor {
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
         String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
-        return new PollMessageDto(SettingConstants.CHAT_ID, text, getTopicId(modType), POLL_OPTIONS);
+        String chatId = settingsService.getStringSetting(CHAT_ID_KEY);
+        return new PollMessageDto(chatId, text, getTopicId(modType), POLL_OPTIONS);
     }
 
     private int getTopicId(ModType modType) {
         return switch (modType) {
-            case CLASSIC -> SettingConstants.TOPIC_ID_CLASSIC;
-            case UPRISING_4, UPRISING_6 -> SettingConstants.TOPIC_ID_UPRISING;
+            case CLASSIC -> settingsService.getIntSetting(SettingsService.TOPIC_ID_CLASSIC_KEY);
+            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingsService.TOPIC_ID_UPRISING_KEY);
         };
     }
 

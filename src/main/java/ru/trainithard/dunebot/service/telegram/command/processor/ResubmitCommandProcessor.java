@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -28,16 +28,17 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     private final MatchFinishingService matchFinishingService;
     private final SubmitCommandProcessor submitCommandProcessor;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
-
+    private final SettingsService settingsService;
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
         logger.debug("{}: resubmit started", loggingId);
 
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
-        if (!match.isResubmitAllowed(SettingConstants.RESUBMITS_LIMIT)) {
+        int resubmitsLimit = settingsService.getIntSetting(SettingsService.RESUBMITS_LIMIT_KEY);
+        if (!match.isResubmitAllowed(resubmitsLimit)) {
             matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(),
-                    String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), SettingConstants.RESUBMITS_LIMIT), loggingId);
+                    String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), resubmitsLimit), loggingId);
         }
 
         process(match, loggingId);

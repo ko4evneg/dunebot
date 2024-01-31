@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
@@ -14,6 +13,7 @@ import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
@@ -44,6 +44,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final MatchFinishingService matchFinishingService;
     private final TaskScheduler dunebotTaskScheduler;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
+    private final SettingsService settingsService;
     private final Clock clock;
 
     @Override
@@ -75,7 +76,8 @@ public class SubmitCommandProcessor extends CommandProcessor {
             });
         }
 
-        Instant forcedFinishTime = Instant.now(clock).plus(SettingConstants.FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
+        int finishMatchTimeout = settingsService.getIntSetting(SettingsService.FINISH_MATCH_TIMEOUT_KEY);
+        Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         String forcedFinishMessage = String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
                 .finishUnsuccessfullySubmittedMatch(match.getId(), forcedFinishMessage, loggingId), forcedFinishTime);
