@@ -10,16 +10,15 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -72,11 +71,29 @@ class AdminCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldThrowOnUnknownSubcommand() {
-        CommandMessage commandMessage = getCommandMessage("zzz", 10000);
+    void shouldSendErrorMessageOnUnknownSubcommand() {
+        processor.process(getCommandMessage("zzz", 10020), mockLoggingId);
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
-        assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualException.getMessage());
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getValue();
+
+        assertEquals("10011", actualMessageDto.getChatId());
+        assertEquals(10020, actualMessageDto.getReplyMessageId());
+        assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
+    }
+
+    @Test
+    void shouldSendSuccessMessageOnUnknownSubcommand() {
+        processor.process(getCommandMessage("zzz", 10020), mockLoggingId);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getValue();
+
+        assertEquals("10011", actualMessageDto.getChatId());
+        assertEquals(10020, actualMessageDto.getReplyMessageId());
+        assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
     }
 
     private CommandMessage getCommandMessage(String arg, int replyId) {

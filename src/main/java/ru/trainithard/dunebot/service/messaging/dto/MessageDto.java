@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.messaging.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
@@ -13,6 +14,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 public class MessageDto {
+    @Setter
     protected String text;
     protected String chatId;
     protected Integer replyMessageId;
@@ -24,7 +26,6 @@ public class MessageDto {
         this.replyMessageId = replyMessageId;
         this.keyboard = linedButtons;
     }
-
 
     public MessageDto(long chatId, String text, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
         this(Long.toString(chatId), MarkdownEscaper.getEscaped(text), replyMessageId, linedButtons);

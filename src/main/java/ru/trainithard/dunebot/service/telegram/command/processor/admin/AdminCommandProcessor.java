@@ -2,9 +2,9 @@ package ru.trainithard.dunebot.service.telegram.command.processor.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -24,6 +24,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String SET_TOPIC_CLASSIC = "set_topic_dune";
     private static final String SET_TOPIC_UPRISING4 = "set_topic_up4";
     private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда!";
+    private static final String SUCCESSFUL_COMMAND_TEXT = "Команда успешно выполнена.";
 
     private final MessagingService messagingService;
     private final SettingsService settingsService;
@@ -31,6 +32,8 @@ public class AdminCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
         String subCommand = commandMessage.getArgument(1).toLowerCase();
+        MessageDto messageDto = new MessageDto(commandMessage, SUCCESSFUL_COMMAND_TEXT, null);
+
         switch (subCommand) {
             case INIT_SUBCOMMAND -> sendSetCommands();
             case SET_CHAT_SUBCOMMAND ->
@@ -39,8 +42,10 @@ public class AdminCommandProcessor extends CommandProcessor {
                     settingsService.saveSetting(SettingsService.TOPIC_ID_CLASSIC_KEY, commandMessage.getReplyMessageId().toString());
             case SET_TOPIC_UPRISING4 ->
                     settingsService.saveSetting(SettingsService.TOPIC_ID_UPRISING_KEY, commandMessage.getReplyMessageId().toString());
-            default -> throw new AnswerableDuneBotException(WRONG_COMMAND_EXCEPTION_MESSAGE, commandMessage);
+            default -> messageDto.setText(WRONG_COMMAND_EXCEPTION_MESSAGE);
         }
+
+        messagingService.sendMessageAsync(messageDto);
     }
 
     private void sendSetCommands() {
