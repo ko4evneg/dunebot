@@ -54,7 +54,7 @@ public class SubmitValidatedMatchRetriever {
         if (finishedMatchStates.contains(match.getState())) {
             throw new AnswerableDuneBotException(FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE, telegramChatId);
         }
-        if (match.getPositiveAnswersCount() < match.getModType().getPlayersCount()) {
+        if (!match.hasEnoughPlayers()) {
             throw new AnswerableDuneBotException(NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE, telegramChatId);
         }
         if (!isResubmit && match.getState() == MatchState.ON_SUBMIT) {

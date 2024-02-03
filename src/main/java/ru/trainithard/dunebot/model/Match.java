@@ -102,4 +102,7 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
+    public boolean hasEnoughPlayers() {
+        return positiveAnswersCount >= modType.getPlayersCount();
+    }
 }

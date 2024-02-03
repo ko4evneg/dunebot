@@ -2,9 +2,8 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | add unknown command /info advice                                                    |
 | critical | guest user vote in rating poll                                                      |
-| critical | not-bot polls votes processing                                                      |
+| critical | rating comparator for 15+ matches                                                   |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
 | high     | leaders rating                                                                      |
