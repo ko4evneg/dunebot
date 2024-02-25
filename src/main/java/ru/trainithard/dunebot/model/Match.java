@@ -17,7 +17,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "matches")
+@Table(name = "MATCHES")
 @NoArgsConstructor
 public class Match extends BaseEntity {
     /**
@@ -29,7 +29,7 @@ public class Match extends BaseEntity {
      * Player who initiated the match poll.
      */
     @OneToOne
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "OWNER_ID")
     private Player owner;
     /**
      * External ID of the poll created for this match.

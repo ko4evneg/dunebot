@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "settings")
+@Table(name = "SETTINGS")
 @NoArgsConstructor
 public class Setting extends BaseEntity {
     private String key;

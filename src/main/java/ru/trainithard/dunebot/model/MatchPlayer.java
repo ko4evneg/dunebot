@@ -13,20 +13,20 @@ import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 @Getter
 @Setter
 @Entity
-@Table(name = "match_players")
+@Table(name = "MATCH_PLAYERS")
 @NoArgsConstructor
 public class MatchPlayer extends BaseEntity {
     /**
      * Participated <code>Match</code>.
      */
     @ManyToOne
-    @JoinColumn(name = "match_id")
+    @JoinColumn(name = "MATCH_ID")
     private Match match;
     /**
      * Positively voted to match poll <code>Player</code>.
      */
     @OneToOne
-    @JoinColumn(name = "player_id")
+    @JoinColumn(name = "PLAYER_ID")
     private Player player;
     /**
      * External ID of a message sent to a player for selection of his <code>candidatePlace</code>.

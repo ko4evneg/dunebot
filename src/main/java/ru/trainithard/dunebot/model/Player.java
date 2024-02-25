@@ -12,7 +12,7 @@ import ru.trainithard.dunebot.util.ParsedNames;
 @Getter
 @Setter
 @Entity
-@Table(name = "players")
+@Table(name = "PLAYERS")
 @NoArgsConstructor
 public class Player extends BaseEntity {
     private long externalId;
