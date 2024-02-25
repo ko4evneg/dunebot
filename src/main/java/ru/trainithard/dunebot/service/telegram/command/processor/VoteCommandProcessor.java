@@ -61,10 +61,9 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     private void registerMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
         logger.debug("{}: vote registration started", loggingId);
-
-        playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
-                matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
-                        .ifPresent(match -> processPlayerVoteRegistration(player, match, loggingId)));
+        matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId()).ifPresent(match ->
+                playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
+                        processPlayerVoteRegistration(player, match, loggingId)));
     }
 
     private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
@@ -143,14 +142,18 @@ public class VoteCommandProcessor extends CommandProcessor {
                             matchPlayerRepository.delete(matchPlayer);
                         });
                         if (match.hasMissingPlayers()) {
-                            ScheduledFuture<?> oldScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
-                            if (oldScheduledTask != null) {
-                                oldScheduledTask.cancel(false);
-                            }
+                            removeScheduledMatchStart(match);
                             messagingService.deleteMessageAsync(match.getExternalStartId());
                         }
                     }
                 });
+    }
+
+    private void removeScheduledMatchStart(Match match) {
+        ScheduledFuture<?> oldScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
+        if (oldScheduledTask != null) {
+            oldScheduledTask.cancel(false);
+        }
     }
 
     @Override

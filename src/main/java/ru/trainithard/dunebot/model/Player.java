@@ -1,5 +1,6 @@
 package ru.trainithard.dunebot.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -23,6 +24,8 @@ public class Player extends BaseEntity {
     private String externalFirstName;
     @Nullable
     private String externalName;
+    @Column(name = "IS_GUEST")
+    private boolean guest;
 
     public Player(CommandMessage commandMessage, ParsedNames parsedNames) {
         this.externalId = commandMessage.getUserId();
