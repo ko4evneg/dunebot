@@ -90,7 +90,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                 Также вы автоматически зарегистрированы у бота как гость под именем %s (%s) %s - это значит, что вы не \
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
-                *Желательно это  сделать прямо сейчас*.""", player.getFirstName(), player.getSteamName(), player.getLastName());
+                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", player.getFirstName(), player.getSteamName(), player.getLastName());
         return new MessageDto(player.getExternalChatId(), MarkdownEscaper.getEscaped(messageText), null, null);
     }
 

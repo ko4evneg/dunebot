@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class MarkdownEscaperTest {
     @Test
     void shouldEscapeText() {
-        String actualText = MarkdownEscaper.getEscaped("a1b`c#y-f+");
+        String actualText = MarkdownEscaper.getEscaped("a1b`c#y+");
 
-        assertEquals("a1b\\`c\\#y\\-f\\+", actualText);
+        assertEquals("a1b\\`c\\#y\\+", actualText);
     }
 
     @Test

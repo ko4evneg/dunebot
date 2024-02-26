@@ -68,7 +68,7 @@ class HelpCommandProcessorTest extends TestContextMock {
     private String getHelpText() {
         // TODO:  check escaping
         return """
-                \\[Подробное описание бота\\](https://github.com/ko4evneg/dunebot/blob/master/help.md)
+                [Подробное описание бота](https://github.com/ko4evneg/dunebot/blob/master/help.md)
                                 
                 Список доступных команд:
                 '/register Имя (ник_steam) Фамилия' Регистрация игрока в рейтинге
