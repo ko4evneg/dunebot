@@ -74,9 +74,24 @@ public class VoteCommandProcessor extends CommandProcessor {
                             } else {
                                 player = playerOptional.get();
                             }
+                    if (player.isGuest()) {
+                        messagingService.sendMessageAsync(getGuestMessageDto(player));
+                    }
                             processPlayerVoteRegistration(player, match, loggingId);
                         }
                 );
+    }
+
+    private MessageDto getGuestMessageDto(Player player) {
+        String messageText = String.format("""
+                Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
+                игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
+                случае победы) - не волнуйтесь, бот подскажет что делать.
+                Также вы автоматически зарегистрированы у бота как гость под именем %s (%s) %s - это значит, что вы не \
+                можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
+                Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
+                *Желательно это  сделать прямо сейчас*.""", player.getFirstName(), player.getSteamName(), player.getLastName());
+        return new MessageDto(player.getExternalChatId(), MarkdownEscaper.getEscaped(messageText), null, null);
     }
 
     private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
@@ -94,7 +109,6 @@ public class VoteCommandProcessor extends CommandProcessor {
             cancelScheduledMatchStart(match);
             logger.debug("{}: vote match start message unscheduled", loggingId);
 
-            // TODO:  logic for guest players start
             scheduleNewMatchStart(match);
             logger.debug("{}: vote match start message scheduled", loggingId);
         }

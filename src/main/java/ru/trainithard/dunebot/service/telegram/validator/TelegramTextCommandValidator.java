@@ -17,6 +17,7 @@ public class TelegramTextCommandValidator implements ValidationStrategy {
     private final SettingsService settingsService;
 
     public void validate(CommandMessage commandMessage) {
+        // TODO: treat guest users as anons
         int minimalArgumentsCount = commandMessage.getCommand().getMinimalArgumentsCount();
         if (minimalArgumentsCount > commandMessage.getArgumentsCount()) {
             throw new AnswerableDuneBotException(String.format(WRONG_ARGUMENTS_COUNT_TEMPLATE, minimalArgumentsCount), commandMessage);

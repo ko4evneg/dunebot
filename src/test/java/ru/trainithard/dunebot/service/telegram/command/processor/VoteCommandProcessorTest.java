@@ -335,8 +335,8 @@ class VoteCommandProcessorTest extends TestContextMock {
         syncRunScheduledTaskAction();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
+        verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getAllValues().get(1);
         String[] textRows = messageDto.getText().split("\n");
         List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
         List<String> guestsNames = Arrays.stream(textRows[4].split(", ")).toList();
@@ -353,8 +353,47 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendPrivateMessageOnGuestPlayerRegistration() {
-        fail();
+    void shouldSendPrivateMessageOnNewGuestPlayerPositiveRegistration() {
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertEquals("""
+                Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
+                игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
+                случае победы) - не волнуйтесь, бот подскажет что делать.
+                Также вы автоматически зарегистрированы у бота как гость под именем Vasya (guest1) Pupkin - это значит, что вы не \
+                можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
+                Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
+                *Желательно это  сделать прямо сейчас*.""", messageDto.getText());
+        assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
+        assertNull(messageDto.getReplyMessageId());
+    }
+
+    @Test
+    void shouldSendPrivateMessageOnExistingGuestPlayerPositiveRegistration() {
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                             "last_name, external_first_name, external_name, is_guest, created_at) " +
+                             "values (10004, " + GUEST_ID + ", " + GUEST_ID + ", 'guest1', 'Vasya', 'Pupkin', 'ef4', 'en4', true, '2010-10-10') ");
+
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertEquals("""
+                Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
+                игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
+                случае победы) - не волнуйтесь, бот подскажет что делать.
+                Также вы автоматически зарегистрированы у бота как гость под именем Vasya (guest1) Pupkin - это значит, что вы не \
+                можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
+                Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
+                *Желательно это  сделать прямо сейчас*.""", messageDto.getText());
+        assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
+        assertNull(messageDto.getReplyMessageId());
     }
 
     @Test
