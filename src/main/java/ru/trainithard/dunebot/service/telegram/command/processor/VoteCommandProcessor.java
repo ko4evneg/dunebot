@@ -24,6 +24,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -61,9 +62,20 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     private void registerMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
         logger.debug("{}: vote registration started", loggingId);
-        matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId()).ifPresent(match ->
-                playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player ->
-                        processPlayerVoteRegistration(player, match, loggingId)));
+        matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
+                .ifPresent(match -> {
+                            Optional<Player> playerOptional = playerRepository.findByExternalId(commandMessage.getUserId());
+                            Player player;
+                            if (playerOptional.isEmpty()) {
+                                int nextGuestIndex = playerRepository.findNextGuestIndex();
+                                Player guestPlayer = new Player(commandMessage, nextGuestIndex);
+                                player = playerRepository.save(guestPlayer);
+                            } else {
+                                player = playerOptional.get();
+                            }
+                            processPlayerVoteRegistration(player, match, loggingId);
+                        }
+                );
     }
 
     private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {

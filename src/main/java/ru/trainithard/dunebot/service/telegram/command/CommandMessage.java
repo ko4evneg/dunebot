@@ -69,7 +69,10 @@ public class CommandMessage {
 
     private CommandMessage(PollAnswer pollAnswer) {
         this.command = Command.VOTE;
-        this.userId = pollAnswer.getUser().getId();
+        User user = pollAnswer.getUser();
+        this.userId = user.getId();
+        this.externalFirstName = user.getFirstName();
+        this.chatId = user.getId();
         this.pollVote = new PollVote(pollAnswer);
     }
 

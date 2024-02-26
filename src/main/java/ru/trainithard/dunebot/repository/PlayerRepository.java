@@ -18,4 +18,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     @Query("select p from MatchPlayer mp left join mp.player p where mp.match.id = :matchId")
     List<Player> findByMatchId(long matchId);
+
+    @Query(nativeQuery = true, value =
+            "select cast(substring(coalesce(max(steam_name), 'guest0'), 6) as integer) + 1 from players where is_guest")
+    int findNextGuestIndex();
 }
