@@ -57,6 +57,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     }
 
     private void sendSetCommands() {
+        // TODO:  replace with valid list
         Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
                 COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
         messagingService.sendSetCommands(new SetCommandsDto(commands));
