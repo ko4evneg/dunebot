@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.MonthlyRatingCalculationService;
+import ru.trainithard.dunebot.service.report.MonthlyRatingCalculationService;
 
 import java.nio.file.Path;
 import java.time.Clock;

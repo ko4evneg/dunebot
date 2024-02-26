@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service;
+package ru.trainithard.dunebot.service.report;
 
 import com.itextpdf.text.DocumentException;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +7,7 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 

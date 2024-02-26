@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service;
+package ru.trainithard.dunebot.service.report;
 
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfReader;

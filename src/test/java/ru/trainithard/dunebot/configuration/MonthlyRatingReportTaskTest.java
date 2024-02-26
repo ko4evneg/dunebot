@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.service.MonthlyRatingCalculationService;
+import ru.trainithard.dunebot.service.report.MonthlyRatingCalculationService;
 
 import java.io.IOException;
 import java.time.*;

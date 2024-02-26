@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service;
+package ru.trainithard.dunebot.service.report;
 
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
-public class MonthlyRating {
+class MonthlyRating {
     private final int matchesCount;
     private final Set<PlayerMonthlyRating> playerRatings = new TreeSet<>();
     @Getter(AccessLevel.NONE)
