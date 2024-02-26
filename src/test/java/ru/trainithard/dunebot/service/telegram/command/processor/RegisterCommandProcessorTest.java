@@ -126,11 +126,6 @@ class RegisterCommandProcessorTest extends TestContextMock {
         assertEquals(Command.REGISTER, actualCommand);
     }
 
-    @Test
-    void shouldChangeGuestPlayerToRegularOnAlreadyVotedPlayerRegistration() {
-        fail();
-    }
-
     private static CommandMessage getCommandMessage(String steamName, @Nullable String userName) {
         User user = new User();
         user.setId(TELEGRAM_USER_ID);
