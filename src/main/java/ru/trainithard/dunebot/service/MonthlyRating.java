@@ -35,6 +35,7 @@ public class MonthlyRating {
         fillDefaultEfficiencies();
 
         Map<Player, List<MatchPlayer>> matchPlayersByPlayer = monthMatchPlayers.stream()
+                .filter(matchPlayer -> !matchPlayer.getPlayer().isGuest())
                 .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
 
         matchPlayersByPlayer.entrySet().stream()

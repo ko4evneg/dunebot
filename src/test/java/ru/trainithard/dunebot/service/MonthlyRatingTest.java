@@ -10,10 +10,12 @@ import ru.trainithard.dunebot.model.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class MonthlyRatingTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
@@ -153,7 +155,19 @@ class MonthlyRatingTest {
 
     @Test
     void shouldExcludeGuestPlayersFromRating() {
-        fail();
+        matchPlayers.stream()
+                .map(MatchPlayer::getPlayer)
+                .filter(player -> Set.of("s5", "s6").contains(player.getSteamName()))
+                .forEach(player -> player.setGuest(true));
+
+        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC);
+
+        assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
+                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("matchesCount", is(6L))),
+                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("matchesCount", is(4L))),
+                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("matchesCount", is(5L))),
+                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("matchesCount", is(4L)))
+        ));
     }
 
     private MatchPlayer getMatchPlayer(Match match, int playerId, int place) {
