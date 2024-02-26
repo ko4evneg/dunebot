@@ -96,7 +96,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
-        jdbcTemplate.execute("delete from players where id between 10000 and 10003 or external_id in (" + USER_2_ID + ", " + GUEST_ID + ")");
+        jdbcTemplate.execute("delete from players where id between 10000 and 10004 or external_id in (" + USER_2_ID + ", " + GUEST_ID + ")");
         jdbcTemplate.execute("delete from external_messages where id between 10000 and 10001 or chat_id between 12345 and 12348 " +
                              "or chat_id in (" + CHAT_ID + ", " + GUEST_ID + ")");
     }
@@ -172,6 +172,22 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @ParameterizedTest
+    @ValueSource(ints = {1, 2, 100000})
+    void shouldDeleteGuestMatchPlayerOnPositiveRegistrationRevocation(int optionId) {
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                             "last_name, external_first_name, external_name, created_at) " +
+                             "values (10004, " + GUEST_ID + ", " + GUEST_ID + ", 'guest99', 'name5', 'l5', 'ef5', 'en5', '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10004, 10000, 10004, '2010-10-10')");
+
+        processor.process(getPollAnswerCommandMessage(optionId, GUEST_ID), mockLoggingId);
+
+        List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
+
+        assertThat(actualPlayerIds, contains(10000L));
+    }
+
+    @ParameterizedTest
     @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"NEW"})
     void shouldNotDeleteNotNewStateMatchPlayerOnPositiveRegistrationRevocation(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
@@ -222,6 +238,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         assertThat(actualPlayerIds, contains(10000L));
     }
 
+    // TODO:  del from here
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnPositiveReplyRegistration() {
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID), mockLoggingId);
@@ -301,6 +318,43 @@ class VoteCommandProcessorTest extends TestContextMock {
         assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
         assertNull(messageDto.getKeyboard());
+    }
+
+    @Test
+    void shouldSendGuestWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
+        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
+
+        jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10001, 10000, 10001, '2010-10-10')");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10002, 10000, 10002, '2010-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        syncRunScheduledTaskAction();
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+        String[] textRows = messageDto.getText().split("\n");
+        List<String> names = Arrays.stream(textRows[2].split(", ")).toList();
+        List<String> guestsNames = Arrays.stream(textRows[5].split(", ")).toList();
+
+        assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
+        assertEquals(REPLY_ID, messageDto.getReplyMessageId());
+        assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
+        assertThat(names, containsInAnyOrder("@en1", "@ef2"));
+        assertTrue(textRows[3].isBlank());
+        assertEquals("*Внимание:* в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
+                     "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:", textRows[4]);
+        assertThat(guestsNames, containsInAnyOrder("@en3", "@fName"));
+        assertNull(messageDto.getKeyboard());
+    }
+
+    @Test
+    void shouldSendPrivateMessageOnGuestPlayerRegistration() {
+        fail();
     }
 
     @Test

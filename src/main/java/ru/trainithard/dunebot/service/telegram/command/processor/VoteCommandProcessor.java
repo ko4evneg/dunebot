@@ -22,6 +22,7 @@ import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,6 +94,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             cancelScheduledMatchStart(match);
             logger.debug("{}: vote match start message unscheduled", loggingId);
 
+            // TODO:  logic for guest players start
             scheduleNewMatchStart(match);
             logger.debug("{}: vote match start message scheduled", loggingId);
         }
@@ -102,30 +104,48 @@ public class VoteCommandProcessor extends CommandProcessor {
         ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
         if (existingScheduledTask != null) {
             existingScheduledTask.cancel(false);
-
         }
     }
 
     private void scheduleNewMatchStart(Match match) {
-        ScheduledFuture<?> scheduledTask = dunebotTaskScheduler.schedule(() -> messagingService
-                .sendMessageAsync(getMatchStartMessage(match)).whenComplete((externalMessageDto, throwable) -> {
-                    deleteExistingOldSubmitMessage(match);
-                    match.setExternalStartId(new ExternalMessageId(externalMessageDto));
-                    matchRepository.save(match);
-                }), Instant.now(clock).plusSeconds(settingsService.getIntSetting(SettingsService.MATCH_START_DELAY_KEY)));
+        int matchStartDelay = settingsService.getIntSetting(SettingsService.MATCH_START_DELAY_KEY);
+        Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
+        ScheduledFuture<?> scheduledTask =
+                dunebotTaskScheduler.schedule(() -> messagingService.sendMessageAsync(getMatchStartMessage(match))
+                                .whenComplete((externalMessageDto, throwable) -> {
+                                    deleteExistingOldSubmitMessage(match);
+                                    match.setExternalStartId(new ExternalMessageId(externalMessageDto));
+                                    matchRepository.save(match);
+                                }),
+                        matchStartInstant);
+
         scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
     }
 
     private MessageDto getMatchStartMessage(Match match) {
+        List<String> regularPlayerMentions = new ArrayList<>();
+        List<String> guestPlayerMentions = new ArrayList<>();
+        for (MatchPlayer matchPlayer : matchPlayerRepository.findByMatch(match)) {
+            Player player = matchPlayer.getPlayer();
+            String mention = player.getMention();
+            if (player.isGuest()) {
+                guestPlayerMentions.add(mention);
+            } else {
+                regularPlayerMentions.add(mention);
+            }
+        }
+
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer replyTopicId = match.getExternalPollId().getReplyId();
-        List<String> playerMentions = playerRepository.findByMatchId(match.getId()).stream()
-                .map(Player::getMention)
-                .toList();
-
-        String text = "*Матч " + match.getId() + "* собран. Участники:" + EXTERNAL_LINE_SEPARATOR +
-                      EXTERNAL_LINE_SEPARATOR + String.join(", ", playerMentions);
-        return new MessageDto(matchTopicChatId, MarkdownEscaper.getEscaped(text), replyTopicId, null);
+        StringBuilder messageText = new StringBuilder("*Матч ").append(match.getId()).append("* собран. Участники:")
+                .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", regularPlayerMentions));
+        if (!guestPlayerMentions.isEmpty()) {
+            messageText.append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR)
+                    .append("*Внимание:* в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
+                            "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
+                    .append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", guestPlayerMentions));
+        }
+        return new MessageDto(matchTopicChatId, MarkdownEscaper.getEscaped(messageText.toString()), replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {
