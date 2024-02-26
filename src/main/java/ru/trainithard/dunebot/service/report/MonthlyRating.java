@@ -13,13 +13,22 @@ import java.util.stream.Collectors;
 
 @Getter
 class MonthlyRating {
+    @Getter(AccessLevel.NONE)
+    private static final Map<Integer, Double> efficiencyRateByPlaceNames = new HashMap<>();
     private final int matchesCount;
     private final Set<PlayerMonthlyRating> playerRatings = new TreeSet<>();
-    @Getter(AccessLevel.NONE)
-    private final Map<Integer, Double> efficiencyRateByPlaceNames = new HashMap<>();
+    private final int matchesRatingThreshold;
 
-    public MonthlyRating(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType) {
+    static {
+        efficiencyRateByPlaceNames.put(1, 1.0);
+        efficiencyRateByPlaceNames.put(2, 0.6);
+        efficiencyRateByPlaceNames.put(3, 0.4);
+        efficiencyRateByPlaceNames.put(4, 0.1);
+    }
+
+    public MonthlyRating(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
         this.matchesCount = getMatchesCount(monthMatchPlayers);
+        this.matchesRatingThreshold = matchesRatingThreshold;
         fillPlayerRatings(monthMatchPlayers, modType.getPlayersCount());
     }
 
@@ -32,8 +41,6 @@ class MonthlyRating {
     }
 
     private void fillPlayerRatings(List<MatchPlayer> monthMatchPlayers, int matchPlayersCount) {
-        fillDefaultEfficiencies();
-
         Map<Player, List<MatchPlayer>> matchPlayersByPlayer = monthMatchPlayers.stream()
                 .filter(matchPlayer -> !matchPlayer.getPlayer().isGuest())
                 .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
@@ -51,13 +58,6 @@ class MonthlyRating {
                             new PlayerMonthlyRating(entry.getKey().getFriendlyName(), orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
                     playerRatings.add(playerMonthlyRating);
                 });
-    }
-
-    private void fillDefaultEfficiencies() {
-        efficiencyRateByPlaceNames.put(1, 1.0);
-        efficiencyRateByPlaceNames.put(2, 0.6);
-        efficiencyRateByPlaceNames.put(3, 0.4);
-        efficiencyRateByPlaceNames.put(4, 0.1);
     }
 
     private TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers, int matchPlayersCount) {
@@ -92,7 +92,7 @@ class MonthlyRating {
 
     @Getter
     @RequiredArgsConstructor
-    public static class PlayerMonthlyRating implements Comparable<PlayerMonthlyRating> {
+    public class PlayerMonthlyRating implements Comparable<PlayerMonthlyRating> {
         private final String playerFriendlyName;
         private final Map<Integer, Long> orderedPlaceCountByPlaceNames;
         private final long matchesCount;
@@ -101,7 +101,13 @@ class MonthlyRating {
 
         @Override
         public int compareTo(PlayerMonthlyRating comparedRating) {
-            int reversedEfficiencyDiff = (int) -(this.efficiency * 100 - comparedRating.efficiency * 100);
+            if (this.matchesCount >= matchesRatingThreshold && comparedRating.matchesCount < matchesRatingThreshold) {
+                return -1;
+            }
+            if (comparedRating.matchesCount >= matchesRatingThreshold && this.matchesCount < matchesRatingThreshold) {
+                return 1;
+            }
+            int reversedEfficiencyDiff = (int) (comparedRating.efficiency * 100 - this.efficiency * 100);
             return reversedEfficiencyDiff != 0 ? reversedEfficiencyDiff : this.playerFriendlyName.compareTo(comparedRating.playerFriendlyName);
         }
 

@@ -2,7 +2,6 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | rating comparator for 15+ matches                                                   |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
 | high     | leaders rating                                                                      |

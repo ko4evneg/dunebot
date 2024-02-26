@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static ru.trainithard.dunebot.service.SettingsService.CHAT_ID_KEY;
+import static ru.trainithard.dunebot.service.SettingsService.MONTHLY_MATCHES_THRESHOLD;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,8 @@ public class MonthlyRatingCalculationService {
         LocalDate to = month.atEndOfMonth();
 
         List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
-        MonthlyRating monthlyRating = new MonthlyRating(monthMatchPlayers, modType);
+        int matchesThreshold = settingsService.getIntSetting(MONTHLY_MATCHES_THRESHOLD);
+        MonthlyRating monthlyRating = new MonthlyRating(monthMatchPlayers, modType, matchesThreshold);
 
         MonthlyRatingPdf monthlyRatingPdf = new MonthlyRatingPdf(getReportName(month), convertToReportRows(monthlyRating));
 

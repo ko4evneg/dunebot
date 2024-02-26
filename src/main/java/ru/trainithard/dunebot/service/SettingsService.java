@@ -8,6 +8,7 @@ public interface SettingsService {
     String MATCH_START_DELAY_KEY = "MATCH_START_DELAY";
     String FINISH_MATCH_TIMEOUT_KEY = "FINISH_MATCH_TIMEOUT";
     String RESUBMITS_LIMIT_KEY = "RESUBMITS_LIMIT";
+    String MONTHLY_MATCHES_THRESHOLD = "MONTH_MATCHES_LIMIT";
 
     int getIntSetting(String key);
 
