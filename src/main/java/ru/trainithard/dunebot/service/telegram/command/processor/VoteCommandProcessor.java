@@ -138,7 +138,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer replyTopicId = match.getExternalPollId().getReplyId();
         StringBuilder messageText = new StringBuilder("*Матч ").append(match.getId()).append("* собран. Участники:")
-                .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", regularPlayerMentions));
+                .append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", regularPlayerMentions));
         if (!guestPlayerMentions.isEmpty()) {
             messageText.append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR)
                     .append("*Внимание:* в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
@@ -175,7 +175,10 @@ public class VoteCommandProcessor extends CommandProcessor {
                         });
                         if (match.hasMissingPlayers()) {
                             removeScheduledMatchStart(match);
-                            messagingService.deleteMessageAsync(match.getExternalStartId());
+                            ExternalMessageId externalStartId = match.getExternalStartId();
+                            if (externalStartId != null) {
+                                messagingService.deleteMessageAsync(externalStartId);
+                            }
                         }
                     }
                 });

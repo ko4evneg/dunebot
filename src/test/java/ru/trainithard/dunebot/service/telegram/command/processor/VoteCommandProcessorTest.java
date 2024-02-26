@@ -311,7 +311,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
         String[] textRows = messageDto.getText().split("\n");
-        List<String> names = Arrays.stream(textRows[2].split(", ")).toList();
+        List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
 
         assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
@@ -338,16 +338,16 @@ class VoteCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
         String[] textRows = messageDto.getText().split("\n");
-        List<String> names = Arrays.stream(textRows[2].split(", ")).toList();
-        List<String> guestsNames = Arrays.stream(textRows[5].split(", ")).toList();
+        List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
+        List<String> guestsNames = Arrays.stream(textRows[4].split(", ")).toList();
 
         assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2"));
-        assertTrue(textRows[3].isBlank());
+        assertTrue(textRows[2].isBlank());
         assertEquals("*Внимание:* в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
-                     "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:", textRows[4]);
+                     "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:", textRows[3]);
         assertThat(guestsNames, containsInAnyOrder("@en3", "@fName"));
         assertNull(messageDto.getKeyboard());
     }
