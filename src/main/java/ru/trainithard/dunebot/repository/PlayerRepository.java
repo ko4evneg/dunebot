@@ -12,8 +12,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     Optional<Player> findByExternalIdOrSteamName(long externalId, @Nullable String steamName);
 
-    @Query("select (count(p) > 0) from Player p where p.externalId = :externalId")
-    boolean existsByTelegramId(Long externalId);
+    @Query("select (count(p) > 0) from Player p where p.externalId = :externalId and not p.guest")
+    boolean existsNonGuestByTelegramId(Long externalId);
 
     @Query(nativeQuery = true, value =
             "select cast(substring(coalesce(max(steam_name), 'guest0'), 6) as integer) + 1 from players where is_guest")

@@ -22,7 +22,7 @@ public class CommonCommandMessageValidator {
         if (command == null) {
             throw new AnswerableDuneBotException(WRONG_COMMAND, commandMessage);
         }
-        if (!command.isAnonymous() && !playerRepository.existsByTelegramId(commandMessage.getUserId())) {
+        if (!command.isAnonymous() && !playerRepository.existsNonGuestByTelegramId(commandMessage.getUserId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, commandMessage);
         }
         if (!command.isPublicCommand() && commandMessage.getChatType() != null && commandMessage.getChatType() != ChatType.PRIVATE) {

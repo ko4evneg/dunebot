@@ -121,6 +121,18 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
+    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE,
+            names = {"REGISTER", "ADMIN", "HELP", "START", "VOTE", "UPLOAD_PHOTO", "ACCEPT_SUBMIT", "REFRESH_PROFILE"})
+    void shouldThrowForGuestCallOfNonAnonymousCommand(Command command) {
+        jdbcTemplate.execute("update players set is_guest = true where id = 10000");
+        message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
+
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
+        assertEquals(ANONYMOUS_COMMAND_TEXT, actualException.getMessage());
+    }
+
+    @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldThrowOnTextCommandsInNonPrivateChat(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
