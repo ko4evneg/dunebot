@@ -13,8 +13,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MonthlyRatingTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
@@ -150,6 +149,11 @@ class MonthlyRatingTest {
                 .anyMatch(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f7 (s7) l7"));
 
         assertFalse(isPlayer7Present);
+    }
+
+    @Test
+    void shouldExcludeGuestPlayersFromRating() {
+        fail();
     }
 
     private MatchPlayer getMatchPlayer(Match match, int playerId, int place) {

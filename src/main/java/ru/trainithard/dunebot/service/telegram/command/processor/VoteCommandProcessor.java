@@ -68,7 +68,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                             Player player;
                             if (playerOptional.isEmpty()) {
                                 int nextGuestIndex = playerRepository.findNextGuestIndex();
-                                Player guestPlayer = new Player(commandMessage, nextGuestIndex);
+                                Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
                                 player = playerRepository.save(guestPlayer);
                             } else {
                                 player = playerOptional.get();

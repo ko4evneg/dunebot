@@ -27,7 +27,7 @@ public class Player extends BaseEntity {
     @Column(name = "IS_GUEST")
     private boolean guest;
 
-    public Player(CommandMessage commandMessage, ParsedNames parsedNames) {
+    private Player(CommandMessage commandMessage, ParsedNames parsedNames) {
         this.externalId = commandMessage.getUserId();
         this.externalChatId = commandMessage.getChatId();
         this.externalFirstName = commandMessage.getExternalFirstName();
@@ -37,8 +37,7 @@ public class Player extends BaseEntity {
         this.externalName = commandMessage.getUserName();
     }
 
-    //TODO make factory methods
-    public Player(CommandMessage commandMessage, int guestId) {
+    private Player(CommandMessage commandMessage, int guestId) {
         this.externalId = commandMessage.getUserId();
         this.externalChatId = commandMessage.getChatId();
         this.externalFirstName = commandMessage.getExternalFirstName();
@@ -47,6 +46,14 @@ public class Player extends BaseEntity {
         this.firstName = "Vasya";
         this.lastName = "Pupkin";
         this.steamName = "guest" + guestId;
+    }
+
+    public static Player createRegularPlayer(CommandMessage commandMessage, ParsedNames parsedNames) {
+        return new Player(commandMessage, parsedNames);
+    }
+
+    public static Player createGuestPlayer(CommandMessage commandMessage, int guestId) {
+        return new Player(commandMessage, guestId);
     }
 
     public String getFriendlyName() {

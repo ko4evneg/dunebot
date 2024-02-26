@@ -63,6 +63,7 @@ public class Match extends BaseEntity {
     /**
      * Count of positive votes in the match poll.
      */
+    //TODO: replace with matchPlayers.size()
     private int positiveAnswersCount;
     /**
      * Count of accepted submit answers for the match (when user selects his place).

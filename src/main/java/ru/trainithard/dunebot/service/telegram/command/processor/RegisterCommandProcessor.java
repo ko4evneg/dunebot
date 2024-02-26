@@ -33,7 +33,7 @@ public class RegisterCommandProcessor extends CommandProcessor {
         ParsedNames parsedNames = validate(commandMessage);
         logger.debug("{}: validation passed", loggingId);
 
-        Player player = playerRepository.save(new Player(commandMessage, parsedNames));
+        Player player = playerRepository.save(Player.createRegularPlayer(commandMessage, parsedNames));
         String messageText = String.format(REGISTRATION_MESSAGE_TEMPLATE, player.getFriendlyName());
         messagingService.sendMessageAsync(
                 new MessageDto(commandMessage.getChatId(), messageText, commandMessage.getReplyMessageId(), null));
