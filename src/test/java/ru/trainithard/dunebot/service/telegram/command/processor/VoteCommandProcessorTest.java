@@ -22,6 +22,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -90,10 +91,13 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "values (10000, 10000, 10000, '" + ModType.CLASSIC + "','" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10000, 10000, 10000, '2010-10-10')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
+                             "values (10000, '" + SettingKey.MATCH_START_DELAY + "', 60, '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004 or external_id in (" + USER_2_ID + ", " + GUEST_ID + ")");

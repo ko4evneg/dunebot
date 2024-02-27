@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SettingsServiceImplTest extends TestContextMock {
     @Autowired
     private SettingsService settingsService;
@@ -27,7 +28,6 @@ class SettingsServiceImplTest extends TestContextMock {
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from settings where id between 10000 and 10002 or key = '" + SettingKey.CHAT_ID + "'");
-        System.out.println();
     }
 
     @Test
@@ -83,6 +83,7 @@ class SettingsServiceImplTest extends TestContextMock {
 
     @Test
     void shouldSaveSetting() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
         settingsService.saveSetting(SettingKey.CHAT_ID, "val");
 
         String actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + SettingKey.CHAT_ID + "'", String.class);
@@ -91,7 +92,6 @@ class SettingsServiceImplTest extends TestContextMock {
     }
 
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldUpdateSetting() {
         settingsService.saveSetting(SettingKey.TOPIC_ID_CLASSIC, "100");
 

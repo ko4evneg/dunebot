@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -32,10 +33,13 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
         fillMessage();
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
+                             "values (10000, '" + SettingKey.ADMIN_USER_ID + "', " + TestConstants.ADMIN_USER_ID + ", '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from players where id = 10000");
     }
 

@@ -20,6 +20,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
@@ -97,10 +98,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 "values (10002, 15000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                 "values (10003, 15000, 10003, '2010-10-10')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
+                             "values (10000, '" + SettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");

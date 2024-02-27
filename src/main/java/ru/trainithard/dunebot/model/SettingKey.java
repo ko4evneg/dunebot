@@ -25,7 +25,7 @@ public enum SettingKey {
      */
     MATCH_START_DELAY,
     /**
-     * Timeout for started match - ends match if no submit was done before this timeout
+     * Timeout in minutes for started match - ends match if no submit was done before this timeout
      */
     FINISH_MATCH_TIMEOUT,
     /**
