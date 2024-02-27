@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.model.Match;
-import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -124,7 +121,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void scheduleNewMatchStart(Match match) {
-        int matchStartDelay = settingsService.getIntSetting(SettingsService.MATCH_START_DELAY_KEY);
+        int matchStartDelay = settingsService.getIntSetting(SettingKey.MATCH_START_DELAY);
         Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
         ScheduledFuture<?> scheduledTask =
                 dunebotTaskScheduler.schedule(() -> messagingService.sendMessageAsync(getMatchStartMessage(match))

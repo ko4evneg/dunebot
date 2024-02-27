@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -19,9 +20,6 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.trainithard.dunebot.service.SettingsService.CHAT_ID_KEY;
-import static ru.trainithard.dunebot.service.SettingsService.MONTHLY_MATCHES_THRESHOLD;
-
 @Service
 @RequiredArgsConstructor
 public class MonthlyRatingCalculationService {
@@ -34,7 +32,7 @@ public class MonthlyRatingCalculationService {
         LocalDate to = month.atEndOfMonth();
 
         List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
-        int matchesThreshold = settingsService.getIntSetting(MONTHLY_MATCHES_THRESHOLD);
+        int matchesThreshold = settingsService.getIntSetting(SettingKey.MONTHLY_MATCHES_THRESHOLD);
         MonthlyRating monthlyRating = new MonthlyRating(monthMatchPlayers, modType, matchesThreshold);
 
         MonthlyRatingPdf monthlyRatingPdf = new MonthlyRatingPdf(getReportName(month), convertToReportRows(monthlyRating));
@@ -44,7 +42,7 @@ public class MonthlyRatingCalculationService {
         Files.write(dir.resolve(getPdfFileName(month)), pdfFile);
 
         String ratingName = "Рейтинг за " + getDateString(month);
-        String chatId = settingsService.getStringSetting(CHAT_ID_KEY);
+        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
         FileMessageDto fileMessageDto =
                 new FileMessageDto(chatId, ratingName + ":", getTopicId(modType), pdfFile, ratingName);
         messagingService.sendFileAsync(fileMessageDto);
@@ -76,8 +74,8 @@ public class MonthlyRatingCalculationService {
 
     private int getTopicId(ModType modType) {
         return switch (modType) {
-            case CLASSIC -> settingsService.getIntSetting(SettingsService.TOPIC_ID_CLASSIC_KEY);
-            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingsService.TOPIC_ID_UPRISING_KEY);
+            case CLASSIC -> settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
         };
     }
 

@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -44,11 +45,11 @@ public class AdminCommandProcessor extends CommandProcessor {
         switch (subCommand) {
             case INIT_SUBCOMMAND -> sendSetCommands();
             case SET_CHAT_SUBCOMMAND ->
-                    settingsService.saveSetting(SettingsService.CHAT_ID_KEY, Long.toString(commandMessage.getChatId()));
+                    settingsService.saveSetting(SettingKey.CHAT_ID, Long.toString(commandMessage.getChatId()));
             case SET_TOPIC_CLASSIC ->
-                    settingsService.saveSetting(SettingsService.TOPIC_ID_CLASSIC_KEY, commandMessage.getReplyMessageId().toString());
+                    settingsService.saveSetting(SettingKey.TOPIC_ID_CLASSIC, commandMessage.getReplyMessageId().toString());
             case SET_TOPIC_UPRISING4 ->
-                    settingsService.saveSetting(SettingsService.TOPIC_ID_UPRISING_KEY, commandMessage.getReplyMessageId().toString());
+                    settingsService.saveSetting(SettingKey.TOPIC_ID_UPRISING, commandMessage.getReplyMessageId().toString());
             default -> {
                 log.debug("{}: wronad admin command subcommand {}", loggingId, subCommand);
                 messageDto.setText(WRONG_COMMAND_EXCEPTION_MESSAGE);

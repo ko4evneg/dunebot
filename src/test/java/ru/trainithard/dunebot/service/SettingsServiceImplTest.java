@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.model.SettingKey;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,73 +19,73 @@ class SettingsServiceImplTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'strKey', 'strVal', '2010-01-02')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10001, 'intKey', '5', '2010-01-02')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10002, 'longKey', '2', '2010-01-02')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '5', '2010-01-02')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10002, 'ADMIN_USER_ID', '2', '2010-01-02')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10002 or key = 'randomKey'");
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10002 or key = '" + SettingKey.CHAT_ID + "'");
         System.out.println();
     }
 
     @Test
     void shouldReturnStringSetting() {
-        String actualValue = settingsService.getStringSetting("strKey");
+        String actualValue = settingsService.getStringSetting(SettingKey.CHAT_ID);
 
         assertEquals("strVal", actualValue);
     }
 
     @Test
     void shouldReturnCachedStringSetting() {
-        settingsService.getStringSetting("strKey");
-        jdbcTemplate.execute("delete from settings where key = 'strKey'");
+        settingsService.getStringSetting(SettingKey.CHAT_ID);
+        jdbcTemplate.execute("delete from settings where key = 'CHAT_ID'");
 
-        String actualCachedValue = settingsService.getStringSetting("strKey");
+        String actualCachedValue = settingsService.getStringSetting(SettingKey.CHAT_ID);
 
         assertEquals("strVal", actualCachedValue);
     }
 
     @Test
     void shouldReturnLongSetting() {
-        long actualValue = settingsService.getLongSetting("longKey");
+        long actualValue = settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
 
         assertEquals(2L, actualValue);
     }
 
     @Test
     void shouldReturnCachedLongSetting() {
-        settingsService.getLongSetting("longKey");
-        jdbcTemplate.execute("delete from settings where key = 'longKey'");
+        settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
+        jdbcTemplate.execute("delete from settings where key = '" + SettingKey.ADMIN_USER_ID + "'");
 
-        long actualCachedValue = settingsService.getLongSetting("longKey");
+        long actualCachedValue = settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
 
         assertEquals(2L, actualCachedValue);
     }
 
     @Test
     void shouldReturnIntSetting() {
-        int actualValue = settingsService.getIntSetting("intKey");
+        int actualValue = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
 
         assertEquals(5, actualValue);
     }
 
     @Test
     void shouldReturnCachedIntSetting() {
-        settingsService.getIntSetting("intKey");
-        jdbcTemplate.execute("delete from settings where key = 'intKey'");
+        settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+        jdbcTemplate.execute("delete from settings where key = '" + SettingKey.TOPIC_ID_CLASSIC + "'");
 
-        int actualCachedValue = settingsService.getIntSetting("intKey");
+        int actualCachedValue = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
 
         assertEquals(5, actualCachedValue);
     }
 
     @Test
     void shouldSaveSetting() {
-        settingsService.saveSetting("randomKey", "val");
+        settingsService.saveSetting(SettingKey.CHAT_ID, "val");
 
-        String actualValue = jdbcTemplate.queryForObject("select value from settings where key = 'randomKey'", String.class);
+        String actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + SettingKey.CHAT_ID + "'", String.class);
 
         assertEquals("val", actualValue);
     }
@@ -92,9 +93,9 @@ class SettingsServiceImplTest extends TestContextMock {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
     void shouldUpdateSetting() {
-        settingsService.saveSetting("intKey", "100");
+        settingsService.saveSetting(SettingKey.TOPIC_ID_CLASSIC, "100");
 
-        Integer actualValue = jdbcTemplate.queryForObject("select value from settings where key = 'intKey'", Integer.class);
+        Integer actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + SettingKey.TOPIC_ID_CLASSIC + "'", Integer.class);
 
         assertNotNull(actualValue);
         assertEquals(100, actualValue);

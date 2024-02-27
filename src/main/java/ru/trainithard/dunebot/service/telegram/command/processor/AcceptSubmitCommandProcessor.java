@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
@@ -62,7 +63,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             deleteOldSubmitMessage(submittingPlayer);
 
             int candidatePlace = callback.candidatePlace;
-            int resubmitsLimit = settingsService.getIntSetting(SettingsService.RESUBMITS_LIMIT_KEY);
+            int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
                 log.debug("{}: not exceeding resubmits conflict resolution started", loggingId);
 

@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -54,21 +55,21 @@ class AdminCommandProcessorTest extends TestContextMock {
     void shouldInvokeSaveChatIdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set_chat", 10000), mockLoggingId);
 
-        verify(settingsService, times(1)).saveSetting(SettingsService.CHAT_ID_KEY, "10011");
+        verify(settingsService, times(1)).saveSetting(SettingKey.CHAT_ID, "10011");
     }
 
     @Test
     void shouldInvokeSaveClassicTopicIdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set_topic_dune", 12345), mockLoggingId);
 
-        verify(settingsService, times(1)).saveSetting(SettingsService.TOPIC_ID_CLASSIC_KEY, "12345");
+        verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_CLASSIC, "12345");
     }
 
     @Test
     void shouldInvokeSaveUprisingTopicIdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set_topic_up4", 12121), mockLoggingId);
 
-        verify(settingsService, times(1)).saveSetting(SettingsService.TOPIC_ID_UPRISING_KEY, "12121");
+        verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_UPRISING, "12121");
     }
 
     @Test

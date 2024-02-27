@@ -7,6 +7,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
@@ -16,8 +17,6 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
-
-import static ru.trainithard.dunebot.service.SettingsService.CHAT_ID_KEY;
 
 /**
  * Creates new poll in external messaging system for new match gathering.
@@ -59,14 +58,14 @@ public class NewCommandProcessor extends CommandProcessor {
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
         String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
-        String chatId = settingsService.getStringSetting(CHAT_ID_KEY);
+        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
         return new PollMessageDto(chatId, text, getTopicId(modType), POLL_OPTIONS);
     }
 
     private int getTopicId(ModType modType) {
         return switch (modType) {
-            case CLASSIC -> settingsService.getIntSetting(SettingsService.TOPIC_ID_CLASSIC_KEY);
-            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingsService.TOPIC_ID_UPRISING_KEY);
+            case CLASSIC -> settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
         };
     }
 
