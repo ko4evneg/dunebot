@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+/**
+ * Redirect /start command to /help.
+ */
 @Service
 @RequiredArgsConstructor
 public class StartCommandProcessor extends CommandProcessor {

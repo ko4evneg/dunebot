@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -23,10 +22,14 @@ import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 
+/**
+ * Accepts player's reply to match submit message (place selection), validates consistency of specific match selected
+ * places and run resubmit process for conflicting matches.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(AcceptSubmitCommandProcessor.class);
     private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE =
             "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE =
@@ -46,14 +49,14 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        logger.debug("{}: accept_submit started", loggingId);
+        log.debug("{}: accept_submit started", loggingId);
 
         Callback callback = new Callback(commandMessage.getCallback());
         Match match = matchRepository.findWithMatchPlayersBy(callback.matchId).orElseThrow();
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
         MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
 
-        logger.debug("{}: set match id: {}, player id: {}", loggingId, match.getId(), submittingPlayer.getPlayer().getId());
+        log.debug("{}: set match id: {}, player id: {}", loggingId, match.getId(), submittingPlayer.getPlayer().getId());
 
         if (!submittingPlayer.hasCandidateVote()) {
             deleteOldSubmitMessage(submittingPlayer);
@@ -61,22 +64,22 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             int candidatePlace = callback.candidatePlace;
             int resubmitsLimit = settingsService.getIntSetting(SettingsService.RESUBMITS_LIMIT_KEY);
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
-                logger.debug("{}: not exceeding resubmits conflict resolution started", loggingId);
+                log.debug("{}: not exceeding resubmits conflict resolution started", loggingId);
 
                 String conflictText = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
                 sendMessagesToMatchPlayers(matchPlayers, conflictText);
                 resubmitProcessor.process(match, loggingId);
 
-                logger.debug("{}: not exceeding resubmits conflict resolution ended successfully", loggingId);
+                log.debug("{}: not exceeding resubmits conflict resolution ended successfully", loggingId);
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
-                logger.debug("{}: exceeding resubmits conflict successfully ended", loggingId);
+                log.debug("{}: exceeding resubmits conflict successfully ended", loggingId);
 
                 sendMessagesToMatchPlayers(matchPlayers, RESUBMIT_LIMIT_EXCEEDED_MESSAGE);
                 matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, match.getId()), loggingId);
 
-                logger.debug("{}: exceeding resubmits conflict resolution successfully ended", loggingId);
+                log.debug("{}: exceeding resubmits conflict resolution successfully ended", loggingId);
             } else {
-                logger.debug("{}: not conflicting submit processing started", loggingId);
+                log.debug("{}: not conflicting submit processing started", loggingId);
 
                 submittingPlayer.setCandidatePlace(candidatePlace);
                 match.setSubmitsCount(match.getSubmitsCount() + 1);
@@ -90,11 +93,11 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
                 }
 
-                logger.debug("{}: not conflicting submit processing successfully ended", loggingId);
+                log.debug("{}: not conflicting submit processing successfully ended", loggingId);
             }
         }
 
-        logger.debug("{}: accept_submit ended", loggingId);
+        log.debug("{}: accept_submit ended", loggingId);
     }
 
     private MatchPlayer getSubmittingPlayer(long externalUserId, List<MatchPlayer> matchPlayers) {

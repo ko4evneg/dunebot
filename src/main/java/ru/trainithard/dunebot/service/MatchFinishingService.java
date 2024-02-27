@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.model.Match;
@@ -23,10 +22,10 @@ import java.util.stream.IntStream;
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchFinishingService {
-    private static final Logger logger = LoggerFactory.getLogger(MatchFinishingService.class);
     private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
 
     private final MatchRepository matchRepository;
@@ -36,17 +35,17 @@ public class MatchFinishingService {
     private final Clock clock;
 
     public void finishUnsuccessfullySubmittedMatch(long matchId, String reason, int loggingId) {
-        logger.debug("{}: unsuccessful_match_finish started", loggingId);
+        log.debug("{}: unsuccessful_match_finish started", loggingId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         if (!finishedMatchStates.contains(match.getState())) {
-            logger.debug("{}: unsuccessful_match_finish found unfinished match id: {}", loggingId, match.getId());
+            log.debug("{}: unsuccessful_match_finish found unfinished match id: {}", loggingId, match.getId());
 
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
-                logger.debug("{}: unsuccessful_match_finish successfully save started", loggingId);
+                log.debug("{}: unsuccessful_match_finish successfully save started", loggingId);
                 finishSuccessfullyAndSave(match);
             } else {
-                logger.debug("{}: unsuccessful_match_finish failed scenario save started", loggingId);
+                log.debug("{}: unsuccessful_match_finish failed scenario save started", loggingId);
 
                 match.setState(MatchState.FAILED);
                 match.setFinishDate(LocalDate.now(clock));
@@ -62,7 +61,7 @@ public class MatchFinishingService {
             }
         }
 
-        logger.debug("{}: unsuccessful_match_finish ended", loggingId);
+        log.debug("{}: unsuccessful_match_finish ended", loggingId);
     }
 
     private boolean hasAllPlacesSubmitted(Match match) {
@@ -73,12 +72,12 @@ public class MatchFinishingService {
     }
 
     public void finishSuccessfullySubmittedMatch(long matchId, int loggingId) {
-        logger.debug("{}: successful_match_finish started", loggingId);
+        log.debug("{}: successful_match_finish started", loggingId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         finishSuccessfullyAndSave(match);
 
-        logger.debug("{}: successful_match_finish ended", loggingId);
+        log.debug("{}: successful_match_finish ended", loggingId);
     }
 
     private void finishSuccessfullyAndSave(Match match) {

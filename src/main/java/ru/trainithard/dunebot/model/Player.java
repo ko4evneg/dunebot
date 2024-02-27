@@ -10,20 +10,47 @@ import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.util.ParsedNames;
 
+/**
+ * Entity represents registered player.
+ */
 @Getter
 @Setter
 @Entity
 @Table(name = "PLAYERS")
 @NoArgsConstructor
 public class Player extends BaseEntity {
+    /**
+     * User ID in external messaging system
+     */
     private long externalId;
+    /**
+     * Chat ID in external messaging system
+     */
     private long externalChatId;
+    /**
+     * Player's first name
+     */
     private String firstName;
+    /**
+     * Player's steam nickname
+     */
     private String steamName;
+    /**
+     * Player's last name
+     */
     private String lastName;
+    /**
+     * Player's first name in external messaging system
+     */
     private String externalFirstName;
+    /**
+     * Player's alias in external messaging system (for telegram: @alias)
+     */
     @Nullable
     private String externalName;
+    /**
+     * Shows if player was registered using /register command or by voting in rating poll.
+     */
     @Column(name = "IS_GUEST")
     private boolean guest;
 

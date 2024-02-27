@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
@@ -20,10 +19,13 @@ import java.util.List;
 
 import static ru.trainithard.dunebot.service.SettingsService.CHAT_ID_KEY;
 
+/**
+ * Creates new poll in external messaging system for new match gathering.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NewCommandProcessor extends CommandProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(NewCommandProcessor.class);
     private static final String POSITIVE_ANSWER = "Да";
     private static final List<String> POLL_OPTIONS = List.of(POSITIVE_ANSWER, "Нет", "Результат");
     private static final String NEW_POLL_MESSAGE_TEMPLATE = "Игрок %s призывает всех на матч в %s";
@@ -36,7 +38,7 @@ public class NewCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        logger.debug("{}: new started", loggingId);
+        log.debug("{}: new started", loggingId);
 
         String modTypeString = commandMessage.getArgument(1);
         ModType modType = ModType.getByAlias(modTypeString);
@@ -52,7 +54,7 @@ public class NewCommandProcessor extends CommandProcessor {
                             matchRepository.save(match);
                         }));
 
-        logger.debug("{}: new ended", loggingId);
+        log.debug("{}: new ended", loggingId);
     }
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {

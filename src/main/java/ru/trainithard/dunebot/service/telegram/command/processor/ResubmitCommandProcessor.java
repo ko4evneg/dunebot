@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -16,10 +15,13 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
 
+/**
+ * Resets current results and initiates match results requests.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResubmitCommandProcessor extends CommandProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(ResubmitCommandProcessor.class);
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE =
             "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест (%d)";
 
@@ -32,7 +34,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        logger.debug("{}: resubmit started", loggingId);
+        log.debug("{}: resubmit started", loggingId);
 
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         int resubmitsLimit = settingsService.getIntSetting(SettingsService.RESUBMITS_LIMIT_KEY);
@@ -43,11 +45,11 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
         process(match, loggingId);
 
-        logger.debug("{}: resubmit ended", loggingId);
+        log.debug("{}: resubmit ended", loggingId);
     }
 
     void process(Match match, int loggingId) {
-        logger.debug("{}: resubmit processing started", loggingId);
+        log.debug("{}: resubmit processing started", loggingId);
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         updateSubmitsData(match);
@@ -57,7 +59,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         });
         submitCommandProcessor.process(match, loggingId);
 
-        logger.debug("{}: resubmit processing ended", loggingId);
+        log.debug("{}: resubmit processing ended", loggingId);
     }
 
     private void updateSubmitsData(Match match) {

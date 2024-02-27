@@ -17,17 +17,53 @@ import static ru.trainithard.dunebot.service.telegram.command.CommandType.*;
 @RequiredArgsConstructor
 public enum Command {
 
+    /**
+     * Register new player.
+     */
     REGISTER(TEXT, true, false, 3),
+    /**
+     * Update existing player profile.
+     */
     REFRESH_PROFILE(TEXT, true, false, 3),
+    /**
+     * Creates new match gathering poll.
+     */
     NEW(TEXT, false, false, 1),
+    /**
+     * Accepts a vote in a match gathering poll.
+     */
     VOTE(POLL_VOTE, true, true, 0),
+    /**
+     * Cancels owned not finished match.
+     */
     CANCEL(TEXT, false, false, 0),
+    /**
+     * Initiate first match results requests.
+     */
     SUBMIT(TEXT, false, false, 1),
+    /**
+     * Resets current results and initiates match results requests.
+     */
     RESUBMIT(TEXT, false, false, 1),
+    /**
+     * Accepts photo upload with match results.
+     */
     UPLOAD_PHOTO(FILE_UPLOAD, true, false, 0),
+    /**
+     * Accepts player's reply to match result requests.
+     */
     ACCEPT_SUBMIT(CALLBACK, true, false, 0),
+    /**
+     * Shows bot help.
+     */
     HELP(TEXT, true, false, 0),
+    /**
+     * Redirects to <code>HELP</code> command.
+     */
     START(TEXT, true, false, 0),
+    /**
+     * Manage and configure bot.
+     */
     ADMIN(TEXT, true, true, 1);
 
     private static final Map<String, Command> availableCommands;

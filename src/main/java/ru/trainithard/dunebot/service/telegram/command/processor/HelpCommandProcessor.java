@@ -7,6 +7,9 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+/**
+ * Shows bot how to instructions to requester.
+ */
 @Service
 @RequiredArgsConstructor
 public class HelpCommandProcessor extends CommandProcessor {

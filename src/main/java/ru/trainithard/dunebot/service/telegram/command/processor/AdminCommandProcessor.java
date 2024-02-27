@@ -12,6 +12,9 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Map;
 
+/**
+ * Process admin commands for bot configuration and management.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

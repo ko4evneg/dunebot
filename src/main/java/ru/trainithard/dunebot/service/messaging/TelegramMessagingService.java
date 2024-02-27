@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.messaging;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -27,10 +26,10 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
-    private static final Logger logger = LoggerFactory.getLogger(TelegramMessagingService.class);
     private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
     private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
     private static final String SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE = "sendDocumentAsync() call encounters API exception";
@@ -47,7 +46,7 @@ public class TelegramMessagingService implements MessagingService {
             DeleteMessage deleteMessage = new DeleteMessage(externalMessageId.getChatIdString(), externalMessageId.getMessageId());
             telegramBot.executeAsync(deleteMessage);
         } catch (TelegramApiException exception) {
-            logger.error(DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+            log.error(DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
     }
 
@@ -61,11 +60,11 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
                 } else {
                     telegramMessageCompletableFuture.isCompletedExceptionally();
-                    logger.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, throwable);
+                    log.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            logger.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
+            log.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -88,11 +87,11 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
                 } else {
                     telegramMessageCompletableFuture.isCompletedExceptionally();
-                    logger.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, throwable);
+                    log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            logger.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+            log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
     }
@@ -129,7 +128,7 @@ public class TelegramMessagingService implements MessagingService {
                 telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
             } else {
                 telegramMessageCompletableFuture.isCompletedExceptionally();
-                logger.error(SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE, throwable);
+                log.error(SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE, throwable);
             }
         });
         return telegramMessageCompletableFuture;
@@ -155,11 +154,11 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new TelegramFileDetailsDto(message));
                 } else {
                     telegramMessageCompletableFuture.isCompletedExceptionally();
-                    logger.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, throwable);
+                    log.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            logger.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, exception);
+            log.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, exception);
         }
         return telegramMessageCompletableFuture;
 
@@ -174,7 +173,7 @@ public class TelegramMessagingService implements MessagingService {
             SetMyCommands setMyCommands = new SetMyCommands(botCommands, new BotCommandScopeDefault(), null);
             telegramBot.executeAsync(setMyCommands);
         } catch (TelegramApiException exception) {
-            logger.error(SET_COMMANDS_LIST_EXCEPTION_MESSAGE, exception);
+            log.error(SET_COMMANDS_LIST_EXCEPTION_MESSAGE, exception);
         }
     }
 }

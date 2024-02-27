@@ -1,5 +1,23 @@
 package ru.trainithard.dunebot.service.telegram.command;
 
+/**
+ * Type of external command, based on its source.
+ */
 public enum CommandType {
-    TEXT, POLL_VOTE, CALLBACK, FILE_UPLOAD
+    /**
+     * Text sourced command
+     */
+    TEXT,
+    /**
+     * Poll vote sourced command
+     */
+    POLL_VOTE,
+    /**
+     * Pressed button sourced command
+     */
+    CALLBACK,
+    /**
+     * File upload sourced command
+     */
+    FILE_UPLOAD
 }

@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.WrongNamesInputException;
@@ -14,10 +13,13 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.util.ParsedNames;
 
+/**
+ * Updates player profile data.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefreshProfileCommandProcessor extends CommandProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(RefreshProfileCommandProcessor.class);
     private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены.";
 
     private final PlayerRepository playerRepository;
@@ -25,11 +27,11 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        logger.debug("{}: refresh started", loggingId);
+        log.debug("{}: refresh started", loggingId);
 
         playerRepository.findByExternalId(commandMessage.getUserId())
                 .ifPresent(player -> {
-                    logger.debug("{}: player found, id: {}", loggingId, player.getId());
+                    log.debug("{}: player found, id: {}", loggingId, player.getId());
                     String allArguments = commandMessage.getAllArguments();
                     if (allArguments.isBlank()) {
                         updateAndSaveTelegramProperties(commandMessage, player, loggingId);
@@ -46,7 +48,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
                     }
                 });
 
-        logger.debug("{}: refresh ended", loggingId);
+        log.debug("{}: refresh ended", loggingId);
     }
 
     private void updateAndSaveTelegramProperties(CommandMessage commandMessage, Player player, int loggingId) {
@@ -54,7 +56,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
         player.setExternalName(commandMessage.getUserName());
         playerRepository.save(player);
 
-        logger.debug("{}: player telegram properties set and saved, id: {}", loggingId, player.getId());
+        log.debug("{}: player telegram properties set and saved, id: {}", loggingId, player.getId());
     }
 
     private void updatePlayerNames(Player player, String allArguments, int loggingId) throws WrongNamesInputException {
@@ -63,7 +65,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
         player.setLastName(parsedNames.getLastName());
         player.setSteamName(parsedNames.getSteamName());
 
-        logger.debug("{}: player names set and saved, id: {}", loggingId, player.getId());
+        log.debug("{}: player names set and saved, id: {}", loggingId, player.getId());
     }
 
     @Override

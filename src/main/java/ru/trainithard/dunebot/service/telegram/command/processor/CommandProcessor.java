@@ -5,6 +5,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+/**
+ * Core abstract class for processing <code>CommandMessage</code> representing external messaging system commands.
+ */
 public abstract class CommandProcessor {
     @Autowired
     TransactionTemplate transactionTemplate;

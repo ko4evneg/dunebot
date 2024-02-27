@@ -10,6 +10,9 @@ import ru.trainithard.dunebot.model.messaging.ChatType;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Core DTO representing external messaging system commands.
+ */
 @Getter
 @EqualsAndHashCode
 public class CommandMessage {

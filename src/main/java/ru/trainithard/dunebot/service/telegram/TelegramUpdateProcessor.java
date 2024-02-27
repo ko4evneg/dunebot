@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.telegram;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
@@ -18,10 +17,14 @@ import ru.trainithard.dunebot.service.telegram.validator.ValidationStrategy;
 
 import java.util.Random;
 
+/**
+ * Core class reponsible for polling and parsing of external messages queue, detecting, validating and processing
+ * parsed commands.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramUpdateProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(TelegramUpdateProcessor.class);
     private static final Random random = new Random();
 
     private final TelegramBot telegramBot;
@@ -38,24 +41,24 @@ public class TelegramUpdateProcessor {
             try {
                 CommandMessage commandMessage = commandMessageFactory.getInstance(update);
                 if (commandMessage != null) {
-                    logger.debug("{}: received {} command from {}", loggingId, commandMessage.getCommand(), commandMessage.getUserId());
+                    log.debug("{}: received {} command from {}", loggingId, commandMessage.getCommand(), commandMessage.getUserId());
 
                     commonCommandMessageValidator.validate(commandMessage);
-                    logger.debug("{}: successfully passed common validation", loggingId);
+                    log.debug("{}: successfully passed common validation", loggingId);
 
                     ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
                     validator.validate(commandMessage);
-                    logger.debug("{}: successfully passed specific validation", loggingId);
+                    log.debug("{}: successfully passed specific validation", loggingId);
 
                     CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
                     processor.process(commandMessage, loggingId);
-                    logger.debug("{}: successfully processed", loggingId);
+                    log.debug("{}: successfully processed", loggingId);
                 }
             } catch (AnswerableDuneBotException answerableException) {
                 messagingService.sendMessageAsync(new MessageDto(answerableException));
-                logger.error(loggingId + ": command failed due to app-specific exception", answerableException);
+                log.error(loggingId + ": command failed due to app-specific exception", answerableException);
             } catch (Exception exception) {
-                logger.error(loggingId + ": command failed due to an exception", exception);
+                log.error(loggingId + ": command failed due to an exception", exception);
             } finally {
                 update = telegramBot.poll();
             }

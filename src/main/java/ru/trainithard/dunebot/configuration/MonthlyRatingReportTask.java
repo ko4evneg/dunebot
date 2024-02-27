@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.configuration;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.trainithard.dunebot.model.ModType;
@@ -13,10 +12,10 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MonthlyRatingReportTask implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(MonthlyRatingReportTask.class);
 
     private final MonthlyRatingCalculationService service;
     private final Clock clock;
@@ -36,15 +35,15 @@ public class MonthlyRatingReportTask implements Runnable {
             try {
                 service.storeAndSendMonthRating(previousMonth, ModType.CLASSIC, Path.of(pdfPath));
             } catch (Exception exception) {
-                logger.error("Failed to execute MonthlyRatingReportTask#run for CLASSIC mod", exception);
+                log.error("Failed to execute MonthlyRatingReportTask#run for CLASSIC mod", exception);
             }
 
             try {
                 service.storeAndSendMonthRating(previousMonth, ModType.UPRISING_4, Path.of(pdfPath));
             } catch (Exception exception) {
-                logger.error("Failed to execute MonthlyRatingReportTask#run for UPRISING_4 mod", exception);
+                log.error("Failed to execute MonthlyRatingReportTask#run for UPRISING_4 mod", exception);
             }
-            logger.info("Successfully executed MonthlyRatingReportTask#run");
+            log.info("Successfully executed MonthlyRatingReportTask#run");
         }
     }
 }

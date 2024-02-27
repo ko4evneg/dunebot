@@ -2,8 +2,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
@@ -31,10 +30,13 @@ import java.util.concurrent.CompletableFuture;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
+/**
+ * Initiates first match results requests.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(SubmitCommandProcessor.class);
     private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
 
@@ -53,11 +55,11 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     void process(Match match, int loggingId) {
-        logger.debug("{}: submit started", loggingId);
+        log.debug("{}: submit started", loggingId);
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
-            logger.debug("{}: matchPlayer processing started, id: {}", loggingId, matchPlayer.getId());
+            log.debug("{}: matchPlayer processing started, id: {}", loggingId, matchPlayer.getId());
 
             deleteOldSubmitMessage(matchPlayer);
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId().toString());
@@ -71,7 +73,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                         matchRepository.save(match);
                     }
                 } else {
-                    logger.error(loggingId + ": sending external message encountered an exception", throwable);
+                    log.error(loggingId + ": sending external message encountered an exception", throwable);
                 }
             });
         }
@@ -81,9 +83,9 @@ public class SubmitCommandProcessor extends CommandProcessor {
         String forcedFinishMessage = String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
                 .finishUnsuccessfullySubmittedMatch(match.getId(), forcedFinishMessage, loggingId), forcedFinishTime);
-        logger.debug("{}: forced finish match task scheduled", loggingId);
+        log.debug("{}: forced finish match task scheduled", loggingId);
 
-        logger.debug("{}: submit ended", loggingId);
+        log.debug("{}: submit ended", loggingId);
     }
 
     private void deleteOldSubmitMessage(MatchPlayer matchPlayer) {

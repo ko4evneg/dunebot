@@ -1,8 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.WrongNamesInputException;
@@ -14,10 +13,13 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.util.ParsedNames;
 
+/**
+ * Registers new player.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterCommandProcessor extends CommandProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(RegisterCommandProcessor.class);
     private static final String NICKNAME_IS_BUSY_MESSAGE_TEMPLATE = "Пользователь со steam ником %s уже существует!";
     private static final String ALREADY_REGISTERED_MESSAGE_TEMPLATE = "Вы уже зарегистрированы под steam ником %s! " +
                                                                       "Для смены ника выполните команду *'/refresh_profile Имя (steam никнейм) Фамилия'*";
@@ -28,17 +30,17 @@ public class RegisterCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        logger.debug("{}: register started", loggingId);
+        log.debug("{}: register started", loggingId);
 
         ParsedNames parsedNames = validate(commandMessage);
-        logger.debug("{}: validation passed", loggingId);
+        log.debug("{}: validation passed", loggingId);
 
         Player player = playerRepository.save(Player.createRegularPlayer(commandMessage, parsedNames));
         String messageText = String.format(REGISTRATION_MESSAGE_TEMPLATE, player.getFriendlyName());
         messagingService.sendMessageAsync(
                 new MessageDto(commandMessage.getChatId(), messageText, commandMessage.getReplyMessageId(), null));
 
-        logger.debug("{}: register ended", loggingId);
+        log.debug("{}: register ended", loggingId);
     }
 
     private ParsedNames validate(CommandMessage commandMessage) {
