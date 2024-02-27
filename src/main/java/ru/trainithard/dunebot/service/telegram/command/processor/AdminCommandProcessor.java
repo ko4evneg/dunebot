@@ -7,11 +7,8 @@ import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
-import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-
-import java.util.Map;
 
 /**
  * Process admin commands for bot configuration and management.
@@ -62,9 +59,9 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private void sendSetCommands() {
         // TODO:  replace with valid list
-        Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
-                COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
-        messagingService.sendSetCommands(new SetCommandsDto(commands));
+//        Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
+//                COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
+//        messagingService.sendSetCommands(new SetCommandsDto(commands));
     }
 
     @Override
