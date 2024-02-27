@@ -40,7 +40,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSH
 class PhotoUploadCommandProcessorTest extends TestContextMock {
     private static final String FILE_ID = "fileId123_4%";
     private static final String FILE_URI = "https://api.telegram.org/file/botfake_token/path/file.jpeg";
-    private static final String SUCCESSFUL_UPLOAD_TEXT = "Скриншот успешно загружен.";
+    private static final String SUCCESSFUL_UPLOAD_TEXT = "Скриншот успешно загружен\\.";
     private static final long FILE_SIZE = 540000;
     private static final long EXTERNAL_USER_ID = 12345L;
     private static final Long CHAT_ID = 100500L;

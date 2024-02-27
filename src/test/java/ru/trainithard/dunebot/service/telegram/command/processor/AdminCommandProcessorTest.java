@@ -21,6 +21,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -40,6 +41,9 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSetCommandsServiceOnInitSubcommand() {
+        fail();
+        // TODO:  set correct command list
+
         processor.process(getCommandMessage("init", 10000), mockLoggingId);
 
         ArgumentCaptor<SetCommandsDto> setCommandsDtoCaptor = ArgumentCaptor.forClass(SetCommandsDto.class);

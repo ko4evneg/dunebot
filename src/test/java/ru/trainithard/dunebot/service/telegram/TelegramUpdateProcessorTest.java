@@ -83,7 +83,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         updateProcessor.process();
 
         verify(messagingService, times(1)).sendMessageAsync(argThat(messageDto ->
-                Long.toString(TELEGRAM_CHAT_ID_1).equals(messageDto.getChatId()) && "Неверная команда!".equals(messageDto.getText())));
+                Long.toString(TELEGRAM_CHAT_ID_1).equals(messageDto.getChatId()) && "Неверная команда\\!".equals(messageDto.getText())));
     }
 
     @Test

@@ -68,7 +68,7 @@ class HelpCommandProcessorTest extends TestContextMock {
     private String getHelpText() {
         // TODO:  check escaping
         return """
-                [Подробное описание бота](https://github.com/ko4evneg/dunebot/blob/master/help.md)
+                [Подробное описание бота](https://github\\.com/ko4evneg/dunebot/blob/master/help\\.md)
                                 
                 Список доступных команд:
                 '/register Имя (ник_steam) Фамилия' Регистрация игрока в рейтинге
@@ -77,7 +77,7 @@ class HelpCommandProcessorTest extends TestContextMock {
                 '/new up4' Создание опроса для Dune Uprising (4 игрока)
                 '/cancel' Удаление последнего опроса, созданного игроком
                 '/submit ID_игры' Запуск регистрации результатов игры с номером **ID_игры**
-                '/resubmit ID_игры' Запуск регистрации результатов игры заново. Возможно выполнить до трех раз на игру
+                '/resubmit ID_игры' Запуск регистрации результатов игры заново\\. Возможно выполнить до трех раз на игру
                 '/help' Помощь""";
     }
 }

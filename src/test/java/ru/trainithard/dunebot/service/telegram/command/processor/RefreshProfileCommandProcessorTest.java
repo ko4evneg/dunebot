@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 class RefreshProfileCommandProcessorTest extends TestContextMock {
     private static final Long CHAT_ID = 12345L;
     private static final long USER_ID = 12345L;
-    private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены.";
+    private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены\\.";
 
     @Autowired
     private RefreshProfileCommandProcessor processor;

@@ -36,7 +36,7 @@ public class TelegramMessagingService implements MessagingService {
     private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
     private static final String SET_COMMANDS_LIST_EXCEPTION_MESSAGE = "sendSetCommands() call encounters API exception";
     private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
-    private static final String MARKDOWN_PARSE_MODE = "Markdown";
+    private static final String MARKDOWN_PARSE_MODE = "MarkdownV2";
 
     private final TelegramBot telegramBot;
 

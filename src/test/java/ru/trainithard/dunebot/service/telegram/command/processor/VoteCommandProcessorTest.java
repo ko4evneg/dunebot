@@ -319,7 +319,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
+        assertEquals("*Матч 10000* собран\\. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
         assertNull(messageDto.getKeyboard());
     }
@@ -347,10 +347,10 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("*Матч 10000* собран. Участники:", textRows[0]);
+        assertEquals("*Матч 10000* собран\\. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2"));
         assertTrue(textRows[2].isBlank());
-        assertEquals("*Внимание:* в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
+        assertEquals("*Внимание:* в матче есть незарегистрированные игроки\\. Они автоматически зарегистрированы " +
                      "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:", textRows[3]);
         assertThat(guestsNames, containsInAnyOrder("@en3", "@fName"));
         assertNull(messageDto.getKeyboard());
@@ -364,6 +364,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
 
+        String actualText = messageDto.getText().replace("\\", "");
         assertEquals("""
                 Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
                 игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
@@ -371,7 +372,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 Также вы автоматически зарегистрированы у бота как гость под именем Vasya (guest1) Pupkin - это значит, что вы не \
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
-                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", messageDto.getText());
+                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", actualText);
         assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
         assertNull(messageDto.getReplyMessageId());
     }
@@ -388,6 +389,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
 
+        String actualText = messageDto.getText().replace("\\", "");
         assertEquals("""
                 Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
                 игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
@@ -395,7 +397,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 Также вы автоматически зарегистрированы у бота как гость под именем Vasya (guest1) Pupkin - это значит, что вы не \
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
-                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", messageDto.getText());
+                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", actualText);
         assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
         assertNull(messageDto.getReplyMessageId());
     }
