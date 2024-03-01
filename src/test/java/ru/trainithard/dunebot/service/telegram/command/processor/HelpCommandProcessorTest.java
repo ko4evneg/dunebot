@@ -32,7 +32,7 @@ class HelpCommandProcessorTest extends TestContextMock {
 
         assertEquals("10222", actualMessageDto.getChatId());
         assertEquals(10101, actualMessageDto.getReplyMessageId());
-        assertEquals(getHelpText(), actualMessageDto.getText());
+        assertEquals(getExpectedHelpText(), actualMessageDto.getText());
     }
 
     @Test
@@ -65,19 +65,18 @@ class HelpCommandProcessorTest extends TestContextMock {
         return CommandMessage.getMessageInstance(message);
     }
 
-    private String getHelpText() {
-        // TODO:  check escaping
+    private String getExpectedHelpText() {
         return """
-                [Подробное описание бота](https://github\\.com/ko4evneg/dunebot/blob/master/help\\.md)
-                                
+                [Подробное описание бота](https://github.com/ko4evneg/dunebot/blob/master/help.md)
+                              
                 Список доступных команд:
                 '/register Имя \\(ник\\_steam\\) Фамилия' Регистрация игрока в рейтинге
                 '/refresh\\_profile Имя \\(ник\\_steam\\) Фамилия' Изменение данных существующего игрока
                 '/new dune' Создание опроса для классической Dune
                 '/new up4' Создание опроса для Dune Uprising \\(4 игрока\\)
                 '/cancel' Удаление последнего опроса, созданного игроком
-                '/submit ID\\_игры' Запуск регистрации результатов игры с номером **ID\\_игры**
-                '/resubmit ID\\_игры' Запуск регистрации результатов игры заново\\. Возможно выполнить до трех раз на игру
+                '/submit *ID\\_игры*' Запуск регистрации результатов игры с номером *ID\\_игры*
+                '/resubmit *ID\\_игры*' Запуск регистрации результатов игры заново\\. Возможно выполнить до трех раз на игру
                 '/help' Помощь""";
     }
 }

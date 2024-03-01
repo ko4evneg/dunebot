@@ -7,6 +7,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.WrongNamesInputException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -42,7 +43,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
                             throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
                         } finally {
                             updateAndSaveTelegramProperties(commandMessage, player, loggingId);
-                            MessageDto messageDto = new MessageDto(commandMessage, SUCCESSFUL_UPDATE_MESSAGE, null);
+                            MessageDto messageDto = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPDATE_MESSAGE), null);
                             messagingService.sendMessageAsync(messageDto);
                         }
                     }

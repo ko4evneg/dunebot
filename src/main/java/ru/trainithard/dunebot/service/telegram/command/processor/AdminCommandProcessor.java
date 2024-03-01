@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -37,7 +38,7 @@ public class AdminCommandProcessor extends CommandProcessor {
 
         String subCommand = commandMessage.getArgument(1).toLowerCase();
 
-        MessageDto messageDto = new MessageDto(commandMessage, SUCCESSFUL_COMMAND_TEXT, null);
+        MessageDto messageDto = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_COMMAND_TEXT), null);
 
         switch (subCommand) {
             case INIT_SUBCOMMAND -> sendSetCommands();

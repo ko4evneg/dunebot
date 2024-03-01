@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.lang.Nullable;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
 
@@ -31,8 +32,8 @@ public class MessageDto {
         this(Long.toString(chatId), MarkdownEscaper.getEscaped(text), replyMessageId, linedButtons);
     }
 
-    public MessageDto(CommandMessage commandMessage, String text, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(commandMessage.getChatId()), MarkdownEscaper.getEscaped(text), commandMessage.getReplyMessageId(), linedButtons);
+    public MessageDto(CommandMessage commandMessage, ExternalMessage externalMessage, @Nullable List<List<ButtonDto>> linedButtons) {
+        this(Long.toString(commandMessage.getChatId()), externalMessage.getText(), commandMessage.getReplyMessageId(), linedButtons);
     }
 
     public MessageDto(ExternalMessageId externalMessageId, String text) {
