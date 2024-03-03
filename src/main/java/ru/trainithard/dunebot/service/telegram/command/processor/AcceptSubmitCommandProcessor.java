@@ -10,6 +10,7 @@ import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -37,7 +38,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'";
     private static final String ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE =
             "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'." +
-                    EXTERNAL_LINE_SEPARATOR + "Теперь загрузите в этот чат скриншот победы.";
+            EXTERNAL_LINE_SEPARATOR + "Теперь загрузите в этот чат скриншот победы.";
     private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE =
             "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
 
@@ -76,7 +77,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 log.debug("{}: exceeding resubmits conflict successfully ended", loggingId);
 
                 sendMessagesToMatchPlayers(matchPlayers, RESUBMIT_LIMIT_EXCEEDED_MESSAGE);
-                matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), String.format(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, match.getId()), loggingId);
+                String resubmitsLimitExceededMessageText = getResubmitsLimitFinishMessage(match.getId()).getText();
+                matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), resubmitsLimitExceededMessageText, loggingId);
 
                 log.debug("{}: exceeding resubmits conflict resolution successfully ended", loggingId);
             } else {
@@ -140,6 +142,12 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         conflictTextBuilder.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
 
         return conflictTextBuilder.toString();
+    }
+
+    private ExternalMessage getResubmitsLimitFinishMessage(Long matchId) {
+        return new ExternalMessage()
+                .startBold().append("Матч ").append(matchId).endBold()
+                .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     }
 
     private String getSubmitText(Match match, int candidatePlace) {

@@ -36,8 +36,8 @@ public class MessageDto {
         this(Long.toString(commandMessage.getChatId()), externalMessage.getText(), commandMessage.getReplyMessageId(), linedButtons);
     }
 
-    public MessageDto(ExternalMessageId externalMessageId, String text) {
-        this(Long.toString(externalMessageId.getChatId()), MarkdownEscaper.getEscaped(text), externalMessageId.getReplyId(), null);
+    public MessageDto(ExternalMessageId externalMessageId, ExternalMessage externalMessage) {
+        this(Long.toString(externalMessageId.getChatId()), externalMessage.getText(), externalMessageId.getReplyId(), null);
     }
 
     public MessageDto(AnswerableDuneBotException exception) {

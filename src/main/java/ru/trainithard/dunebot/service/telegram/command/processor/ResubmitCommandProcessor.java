@@ -11,6 +11,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -40,13 +41,20 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
-            matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(),
-                    String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId(), resubmitsLimit), loggingId);
+            String timeoutFinishMessageText = getTimeoutFinishMessage(match.getId(), resubmitsLimit).getText();
+            matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), timeoutFinishMessageText, loggingId);
         }
 
         process(match, loggingId);
 
         log.debug("{}: resubmit ended", loggingId);
+    }
+
+    private ExternalMessage getTimeoutFinishMessage(Long matchId, int resubmitsLimit) {
+        return new ExternalMessage()
+                .startBold().append("Матч ").append(matchId).endBold()
+                .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест (")
+                .append(resubmitsLimit).append(")");
     }
 
     void process(Match match, int loggingId) {

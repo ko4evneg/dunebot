@@ -15,6 +15,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
@@ -38,7 +39,6 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
-    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
 
     private final MatchPlayerRepository matchPlayerRepository;
@@ -81,9 +81,9 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
         int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
-        String forcedFinishMessage = String.format(TIMEOUT_MATCH_FINISH_MESSAGE, match.getId());
+        ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
-                .finishUnsuccessfullySubmittedMatch(match.getId(), forcedFinishMessage, loggingId), forcedFinishTime);
+                .finishUnsuccessfullySubmittedMatch(match.getId(), forcedFinishMessage.getText(), loggingId), forcedFinishTime);
         log.debug("{}: forced finish match task scheduled", loggingId);
 
         log.debug("{}: submit ended", loggingId);
@@ -112,6 +112,12 @@ public class SubmitCommandProcessor extends CommandProcessor {
         }
         buttons.add(new ButtonDto("не участвовал(а)", callbackPrefix + NOT_PARTICIPATED_MATCH_PLACE));
         return Lists.partition(buttons, 2);
+    }
+
+    private ExternalMessage getForcedFinishMessage(Long matchId) {
+        return new ExternalMessage()
+                .startBold().append("Матч ").append(matchId).endBold()
+                .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     }
 
     @Override

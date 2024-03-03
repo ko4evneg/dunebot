@@ -10,6 +10,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
@@ -56,7 +57,7 @@ public class MatchFinishingService {
                 });
 
                 ExternalPollId externalPollId = match.getExternalPollId();
-                MessageDto finishMessage = new MessageDto(externalPollId, reason);
+                MessageDto finishMessage = new MessageDto(externalPollId, new ExternalMessage(reason));
                 messagingService.sendMessageAsync(finishMessage);
             }
         }
@@ -92,20 +93,20 @@ public class MatchFinishingService {
     }
 
     private MessageDto getMatchFinishMessage(Match match) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("*Матч ").append(match.getId()).append("* завершился:")
+        ExternalMessage message = new ExternalMessage();
+        message.startBold().append("Матч ").append(match.getId()).endBold().append(" завершился:")
                 .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
+
         Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
         match.getMatchPlayers().stream()
                 .filter(matchPlayer -> matchPlayer.getPlace() != null &&
                         matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
-        playerNamesByPlace.forEach((place, name) -> stringBuilder.append(getPlaceEmoji(place)).append(" ").append(name).append(EXTERNAL_LINE_SEPARATOR));
-        stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR));
+        playerNamesByPlace.forEach((place, name) -> message.append(getPlaceEmoji(place)).append(" ").append(name).append(EXTERNAL_LINE_SEPARATOR));
 
         ExternalPollId externalPollId = match.getExternalPollId();
-        return new MessageDto(externalPollId, stringBuilder.toString());
+        return new MessageDto(externalPollId, message);
     }
 
     private String getPlaceEmoji(Integer place) {
@@ -116,7 +117,7 @@ public class MatchFinishingService {
             case 4 -> "4️⃣";
             case 5 -> "5️⃣";
             case 6 -> "6️⃣";
-            default -> "";
+            default -> throw new IllegalArgumentException("Can't determine place number emoji");
         };
     }
 }

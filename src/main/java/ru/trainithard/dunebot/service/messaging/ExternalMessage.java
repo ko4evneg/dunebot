@@ -3,27 +3,48 @@ package ru.trainithard.dunebot.service.messaging;
 import ru.trainithard.dunebot.configuration.SettingConstants;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
 
+import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+
 public class ExternalMessage {
     private final StringBuilder stringBuilder = new StringBuilder();
+    private boolean boldMarkupEnabled;
 
     public ExternalMessage() {
     }
 
-    public ExternalMessage(String text) {
-        append(text);
+    public ExternalMessage(Object text) {
+        append(text.toString());
     }
 
-    public ExternalMessage append(String text) {
-        stringBuilder.append(MarkdownEscaper.getEscaped(text));
+    public ExternalMessage append(Object text) {
+        stringBuilder.append(MarkdownEscaper.getEscaped(text.toString()));
         return this;
     }
 
-    public ExternalMessage appendBold(String text) {
-        stringBuilder.append("*").append(MarkdownEscaper.getEscaped(text)).append("*");
+    public ExternalMessage appendBold(Object text) {
+        stringBuilder.append("*").append(MarkdownEscaper.getEscaped(text.toString())).append("*");
         return this;
     }
 
-    public ExternalMessage appendLink(String name, String link) {
+    public ExternalMessage startBold() {
+        stringBuilder.append("*");
+        if (boldMarkupEnabled) {
+            throw new IllegalStateException("Starting new bold markup, when it is already bold");
+        }
+        boldMarkupEnabled = true;
+        return this;
+    }
+
+    public ExternalMessage endBold() {
+        stringBuilder.append("*");
+        if (!boldMarkupEnabled) {
+            throw new IllegalStateException("No bold markup start registered");
+        }
+        boldMarkupEnabled = false;
+        return this;
+    }
+
+    public ExternalMessage appendLink(Object name, String link) {
         //TODO: escape in (...)
         stringBuilder.append("[").append(name).append("]").append("(").append(link).append(")");
         return this;
@@ -35,6 +56,11 @@ public class ExternalMessage {
     }
 
     public String getText() {
+        int index = stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR);
+        if (index >= 0) {
+            stringBuilder.deleteCharAt(index);
+        }
         return stringBuilder.toString();
     }
+    //TODO ADD TEST
 }
