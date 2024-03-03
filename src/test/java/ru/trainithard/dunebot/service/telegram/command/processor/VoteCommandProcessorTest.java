@@ -372,7 +372,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 Также вы автоматически зарегистрированы у бота как гость под именем Vasya (guest1) Pupkin - это значит, что вы не \
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
-                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", actualText);
+                *Желательно это  сделать прямо сейчас.* Подробная информация о боте: /help.""", actualText);
         assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
         assertNull(messageDto.getReplyMessageId());
     }

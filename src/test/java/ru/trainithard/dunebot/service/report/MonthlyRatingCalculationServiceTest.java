@@ -176,7 +176,7 @@ class MonthlyRatingCalculationServiceTest extends TestContextMock {
 
         assertEquals(TestConstants.TOPIC_ID_UPRISING, actualMessage.getReplyMessageId());
         assertEquals(TestConstants.CHAT_ID, actualMessage.getChatId());
-        assertEquals("Рейтинг за 10.2010:", actualMessage.getText());
+        assertEquals("Рейтинг за 10\\.2010:", actualMessage.getText());
         assertArrayEquals(referenceFileBytes, actualPdfReader.getPageContent(1));
 
         actualInputStream.close();

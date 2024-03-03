@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 @Getter
 @RequiredArgsConstructor
 public enum ModType {
-    CLASSIC("\"Дюна (классика)\"", "dune", 4),
-    UPRISING_4("\"Апрайзинг на 4-х\"", "up4", 4),
-    UPRISING_6("\"Апрайзинг 3х3\"", "up6", 6);
+    CLASSIC("'Дюна (классика)'", "dune", 4),
+    UPRISING_4("'Апрайзинг на 4-х'", "up4", 4),
+    UPRISING_6("'Апрайзинг 3х3''", "up6", 6);
 
     private static final Map<String, ModType> modTypeByAlias;
 

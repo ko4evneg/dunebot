@@ -30,7 +30,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
     private static final String LAST_NAME = "lName";
     private static final String STEAM_NAME = "stName";
     private static final String REGISTRATION_MESSAGE =
-            String.format("Вы зарегистрированы как '%s (%s) %s'", FIRST_NAME, STEAM_NAME, LAST_NAME);
+            String.format("Вы зарегистрированы как '%s \\(%s\\) %s'", FIRST_NAME, STEAM_NAME, LAST_NAME);
     private static final CommandMessage commandMessage = getCommandMessage(STEAM_NAME, null);
     private static final String EXTERNAL_FIRST_NAME = "extName";
 

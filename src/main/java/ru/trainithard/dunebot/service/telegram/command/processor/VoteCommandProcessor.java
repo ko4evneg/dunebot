@@ -25,8 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
-import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
-
 /**
  * Accepts the vote in a match poll from external messaging system.
  */
@@ -70,27 +68,30 @@ public class VoteCommandProcessor extends CommandProcessor {
                                 int nextGuestIndex = playerRepository.findNextGuestIndex();
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
                                 player = playerRepository.save(guestPlayer);
+                                messagingService.sendMessageAsync(getGuestMessageDto(player));
                             } else {
                                 player = playerOptional.get();
                             }
-                    if (player.isGuest()) {
-                        messagingService.sendMessageAsync(getGuestMessageDto(player));
-                    }
                             processPlayerVoteRegistration(player, match, loggingId);
                         }
                 );
     }
 
     private MessageDto getGuestMessageDto(Player player) {
-        String messageText = String.format("""
+        ExternalMessage guestVoteMessage = new ExternalMessage("""
                 Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
                 игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
                 случае победы) - не волнуйтесь, бот подскажет что делать.
-                Также вы автоматически зарегистрированы у бота как гость под именем %s (%s) %s - это значит, что вы не \
-                можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
-                Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
-                *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", player.getFirstName(), player.getSteamName(), player.getLastName());
-        return new MessageDto(player.getExternalChatId(), new ExternalMessage(messageText), null, null);
+                Также вы автоматически зарегистрированы у бота как гость под именем """)
+                .append(player.getFirstName()).append(" (").append(player.getSteamName()).append(") ").append(player.getLastName())
+                .append(""" 
+                         - это значит, что вы не \
+                        можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
+                        Для того, чтобы подтвердить регистрацию, выполните в этом чате команду """)
+                .appendBold("'/refresh_profile Имя (Steam) Фамилия'").append(".")
+                .appendBold("Желательно это  сделать прямо сейчас.").newLine()
+                .append("Подробная информация о боте: /help.");
+        return new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
     }
 
     private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
@@ -150,15 +151,17 @@ public class VoteCommandProcessor extends CommandProcessor {
 
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer replyTopicId = match.getExternalPollId().getReplyId();
-        StringBuilder messageText = new StringBuilder("*Матч ").append(match.getId()).append("* собран. Участники:")
-                .append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", regularPlayerMentions));
+        ExternalMessage startMessage = new ExternalMessage()
+                .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
+                .newLine().append(String.join(", ", regularPlayerMentions));
         if (!guestPlayerMentions.isEmpty()) {
-            messageText.append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR)
-                    .append("*Внимание:* в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
+            startMessage.newLine().newLine()
+                    .appendBold("Внимание:")
+                    .append(" в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
                             "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
-                    .append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", guestPlayerMentions));
+                    .newLine().append(String.join(", ", guestPlayerMentions));
         }
-        return new MessageDto(matchTopicChatId, new ExternalMessage(messageText), replyTopicId, null);
+        return new MessageDto(matchTopicChatId, startMessage, replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {
