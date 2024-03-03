@@ -99,7 +99,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
         String text = String.format(MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE, matchIdString);
         List<List<ButtonDto>> pollKeyboard = getSubmitCallbackKeyboard(registeredMatchPlayers, matchIdString);
         String playersChatId = Long.toString(matchPlayer.getPlayer().getExternalChatId());
-        return new MessageDto(playersChatId, text, null, pollKeyboard);
+        return new MessageDto(playersChatId, new ExternalMessage(text), null, pollKeyboard);
     }
 
     private List<List<ButtonDto>> getSubmitCallbackKeyboard(List<MatchPlayer> registeredMatchPlayers, String matchIdString) {

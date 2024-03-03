@@ -7,6 +7,7 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.WrongNamesInputException;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -38,7 +39,7 @@ public class RegisterCommandProcessor extends CommandProcessor {
         Player player = playerRepository.save(Player.createRegularPlayer(commandMessage, parsedNames));
         String messageText = String.format(REGISTRATION_MESSAGE_TEMPLATE, player.getFriendlyName());
         messagingService.sendMessageAsync(
-                new MessageDto(commandMessage.getChatId(), messageText, commandMessage.getReplyMessageId(), null));
+                new MessageDto(commandMessage.getChatId(), new ExternalMessage(messageText), commandMessage.getReplyMessageId(), null));
 
         log.debug("{}: register ended", loggingId);
     }

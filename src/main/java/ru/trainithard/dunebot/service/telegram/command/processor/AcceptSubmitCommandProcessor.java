@@ -32,13 +32,6 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LIN
 @Service
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
-    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE =
-            "*Матч %d* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
-    private static final String ACCEPTED_SUBMIT_MESSAGE_TEMPLATE =
-            "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'";
-    private static final String ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE =
-            "В матче %1$d за вами зафиксировано %2$d место.%3$sПри ошибке используйте команду '/resubmit %1$d'." +
-            EXTERNAL_LINE_SEPARATOR + "Теперь загрузите в этот чат скриншот победы.";
     private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE =
             "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
 
@@ -68,15 +61,15 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
                 log.debug("{}: not exceeding resubmits conflict resolution started", loggingId);
 
-                String conflictText = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
-                sendMessagesToMatchPlayers(matchPlayers, conflictText);
+                ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
+                sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
                 resubmitProcessor.process(match, loggingId);
 
                 log.debug("{}: not exceeding resubmits conflict resolution ended successfully", loggingId);
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
                 log.debug("{}: exceeding resubmits conflict successfully ended", loggingId);
 
-                sendMessagesToMatchPlayers(matchPlayers, RESUBMIT_LIMIT_EXCEEDED_MESSAGE);
+                sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
                 String resubmitsLimitExceededMessageText = getResubmitsLimitFinishMessage(match.getId()).getText();
                 matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), resubmitsLimitExceededMessageText, loggingId);
 
@@ -91,7 +84,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                     matchPlayerRepository.save(submittingPlayer);
                 });
                 Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
-                messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match, candidatePlace), null, null));
+                messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
                 if (match.canBeFinished()) {
                     matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
                 }
@@ -123,25 +116,25 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 });
     }
 
-    private String getConflictMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {
+    private ExternalMessage getConflictMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {
         Map<Integer, List<MatchPlayer>> playersByPlace = matchPlayers.stream()
                 .filter(matchPlayer -> matchPlayer.getCandidatePlace() != null && !matchPlayer.getId().equals(candidate.getId()))
                 .collect(Collectors.groupingBy(MatchPlayer::getCandidatePlace));
         List<MatchPlayer> candidatePlaceMatchPlayers = playersByPlace.computeIfAbsent(candidatePlace, key -> new ArrayList<>());
         candidatePlaceMatchPlayers.add(candidate);
-        StringBuilder conflictTextBuilder = new StringBuilder("Некоторые игроки не смогли поделить *");
+        ExternalMessage conflictMessage = new ExternalMessage("Некоторые игроки не смогли поделить ").startBold();
         for (Map.Entry<Integer, List<MatchPlayer>> entry : playersByPlace.entrySet()) {
             List<MatchPlayer> conflictMatchPlayers = entry.getValue();
             if (conflictMatchPlayers.size() > 1) {
-                conflictTextBuilder.append(entry.getKey()).append(" место*:").append(EXTERNAL_LINE_SEPARATOR);
+                conflictMessage.append(entry.getKey()).append(" место").endBold().append(":").newLine();
                 conflictMatchPlayers.stream()
                         .map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName())
-                        .forEach(playerFriendlyName -> conflictTextBuilder.append(playerFriendlyName).append(EXTERNAL_LINE_SEPARATOR));
+                        .forEach(playerFriendlyName -> conflictMessage.append(playerFriendlyName).newLine());
             }
         }
-        conflictTextBuilder.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
+        conflictMessage.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
 
-        return conflictTextBuilder.toString();
+        return conflictMessage;
     }
 
     private ExternalMessage getResubmitsLimitFinishMessage(Long matchId) {
@@ -150,13 +143,24 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     }
 
-    private String getSubmitText(Match match, int candidatePlace) {
+    private ExternalMessage getSubmitText(long matchId, int candidatePlace) {
         return candidatePlace == 1 ?
-                String.format(ACCEPTED_FIRST_PLACE_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR) :
-                String.format(ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, match.getId(), candidatePlace, EXTERNAL_LINE_SEPARATOR);
+                getAcceptedFirstPlaceSubmitMessageTemplate(matchId, candidatePlace) :
+                getAcceptedSubmitMessageTemplate(matchId, candidatePlace);
     }
 
-    private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, String message) {
+    private ExternalMessage getAcceptedFirstPlaceSubmitMessageTemplate(long matchId, int candidatePlace) {
+        return getAcceptedSubmitMessageTemplate(matchId, candidatePlace).newLine()
+                .append("Теперь загрузите в этот чат скриншот победы.");
+    }
+
+    private ExternalMessage getAcceptedSubmitMessageTemplate(long matchId, int candidatePlace) {
+        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
+                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
+    }
+
+    private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, ExternalMessage message) {
         for (MatchPlayer matchPlayer : matchPlayers) {
             messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
         }

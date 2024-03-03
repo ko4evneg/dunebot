@@ -10,11 +10,11 @@ import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -90,7 +90,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду *'/refresh_profile Имя (Steam) Фамилия'*.
                 *Желательно это  сделать прямо сейчас*. Подробная информация о боте: /help.""", player.getFirstName(), player.getSteamName(), player.getLastName());
-        return new MessageDto(player.getExternalChatId(), MarkdownEscaper.getEscaped(messageText), null, null);
+        return new MessageDto(player.getExternalChatId(), new ExternalMessage(messageText), null, null);
     }
 
     private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
@@ -158,7 +158,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                             "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
                     .append(EXTERNAL_LINE_SEPARATOR).append(String.join(", ", guestPlayerMentions));
         }
-        return new MessageDto(matchTopicChatId, MarkdownEscaper.getEscaped(messageText.toString()), replyTopicId, null);
+        return new MessageDto(matchTopicChatId, new ExternalMessage(messageText), replyTopicId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {

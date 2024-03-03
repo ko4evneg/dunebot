@@ -200,8 +200,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         String conflictText = """
                 Некоторые игроки не смогли поделить *2 место*:
-                name2 (st_pl2) l2
-                name1 (st_pl1) l1
+                name2 \\(st\\_pl2\\) l2
+                name1 \\(st\\_pl1\\) l1
 
                 Повторный опрос результата\\.\\.\\.""";
         assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
@@ -250,8 +250,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано " + place + " место\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'", actualMessages.getText());
+        assertEquals("В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                     "При ошибке используйте команду '/resubmit 15000'\\.", actualMessages.getText());
     }
 
     @Test
@@ -264,7 +264,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertNull(actualMessages.getReplyMessageId());
         assertEquals("11002", actualMessages.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано 1 место\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+        assertEquals("В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                      "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                      "Теперь загрузите в этот чат скриншот победы\\.", actualMessages.getText());
     }

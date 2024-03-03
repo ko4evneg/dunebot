@@ -8,7 +8,6 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.util.List;
 
@@ -21,26 +20,26 @@ public class MessageDto {
     protected Integer replyMessageId;
     protected List<List<ButtonDto>> keyboard;
 
-    public MessageDto(String chatId, String text, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
-        this.text = text;
+    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
+        this.text = externalMessage.getText();
         this.chatId = chatId;
         this.replyMessageId = replyMessageId;
         this.keyboard = linedButtons;
     }
 
-    public MessageDto(long chatId, String text, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(chatId), MarkdownEscaper.getEscaped(text), replyMessageId, linedButtons);
+    public MessageDto(long chatId, ExternalMessage externalMessage, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
+        this(Long.toString(chatId), externalMessage, replyMessageId, linedButtons);
     }
 
     public MessageDto(CommandMessage commandMessage, ExternalMessage externalMessage, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(commandMessage.getChatId()), externalMessage.getText(), commandMessage.getReplyMessageId(), linedButtons);
+        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getReplyMessageId(), linedButtons);
     }
 
     public MessageDto(ExternalMessageId externalMessageId, ExternalMessage externalMessage) {
-        this(Long.toString(externalMessageId.getChatId()), externalMessage.getText(), externalMessageId.getReplyId(), null);
+        this(Long.toString(externalMessageId.getChatId()), externalMessage, externalMessageId.getReplyId(), null);
     }
 
     public MessageDto(AnswerableDuneBotException exception) {
-        this(Long.toString(exception.getTelegramChatId()), MarkdownEscaper.getEscaped(exception.getMessage()), exception.getTelegramReplyId(), null);
+        this(Long.toString(exception.getTelegramChatId()), new ExternalMessage(exception.getMessage()), exception.getTelegramReplyId(), null);
     }
 }

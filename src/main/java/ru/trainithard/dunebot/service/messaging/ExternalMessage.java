@@ -57,7 +57,7 @@ public class ExternalMessage {
 
     public String getText() {
         int index = stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR);
-        if (index >= 0) {
+        if (index == stringBuilder.length() - 1) {
             stringBuilder.deleteCharAt(index);
         }
         return stringBuilder.toString();

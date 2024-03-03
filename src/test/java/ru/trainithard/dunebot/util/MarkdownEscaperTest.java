@@ -14,7 +14,7 @@ class MarkdownEscaperTest {
 
     @Test
     void shouldNotEscapeText() {
-        String actualText = MarkdownEscaper.getEscaped("AZabzАЯабя019,\\[]()_*<'?:;%^&$@");
+        String actualText = MarkdownEscaper.getEscaped("AZabzАЯабя019,\\<'?:;%^&$@");
 
         assertEquals("AZabzАЯабя019,\\[]()_*<'?:;%^&$@", actualText);
     }

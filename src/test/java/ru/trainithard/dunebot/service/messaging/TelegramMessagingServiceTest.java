@@ -59,7 +59,7 @@ class TelegramMessagingServiceTest {
     @Test
     void shouldInvokeSendPollCall() throws TelegramApiException {
         doReturn(CompletableFuture.completedFuture(getPollMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
-        PollMessageDto pollMessageDto = new PollMessageDto(MESSAGE_ID.toString(), "Poll question", REPLY_ID, List.of("1", "2", "3"));
+        PollMessageDto pollMessageDto = new PollMessageDto(MESSAGE_ID.toString(), new ExternalMessage("Poll question"), REPLY_ID, List.of("1", "2", "3"));
 
         telegramMessagingService.sendPollAsync(pollMessageDto);
 
@@ -94,7 +94,7 @@ class TelegramMessagingServiceTest {
     @Test
     void shouldInvokeSendMessageCall() throws TelegramApiException {
         doReturn(CompletableFuture.completedFuture(getTextMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendMessage.class));
-        MessageDto messageDto = new MessageDto(CHAT_ID, "la text", REPLY_ID, getKeyboard());
+        MessageDto messageDto = new MessageDto(CHAT_ID, new ExternalMessage("la text"), REPLY_ID, getKeyboard());
 
         telegramMessagingService.sendMessageAsync(messageDto);
 
@@ -138,7 +138,7 @@ class TelegramMessagingServiceTest {
     void shouldInvokeSendMessageCallOnFileSend() throws IOException {
         byte[] referenceFileContent = "la_file_content".getBytes();
         doReturn(CompletableFuture.completedFuture(getTextMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendDocument.class));
-        FileMessageDto fileMessageDto = new FileMessageDto(CHAT_ID.toString(), "la text", REPLY_ID, referenceFileContent, "file.txt");
+        FileMessageDto fileMessageDto = new FileMessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), REPLY_ID, referenceFileContent, "file.txt");
 
         telegramMessagingService.sendFileAsync(fileMessageDto);
 

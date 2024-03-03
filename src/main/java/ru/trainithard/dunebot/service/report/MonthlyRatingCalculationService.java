@@ -9,6 +9,7 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 
@@ -44,7 +45,7 @@ public class MonthlyRatingCalculationService {
         String ratingName = "Рейтинг за " + getDateString(month);
         String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
         FileMessageDto fileMessageDto =
-                new FileMessageDto(chatId, ratingName + ":", getTopicId(modType), pdfFile, ratingName);
+                new FileMessageDto(chatId, new ExternalMessage(ratingName).append(":"), getTopicId(modType), pdfFile, ratingName);
         messagingService.sendFileAsync(fileMessageDto);
     }
 
