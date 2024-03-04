@@ -70,8 +70,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 log.debug("{}: exceeding resubmits conflict successfully ended", loggingId);
 
                 sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
-                String resubmitsLimitExceededMessageText = getResubmitsLimitFinishMessage(match.getId()).getText();
-                matchFinishingService.finishUnsuccessfullySubmittedMatch(match.getId(), resubmitsLimitExceededMessageText, loggingId);
+                ExternalMessage resubmitsLimitExceededMessage = getResubmitsLimitFinishMessage(match.getId());
+                matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage, loggingId);
 
                 log.debug("{}: exceeding resubmits conflict resolution successfully ended", loggingId);
             } else {
@@ -86,7 +86,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
                 messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
                 if (match.canBeFinished()) {
-                    matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
+                    matchFinishingService.finishSubmittedMatch(match.getId(), loggingId);
                 }
 
                 log.debug("{}: not conflicting submit processing successfully ended", loggingId);

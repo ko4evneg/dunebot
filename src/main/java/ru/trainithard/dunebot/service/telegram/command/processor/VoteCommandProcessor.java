@@ -68,10 +68,12 @@ public class VoteCommandProcessor extends CommandProcessor {
                                 int nextGuestIndex = playerRepository.findNextGuestIndex();
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
                                 player = playerRepository.save(guestPlayer);
-                                messagingService.sendMessageAsync(getGuestMessageDto(player));
                             } else {
                                 player = playerOptional.get();
                             }
+                    if (player.isGuest()) {
+                        messagingService.sendMessageAsync(getGuestMessageDto(player));
+                    }
                             processPlayerVoteRegistration(player, match, loggingId);
                         }
                 );
@@ -81,14 +83,13 @@ public class VoteCommandProcessor extends CommandProcessor {
         ExternalMessage guestVoteMessage = new ExternalMessage("""
                 Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
                 игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
-                случае победы) - не волнуйтесь, бот подскажет что делать.
-                Также вы автоматически зарегистрированы у бота как гость под именем """)
+                случае победы) - не волнуйтесь, бот подскажет что делать.""").newLine()
+                .append("Также вы автоматически зарегистрированы у бота как гость под именем ")
                 .append(player.getFirstName()).append(" (").append(player.getSteamName()).append(") ").append(player.getLastName())
-                .append(""" 
-                         - это значит, что вы не \
-                        можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
-                        Для того, чтобы подтвердить регистрацию, выполните в этом чате команду """)
-                .appendBold("'/refresh_profile Имя (Steam) Фамилия'").append(".")
+                .append(" - это значит, что вы не можете выполнять некоторые команды бота и не будете включены " +
+                        "в результаты рейтинга.").newLine()
+                .append("Для того, чтобы подтвердить регистрацию, выполните в этом чате команду")
+                .appendBold(" '/refresh_profile Имя (Steam) Фамилия'").append(".").newLine()
                 .appendBold("Желательно это  сделать прямо сейчас.").newLine()
                 .append("Подробная информация о боте: /help.");
         return new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);

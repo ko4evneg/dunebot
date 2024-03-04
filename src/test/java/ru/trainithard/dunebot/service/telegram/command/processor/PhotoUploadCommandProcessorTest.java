@@ -232,7 +232,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage(), mockLoggingId);
 
-        verify(matchFinishingService, times(1)).finishSuccessfullySubmittedMatch(eq(10000L), anyInt());
+        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(10000L), anyInt());
     }
 
     @Test
@@ -244,7 +244,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage(), mockLoggingId);
 
-        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(10000L), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(eq(10000L), anyInt());
     }
 
     @Test

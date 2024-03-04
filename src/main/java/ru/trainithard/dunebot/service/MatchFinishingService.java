@@ -35,7 +35,7 @@ public class MatchFinishingService {
     private final MessagingService messagingService;
     private final Clock clock;
 
-    public void finishUnsuccessfullySubmittedMatch(long matchId, String reason, int loggingId) {
+    public void finishNotSubmittedMatch(long matchId, ExternalMessage reasonMessage, int loggingId) {
         log.debug("{}: unsuccessful_match_finish started", loggingId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
@@ -57,7 +57,7 @@ public class MatchFinishingService {
                 });
 
                 ExternalPollId externalPollId = match.getExternalPollId();
-                MessageDto finishMessage = new MessageDto(externalPollId, new ExternalMessage(reason));
+                MessageDto finishMessage = new MessageDto(externalPollId, reasonMessage);
                 messagingService.sendMessageAsync(finishMessage);
             }
         }
@@ -72,7 +72,7 @@ public class MatchFinishingService {
         return possibleMatchPlaces.isEmpty();
     }
 
-    public void finishSuccessfullySubmittedMatch(long matchId, int loggingId) {
+    public void finishSubmittedMatch(long matchId, int loggingId) {
         log.debug("{}: successful_match_finish started", loggingId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();

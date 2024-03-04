@@ -71,7 +71,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     matchRepository.save(match);
                     log.debug("{}: match finish conditions checking", loggingId);
                     if (match.canBeFinished()) {
-                        matchFinishingService.finishSuccessfullySubmittedMatch(match.getId(), loggingId);
+                        matchFinishingService.finishSubmittedMatch(match.getId(), loggingId);
                     }
 
                     messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), null));

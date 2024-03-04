@@ -12,6 +12,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
 import java.time.Clock;
@@ -29,7 +30,9 @@ import static org.mockito.Mockito.*;
 class MatchFinishingServiceTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID = 9000;
-    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final ExternalMessage UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = new ExternalMessage()
+            .appendBold("Матч 15000")
+            .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     private static final LocalDate FINISH_DATE = LocalDate.of(2012, 12, 12);
 
     @Autowired
@@ -92,7 +95,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
 
-        finishingService.finishSuccessfullySubmittedMatch(15000L, mockLoggingId);
+        finishingService.finishSubmittedMatch(15000L, mockLoggingId);
 
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
@@ -104,7 +107,7 @@ class MatchFinishingServiceTest extends TestContextMock {
     void shouldNotDoAnythingWithFinishedMatchOnUnsuccessfullySubmittedMatchFinish(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
 
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         Boolean areMatchPlayersChanged = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 15000 and place is not null)", Boolean.class);
 
@@ -115,7 +118,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         List<Integer> actualPersistedPlacesCount = jdbcTemplate
                 .queryForList("select id from match_players where match_id = 15000 and place is not null", Integer.class);
@@ -129,7 +132,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                 "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
@@ -142,7 +145,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                 "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         Boolean wasAnyPlaceSaved = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 15000 and place is not null)", Boolean.class);
 
@@ -156,7 +159,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                 "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -178,7 +181,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
 
-        finishingService.finishSuccessfullySubmittedMatch(15000L, mockLoggingId);
+        finishingService.finishSubmittedMatch(15000L, mockLoggingId);
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
@@ -191,7 +194,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
 
-        finishingService.finishSuccessfullySubmittedMatch(15000L, mockLoggingId);
+        finishingService.finishSubmittedMatch(15000L, mockLoggingId);
 
         LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
 
@@ -201,7 +204,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish() {
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
@@ -211,7 +214,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSetMatchFinishDateOnUnsuccessfullySubmittedMatchFinish() {
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
 
@@ -224,7 +227,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
 
-        finishingService.finishSuccessfullySubmittedMatch(15000L, mockLoggingId);
+        finishingService.finishSubmittedMatch(15000L, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -243,7 +246,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWithoutResults() {
-        finishingService.finishUnsuccessfullySubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
+        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE, mockLoggingId);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());

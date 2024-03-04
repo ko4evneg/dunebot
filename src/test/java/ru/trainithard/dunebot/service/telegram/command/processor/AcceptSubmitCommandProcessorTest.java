@@ -21,6 +21,7 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -35,7 +36,9 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AcceptSubmitCommandProcessorTest extends TestContextMock {
-    private static final String UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final ExternalMessage UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = new ExternalMessage()
+            .appendBold("Матч 15000")
+            .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     private static final long USER_1_ID = 11000L;
     private static final long USER_2_ID = 11001L;
 
@@ -127,7 +130,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
 
-        verify(matchFinishingService, times(1)).finishSuccessfullySubmittedMatch(eq(15000L), anyInt());
+        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(15000L), anyInt());
     }
 
     @Test
@@ -136,14 +139,14 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
 
-        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(15000L), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L), anyInt());
     }
 
     @Test
     void shouldNotInvokeMatchFinishOnNotLastCallbackReply() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
 
-        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(anyInt(), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(anyInt(), anyInt());
     }
 
     @Test
@@ -153,7 +156,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
 
-        verify(matchFinishingService, never()).finishSuccessfullySubmittedMatch(eq(15000L), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L), anyInt());
     }
 
     @Test
@@ -163,7 +166,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
 
-        verify(matchFinishingService, never()).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE), anyInt());
+        verify(matchFinishingService, never()).finishNotSubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE), anyInt());
     }
 
     @Test

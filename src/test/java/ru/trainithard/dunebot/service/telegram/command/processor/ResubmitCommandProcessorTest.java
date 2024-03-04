@@ -42,7 +42,8 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     private static final long USER_ID = 11000L;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
-    private static final String RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE = "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест \\(3\\)";
+    private static final String RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT =
+            "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест \\(3\\)";
     private final CommandMessage resubmitCommandMessage = getCommandMessage(USER_ID);
 
     @Autowired
@@ -65,35 +66,35 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, 11001, 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, 11001, 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
+                             "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
+                             "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
+                             "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, submits_retry_count, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, 1, '2010-10-10') ");
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10002, 'ExternalMessageId', 10012, 10022, '2020-10-10')");
+                             "values (10002, 'ExternalMessageId', 10012, 10022, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10003, 'ExternalMessageId', 10013, 10023, '2020-10-10')");
+                             "values (10003, 'ExternalMessageId', 10013, 10023, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10004, 'ExternalMessageId', 10014, 10024, '2020-10-10')");
+                             "values (10004, 'ExternalMessageId', 10014, 10024, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10005, 'ExternalMessageId', 10015, 10025, '2020-10-10')");
+                             "values (10005, 'ExternalMessageId', 10015, 10025, '2020-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10000, 15000, 10000, 10002, '2010-10-10')");
+                             "values (10000, 15000, 10000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                "values (10001, 15000, 10001, 10003, 1, '2010-10-10')");
+                             "values (10001, 15000, 10001, 10003, 1, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                "values (10002, 15000, 10002, 10004, 2, '2010-10-10')");
+                             "values (10002, 15000, 10002, 10004, 2, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10003, 15000, 10003, 10005, '2010-10-10')");
+                             "values (10003, 15000, 10003, 10005, '2010-10-10')");
         jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10000, '" + SettingKey.RESUBMITS_LIMIT + "', 3, '2010-10-10')");
     }
@@ -129,7 +130,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldThrowOnAlienMatchResubmit() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
+                             "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
         CommandMessage commandMessage = getCommandMessage(11004L);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
@@ -185,7 +186,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
 
         Boolean isAnyExternalMessageIdExist = jdbcTemplate.queryForObject("select exists" +
-                "(select 1 from match_players where match_id = 15000 and candidate_place is not null)", Boolean.class);
+                                                                          "(select 1 from match_players where match_id = 15000 and candidate_place is not null)", Boolean.class);
 
         assertNotNull(isAnyExternalMessageIdExist);
         assertFalse(isAnyExternalMessageIdExist);
@@ -208,7 +209,8 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
 
-        verify(finishingService, times(1)).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE), anyInt());
+        verify(finishingService, times(1)).finishNotSubmittedMatch(
+                eq(15000L), argThat(message -> RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT.equals(message.getText())), anyInt());
     }
 
     @Test

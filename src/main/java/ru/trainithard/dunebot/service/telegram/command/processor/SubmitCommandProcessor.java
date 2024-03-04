@@ -83,7 +83,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
-                .finishUnsuccessfullySubmittedMatch(match.getId(), forcedFinishMessage.getText(), loggingId), forcedFinishTime);
+                .finishNotSubmittedMatch(match.getId(), forcedFinishMessage, loggingId), forcedFinishTime);
         log.debug("{}: forced finish match task scheduled", loggingId);
 
         log.debug("{}: submit ended", loggingId);

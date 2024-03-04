@@ -53,7 +53,8 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private static final long CHAT_ID = 12000L;
     private static final long USER_ID = 11000L;
     private static final int FINISH_MATCH_TIMEOUT = 120;
-    private static final String TIMEOUT_MATCH_FINISH_MESSAGE = "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
+    private static final String TIMEOUT_MATCH_FINISH_MESSAGE_TEXT =
+            "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест";
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
     private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID);
@@ -319,7 +320,8 @@ class SubmitCommandProcessorTest extends TestContextMock {
         thread.start();
         thread.join();
 
-        verify(finishingService, times(1)).finishUnsuccessfullySubmittedMatch(eq(15000L), eq(TIMEOUT_MATCH_FINISH_MESSAGE), anyInt());
+        verify(finishingService, times(1)).finishNotSubmittedMatch(
+                eq(15000L), argThat(message -> TIMEOUT_MATCH_FINISH_MESSAGE_TEXT.equals(message.getText())), anyInt());
     }
 
     @Test
