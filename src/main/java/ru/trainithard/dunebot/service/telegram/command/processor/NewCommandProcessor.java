@@ -60,7 +60,8 @@ public class NewCommandProcessor extends CommandProcessor {
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
         String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
         String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
-        return new PollMessageDto(chatId, new ExternalMessage(text), getTopicId(modType), POLL_OPTIONS);
+        ExternalMessage externalMessage = new ExternalMessage().appendRaw(text);
+        return new PollMessageDto(chatId, externalMessage, getTopicId(modType), POLL_OPTIONS);
     }
 
     private int getTopicId(ModType modType) {

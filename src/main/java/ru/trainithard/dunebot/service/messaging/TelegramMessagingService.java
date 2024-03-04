@@ -74,6 +74,7 @@ public class TelegramMessagingService implements MessagingService {
         sendPoll.setReplyToMessageId(pollMessage.getReplyMessageId());
         sendPoll.setIsAnonymous(false);
         sendPoll.setAllowMultipleAnswers(false);
+
         return sendPoll;
     }
 
@@ -140,6 +141,7 @@ public class TelegramMessagingService implements MessagingService {
         SendDocument sendDocument = new SendDocument(fileMessageDto.getChatId(), inputFile);
         sendDocument.setReplyToMessageId(fileMessageDto.getReplyMessageId());
         sendDocument.setCaption(fileMessageDto.getText());
+        sendDocument.setParseMode(MARKDOWN2_PARSE_MODE);
         return sendDocument;
     }
 

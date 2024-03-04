@@ -16,6 +16,11 @@ public class ExternalMessage {
         append(text.toString());
     }
 
+    public ExternalMessage appendRaw(Object text) {
+        stringBuilder.append(text.toString());
+        return this;
+    }
+
     public ExternalMessage append(Object text) {
         stringBuilder.append(MarkdownEscaper.getEscaped(text.toString()));
         return this;
