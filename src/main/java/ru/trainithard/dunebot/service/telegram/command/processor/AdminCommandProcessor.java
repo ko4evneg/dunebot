@@ -49,8 +49,8 @@ public class AdminCommandProcessor extends CommandProcessor {
             case SET_TOPIC_UPRISING4 ->
                     settingsService.saveSetting(SettingKey.TOPIC_ID_UPRISING, commandMessage.getReplyMessageId().toString());
             default -> {
-                log.debug("{}: wronad admin command subcommand {}", loggingId, subCommand);
-                messageDto.setText(WRONG_COMMAND_EXCEPTION_MESSAGE);
+                log.debug("{}: wrong admin command subcommand {}", loggingId, subCommand);
+                messageDto = new MessageDto(commandMessage, new ExternalMessage(WRONG_COMMAND_EXCEPTION_MESSAGE), null);
             }
         }
 

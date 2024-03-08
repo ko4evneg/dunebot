@@ -31,7 +31,7 @@ class AdminCommandProcessorTest extends TestContextMock {
     private static final String COMMANDS_LIST_DESCRIPTION = "Показать список доступных команд";
     private static final String HELP_COMMAND_TEXT = "/help";
     private static final String COMMANDS_LIST_COMMAND_TEXT = "/commands";
-    private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда!";
+    private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда\\!";
 
     @Autowired
     private AdminCommandProcessor processor;

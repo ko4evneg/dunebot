@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 @Getter
 public class ParsedNames {
     private static final String WRONG_INPUT_EXCEPTION_TEXT = "Неверный формат ввода имен. Пример верного формата:" +
-            SettingConstants.EXTERNAL_LINE_SEPARATOR + "/register Иван (УБИЙЦА ЛОСЕЙ) Петров" +
-            SettingConstants.EXTERNAL_LINE_SEPARATOR + "/refresh_profile Иван (УБИЙЦА ЛОСЕЙ) Петров";
+                                                             SettingConstants.EXTERNAL_LINE_SEPARATOR + "/register Иван (Лось) Петров" +
+                                                             SettingConstants.EXTERNAL_LINE_SEPARATOR + "/refresh_profile Иван (Лось) Петров";
 
     private final String firstName;
     private final String lastName;
