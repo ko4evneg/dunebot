@@ -21,14 +21,6 @@ public class MessageDto {
     protected Integer topicId;
     protected List<List<ButtonDto>> keyboard;
 
-    // TODO:  del
-    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable List<List<ButtonDto>> linedButtons) {
-        this.text = externalMessage.getText();
-        this.chatId = chatId;
-        this.topicId = topicId;
-        this.keyboard = linedButtons;
-    }
-
     public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
         this.text = externalMessage.getText();
         this.chatId = chatId;
@@ -37,12 +29,16 @@ public class MessageDto {
         this.replyMessageId = replyMessageId;
     }
 
+    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable List<List<ButtonDto>> linedButtons) {
+        this(chatId, externalMessage, topicId, null, linedButtons);
+    }
+
     public MessageDto(long chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(chatId), externalMessage, topicId, linedButtons);
+        this(Long.toString(chatId), externalMessage, topicId, null, linedButtons);
     }
 
     public MessageDto(CommandMessage commandMessage, ExternalMessage externalMessage, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getReplyMessageId(), linedButtons);
+        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getReplyMessageId(), null, linedButtons);
     }
 
     public MessageDto(ExternalMessageId externalMessageId, ExternalMessage externalMessage) {

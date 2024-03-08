@@ -154,7 +154,6 @@ class CommandMessageFactoryImplTest {
         assertNotNull(commandMessage);
         assertEquals(USER_ID, commandMessage.getUserId());
         assertEquals(Command.ACCEPT_SUBMIT, commandMessage.getCommand());
-        assertEquals(MESSAGE_ID, commandMessage.getReplyMessageId());
         assertEquals(CALLBACK_DATA, commandMessage.getCallback());
     }
 

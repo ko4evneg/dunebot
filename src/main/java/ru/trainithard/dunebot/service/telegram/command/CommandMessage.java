@@ -35,6 +35,7 @@ public class CommandMessage {
     /**
      * External system user first name
      */
+    private Integer topicId;
     private String externalFirstName;
     /**
      * External system user identifier (like tag, login etc...)
@@ -83,7 +84,6 @@ public class CommandMessage {
         this.command = Command.ACCEPT_SUBMIT;
         this.userId = callbackQuery.getFrom().getId();
         this.callback = callbackQuery.getData();
-        this.replyMessageId = callbackQuery.getMessage().getMessageId();
     }
 
     private CommandMessage(Message message) {
@@ -94,6 +94,7 @@ public class CommandMessage {
         this.chatId = message.getChatId();
         this.messageId = message.getMessageId();
         this.chatType = ChatType.valueOf(message.getChat().getType().toUpperCase());
+        this.topicId = message.getMessageThreadId();
         Message replyToMessage = message.getReplyToMessage();
         if (replyToMessage != null) {
             this.replyMessageId = replyToMessage.getMessageId();
