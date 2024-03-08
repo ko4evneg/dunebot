@@ -127,7 +127,7 @@ class AdminCommandProcessorTest extends TestContextMock {
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
         assertEquals("10011", actualMessageDto.getChatId());
-        assertEquals(10020, actualMessageDto.getReplyMessageId());
+        assertEquals(10020, actualMessageDto.getTopicId());
         assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
     }
 
@@ -140,7 +140,7 @@ class AdminCommandProcessorTest extends TestContextMock {
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
         assertEquals("10011", actualMessageDto.getChatId());
-        assertEquals(10020, actualMessageDto.getReplyMessageId());
+        assertEquals(10020, actualMessageDto.getTopicId());
         assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
     }
 

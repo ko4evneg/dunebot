@@ -151,7 +151,8 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
 
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
-        Integer replyTopicId = match.getExternalPollId().getReplyId();
+        Integer topicId = match.getExternalPollId().getReplyId();
+        Integer replyMessageId = match.getExternalPollId().getMessageId();
         ExternalMessage startMessage = new ExternalMessage()
                 .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
                 .newLine().append(String.join(", ", regularPlayerMentions));
@@ -162,7 +163,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                             "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
                     .newLine().append(String.join(", ", guestPlayerMentions));
         }
-        return new MessageDto(matchTopicChatId, startMessage, replyTopicId, null);
+        return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {

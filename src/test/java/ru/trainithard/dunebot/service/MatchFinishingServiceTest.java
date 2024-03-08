@@ -166,7 +166,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
-        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
+        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getTopicId());
         assertEquals("""
                 *Матч 15000* завершился:
                                 
@@ -234,7 +234,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
-        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
+        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getTopicId());
         assertEquals("""
                 *Матч 15000* завершился:
                                 
@@ -253,7 +253,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertEquals(MATCH_CHAT_ID, messageDto.getChatId());
-        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getReplyMessageId());
+        assertEquals(MATCH_TOPIC_REPLY_ID, messageDto.getTopicId());
         assertEquals("*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест", messageDto.getText());
     }
 }

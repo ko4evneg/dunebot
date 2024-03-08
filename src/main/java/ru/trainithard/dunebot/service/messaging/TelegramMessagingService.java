@@ -71,7 +71,7 @@ public class TelegramMessagingService implements MessagingService {
 
     private SendPoll getSendPoll(PollMessageDto pollMessage) {
         SendPoll sendPoll = new SendPoll(pollMessage.getChatId(), pollMessage.getText(), pollMessage.getOptions());
-        sendPoll.setReplyToMessageId(pollMessage.getReplyMessageId());
+        sendPoll.setReplyToMessageId(pollMessage.getTopicId());
         sendPoll.setIsAnonymous(false);
         sendPoll.setAllowMultipleAnswers(false);
 
@@ -100,6 +100,7 @@ public class TelegramMessagingService implements MessagingService {
     private SendMessage getSendMessage(MessageDto message) {
         SendMessage sendMessage = new SendMessage(message.getChatId(), message.getText());
         sendMessage.setParseMode(MARKDOWN2_PARSE_MODE);
+        sendMessage.setMessageThreadId(message.getTopicId());
         sendMessage.setReplyToMessageId(message.getReplyMessageId());
         if (message.getKeyboard() != null) {
             sendMessage.setReplyMarkup(getInlineKeyboard(message));
@@ -139,7 +140,7 @@ public class TelegramMessagingService implements MessagingService {
         InputStream fileInputStream = new ByteArrayInputStream(fileMessageDto.getFile());
         InputFile inputFile = new InputFile(fileInputStream, fileMessageDto.getFileName());
         SendDocument sendDocument = new SendDocument(fileMessageDto.getChatId(), inputFile);
-        sendDocument.setReplyToMessageId(fileMessageDto.getReplyMessageId());
+        sendDocument.setReplyToMessageId(fileMessageDto.getTopicId());
         sendDocument.setCaption(fileMessageDto.getText());
         sendDocument.setParseMode(MARKDOWN2_PARSE_MODE);
         return sendDocument;

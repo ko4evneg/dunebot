@@ -251,7 +251,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessages = messageCaptor.getValue();
 
-        assertNull(actualMessages.getReplyMessageId());
+        assertNull(actualMessages.getTopicId());
         assertEquals("11002", actualMessages.getChatId());
         assertEquals("В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                      "При ошибке используйте команду '/resubmit 15000'\\.", actualMessages.getText());
@@ -265,7 +265,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessages = messageCaptor.getValue();
 
-        assertNull(actualMessages.getReplyMessageId());
+        assertNull(actualMessages.getTopicId());
         assertEquals("11002", actualMessages.getChatId());
         assertEquals("В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                      "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +

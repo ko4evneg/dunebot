@@ -174,7 +174,7 @@ class MonthlyRatingCalculationServiceTest extends TestContextMock {
         ByteArrayInputStream actualInputStream = new ByteArrayInputStream(actualMessage.getFile());
         PdfReader actualPdfReader = new PdfReader(actualInputStream);
 
-        assertEquals(TestConstants.TOPIC_ID_UPRISING, actualMessage.getReplyMessageId());
+        assertEquals(TestConstants.TOPIC_ID_UPRISING, actualMessage.getTopicId());
         assertEquals(TestConstants.CHAT_ID, actualMessage.getChatId());
         assertEquals("Рейтинг за 10\\.2010:", actualMessage.getText());
         assertArrayEquals(referenceFileBytes, actualPdfReader.getPageContent(1));

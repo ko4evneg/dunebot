@@ -47,6 +47,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class VoteCommandProcessorTest extends TestContextMock {
+    private static final int REPLY_ID = 111001;
     @Autowired
     private VoteCommandProcessor processor;
     @MockBean
@@ -56,7 +57,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     private static final String POLL_ID = "100500";
     private static final long CHAT_ID = 100501L;
-    private static final int REPLY_ID = 100500;
+    private static final int TOPIC_ID = 100500;
     private static final long USER_1_ID = 12345L;
     private static final long USER_2_ID = 12346L;
     private static final long GUEST_ID = 12400L;
@@ -86,7 +87,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "last_name, external_first_name, external_name, created_at) " +
                              "values (10003, 12348, 12348, 'st_pl4', 'name4', 'l4', 'ef4', 'en4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
-                             "values (10000, 'ExternalPollId', 123, " + TestConstants.CHAT_ID + ", " + REPLY_ID + ", '" + POLL_ID + "', '2020-10-10')");
+                             "values (10000, 'ExternalPollId', " + REPLY_ID + ", " + TestConstants.CHAT_ID + ", " + TOPIC_ID + ", '" + POLL_ID + "', '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
                              "values (10000, 10000, 10000, '" + ModType.CLASSIC + "','" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
@@ -208,7 +209,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @Test
     void shouldSendDeleteStartMessageOnPositiveRegistrationRevocationWhenNotEnoughPlayersLeft() {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
-                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + TOPIC_ID + ", '2020-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 4, external_start_id = 10001 where id = 10000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 10000, 10001, '2010-10-10')");
@@ -216,13 +217,13 @@ class VoteCommandProcessorTest extends TestContextMock {
         processor.process(getPollAnswerCommandMessage(1, USER_2_ID), mockLoggingId);
 
         verify(messagingService, times(1)).deleteMessageAsync(argThat(messageDto ->
-                messageDto.getMessageId().equals(9000) && messageDto.getChatId().equals(CHAT_ID) && messageDto.getReplyId().equals(REPLY_ID)));
+                messageDto.getMessageId().equals(9000) && messageDto.getChatId().equals(CHAT_ID) && messageDto.getReplyId().equals(TOPIC_ID)));
     }
 
     @Test
     void shouldNotSendDeleteStartMessageOnPositiveRegistrationRevocationWhenEnoughPlayersLeft() {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
-                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + REPLY_ID + ", '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + TOPIC_ID + ", '2020-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = 10001 where id = 10000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 10000, 10001, '2010-10-10')");
@@ -318,6 +319,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
 
         assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
+        assertEquals(TOPIC_ID, messageDto.getTopicId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("*Матч 10000* собран\\. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
@@ -346,6 +348,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         List<String> guestsNames = Arrays.stream(textRows[4].split(", ")).toList();
 
         assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
+        assertEquals(TOPIC_ID, messageDto.getTopicId());
         assertEquals(REPLY_ID, messageDto.getReplyMessageId());
         assertEquals("*Матч 10000* собран\\. Участники:", textRows[0]);
         assertThat(names, containsInAnyOrder("@en1", "@ef2"));
@@ -375,7 +378,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 *Желательно это  сделать прямо сейчас.*
                 Подробная информация о боте: /help.""", actualText);
         assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
-        assertNull(messageDto.getReplyMessageId());
+        assertNull(messageDto.getTopicId());
     }
 
     @Test
@@ -401,7 +404,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 *Желательно это  сделать прямо сейчас.*
                 Подробная информация о боте: /help.""", actualText);
         assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
-        assertNull(messageDto.getReplyMessageId());
+        assertNull(messageDto.getTopicId());
     }
 
     @Test
@@ -439,13 +442,14 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     private ExternalMessageDto getSubmitExternalMessage() {
         Message replyMessage = new Message();
-        replyMessage.setMessageId(111001);
+        replyMessage.setMessageId(REPLY_ID);
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         Message message = new Message();
         message.setMessageId(111000);
         message.setReplyToMessage(replyMessage);
         message.setChat(chat);
+        message.setMessageThreadId(TOPIC_ID);
         return new ExternalMessageDto(message);
     }
 

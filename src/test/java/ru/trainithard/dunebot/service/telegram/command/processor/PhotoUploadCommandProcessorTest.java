@@ -163,7 +163,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
-        assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
+        assertEquals(REPLY_ID, actualMessage.getTopicId());
         assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
         assertEquals("saving exception", actualMessage.getText());
     }

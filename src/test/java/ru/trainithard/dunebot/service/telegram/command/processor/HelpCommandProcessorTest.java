@@ -31,7 +31,7 @@ class HelpCommandProcessorTest extends TestContextMock {
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
         assertEquals("10222", actualMessageDto.getChatId());
-        assertEquals(10101, actualMessageDto.getReplyMessageId());
+        assertEquals(10101, actualMessageDto.getTopicId());
         assertEquals(getExpectedHelpText(), actualMessageDto.getText());
     }
 

@@ -93,7 +93,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         updateProcessor.process();
 
         verify(messagingService, times(1)).sendMessageAsync(argThat(messageDto ->
-                messageDto.getReplyMessageId() == 12345));
+                messageDto.getTopicId() == 12345));
     }
 
     @Test
