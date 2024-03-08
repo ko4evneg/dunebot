@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
@@ -12,6 +13,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.EnumSet;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubmitValidatedMatchRetriever {
@@ -26,13 +28,16 @@ public class SubmitValidatedMatchRetriever {
 
     public Match getValidatedResubmitMatch(CommandMessage commandMessage) {
         long telegramChatId = commandMessage.getChatId();
+        String rawMatchId = commandMessage.getArgument(1);
         try {
-            long matchId = Long.parseLong(commandMessage.getArgument(1));
+            log.debug("Validation started");
+            long matchId = Long.parseLong(rawMatchId);
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
             validateMatch(telegramChatId, match, true);
             validateSubmitAllowed(commandMessage, match, telegramChatId);
             return match;
         } catch (NumberFormatException | MatchNotExistsException exception) {
+            log.debug("Validation fail for match id {}", rawMatchId);
             throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, telegramChatId);
         }
     }

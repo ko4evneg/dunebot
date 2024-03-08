@@ -134,7 +134,7 @@ class NewCommandProcessorTest extends TestContextMock {
 
         assertThat(actualPoll,
                 both(hasProperty("chatId", is(TestConstants.CHAT_ID)))
-                        .and(hasProperty("replyMessageId", is(expectedTopicId))));
+                        .and(hasProperty("topicId", is(expectedTopicId))));
     }
 
     private static Stream<Arguments> chatIdSource() {

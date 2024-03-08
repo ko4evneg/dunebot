@@ -38,7 +38,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
-            ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId(), resubmitsLimit);
+            ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
             matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage, loggingId);
         }
 
@@ -47,11 +47,10 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         log.debug("{}: resubmit ended", loggingId);
     }
 
-    private ExternalMessage getTimeoutFinishMessage(Long matchId, int resubmitsLimit) {
+    private ExternalMessage getTimeoutFinishMessage(Long matchId) {
         return new ExternalMessage()
                 .startBold().append("Матч ").append(matchId).endBold()
-                .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест (")
-                .append(resubmitsLimit).append(")");
+                .append(" завершен без результата, так как истек лимит времени регистрации голосов.");
     }
 
     void process(Match match, int loggingId) {

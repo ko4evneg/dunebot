@@ -43,7 +43,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
     private static final String RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT =
-            "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест \\(3\\)";
+            "*Матч 15000* завершен без результата, так как истек лимит времени регистрации голосов\\.";
     private final CommandMessage resubmitCommandMessage = getCommandMessage(USER_ID);
 
     @Autowired

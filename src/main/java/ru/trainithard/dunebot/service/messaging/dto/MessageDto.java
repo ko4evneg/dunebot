@@ -16,12 +16,12 @@ import java.util.List;
 public class MessageDto {
     @Setter
     protected String text;
-    @Setter
     protected Integer replyMessageId;
     protected String chatId;
     protected Integer topicId;
     protected List<List<ButtonDto>> keyboard;
 
+    // TODO:  del
     public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable List<List<ButtonDto>> linedButtons) {
         this.text = externalMessage.getText();
         this.chatId = chatId;

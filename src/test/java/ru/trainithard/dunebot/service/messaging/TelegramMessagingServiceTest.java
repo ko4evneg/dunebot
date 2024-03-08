@@ -35,7 +35,8 @@ import static org.mockito.Mockito.*;
 class TelegramMessagingServiceTest {
     private static final Integer MESSAGE_ID = 123;
     private static final Long CHAT_ID = 456L;
-    private static final Integer REPLY_ID = 789;
+    private static final Integer TOPIC_ID = 789;
+    private static final Integer REPLY_ID = 3000;
     private static final String POLL_ID = "9000";
     private static final String FILE_ID = "randomFileId";
 
@@ -44,7 +45,7 @@ class TelegramMessagingServiceTest {
 
     @Test
     void shouldInvokeDeleteCall() throws TelegramApiException {
-        ExternalMessageId externalMessageId = new ExternalMessageId(MESSAGE_ID, CHAT_ID, REPLY_ID);
+        ExternalMessageId externalMessageId = new ExternalMessageId(MESSAGE_ID, CHAT_ID, TOPIC_ID);
 
         telegramMessagingService.deleteMessageAsync(externalMessageId);
 
@@ -59,7 +60,7 @@ class TelegramMessagingServiceTest {
     @Test
     void shouldInvokeSendPollCall() throws TelegramApiException {
         doReturn(CompletableFuture.completedFuture(getPollMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendPoll.class));
-        PollMessageDto pollMessageDto = new PollMessageDto(MESSAGE_ID.toString(), new ExternalMessage("Poll question"), REPLY_ID, List.of("1", "2", "3"));
+        PollMessageDto pollMessageDto = new PollMessageDto(MESSAGE_ID.toString(), new ExternalMessage("Poll question"), TOPIC_ID, List.of("1", "2", "3"));
 
         telegramMessagingService.sendPollAsync(pollMessageDto);
 
@@ -67,7 +68,7 @@ class TelegramMessagingServiceTest {
         verify(telegramBot, times(1)).executeAsync(sendPollCaptor.capture());
         SendPoll actualSendPoll = sendPollCaptor.getValue();
 
-        assertEquals(REPLY_ID, actualSendPoll.getReplyToMessageId());
+        assertEquals(TOPIC_ID, actualSendPoll.getReplyToMessageId());
         assertEquals("Poll question", actualSendPoll.getQuestion());
         assertNotNull(actualSendPoll.getIsAnonymous());
         assertFalse(actualSendPoll.getIsAnonymous());
@@ -78,7 +79,7 @@ class TelegramMessagingServiceTest {
 
     private Message getPollMessageReply() {
         Message replyMessage = new Message();
-        replyMessage.setMessageId(REPLY_ID);
+        replyMessage.setMessageId(TOPIC_ID);
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         Poll poll = new Poll();
@@ -94,7 +95,7 @@ class TelegramMessagingServiceTest {
     @Test
     void shouldInvokeSendMessageCall() throws TelegramApiException {
         doReturn(CompletableFuture.completedFuture(getTextMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendMessage.class));
-        MessageDto messageDto = new MessageDto(CHAT_ID, new ExternalMessage("la text"), REPLY_ID, getKeyboard());
+        MessageDto messageDto = new MessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), TOPIC_ID, REPLY_ID, getKeyboard());
 
         telegramMessagingService.sendMessageAsync(messageDto);
 
@@ -104,7 +105,7 @@ class TelegramMessagingServiceTest {
         InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) actualSendMessage.getReplyMarkup();
         List<InlineKeyboardButton> buttons = replyMarkup.getKeyboard().stream().flatMap(Collection::stream).toList();
 
-        assertEquals(REPLY_ID, actualSendMessage.getReplyToMessageId());
+        assertEquals(TOPIC_ID, actualSendMessage.getMessageThreadId());
         assertEquals("la text", actualSendMessage.getText());
         assertEquals(CHAT_ID.toString(), actualSendMessage.getChatId());
         assertThat(buttons, contains(
@@ -138,7 +139,7 @@ class TelegramMessagingServiceTest {
     void shouldInvokeSendMessageCallOnFileSend() throws IOException {
         byte[] referenceFileContent = "la_file_content".getBytes();
         doReturn(CompletableFuture.completedFuture(getTextMessageReply())).when(telegramBot).executeAsync(ArgumentMatchers.any(SendDocument.class));
-        FileMessageDto fileMessageDto = new FileMessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), REPLY_ID, referenceFileContent, "file.txt");
+        FileMessageDto fileMessageDto = new FileMessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), TOPIC_ID, referenceFileContent, "file.txt");
 
         telegramMessagingService.sendFileAsync(fileMessageDto);
 
@@ -148,7 +149,7 @@ class TelegramMessagingServiceTest {
         byte[] actualFile = actualDocument.getFile().getNewMediaStream().readAllBytes();
 
         assertEquals("la text", actualDocument.getCaption());
-        assertEquals(REPLY_ID, actualDocument.getReplyToMessageId());
+        assertEquals(TOPIC_ID, actualDocument.getReplyToMessageId());
         assertEquals(CHAT_ID.toString(), actualDocument.getChatId());
         assertArrayEquals(referenceFileContent, actualFile);
     }
@@ -179,6 +180,7 @@ class TelegramMessagingServiceTest {
         message.setMessageId(100500);
         message.setText("the text");
         message.setReplyToMessage(replyMessage);
+        message.setMessageThreadId(TOPIC_ID);
         return message;
     }
 }
