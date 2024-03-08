@@ -3,13 +3,17 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+
+import java.util.Map;
 
 /**
  * Process admin commands for bot configuration and management.
@@ -28,6 +32,9 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String SET_TOPIC_UPRISING4 = "set_topic_up4";
     private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда!";
     private static final String SUCCESSFUL_COMMAND_TEXT = "Команда успешно выполнена.";
+    private static final String SET_KEY = "set";
+    private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
+    private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
 
     private final MessagingService messagingService;
     private final SettingsService settingsService;
@@ -48,6 +55,20 @@ public class AdminCommandProcessor extends CommandProcessor {
                     settingsService.saveSetting(SettingKey.TOPIC_ID_CLASSIC, commandMessage.getReplyMessageId().toString());
             case SET_TOPIC_UPRISING4 ->
                     settingsService.saveSetting(SettingKey.TOPIC_ID_UPRISING, commandMessage.getReplyMessageId().toString());
+            case SET_KEY -> {
+                String settingName = commandMessage.getArgument(2);
+                SettingKey settingKey = SettingKey.getByName(settingName);
+                if (settingKey == null || settingKey == SettingKey.ADMIN_USER_ID) {
+                    throw new AnswerableDuneBotException(WRONG_SETTING_TEXT, commandMessage);
+                }
+                String settingValue = commandMessage.getArgument(3);
+                try {
+                    Integer.parseInt(settingValue);
+                } catch (NumberFormatException exception) {
+                    throw new AnswerableDuneBotException(WRONG_SETTING_VALUE_TEXT, commandMessage);
+                }
+                settingsService.saveSetting(settingKey, settingValue);
+            }
             default -> {
                 log.debug("{}: wrong admin command subcommand {}", loggingId, subCommand);
                 messageDto = new MessageDto(commandMessage, new ExternalMessage(WRONG_COMMAND_EXCEPTION_MESSAGE), null);
@@ -59,10 +80,9 @@ public class AdminCommandProcessor extends CommandProcessor {
     }
 
     private void sendSetCommands() {
-        // TODO:  replace with valid list
-//        Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
-//                COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
-//        messagingService.sendSetCommands(new SetCommandsDto(commands));
+        Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
+                COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
+        messagingService.sendSetCommands(new SetCommandsDto(commands));
     }
 
     @Override

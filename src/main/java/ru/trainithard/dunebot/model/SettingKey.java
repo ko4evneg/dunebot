@@ -1,5 +1,7 @@
 package ru.trainithard.dunebot.model;
 
+import java.util.Arrays;
+
 /**
  * Setting key for receiving setting values from storage
  */
@@ -36,4 +38,14 @@ public enum SettingKey {
      * Monthly threshold of required matches for rating participation
      */
     MONTHLY_MATCHES_THRESHOLD;
+
+    public static SettingKey getByName(String settingName) {
+        if (settingName == null || settingName.isBlank()) {
+            return null;
+        }
+
+        return Arrays.stream(values())
+                .filter(settingKey -> settingName.equalsIgnoreCase(settingKey.name()))
+                .findFirst().orElse(null);
+    }
 }

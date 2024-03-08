@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.SettingsService;
@@ -21,7 +22,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -32,6 +33,8 @@ class AdminCommandProcessorTest extends TestContextMock {
     private static final String HELP_COMMAND_TEXT = "/help";
     private static final String COMMANDS_LIST_COMMAND_TEXT = "/commands";
     private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда\\!";
+    private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
+    private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
 
     @Autowired
     private AdminCommandProcessor processor;
@@ -41,9 +44,6 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSetCommandsServiceOnInitSubcommand() {
-        fail();
-        // TODO:  set correct command list
-
         processor.process(getCommandMessage("init", 10000), mockLoggingId);
 
         ArgumentCaptor<SetCommandsDto> setCommandsDtoCaptor = ArgumentCaptor.forClass(SetCommandsDto.class);
@@ -74,6 +74,48 @@ class AdminCommandProcessorTest extends TestContextMock {
         processor.process(getCommandMessage("set_topic_up4", 12121), mockLoggingId);
 
         verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_UPRISING, "12121");
+    }
+
+    @Test
+    void shouldInvokeSaveFinishMatchTimeoutSettingOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set finish_match_timeout 30", 10000), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingKey.FINISH_MATCH_TIMEOUT, "30");
+    }
+
+    @Test
+    void shouldInvokeSaveResubmitsLimitOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set resubmits_limit 3", 10000), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingKey.RESUBMITS_LIMIT, "3");
+    }
+
+    @Test
+    void shouldInvokeSaveMothlyMatchesThresholdSettingOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set monthly_matches_threshold 10", 10000), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingKey.MONTHLY_MATCHES_THRESHOLD, "10");
+    }
+
+    @Test
+    void shouldInvokeSaveMatchStartDelaySettingOnTopicInitSubcommand() {
+        processor.process(getCommandMessage("set match_start_delay 40", 10000), mockLoggingId);
+
+        verify(settingsService, times(1)).saveSetting(SettingKey.MATCH_START_DELAY, "40");
+    }
+
+    @Test
+    void shouldThrowOnWrongSettingKey() {
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
+                () -> processor.process(getCommandMessage("set wrong_key 40", 10000), mockLoggingId));
+        assertEquals(WRONG_SETTING_TEXT, actualException.getMessage());
+    }
+
+    @Test
+    void shouldThrowOnWrongSettingValue() {
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
+                () -> processor.process(getCommandMessage("set match_start_delay bad_val", 10000), mockLoggingId));
+        assertEquals(WRONG_SETTING_VALUE_TEXT, actualException.getMessage());
     }
 
     @Test
