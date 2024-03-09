@@ -15,12 +15,6 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 10MB
-#spring:
-#  jpa:
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        format_sql: true
 ---
 spring:
   config:
@@ -38,7 +32,14 @@ spring:
     scheduling:
       pool:
         size: 2
+  sql:
+    init:
+      mode: never
+  liquibase:
+    change-log: classpath:changelog.xml
+
 ---
+
 spring:
   config:
     activate:
