@@ -15,7 +15,9 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 10MB
+
 ---
+
 spring:
   config:
     activate:
@@ -47,19 +49,22 @@ spring:
   main:
     web-application-type: none
   datasource:
-    url: jdbc:postgresql://db:5432/postgres
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;database_to_lower=true;NON_KEYWORDS=KEY,VALUE
     username: sa
-    password: sa
-    driver-class-name: org.postgresql.Driver
+    password: password
+    driver-class-name: org.h2.Driver
+
     hikari:
       minimum-idle: 5
   jpa:
     hibernate:
       ddl-auto: none
+    database-platform: org.hibernate.dialect.H2Dialect
   sql:
     init:
-      mode: never
-      platform: postgresql
+      mode: embedded
+      platform: h2
+      schema-locations: classpath:schema.sql
 bot:
   token: fake_token
   photos-directory: photos
