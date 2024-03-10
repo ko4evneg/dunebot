@@ -53,7 +53,6 @@ spring:
     username: sa
     password: password
     driver-class-name: org.h2.Driver
-
     hikari:
       minimum-idle: 5
   jpa:
@@ -65,6 +64,8 @@ spring:
       mode: embedded
       platform: h2
       schema-locations: classpath:schema.sql
+  liquibase:
+    enabled: false
 bot:
   token: fake_token
   photos-directory: photos
