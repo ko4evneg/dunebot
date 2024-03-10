@@ -13,6 +13,8 @@ services:
     volumes:
       #     todo replace with prod
       - "C:/Java/persistent/db:/var/lib/postgresql/data"
+      - "C:/Java/persistent/timezone:/etc/timezone:ro"
+      - "C:/Java/persistent/localtime:/etc/localtime:ro"
   bot:
     container_name: bot
     image: dunebot:latest
@@ -26,3 +28,5 @@ services:
       - "C:/Java/persistent/log:/var/dunebot/log"
       - "C:/Java/persistent/photo:/var/dunebot/photo"
       - "C:/Java/persistent/pdf:/var/dunebot/pdf"
+      - "C:/Java/persistent/timezone:/etc/timezone:ro"
+      - "C:/Java/persistent/localtime:/etc/localtime:ro"
