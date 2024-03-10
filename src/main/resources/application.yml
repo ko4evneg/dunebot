@@ -1,7 +1,7 @@
 bot:
   #TODO: split file locs for test/prod
-  photos-directory: photos
-  pdf-directory: pdf
+  photos-directory: /var/dunebot/photo
+  pdf-directory: /var/dunebot/pdf
 logging:
   level:
     root: error
@@ -11,7 +11,7 @@ logging:
     file: UTF-8
   file:
     #TODO: split file locs for test/prod
-    name: logs/dunebot.log
+    name: /var/dunebot/log/dunebot.log
   logback:
     rollingpolicy:
       max-file-size: 10MB
@@ -23,7 +23,7 @@ spring:
   main:
     web-application-type: none
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://db:5432/postgres
     #    todo
     username: sa
     password: sa
@@ -47,7 +47,7 @@ spring:
   main:
     web-application-type: none
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://db:5432/postgres
     username: sa
     password: sa
     driver-class-name: org.postgresql.Driver

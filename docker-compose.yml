@@ -1,0 +1,28 @@
+services:
+  db:
+    container_name: db
+    image: postgres:13.14
+    restart: always
+    environment:
+      #      todo
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: sa
+    ports:
+      #      check need
+      - 5432:5432
+    volumes:
+      #     todo replace with prod
+      - "C:/Java/persistent/db:/var/lib/postgresql/data"
+  bot:
+    container_name: bot
+    image: dunebot:latest
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      #     todo replace with prod
+      - "C:/Java/persistent/log:/var/dunebot/log"
+      - "C:/Java/persistent/photo:/var/dunebot/photo"
+      - "C:/Java/persistent/pdf:/var/dunebot/pdf"
