@@ -2,6 +2,7 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
+| critical | multiple on-submit matches                                                          |
 | high     | add maintenance windows                                                             |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
