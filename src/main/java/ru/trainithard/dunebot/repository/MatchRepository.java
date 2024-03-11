@@ -27,7 +27,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query("""
             select m from Match m
             left join fetch m.matchPlayers mp
-            where m.state = :matchState and m.id = (select mp2.match.id from MatchPlayer mp2 where mp2.player.externalId = :externalPlayerId)
+            where m.id = (select mp2.match.id from MatchPlayer mp2 where mp2.match.state = :matchState and mp2.player.externalId = :externalPlayerId)
             """)
     List<Match> findLatestPlayerMatchWithMatchPlayerBy(long externalPlayerId, MatchState matchState);
 
