@@ -85,13 +85,25 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     @AfterEach
     void afterEach() throws IOException {
         FileSystemUtils.deleteRecursively(Path.of("photos/11_10"));
-        jdbcTemplate.execute("delete from match_players where match_id = 10000");
-        jdbcTemplate.execute("delete from matches where id = 10000");
+        jdbcTemplate.execute("delete from match_players where match_id between 10000 and 10001");
+        jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
         jdbcTemplate.execute("delete from players where id between 10000 and 10003");
     }
 
     @Test
     void shouldRequestForFileWhenCompressedPhotoReceived() {
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)), mockLoggingId);
+
+        verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
+    }
+
+    @Test
+    void shouldSelectCorrectMatchWhenMultipleMatchesPresent() {
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, has_onsubmit_photo, created_at) " +
+                             "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
+                             "values (10004, 10001, 10000, 4, '2010-10-10')");
+
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)), mockLoggingId);
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
