@@ -39,7 +39,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
-    private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %s:";
+    private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %d:";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
@@ -63,7 +63,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
             log.debug("{}: matchPlayer processing started, id: {}", loggingId, matchPlayer.getId());
 
             deleteOldSubmitMessage(matchPlayer);
-            MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId().toString());
+            MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId());
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
                 if (throwable == null) {
@@ -95,14 +95,14 @@ public class SubmitCommandProcessor extends CommandProcessor {
         }
     }
 
-    private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, List<MatchPlayer> registeredMatchPlayers, String matchIdString) {
-        String text = String.format(MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE, matchIdString);
-        List<List<ButtonDto>> pollKeyboard = getSubmitCallbackKeyboard(registeredMatchPlayers, matchIdString);
+    private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, List<MatchPlayer> registeredMatchPlayers, long matchId) {
+        String text = String.format(MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE, matchId);
+        List<List<ButtonDto>> pollKeyboard = getSubmitCallbackKeyboard(registeredMatchPlayers, matchId);
         String playersChatId = Long.toString(matchPlayer.getPlayer().getExternalChatId());
         return new MessageDto(playersChatId, new ExternalMessage(text), null, pollKeyboard);
     }
 
-    private List<List<ButtonDto>> getSubmitCallbackKeyboard(List<MatchPlayer> registeredMatchPlayers, String matchIdString) {
+    private List<List<ButtonDto>> getSubmitCallbackKeyboard(List<MatchPlayer> registeredMatchPlayers, long matchIdString) {
         List<ButtonDto> buttons = new ArrayList<>();
         String callbackPrefix = matchIdString + "__";
         for (int i = 0; i < registeredMatchPlayers.size(); i++) {
