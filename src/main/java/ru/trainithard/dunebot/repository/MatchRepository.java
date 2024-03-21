@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,4 +40,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             where m.id = :matchId
             """)
     Optional<Match> findWithMatchPlayersBy(long matchId);
+
+    List<Match> findAllByStateIn(Collection<MatchState> states);
 }
