@@ -33,18 +33,20 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: resubmit started", loggingId);
+        log.debug("{}: RESUBMIT started", logId());
 
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
+        log.debug("{}: resubmit limit {}", logId(), resubmitsLimit);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
+            log.debug("{}: resubmitting...", logId());
             ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
-            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage, loggingId);
+            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage, logId());
         }
 
-        process(match, loggingId);
+        process(match, logId());
 
-        log.debug("{}: resubmit ended", loggingId);
+        log.debug("{}: RESUBMIT ended", logId());
     }
 
     private ExternalMessage getTimeoutFinishMessage(Long matchId) {
@@ -54,17 +56,19 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     }
 
     void process(Match match, int loggingId) {
-        log.debug("{}: resubmit processing started", loggingId);
+        log.debug("{}: RESUBMIT(internal) started", logId());
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
+        log.debug("{}: matchPlayers retrieved", logId());
         updateSubmitsData(match);
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(registeredMatchPlayers);
+            log.debug("{}: match {} and matchPlayers submit discarded info and updated limits saved.", logId(), match.getId());
         });
-        submitCommandProcessor.process(match, loggingId);
+        submitCommandProcessor.process(match, logId());
 
-        log.debug("{}: resubmit processing ended", loggingId);
+        log.debug("{}: RESUBMIT(internal) ended", logId());
     }
 
     private void updateSubmitsData(Match match) {
