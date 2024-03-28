@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.ScreenshotSavingException;
@@ -13,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.PHOTO_ALLOWED_EXTENSIONS;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScreenshotServiceImpl implements ScreenshotService {
@@ -27,14 +29,18 @@ public class ScreenshotServiceImpl implements ScreenshotService {
 
     @Override
     public void save(long matchId, String dottedFileExtension, byte[] screenshot) throws IOException {
+        int logId = LogId.get();
+        log.debug("{}: saving file", logId);
         LocalDate today = LocalDateTime.ofInstant(Instant.now(clock), ZoneId.systemDefault()).toLocalDate();
         String monthYear = today.format(DateTimeFormatter.ofPattern("yy_MM"));
         Path savePath = Path.of(getSaveDirectoryPath(monthYear) + matchId + dottedFileExtension);
+        log.debug("{}: save path: '{}'", logId, savePath);
 
         validate(dottedFileExtension, savePath);
 
         Files.createDirectories(savePath.getParent());
         Files.write(savePath, screenshot);
+        log.debug("{}: file successfully saved", logId);
     }
 
     private void validate(String dottedFileExtension, Path savePath) {

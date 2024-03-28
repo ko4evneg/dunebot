@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StartupServiceImpl implements StartupService {
@@ -25,15 +27,17 @@ public class StartupServiceImpl implements StartupService {
 
     @Override
     public void startUp() {
+        log.info("Startup match validation...");
         List<Match> notEndedMatches = matchRepository.findAllByStateIn(List.of(MatchState.NEW, MatchState.ON_SUBMIT));
         Map<Integer, String> matchIdStringsByTopicId = new HashMap<>();
         for (Match match : notEndedMatches) {
+            log.debug("Set failing state for match {}", match.getId());
             match.setState(MatchState.FAILED);
-
             Integer chatId = match.getExternalPollId().getReplyId();
             matchIdStringsByTopicId.merge(chatId, match.getId().toString(), (oldVal, val) -> oldVal + ", " + val);
         }
         matchRepository.saveAll(notEndedMatches);
+        log.debug("All failed matches saved");
 
         String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
         matchIdStringsByTopicId.forEach((topicId, matchIds) -> {
@@ -41,5 +45,6 @@ public class StartupServiceImpl implements StartupService {
             MessageDto messageDto = new MessageDto(chatId, externalMessage, topicId, null);
             messagingService.sendMessageAsync(messageDto);
         });
+        log.info("Startup match validation finished");
     }
 }
