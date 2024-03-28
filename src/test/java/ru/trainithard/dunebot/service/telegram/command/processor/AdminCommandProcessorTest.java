@@ -23,8 +23,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AdminCommandProcessorTest extends TestContextMock {
@@ -149,6 +148,44 @@ class AdminCommandProcessorTest extends TestContextMock {
         Command actualCommand = processor.getCommand();
 
         assertEquals(Command.ADMIN, actualCommand);
+    }
+
+    @Test
+    void shouldSendSingleBroadcastMessageWhenTopicsAreSame() {
+        when(settingsService.getStringSetting(eq(SettingKey.CHAT_ID))).thenReturn("12345");
+        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING))).thenReturn(3);
+        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC))).thenReturn(3);
+
+        processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020), mockLoggingId);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
+
+        assertEquals("12345", actualMessageDto.getChatId());
+        assertEquals(3, actualMessageDto.getTopicId());
+        assertEquals("Корова шла по полю, а потом упала\\!$%\\(\\)", actualMessageDto.getText());
+    }
+
+    @Test
+    void shouldSendTwoBroadcastMessagesWhenTopicsAreDifferent() {
+        when(settingsService.getStringSetting(eq(SettingKey.CHAT_ID))).thenReturn("12345");
+        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING))).thenReturn(1);
+        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC))).thenReturn(2);
+
+        processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020), mockLoggingId);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(3)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto1 = messageDtoCaptor.getAllValues().get(0);
+        MessageDto actualMessageDto2 = messageDtoCaptor.getAllValues().get(1);
+
+        assertEquals("12345", actualMessageDto1.getChatId());
+        assertEquals("12345", actualMessageDto2.getChatId());
+        assertEquals(1, actualMessageDto1.getTopicId());
+        assertEquals(2, actualMessageDto2.getTopicId());
+        assertEquals("Корова шла по полю, а потом упала\\!$%\\(\\)", actualMessageDto1.getText());
+        assertEquals("Корова шла по полю, а потом упала\\!$%\\(\\)", actualMessageDto2.getText());
     }
 
     private CommandMessage getCommandMessage(String arg, int replyId) {

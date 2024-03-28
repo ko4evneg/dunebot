@@ -33,6 +33,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда!";
     private static final String SUCCESSFUL_COMMAND_TEXT = "Команда успешно выполнена.";
     private static final String SET_KEY = "set";
+    private static final String MESSAGE_KEY = "message";
     private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
 
@@ -41,7 +42,8 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: admin command started with args: '{}'", loggingId, commandMessage.getAllArguments());
+        String allCommandArguments = commandMessage.getAllArguments();
+        log.debug("{}: admin command started with args: '{}'", loggingId, allCommandArguments);
 
         String subCommand = commandMessage.getArgument(1).toLowerCase();
 
@@ -68,6 +70,19 @@ public class AdminCommandProcessor extends CommandProcessor {
                     throw new AnswerableDuneBotException(WRONG_SETTING_VALUE_TEXT, commandMessage);
                 }
                 settingsService.saveSetting(settingKey, settingValue);
+            }
+            case MESSAGE_KEY -> {
+                String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
+                int up4Topic = settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
+                int duneTopic = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+                String message = allCommandArguments.substring(MESSAGE_KEY.length() + 1);
+                ExternalMessage userMessage = new ExternalMessage(message);
+                MessageDto up4UserMessageDto = new MessageDto(chatId, userMessage, up4Topic, null);
+                messagingService.sendMessageAsync(up4UserMessageDto);
+                if (up4Topic != duneTopic) {
+                    MessageDto duneUserMessageDto = new MessageDto(chatId, userMessage, duneTopic, null);
+                    messagingService.sendMessageAsync(duneUserMessageDto);
+                }
             }
             default -> {
                 log.debug("{}: wrong admin command subcommand {}", loggingId, subCommand);
