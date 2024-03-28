@@ -28,36 +28,37 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: refresh started", loggingId);
+        log.debug("{}: REFRESH_PROFILE started", logId());
 
         playerRepository.findByExternalId(commandMessage.getUserId())
                 .ifPresent(player -> {
-                    log.debug("{}: player found, id: {}", loggingId, player.getId());
+                    log.debug("{}: player {} found", logId(), player.getId());
                     String allArguments = commandMessage.getAllArguments();
                     if (allArguments.isBlank()) {
-                        updateAndSaveTelegramProperties(commandMessage, player, loggingId);
+                        updateAndSaveTelegramProperties(commandMessage, player, logId());
                     } else {
                         try {
-                            updatePlayerNames(player, allArguments, loggingId);
+                            updatePlayerNames(player, allArguments, logId());
                         } catch (WrongNamesInputException exception) {
                             throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
                         } finally {
-                            updateAndSaveTelegramProperties(commandMessage, player, loggingId);
+                            updateAndSaveTelegramProperties(commandMessage, player, logId());
                             MessageDto messageDto = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPDATE_MESSAGE), null);
                             messagingService.sendMessageAsync(messageDto);
                         }
                     }
                 });
 
-        log.debug("{}: refresh ended", loggingId);
+        log.debug("{}: REFRESH_PROFILE ended", logId());
     }
 
     private void updateAndSaveTelegramProperties(CommandMessage commandMessage, Player player, int loggingId) {
-        player.setExternalFirstName(commandMessage.getExternalFirstName());
-        player.setExternalName(commandMessage.getUserName());
+        String firstName = commandMessage.getExternalFirstName();
+        String userName = commandMessage.getUserName();
+        player.setExternalFirstName(firstName);
+        player.setExternalName(userName);
         playerRepository.save(player);
-
-        log.debug("{}: player telegram properties set and saved, id: {}", loggingId, player.getId());
+        log.debug("{}: player telegram {} names saved (name: {}, username: {})", loggingId, player.getId(), firstName, userName);
     }
 
     private void updatePlayerNames(Player player, String allArguments, int loggingId) throws WrongNamesInputException {
@@ -66,7 +67,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
         player.setLastName(parsedNames.getLastName());
         player.setSteamName(parsedNames.getSteamName());
 
-        log.debug("{}: player names set and saved, id: {}", loggingId, player.getId());
+        log.debug("{}: player {} names saved. '{}'", loggingId, player.getId(), parsedNames);
     }
 
     @Override

@@ -167,7 +167,6 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private static class Callback {
-
         private final long matchId;
         private final int candidatePlace;
 

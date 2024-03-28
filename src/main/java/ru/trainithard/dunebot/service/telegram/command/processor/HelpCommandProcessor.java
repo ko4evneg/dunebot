@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -11,6 +12,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 /**
  * Shows bot how to instructions to requester.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HelpCommandProcessor extends CommandProcessor {
@@ -18,7 +20,9 @@ public class HelpCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
+        log.debug("{}: HELP started", logId());
         messagingService.sendMessageAsync(new MessageDto(commandMessage, getHelpText(), null));
+        log.debug("{}: HELP ended", logId());
     }
 
     @Override

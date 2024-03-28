@@ -31,31 +31,36 @@ public class RegisterCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: register started", loggingId);
+        log.debug("{}: REGISTER started", logId());
 
         ParsedNames parsedNames = validate(commandMessage);
-        log.debug("{}: validation passed", loggingId);
 
         Player player = playerRepository.save(Player.createRegularPlayer(commandMessage, parsedNames));
+        log.debug("{}: new player {} saved", logId(), player.getId());
         String messageText = String.format(REGISTRATION_MESSAGE_TEMPLATE, player.getFriendlyName());
         messagingService.sendMessageAsync(
                 new MessageDto(commandMessage.getChatId(), new ExternalMessage(messageText), commandMessage.getReplyMessageId(), null));
 
-        log.debug("{}: register ended", loggingId);
+        log.debug("{}: REGISTER ended", logId());
     }
 
     private ParsedNames validate(CommandMessage commandMessage) {
+        log.debug("{}: names validation", logId());
         try {
             long externalId = commandMessage.getUserId();
             ParsedNames parsedNames = new ParsedNames(commandMessage.getAllArguments());
-            String steamName = parsedNames.getSteamName();
-            playerRepository.findByExternalIdOrSteamName(externalId, steamName).ifPresent(player -> {
-                if (externalId == player.getExternalId()) {
-                    throw new AnswerableDuneBotException(String.format(ALREADY_REGISTERED_MESSAGE_TEMPLATE, player.getSteamName()), player.getExternalChatId());
-                } else if (steamName.equals(player.getSteamName())) {
-                    throw new AnswerableDuneBotException(String.format(NICKNAME_IS_BUSY_MESSAGE_TEMPLATE, steamName), player.getExternalChatId());
+            String newSteamName = parsedNames.getSteamName();
+            playerRepository.findByExternalIdOrSteamName(externalId, newSteamName).ifPresent(player -> {
+                long playerExternalId = player.getExternalId();
+                String playerSteamName = player.getSteamName();
+                log.debug("{}: validation failed, player found: ({}, {})", logId(), playerExternalId, playerSteamName);
+                if (externalId == playerExternalId) {
+                    throw new AnswerableDuneBotException(String.format(ALREADY_REGISTERED_MESSAGE_TEMPLATE, playerSteamName), player.getExternalChatId());
+                } else if (newSteamName.equals(playerSteamName)) {
+                    throw new AnswerableDuneBotException(String.format(NICKNAME_IS_BUSY_MESSAGE_TEMPLATE, newSteamName), player.getExternalChatId());
                 }
             });
+            log.debug("{}: validation successful", logId());
             return parsedNames;
         } catch (WrongNamesInputException exception) {
             throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
