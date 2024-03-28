@@ -44,56 +44,49 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: accept_submit started", loggingId);
+        log.debug("{}: ACCEPT_SUBMIT started", logId());
 
         Callback callback = new Callback(commandMessage.getCallback());
         Match match = matchRepository.findWithMatchPlayersBy(callback.matchId).orElseThrow();
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
         MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
-
-        log.debug("{}: set match id: {}, player id: {}", loggingId, match.getId(), submittingPlayer.getPlayer().getId());
+        log.debug("{}: match id: {}, player id: {}", logId(), match.getId(), submittingPlayer.getPlayer().getId());
 
         if (!submittingPlayer.hasCandidateVote()) {
             deleteOldSubmitMessage(submittingPlayer);
 
             int candidatePlace = callback.candidatePlace;
             int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
+            log.debug("{}: candidatePlace = {}", logId(), candidatePlace);
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
-                log.debug("{}: not exceeding resubmits conflict resolution started", loggingId);
-
+                log.debug("{}: conflict resolution - resubmit", logId());
                 ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
                 sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
-                resubmitProcessor.process(match, loggingId);
-
-                log.debug("{}: not exceeding resubmits conflict resolution ended successfully", loggingId);
+                resubmitProcessor.process(match, logId());
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
-                log.debug("{}: exceeding resubmits conflict successfully ended", loggingId);
-
+                log.debug("{}: conflict resolution - failed match", logId());
                 sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
                 ExternalMessage resubmitsLimitExceededMessage = getResubmitsLimitFinishMessage(match.getId());
-                matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage, loggingId);
-
-                log.debug("{}: exceeding resubmits conflict resolution successfully ended", loggingId);
+                matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage, logId());
             } else {
-                log.debug("{}: not conflicting submit processing started", loggingId);
-
+                log.debug("{}: player's submit processing", logId());
                 submittingPlayer.setCandidatePlace(candidatePlace);
                 match.setSubmitsCount(match.getSubmitsCount() + 1);
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
                     matchPlayerRepository.save(submittingPlayer);
+                    log.debug("{}: match {} and submitting matchPlayers saved)", logId(), match.getId());
                 });
                 Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
                 messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
                 if (match.canBeFinished()) {
-                    matchFinishingService.finishSubmittedMatch(match.getId(), loggingId);
+                    matchFinishingService.finishSubmittedMatch(match.getId(), logId());
                 }
-
-                log.debug("{}: not conflicting submit processing successfully ended", loggingId);
+                log.debug("{}: player's submit successfully processed", logId());
             }
         }
 
-        log.debug("{}: accept_submit ended", loggingId);
+        log.debug("{}: ACCEPT_SUBMIT ended", logId());
     }
 
     private MatchPlayer getSubmittingPlayer(long externalUserId, List<MatchPlayer> matchPlayers) {
@@ -110,10 +103,12 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
     private boolean isConflictSubmit(List<MatchPlayer> matchPlayers, int candidatePlace) {
         return matchPlayers.stream()
-                .anyMatch(matchPlayer -> {
+                .filter(matchPlayer -> {
                     Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
                     return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
-                });
+                })
+                .peek(matchPlayer -> log.debug("{}: conflict found. matchPlayer {} has same candidatePlace ", logId(), matchPlayer.getId()))
+                .findFirst().isPresent();
     }
 
     private ExternalMessage getConflictMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {

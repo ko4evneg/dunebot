@@ -38,23 +38,29 @@ public class NewCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: new started", loggingId);
+        log.debug("{}: NEW started", logId());
 
         String modTypeString = commandMessage.getArgument(1);
         ModType modType = ModType.getByAlias(modTypeString);
         if (modType == null) {
             throw new AnswerableDuneBotException(String.format(UNSUPPORTED_MATCH_TYPE_MESSAGE_TEMPLATE, modTypeString), commandMessage);
         }
+        log.debug("{}: mod type {} detected", logId(), modType);
         playerRepository.findByExternalId(commandMessage.getUserId())
-                .ifPresent(player -> messagingService.sendPollAsync(getNewPollMessage(player, modType))
-                        .thenAccept(telegramPollDto -> {
-                            Match match = new Match(modType);
-                            match.setExternalPollId(telegramPollDto.toExternalPollId());
-                            match.setOwner(player);
-                            matchRepository.save(match);
-                        }));
+                .ifPresent(player -> {
+                    messagingService.sendPollAsync(getNewPollMessage(player, modType))
+                            .thenAccept(telegramPollDto -> {
+                                log.debug("{}: match creation request callback received", logId());
+                                Match match = new Match(modType);
+                                match.setExternalPollId(telegramPollDto.toExternalPollId());
+                                match.setOwner(player);
+                                matchRepository.save(match);
+                                log.debug("{}: new match saved", logId());
+                            });
+                    log.debug("{}: match creation request sent", logId());
+                });
 
-        log.debug("{}: new ended", loggingId);
+        log.debug("{}: NEW ended", logId());
     }
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {

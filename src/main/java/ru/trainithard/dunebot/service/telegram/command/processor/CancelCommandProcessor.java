@@ -34,27 +34,28 @@ public class CancelCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: cancel started", loggingId);
+        log.debug("{}: CANCEL started", logId());
 
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player -> {
+            log.debug("{}: player id ({}) found", logId(), player.getId());
             Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatchWithMatchPlayersBy(player.getId());
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
-                log.debug("{}: to-cancel match found, id {}", loggingId, latestOwnedMatch.getId());
-// TODO:  onsubmit
+                log.debug("{}: match found, id {}", logId(), latestOwnedMatch.getId());
+                //TODO: restrict onsubmit cancel
                 if (finishedMatchStates.contains(latestOwnedMatch.getState())) {
                     throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
                 }
-
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
                 transactionTemplate.executeWithoutResult(status -> {
                     matchPlayerRepository.deleteAll(latestOwnedMatch.getMatchPlayers());
                     matchRepository.delete(latestOwnedMatch);
+                    log.debug("{}: match and matchPlayers deleted", logId());
                 });
             }
         });
 
-        log.debug("{}: cancel ended", loggingId);
+        log.debug("{}: CANCEL ended", logId());
     }
 
     @Override

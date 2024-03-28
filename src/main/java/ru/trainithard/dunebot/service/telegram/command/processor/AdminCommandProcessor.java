@@ -43,7 +43,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
         String allCommandArguments = commandMessage.getAllArguments();
-        log.debug("{}: admin command started with args: '{}'", loggingId, allCommandArguments);
+        log.debug("{}: ADMIN started. Args: '{}'", logId(), allCommandArguments);
 
         String subCommand = commandMessage.getArgument(1).toLowerCase();
 
@@ -85,13 +85,13 @@ public class AdminCommandProcessor extends CommandProcessor {
                 }
             }
             default -> {
-                log.debug("{}: wrong admin command subcommand {}", loggingId, subCommand);
+                log.debug("{}: wrong admin subcommand {}", logId(), subCommand);
                 messageDto = new MessageDto(commandMessage, new ExternalMessage(WRONG_COMMAND_EXCEPTION_MESSAGE), null);
             }
         }
 
         messagingService.sendMessageAsync(messageDto);
-        log.debug("{}: admin command sucsessfuly finished execution", loggingId, commandMessage, subCommand);
+        log.debug("{}: ADMIN ended", logId());
     }
 
     private void sendSetCommands() {

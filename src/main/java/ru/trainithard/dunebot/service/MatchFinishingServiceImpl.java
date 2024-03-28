@@ -37,24 +37,22 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
 
     @Override
     public void finishNotSubmittedMatch(long matchId, ExternalMessage reasonMessage, int loggingId) {
-        log.debug("{}: unsuccessful_match_finish started", loggingId);
+        int logId = LogId.get();
+        log.debug("{}: finishing not submitted match started", logId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
+        log.debug("{}: match found (id: {}, state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
         if (!finishedMatchStates.contains(match.getState())) {
-            log.debug("{}: unsuccessful_match_finish found unfinished match id: {}", loggingId, match.getId());
-
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
-                log.debug("{}: unsuccessful_match_finish successfully save started", loggingId);
                 finishSuccessfullyAndSave(match);
             } else {
-                log.debug("{}: unsuccessful_match_finish failed scenario save started", loggingId);
-
                 match.setState(MatchState.FAILED);
                 match.setFinishDate(LocalDate.now(clock));
                 match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(match.getMatchPlayers());
+                    log.debug("{}: match {} and its matchPlayers saved)", logId, match.getId());
                 });
 
                 ExternalPollId externalPollId = match.getExternalPollId();
@@ -62,34 +60,34 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
                 messagingService.sendMessageAsync(finishMessage);
             }
         }
-
-        log.debug("{}: unsuccessful_match_finish ended", loggingId);
+        log.debug("{}: finishing not submitted match ended", logId);
     }
 
     private boolean hasAllPlacesSubmitted(Match match) {
         int requiredPlaceSubmits = match.getModType().getPlayersCount();
         Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());
         match.getMatchPlayers().forEach(matchPlayer -> possibleMatchPlaces.remove(matchPlayer.getCandidatePlace()));
+        log.debug("{}: match misses {} candidatePlaces", LogId.get(), possibleMatchPlaces.size());
         return possibleMatchPlaces.isEmpty();
     }
 
     @Override
     public void finishSubmittedMatch(long matchId, int loggingId) {
-        log.debug("{}: successful_match_finish started", loggingId);
-
+        log.debug("{}: finishing submitted match started", LogId.get());
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         finishSuccessfullyAndSave(match);
-
-        log.debug("{}: successful_match_finish ended", loggingId);
+        log.debug("{}: finishing submitted match ended", LogId.get());
     }
 
     private void finishSuccessfullyAndSave(Match match) {
+        log.debug("{}: processing successful finish", LogId.get());
         match.setState(MatchState.FINISHED);
         match.setFinishDate(LocalDate.now(clock));
         match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(match.getMatchPlayers());
+            log.debug("{}: match {} and its matchPlayers saved)", LogId.get(), match.getId());
         });
         messagingService.sendMessageAsync(getMatchFinishMessage(match));
     }
