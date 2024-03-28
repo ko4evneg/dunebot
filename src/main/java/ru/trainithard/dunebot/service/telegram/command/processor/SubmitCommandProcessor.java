@@ -52,29 +52,32 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage), loggingId);
+        process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage), logId());
     }
 
     void process(Match match, int loggingId) {
-        log.debug("{}: submit started", loggingId);
+        log.debug("{}: SUBMIT started", logId());
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
-            log.debug("{}: matchPlayer processing started, id: {}", loggingId, matchPlayer.getId());
-
+            log.debug("{}: matchPlayer {} processing...", logId(), matchPlayer.getId());
             deleteOldSubmitMessage(matchPlayer);
+
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId());
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
                 if (throwable == null) {
+                    //todo: transaction?
                     matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                     matchPlayerRepository.save(matchPlayer);
+                    log.debug("{}: matchPlayer {} saved", logId(), matchPlayer.getId());
                     if (match.getState() == MatchState.NEW) {
                         match.setState(MatchState.ON_SUBMIT);
                         matchRepository.save(match);
+                        log.debug("{}: match {} saved", logId(), match.getId());
                     }
                 } else {
-                    log.error(loggingId + ": sending external message encountered an exception", throwable);
+                    log.error(logId() + ": sending external message encountered an exception", throwable);
                 }
             });
         }
@@ -83,10 +86,10 @@ public class SubmitCommandProcessor extends CommandProcessor {
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
-                .finishNotSubmittedMatch(match.getId(), forcedFinishMessage, loggingId), forcedFinishTime);
-        log.debug("{}: forced finish match task scheduled", loggingId);
+                .finishNotSubmittedMatch(match.getId(), forcedFinishMessage, logId()), forcedFinishTime);
+        log.debug("{}: forced finish match task scheduled to {}", logId(), forcedFinishTime);
 
-        log.debug("{}: submit ended", loggingId);
+        log.debug("{}: SUBMIT ended", logId());
     }
 
     private void deleteOldSubmitMessage(MatchPlayer matchPlayer) {

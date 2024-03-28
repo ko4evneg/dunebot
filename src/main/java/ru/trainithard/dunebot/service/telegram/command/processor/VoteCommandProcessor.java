@@ -46,37 +46,43 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: vote started", loggingId);
+        log.debug("{}: VOTE started", logId());
 
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
+        log.debug("{}: poll options: {}", logId(), selectedPollAnswers);
         if (selectedPollAnswers.contains(POSITIVE_POLL_OPTION_ID)) {
-            registerMatchPlayerVote(commandMessage, loggingId);
+            registerMatchPlayerVote(commandMessage, logId());
         } else {
-            unregisterMatchPlayerVote(commandMessage, loggingId);
+            unregisterMatchPlayerVote(commandMessage, logId());
         }
 
-        log.debug("{}: vote ended", loggingId);
+        log.debug("{}: VOTE ended", logId());
     }
 
     private void registerMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: vote registration started", loggingId);
+        log.debug("{}: vote registration...", logId());
         matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
                 .ifPresent(match -> {
+                    log.debug("{}: found match {}", logId(), match.getId());
                             Optional<Player> playerOptional = playerRepository.findByExternalId(commandMessage.getUserId());
                             Player player;
                             if (playerOptional.isEmpty()) {
+                                log.debug("{}: player telegram id {} not found", logId(), commandMessage.getUserId());
                                 int nextGuestIndex = playerRepository.findNextGuestIndex();
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
                                 player = playerRepository.save(guestPlayer);
+                                log.debug("{}: new guest player saved", logId(), commandMessage.getUserId());
                             } else {
                                 player = playerOptional.get();
+                                log.debug("{}: player telegram id {} found", logId(), commandMessage.getUserId());
                             }
                     if (player.isGuest()) {
                         messagingService.sendMessageAsync(getGuestMessageDto(player));
                     }
-                            processPlayerVoteRegistration(player, match, loggingId);
+                    processPlayerVoteRegistration(player, match, logId());
                         }
                 );
+        log.debug("{}: vote registered", logId());
     }
 
     private MessageDto getGuestMessageDto(Player player) {
@@ -96,7 +102,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
-        log.debug("{}: vote registration found player id: {}, match id: {}", loggingId, player.getId(), match.getId());
+        log.debug("{}: player id: {}, match id: {} vote registration...", logId(), player.getId(), match.getId());
 
         int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
         match.setPositiveAnswersCount(updatedPositiveAnswersCount);
@@ -104,14 +110,13 @@ public class VoteCommandProcessor extends CommandProcessor {
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.save(matchPlayer);
+            log.debug("{}: match {} and matchPlayer {} saved, positiveAnswers: {}",
+                    logId(), player.getId(), match.getId(), updatedPositiveAnswersCount);
         });
 
         if (match.isFull()) {
             cancelScheduledMatchStart(match);
-            log.debug("{}: vote match start message unscheduled", loggingId);
-
             scheduleNewMatchStart(match);
-            log.debug("{}: vote match start message scheduled", loggingId);
         }
     }
 
@@ -120,6 +125,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         if (existingScheduledTask != null) {
             existingScheduledTask.cancel(false);
         }
+        log.debug("{}: vote match start message unscheduled", logId());
     }
 
     private void scheduleNewMatchStart(Match match) {
@@ -131,10 +137,12 @@ public class VoteCommandProcessor extends CommandProcessor {
                                     deleteExistingOldSubmitMessage(match);
                                     match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                                     matchRepository.save(match);
+                                    log.debug("{}: match externalStart updated to '{}' and saved", logId(), matchStartInstant);
                                 }),
                         matchStartInstant);
 
         scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
+        log.debug("{}: vote match start message scheduled to '{}'", logId(), matchStartInstant);
     }
 
     private MessageDto getMatchStartMessage(Match match) {
@@ -176,20 +184,21 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void unregisterMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
-        log.debug("{}: vote unregister started", loggingId);
+        log.debug("{}: vote revocation...", logId());
 
         matchPlayerRepository
                 .findByMatchExternalPollIdPollIdAndPlayerExternalId(commandMessage.getPollVote().pollId(), commandMessage.getUserId())
                 .ifPresent(matchPlayer -> {
+                    log.debug("{}: matchPlayer {} found", logId(), matchPlayer.getId());
                     Match match = matchPlayer.getMatch();
 
-                    log.debug("{}: vote unregister found match id: {}, player id: {}", loggingId, match.getId(), matchPlayer.getPlayer().getId());
                     if (match.getState() == MatchState.NEW) {
                         int currentPositiveAnswersCount = match.getPositiveAnswersCount();
                         match.setPositiveAnswersCount(currentPositiveAnswersCount - 1);
                         transactionTemplate.executeWithoutResult(status -> {
                             matchRepository.save(match);
                             matchPlayerRepository.delete(matchPlayer);
+                            log.debug("{}: updated match {} saved. matchPlayer {} deleted", logId(), match.getId(), matchPlayer.getId());
                         });
                         if (match.hasMissingPlayers()) {
                             removeScheduledMatchStart(match);
@@ -207,6 +216,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         if (oldScheduledTask != null) {
             oldScheduledTask.cancel(false);
         }
+        log.debug("{}: match {} start unscheduled", logId(), match.getId());
     }
 
     @Override
