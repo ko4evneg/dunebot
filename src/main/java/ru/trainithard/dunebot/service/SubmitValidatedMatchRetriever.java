@@ -27,35 +27,36 @@ public class SubmitValidatedMatchRetriever {
     private final MatchRepository matchRepository;
 
     public Match getValidatedResubmitMatch(CommandMessage commandMessage) {
-        long telegramChatId = commandMessage.getChatId();
+        log.debug("{}: match for RESUBMIT retrieval...", LogId.get());
         String rawMatchId = commandMessage.getArgument(1);
         try {
-            log.debug("Validation started");
             long matchId = Long.parseLong(rawMatchId);
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
-            validateMatch(telegramChatId, match, true);
-            validateSubmitAllowed(commandMessage, match, telegramChatId);
+            log.debug("{}: match {} found...", LogId.get(), matchId);
+            validateMatch(commandMessage, match, true);
             return match;
         } catch (NumberFormatException | MatchNotExistsException exception) {
-            log.debug("Validation fail for match id {}", rawMatchId);
-            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, telegramChatId);
+            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, commandMessage.getChatId());
         }
     }
 
     public Match getValidatedSubmitMatch(CommandMessage commandMessage) {
+        log.debug("{}: match for SUBMIT retrieval...", LogId.get());
         long telegramChatId = commandMessage.getChatId();
         try {
             long matchId = Long.parseLong(commandMessage.getArgument(1));
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
-            validateMatch(telegramChatId, match, false);
-            validateSubmitAllowed(commandMessage, match, telegramChatId);
+            log.debug("{}: match {} found...", LogId.get(), matchId);
+            validateMatch(commandMessage, match, false);
             return match;
         } catch (NumberFormatException | MatchNotExistsException exception) {
             throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, telegramChatId);
         }
     }
 
-    private void validateMatch(long telegramChatId, Match match, boolean isResubmit) {
+    private void validateMatch(CommandMessage commandMessage, Match match, boolean isResubmit) {
+        log.debug("{}: match {} validation...", LogId.get(), match.getId());
+        long telegramChatId = commandMessage.getChatId();
         if (finishedMatchStates.contains(match.getState())) {
             throw new AnswerableDuneBotException(FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE, telegramChatId);
         }
@@ -65,12 +66,10 @@ public class SubmitValidatedMatchRetriever {
         if (!isResubmit && match.getState() == MatchState.ON_SUBMIT) {
             throw new AnswerableDuneBotException(ALREADY_SUBMITTED_EXCEPTION_MESSAGE, telegramChatId);
         }
-    }
-
-    private void validateSubmitAllowed(CommandMessage commandMessage, Match match, long telegramChatId) {
         if (!isSubmitAllowed(commandMessage, match)) {
             throw new AnswerableDuneBotException(SUBMIT_NOT_ALLOWED_EXCEPTION_MESSAGE, telegramChatId);
         }
+        log.debug("{}: match {} successfully validated", LogId.get(), match.getId());
     }
 
     private boolean isSubmitAllowed(CommandMessage commandMessage, Match match) {

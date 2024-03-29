@@ -52,11 +52,13 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage, int loggingId) {
+        log.debug("{}: SUBMIT started", logId());
         process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage), logId());
+        log.debug("{}: SUBMIT ended", logId());
     }
 
     void process(Match match, int loggingId) {
-        log.debug("{}: SUBMIT started", logId());
+        log.debug("{}: SUBMIT(internal) started", logId());
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
@@ -89,7 +91,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                 .finishNotSubmittedMatch(match.getId(), forcedFinishMessage, logId()), forcedFinishTime);
         log.debug("{}: forced finish match task scheduled to {}", logId(), forcedFinishTime);
 
-        log.debug("{}: SUBMIT ended", logId());
+        log.debug("{}: SUBMIT(internal) ended", logId());
     }
 
     private void deleteOldSubmitMessage(MatchPlayer matchPlayer) {

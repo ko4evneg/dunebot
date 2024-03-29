@@ -27,4 +27,9 @@ public class ParsedNames {
         this.steamName = matcher.group(2);
         this.lastName = matcher.group(3);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s (%s) %s", firstName, steamName, lastName);
+    }
 }
