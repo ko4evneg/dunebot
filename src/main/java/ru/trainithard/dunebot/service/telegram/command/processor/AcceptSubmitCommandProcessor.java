@@ -62,12 +62,12 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 log.debug("{}: conflict resolution - resubmit", logId());
                 ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
                 sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
-                resubmitProcessor.process(match, logId());
+                resubmitProcessor.process(match);
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
                 log.debug("{}: conflict resolution - failed match", logId());
                 sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
                 ExternalMessage resubmitsLimitExceededMessage = getResubmitsLimitFinishMessage(match.getId());
-                matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage, logId());
+                matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage);
             } else {
                 log.debug("{}: player's submit processing", logId());
                 submittingPlayer.setCandidatePlace(candidatePlace);
@@ -80,7 +80,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
                 messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
                 if (match.canBeFinished()) {
-                    matchFinishingService.finishSubmittedMatch(match.getId(), logId());
+                    matchFinishingService.finishSubmittedMatch(match.getId());
                 }
                 log.debug("{}: player's submit successfully processed", logId());
             }

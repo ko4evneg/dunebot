@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
@@ -244,7 +243,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage());
 
-        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(10000L), anyInt());
+        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(10000L));
     }
 
     @Test
@@ -256,7 +255,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage());
 
-        verify(matchFinishingService, never()).finishSubmittedMatch(eq(10000L), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(eq(10000L));
     }
 
     @Test

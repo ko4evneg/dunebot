@@ -321,7 +321,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         thread.join();
 
         verify(finishingService, times(1)).finishNotSubmittedMatch(
-                eq(15000L), argThat(message -> TIMEOUT_MATCH_FINISH_MESSAGE_TEXT.equals(message.getText())), anyInt());
+                eq(15000L), argThat(message -> TIMEOUT_MATCH_FINISH_MESSAGE_TEXT.equals(message.getText())));
     }
 
     @Test

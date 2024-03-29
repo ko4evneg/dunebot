@@ -167,7 +167,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                 .process(argThat((Match match) -> {
                     List<Long> matchPlayerIds = match.getMatchPlayers().stream().map(matchPlayer -> matchPlayer.getPlayer().getId()).sorted().toList();
                     return match.getId().equals(15000L) && matchPlayerIds.equals(List.of(10000L, 10001L, 10002L, 10003L));
-                }), anyInt());
+                }));
     }
 
     @Test
@@ -210,7 +210,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         resubmitProcessor.process(resubmitCommandMessage);
 
         verify(finishingService, times(1)).finishNotSubmittedMatch(
-                eq(15000L), argThat(message -> RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT.equals(message.getText())), anyInt());
+                eq(15000L), argThat(message -> RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT.equals(message.getText())));
     }
 
     @Test

@@ -130,7 +130,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(15000L), anyInt());
+        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(15000L));
     }
 
     @Test
@@ -139,14 +139,14 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L));
     }
 
     @Test
     void shouldNotInvokeMatchFinishOnNotLastCallbackReply() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishSubmittedMatch(anyInt(), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(anyInt());
     }
 
     @Test
@@ -156,7 +156,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L), anyInt());
+        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L));
     }
 
     @Test
@@ -166,7 +166,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishNotSubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE), anyInt());
+        verify(matchFinishingService, never()).finishNotSubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE));
     }
 
     @Test
@@ -177,7 +177,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(resubmitCommandProcessor, times(1))
-                .process(argThat((Match match) -> match.getId().equals(15000L)), anyInt());
+                .process(argThat((Match match) -> match.getId().equals(15000L)));
     }
 
     @Test
@@ -187,7 +187,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(resubmitCommandProcessor, never()).process(argThat((Match match) -> match.getId().equals(15000L)), anyInt());
+        verify(resubmitCommandProcessor, never()).process(argThat((Match match) -> match.getId().equals(15000L)));
     }
 
     @Test

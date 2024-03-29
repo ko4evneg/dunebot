@@ -36,7 +36,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     private final Clock clock;
 
     @Override
-    public void finishNotSubmittedMatch(long matchId, ExternalMessage reasonMessage, int loggingId) {
+    public void finishNotSubmittedMatch(long matchId, ExternalMessage reasonMessage) {
         int logId = LogId.get();
         log.debug("{}: finishing not submitted match started", logId);
 
@@ -72,7 +72,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     }
 
     @Override
-    public void finishSubmittedMatch(long matchId, int loggingId) {
+    public void finishSubmittedMatch(long matchId) {
         log.debug("{}: finishing submitted match started", LogId.get());
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         finishSuccessfullyAndSave(match);

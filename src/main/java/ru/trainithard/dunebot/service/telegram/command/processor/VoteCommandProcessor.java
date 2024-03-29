@@ -51,15 +51,15 @@ public class VoteCommandProcessor extends CommandProcessor {
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();
         log.debug("{}: poll options: {}", logId(), selectedPollAnswers);
         if (selectedPollAnswers.contains(POSITIVE_POLL_OPTION_ID)) {
-            registerMatchPlayerVote(commandMessage, logId());
+            registerMatchPlayerVote(commandMessage);
         } else {
-            unregisterMatchPlayerVote(commandMessage, logId());
+            unregisterMatchPlayerVote(commandMessage);
         }
 
         log.debug("{}: VOTE ended", logId());
     }
 
-    private void registerMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
+    private void registerMatchPlayerVote(CommandMessage commandMessage) {
         log.debug("{}: vote registration...", logId());
         matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
                 .ifPresent(match -> {
@@ -79,7 +79,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                     if (player.isGuest()) {
                         messagingService.sendMessageAsync(getGuestMessageDto(player));
                     }
-                    processPlayerVoteRegistration(player, match, logId());
+                    processPlayerVoteRegistration(player, match);
                         }
                 );
         log.debug("{}: vote registered", logId());
@@ -101,7 +101,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         return new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
     }
 
-    private void processPlayerVoteRegistration(Player player, Match match, int loggingId) {
+    private void processPlayerVoteRegistration(Player player, Match match) {
         log.debug("{}: player id: {}, match id: {} vote registration...", logId(), player.getId(), match.getId());
 
         int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
@@ -183,7 +183,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void unregisterMatchPlayerVote(CommandMessage commandMessage, int loggingId) {
+    private void unregisterMatchPlayerVote(CommandMessage commandMessage) {
         log.debug("{}: vote revocation...", logId());
 
         matchPlayerRepository

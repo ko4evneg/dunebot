@@ -53,11 +53,11 @@ public class SubmitCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage) {
         log.debug("{}: SUBMIT started", logId());
-        process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage), logId());
+        process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage));
         log.debug("{}: SUBMIT ended", logId());
     }
 
-    void process(Match match, int loggingId) {
+    void process(Match match) {
         log.debug("{}: SUBMIT(internal) started", logId());
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
@@ -88,7 +88,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId());
         dunebotTaskScheduler.schedule(() -> matchFinishingService
-                .finishNotSubmittedMatch(match.getId(), forcedFinishMessage, logId()), forcedFinishTime);
+                .finishNotSubmittedMatch(match.getId(), forcedFinishMessage), forcedFinishTime);
         log.debug("{}: forced finish match task scheduled to {}", logId(), forcedFinishTime);
 
         log.debug("{}: SUBMIT(internal) ended", logId());

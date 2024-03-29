@@ -41,10 +41,10 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         if (!match.isResubmitAllowed(resubmitsLimit)) {
             log.debug("{}: resubmitting...", logId());
             ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
-            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage, logId());
+            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage);
         }
 
-        process(match, logId());
+        process(match);
 
         log.debug("{}: RESUBMIT ended", logId());
     }
@@ -55,7 +55,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
                 .append(" завершен без результата, так как истек лимит времени регистрации голосов.");
     }
 
-    void process(Match match, int loggingId) {
+    void process(Match match) {
         log.debug("{}: RESUBMIT(internal) started", logId());
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
@@ -66,7 +66,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             matchPlayerRepository.saveAll(registeredMatchPlayers);
             log.debug("{}: match {} and matchPlayers submit discarded info and updated limits saved.", logId(), match.getId());
         });
-        submitCommandProcessor.process(match, logId());
+        submitCommandProcessor.process(match);
 
         log.debug("{}: RESUBMIT(internal) ended", logId());
     }
