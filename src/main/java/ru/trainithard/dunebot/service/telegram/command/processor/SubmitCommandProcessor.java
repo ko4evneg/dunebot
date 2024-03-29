@@ -51,7 +51,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final Clock clock;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: SUBMIT started", logId());
         process(validatedMatchRetriever.getValidatedSubmitMatch(commandMessage), logId());
         log.debug("{}: SUBMIT ended", logId());

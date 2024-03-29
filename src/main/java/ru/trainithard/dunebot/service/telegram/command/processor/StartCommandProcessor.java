@@ -16,9 +16,9 @@ public class StartCommandProcessor extends CommandProcessor {
     private final HelpCommandProcessor helpCommandProcessor;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: START: redirecting to help command", logId());
-        helpCommandProcessor.process(commandMessage, logId());
+        helpCommandProcessor.process(commandMessage);
     }
 
     @Override

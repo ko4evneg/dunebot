@@ -24,7 +24,7 @@ class HelpCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendHelpText() {
-        processor.process(getCommandMessage(), mockLoggingId);
+        processor.process(getCommandMessage());
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());

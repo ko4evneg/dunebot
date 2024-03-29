@@ -37,7 +37,7 @@ public class NewCommandProcessor extends CommandProcessor {
     private final SettingsService settingsService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: NEW started", logId());
 
         String modTypeString = commandMessage.getArgument(1);

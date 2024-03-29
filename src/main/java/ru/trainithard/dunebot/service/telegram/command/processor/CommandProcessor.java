@@ -13,7 +13,7 @@ public abstract class CommandProcessor {
     @Autowired
     TransactionTemplate transactionTemplate;
 
-    public abstract void process(CommandMessage commandMessage, int loggingId);
+    public abstract void process(CommandMessage commandMessage);
 
     public abstract Command getCommand();
 

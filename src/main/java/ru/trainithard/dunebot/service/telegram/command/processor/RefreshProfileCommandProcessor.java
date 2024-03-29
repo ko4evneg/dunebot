@@ -27,7 +27,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: REFRESH_PROFILE started", logId());
 
         playerRepository.findByExternalId(commandMessage.getUserId())

@@ -75,7 +75,7 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldCreateNewMatch() {
-        processor.process(pollCommandMessage, mockLoggingId);
+        processor.process(pollCommandMessage);
 
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where poll_id = '" + POLL_ID + "'", Long.class);
         Boolean isMatchCreated = jdbcTemplate.queryForObject("select exists(select 1 from matches where external_poll_id = " + actualMessageId + ")", Boolean.class);
@@ -86,7 +86,7 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldCorrectlyFillNewMatch() {
-        processor.process(pollCommandMessage, mockLoggingId);
+        processor.process(pollCommandMessage);
 
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where chat_id = " +
                                                            CHAT_ID + " and poll_id = '" + POLL_ID + "' and message_id = " + MESSAGE_ID + " and reply_id = " + REPLY_ID, Long.class);
@@ -99,7 +99,7 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotCreateAnyMatchPlayer() {
-        processor.process(pollCommandMessage, mockLoggingId);
+        processor.process(pollCommandMessage);
 
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where poll_id = '" + POLL_ID + "'", Long.class);
         Boolean isMatchPlayerExist = jdbcTemplate.queryForObject("select exists(select 1 from match_players " +
@@ -111,7 +111,7 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendTelegramPoll() {
-        processor.process(pollCommandMessage, mockLoggingId);
+        processor.process(pollCommandMessage);
 
         ArgumentCaptor<PollMessageDto> pollCaptor = ArgumentCaptor.forClass(PollMessageDto.class);
         verify(messagingService).sendPollAsync(pollCaptor.capture());
@@ -126,7 +126,7 @@ class NewCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @MethodSource("chatIdSource")
     void shouldSetCorrectTelegramPollChatAndTopicIds(ModType modType, int expectedTopicId) {
-        processor.process(getCommandMessage(modType.getAlias()), mockLoggingId);
+        processor.process(getCommandMessage(modType.getAlias()));
 
         ArgumentCaptor<PollMessageDto> pollCaptor = ArgumentCaptor.forClass(PollMessageDto.class);
         verify(messagingService).sendPollAsync(pollCaptor.capture());
@@ -150,7 +150,7 @@ class NewCommandProcessorTest extends TestContextMock {
         doThrow(new TelegramApiCallException("", new RuntimeException())).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
 
         try {
-            processor.process(pollCommandMessage, mockLoggingId);
+            processor.process(pollCommandMessage);
         } catch (TelegramApiCallException ignored) {
         }
 
@@ -165,7 +165,7 @@ class NewCommandProcessorTest extends TestContextMock {
     void shouldThrowWhenUnsupportedMatchTypeArgumentProvided() {
         CommandMessage commandMessage = getCommandMessage("fake");
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(commandMessage, mockLoggingId));
+                () -> processor.process(commandMessage));
         assertEquals("Неподдерживаемый тип матча: fake", actualException.getMessage());
     }
 

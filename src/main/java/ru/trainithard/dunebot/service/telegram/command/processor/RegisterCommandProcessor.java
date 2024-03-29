@@ -30,7 +30,7 @@ public class RegisterCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: REGISTER started", logId());
 
         ParsedNames parsedNames = validate(commandMessage);

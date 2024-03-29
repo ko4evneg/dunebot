@@ -114,7 +114,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> resubmitProcessor.process(resubmitCommandMessage, mockLoggingId));
+                () -> resubmitProcessor.process(resubmitCommandMessage));
 
         assertEquals(expectedException, actualException.getMessage());
     }
@@ -134,7 +134,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         CommandMessage commandMessage = getCommandMessage(11004L);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> resubmitProcessor.process(commandMessage, mockLoggingId));
+                () -> resubmitProcessor.process(commandMessage));
 
         assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
     }
@@ -145,14 +145,14 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id = 15000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> resubmitProcessor.process(resubmitCommandMessage, mockLoggingId));
+                () -> resubmitProcessor.process(resubmitCommandMessage));
 
         assertEquals("Матча с таким ID не существует!", actualException.getMessage());
     }
 
     @Test
     void shouldIncreaseMatchResubmitCounterOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
+        resubmitProcessor.process(resubmitCommandMessage);
 
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_retry_count from matches where id = 15000", Integer.class);
 
@@ -161,7 +161,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSubmitProcessorOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
+        resubmitProcessor.process(resubmitCommandMessage);
 
         verify(submitProcessor, times(1))
                 .process(argThat((Match match) -> {
@@ -174,7 +174,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldResetMatchSubmitsCountOnResubmit() {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
 
-        resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
+        resubmitProcessor.process(resubmitCommandMessage);
 
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_count from matches where id = 15000", Integer.class);
 
@@ -183,7 +183,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldResetMatchPlayersCandidatePlaceOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
+        resubmitProcessor.process(resubmitCommandMessage);
 
         Boolean isAnyExternalMessageIdExist = jdbcTemplate.queryForObject("select exists" +
                                                                           "(select 1 from match_players where match_id = 15000 and candidate_place is not null)", Boolean.class);
@@ -194,7 +194,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldDeleteOldMatchPlayersExternalMessagesOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
+        resubmitProcessor.process(resubmitCommandMessage);
 
         Boolean isAnyExternalMessageExist = jdbcTemplate.queryForObject(
                 "select exists(select 1 from external_messages where id between 10002 and 10005)", Boolean.class);
@@ -207,7 +207,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldInvokeUnsuccessfulSubmitMatchFinishOnResubmitExceedingMessage() {
         jdbcTemplate.execute("update matches set positive_answers_count = 4, submits_retry_count = 3 where id = 15000");
 
-        resubmitProcessor.process(resubmitCommandMessage, mockLoggingId);
+        resubmitProcessor.process(resubmitCommandMessage);
 
         verify(finishingService, times(1)).finishNotSubmittedMatch(
                 eq(15000L), argThat(message -> RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT.equals(message.getText())), anyInt());

@@ -28,9 +28,9 @@ class StartCommandProcessorTest extends TestContextMock {
     void shouldRedirectToHelpProcessorOnCommand() {
         CommandMessage commandMessage = getCommandMessage();
 
-        startCommandProcessor.process(commandMessage, mockLoggingId);
+        startCommandProcessor.process(commandMessage);
 
-        verify(helpCommandProcessor, times(1)).process(eq(commandMessage), eq(mockLoggingId));
+        verify(helpCommandProcessor, times(1)).process(eq(commandMessage));
     }
 
     @Test

@@ -43,7 +43,7 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSetCommandsServiceOnInitSubcommand() {
-        processor.process(getCommandMessage("init", 10000), mockLoggingId);
+        processor.process(getCommandMessage("init", 10000));
 
         ArgumentCaptor<SetCommandsDto> setCommandsDtoCaptor = ArgumentCaptor.forClass(SetCommandsDto.class);
         verify(messagingService, times(1)).sendSetCommands(setCommandsDtoCaptor.capture());
@@ -56,49 +56,49 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSaveChatIdSettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set_chat", 10000), mockLoggingId);
+        processor.process(getCommandMessage("set_chat", 10000));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.CHAT_ID, "10011");
     }
 
     @Test
     void shouldInvokeSaveClassicTopicIdSettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set_topic_dune", 12345), mockLoggingId);
+        processor.process(getCommandMessage("set_topic_dune", 12345));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_CLASSIC, "12345");
     }
 
     @Test
     void shouldInvokeSaveUprisingTopicIdSettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set_topic_up4", 12121), mockLoggingId);
+        processor.process(getCommandMessage("set_topic_up4", 12121));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_UPRISING, "12121");
     }
 
     @Test
     void shouldInvokeSaveFinishMatchTimeoutSettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set finish_match_timeout 30", 10000), mockLoggingId);
+        processor.process(getCommandMessage("set finish_match_timeout 30", 10000));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.FINISH_MATCH_TIMEOUT, "30");
     }
 
     @Test
     void shouldInvokeSaveResubmitsLimitOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set resubmits_limit 3", 10000), mockLoggingId);
+        processor.process(getCommandMessage("set resubmits_limit 3", 10000));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.RESUBMITS_LIMIT, "3");
     }
 
     @Test
     void shouldInvokeSaveMothlyMatchesThresholdSettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set monthly_matches_threshold 10", 10000), mockLoggingId);
+        processor.process(getCommandMessage("set monthly_matches_threshold 10", 10000));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.MONTHLY_MATCHES_THRESHOLD, "10");
     }
 
     @Test
     void shouldInvokeSaveMatchStartDelaySettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set match_start_delay 40", 10000), mockLoggingId);
+        processor.process(getCommandMessage("set match_start_delay 40", 10000));
 
         verify(settingsService, times(1)).saveSetting(SettingKey.MATCH_START_DELAY, "40");
     }
@@ -106,20 +106,20 @@ class AdminCommandProcessorTest extends TestContextMock {
     @Test
     void shouldThrowOnWrongSettingKey() {
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(getCommandMessage("set wrong_key 40", 10000), mockLoggingId));
+                () -> processor.process(getCommandMessage("set wrong_key 40", 10000)));
         assertEquals(WRONG_SETTING_TEXT, actualException.getMessage());
     }
 
     @Test
     void shouldThrowOnWrongSettingValue() {
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(getCommandMessage("set match_start_delay bad_val", 10000), mockLoggingId));
+                () -> processor.process(getCommandMessage("set match_start_delay bad_val", 10000)));
         assertEquals(WRONG_SETTING_VALUE_TEXT, actualException.getMessage());
     }
 
     @Test
     void shouldSendErrorMessageOnUnknownSubcommand() {
-        processor.process(getCommandMessage("zzz", 10020), mockLoggingId);
+        processor.process(getCommandMessage("zzz", 10020));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -132,7 +132,7 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendSuccessMessageOnUnknownSubcommand() {
-        processor.process(getCommandMessage("zzz", 10020), mockLoggingId);
+        processor.process(getCommandMessage("zzz", 10020));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -156,7 +156,7 @@ class AdminCommandProcessorTest extends TestContextMock {
         when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING))).thenReturn(3);
         when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC))).thenReturn(3);
 
-        processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020), mockLoggingId);
+        processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
@@ -173,7 +173,7 @@ class AdminCommandProcessorTest extends TestContextMock {
         when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING))).thenReturn(1);
         when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC))).thenReturn(2);
 
-        processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020), mockLoggingId);
+        processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(3)).sendMessageAsync(messageDtoCaptor.capture());

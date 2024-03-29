@@ -32,7 +32,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     private final SettingsService settingsService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: RESUBMIT started", logId());
 
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);

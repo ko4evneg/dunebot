@@ -43,7 +43,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private final SettingsService settingsService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: ACCEPT_SUBMIT started", logId());
 
         Callback callback = new Callback(commandMessage.getCallback());

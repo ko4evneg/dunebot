@@ -64,7 +64,7 @@ class CancelCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendCorrectDeleteMessageRequest() {
-        processor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage);
 
         ArgumentCaptor<ExternalMessageId> messageIdCaptor = ArgumentCaptor.forClass(ExternalMessageId.class);
         verify(messagingService).deleteMessageAsync(messageIdCaptor.capture());
@@ -77,7 +77,7 @@ class CancelCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldDeleteMatch() {
-        processor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage);
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
 
@@ -89,7 +89,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10001, 12346, 9000, 'st_pl2', 'name2', 'l1', 'e1', '2010-10-10') ");
 
-        processor.process(commandMessage, mockLoggingId);
+        processor.process(commandMessage);
 
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
@@ -100,14 +100,14 @@ class CancelCommandProcessorTest extends TestContextMock {
     void shouldThrowOnFailedCancel() {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
 
-        assertThrows(TelegramApiCallException.class, () -> processor.process(commandMessage, mockLoggingId));
+        assertThrows(TelegramApiCallException.class, () -> processor.process(commandMessage));
     }
 
     @Test
     void shouldNotDeleteMatchAndMatchPlayersOnFailedCancel() {
         try {
             doThrow(new TelegramApiCallException("", new TelegramApiException())).when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
-            processor.process(commandMessage, mockLoggingId);
+            processor.process(commandMessage);
         } catch (TelegramApiCallException ignored) {
         }
 
@@ -124,7 +124,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         try {
-            processor.process(commandMessage, mockLoggingId);
+            processor.process(commandMessage);
         } catch (AnswerableDuneBotException ignored) {
         }
 
@@ -141,7 +141,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
         try {
-            processor.process(commandMessage, mockLoggingId);
+            processor.process(commandMessage);
         } catch (AnswerableDuneBotException ignored) {
         }
 
@@ -153,7 +153,7 @@ class CancelCommandProcessorTest extends TestContextMock {
     void shouldThrowOnFinishedMatchCancelRequest(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage, mockLoggingId));
+        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage));
 
         assertEquals("Запрещено отменять завершенные матчи!", actualException.getMessage());
     }

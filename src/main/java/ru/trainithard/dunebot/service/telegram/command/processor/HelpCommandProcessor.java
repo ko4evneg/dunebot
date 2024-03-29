@@ -19,7 +19,7 @@ public class HelpCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: HELP started", logId());
         messagingService.sendMessageAsync(new MessageDto(commandMessage, getHelpText(), null));
         log.debug("{}: HELP ended", logId());

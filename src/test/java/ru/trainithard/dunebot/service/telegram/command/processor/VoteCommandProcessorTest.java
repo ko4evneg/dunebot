@@ -108,7 +108,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveNewMatchPlayerOnPositiveReplyRegistration() {
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -117,7 +117,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveNewGuestMatchPlayerOnPositiveReplyRegistration() {
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
         List<Long> actualPlayerExternalIds = jdbcTemplate.queryForList("select p.external_id from match_players mp " +
                                                                        "left join players p on p.id = mp.player_id " +
@@ -128,7 +128,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldCorrectlyFillGuestUserFields() {
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
         Player actualPlayer = jdbcTemplate
                 .queryForObject("select * from players p join match_players mp on p.id = mp.player_id " +
@@ -144,7 +144,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     void shouldCorrectlySetGuestIndex() {
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest412' where id = 10003");
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
         String actualGuestName = jdbcTemplate
                 .queryForObject("select steam_name from players p join match_players mp on p.id = mp.player_id " +
@@ -156,7 +156,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotSaveNewMatchPlayerOnNonPositiveReplyRegistration(int optionId) {
-        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -169,7 +169,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 10000, 10001, '2010-10-10')");
 
-        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -185,7 +185,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10004, 10000, 10004, '2010-10-10')");
 
-        processor.process(getPollAnswerCommandMessage(optionId, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(optionId, GUEST_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -199,7 +199,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 10000, 10001, '2010-10-10')");
 
-        processor.process(getPollAnswerCommandMessage(1, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -214,7 +214,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 10000, 10001, '2010-10-10')");
 
-        processor.process(getPollAnswerCommandMessage(1, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
 
         verify(messagingService, times(1)).deleteMessageAsync(argThat(messageDto ->
                 messageDto.getMessageId().equals(9000) && messageDto.getChatId().equals(CHAT_ID) && messageDto.getReplyId().equals(TOPIC_ID)));
@@ -228,7 +228,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 10000, 10001, '2010-10-10')");
 
-        processor.process(getPollAnswerCommandMessage(1, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
 
         verify(messagingService, never()).deleteMessageAsync(any());
     }
@@ -236,7 +236,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotDeleteMatchRegisteredPlayerOnNonPositiveReplyRegistrationRevocation(int optionId) {
-        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
@@ -246,7 +246,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     // TODO:  del from here
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnPositiveReplyRegistration() {
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -256,7 +256,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotIncreaseMatchRegisteredPlayersCountOnNonPositiveReplyRegistration(int optionId) {
-        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -269,7 +269,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "values (10003, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 2 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(null, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(null, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -279,7 +279,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 100000})
     void shouldNotDecreaseMatchRegisteredPlayersCountOnNonPositiveReplyRegistrationRevocation(int optionId) {
-        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(optionId, USER_2_ID));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
@@ -290,7 +290,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     void shouldAddScheduledTaskOnFourthPlayerRegistration() {
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
         verify(dunebotTaskScheduler, times(1)).schedule(any(), instantCaptor.capture());
@@ -309,7 +309,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "values (10002, 10000, 10003, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
         syncRunScheduledTaskAction();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -337,7 +337,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "values (10002, 10000, 10002, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
         syncRunScheduledTaskAction();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -361,7 +361,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendPrivateMessageOnNewGuestPlayerPositiveRegistration() {
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -387,7 +387,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "last_name, external_first_name, external_name, is_guest, created_at) " +
                              "values (10004, " + GUEST_ID + ", " + GUEST_ID + ", 'guest1', 'Vasya', 'Pupkin', 'ef4', 'en4', true, '2010-10-10') ");
 
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -413,7 +413,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID), mockLoggingId);
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
         syncRunScheduledTaskAction();
 
         Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_start_id = " +

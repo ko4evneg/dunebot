@@ -45,7 +45,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: VOTE started", logId());
 
         List<Integer> selectedPollAnswers = commandMessage.getPollVote().selectedAnswerId();

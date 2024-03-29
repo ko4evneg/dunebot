@@ -41,7 +41,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private final SettingsService settingsService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         String allCommandArguments = commandMessage.getAllArguments();
         log.debug("{}: ADMIN started. Args: '{}'", logId(), allCommandArguments);
 

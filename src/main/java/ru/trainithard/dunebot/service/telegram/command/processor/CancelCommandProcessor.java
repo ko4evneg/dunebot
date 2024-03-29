@@ -33,7 +33,7 @@ public class CancelCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: CANCEL started", logId());
 
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player -> {

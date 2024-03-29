@@ -97,7 +97,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {0, 1, 4, 6})
     void shouldSetCandidatePlaceOnCallbackReply(int expectedPlace) {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + expectedPlace), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + expectedPlace));
 
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select candidate_place from match_players where id = 10000", Integer.class);
 
@@ -107,7 +107,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldNotChangeAlreadySetCandidatePlaceOnCallbackReply() {
         jdbcTemplate.execute("update match_players set candidate_place = 1 where id = 10000");
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select candidate_place from match_players where id = 10000", Integer.class);
 
@@ -116,8 +116,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldIncreaseMatchSubmitCountOnCallbackReply() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__-1"), mockLoggingId);
-        processor.process(getCommandMessage(USER_2_ID, 10003, 11003, "15000__3"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__-1"));
+        processor.process(getCommandMessage(USER_2_ID, 10003, 11003, "15000__3"));
 
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select submits_count from matches where id = 15000", Integer.class);
 
@@ -128,7 +128,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     void shouldInvokeMatchFinishOnLastCallbackReply() {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(15000L), anyInt());
     }
@@ -137,14 +137,14 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     void shouldNotInvokeMatchFinishOnLastCallbackReplyWhenMatchHasNoPhoto() {
         jdbcTemplate.execute("update matches set submits_count = 3, has_onsubmit_photo = false where id = 15000");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L), anyInt());
     }
 
     @Test
     void shouldNotInvokeMatchFinishOnNotLastCallbackReply() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(matchFinishingService, never()).finishSubmittedMatch(anyInt(), anyInt());
     }
@@ -154,7 +154,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L), anyInt());
     }
@@ -164,7 +164,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(matchFinishingService, never()).finishNotSubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE), anyInt());
     }
@@ -174,7 +174,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(resubmitCommandProcessor, times(1))
                 .process(argThat((Match match) -> match.getId().equals(15000L)), anyInt());
@@ -185,7 +185,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + TestConstants.RESUBMITS_LIMIT + " where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(resubmitCommandProcessor, never()).process(argThat((Match match) -> match.getId().equals(15000L)), anyInt());
     }
@@ -195,7 +195,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
@@ -219,7 +219,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + TestConstants.RESUBMITS_LIMIT + " where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
@@ -236,7 +236,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendDeleteMessageForSubmitMessageOnCallbackReply() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__1"), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__1"));
 
         verify(messagingService, times(1)).deleteMessageAsync(argThat(messageDto ->
                 messageDto.getMessageId().equals(10002) && messageDto.getChatId().equals(11002L)));
@@ -245,7 +245,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {2, 3, 4})
     void shouldSendMessageAboutCallbackAcceptOnCallbackReply(int place) {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -259,7 +259,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendMessageAboutCallbackAcceptOnCallbackReply() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1), mockLoggingId);
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());

@@ -47,7 +47,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private String botToken;
 
     @Override
-    public void process(CommandMessage commandMessage, int loggingId) {
+    public void process(CommandMessage commandMessage) {
         log.debug("{}: PHOTO started", logId());
 
         Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT).iterator().next();

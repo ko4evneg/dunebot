@@ -53,7 +53,7 @@ public class TelegramUpdateProcessor {
                     log.debug("{}: successfully passed specific validation", logId);
 
                     CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
-                    processor.process(commandMessage, logId);
+                    processor.process(commandMessage);
                     log.debug("{}: successfully processed", logId);
                 }
             } catch (AnswerableDuneBotException answerableException) {
