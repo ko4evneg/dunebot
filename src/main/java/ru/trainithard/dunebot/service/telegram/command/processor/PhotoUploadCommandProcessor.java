@@ -48,21 +48,22 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        log.debug("{}: PHOTO started", logId());
+        int logId = logId();
+        log.debug("{}: PHOTO started", logId);
 
         Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT).iterator().next();
-        log.debug("{}: match {} found", logId(), match.getId());
+        log.debug("{}: match {} found", logId, match.getId());
 
         String fileId = getFileId(commandMessage);
-        log.debug("{}: file telegram id: {}", logId(), fileId);
+        log.debug("{}: file telegram id: {}", logId, fileId);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
         file.whenComplete((telegramFileDetailsDto, throwable) -> {
-            log.debug("{}: file detail callback received from telegram", logId());
+            log.debug("{}: file detail callback received from telegram", logId);
 
             String filePath = telegramFileDetailsDto.path();
             String effectiveFilePath = filePath.startsWith(PATH_SEPARATOR) ? filePath : PATH_SEPARATOR + filePath;
             byte[] photoBytes = restTemplate.getForObject(getFileUri(effectiveFilePath), byte[].class);
-            log.debug("{}: file bytes[] received from telegram", logId());
+            log.debug("{}: file bytes[] received from telegram", logId);
 
             try {
                 if (photoBytes != null) {
@@ -70,7 +71,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
                     match.setHasSubmitPhoto(true);
                     matchRepository.save(match);
-                    log.debug("{}: match photo flag saved", logId());
+                    log.debug("{}: match photo flag saved", logId);
                     if (match.canBeFinished()) {
                         matchFinishingService.finishSubmittedMatch(match.getId());
                     }
@@ -78,14 +79,14 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), null));
                 }
             } catch (ScreenshotSavingException exception) {
-                log.error(logId() + ": file save failed due to an exception", exception);
+                log.error(logId + ": file save failed due to an exception", exception);
                 messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(exception.getMessage()), null));
             } catch (IOException exception) {
-                log.error(logId() + ": encountered an exception", exception);
+                log.error(logId + ": encountered an exception", exception);
             }
         });
 
-        log.debug("{}: PHOTO ended", logId());
+        log.debug("{}: PHOTO ended", logId);
     }
 
     private String getFileId(CommandMessage commandMessage) {
