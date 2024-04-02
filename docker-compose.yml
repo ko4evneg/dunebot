@@ -1,28 +1,33 @@
 services:
   db:
     container_name: db
-    image: postgres:13.14
+    image: postgres:16.2
     restart: always
     environment:
       #      todo
       POSTGRES_USER: sa
       POSTGRES_PASSWORD: sa
     ports:
-      #      check need
       - 5432:5432
     volumes:
       #     todo replace with prod
       - "C:/Java/persistent/db:/var/lib/postgresql/data"
       - "C:/Java/persistent/timezone:/etc/timezone:ro"
       - "C:/Java/persistent/localtime:/etc/localtime:ro"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U sa" ]
+      interval: 3s
   bot:
     container_name: bot
-    image: dunebot:latest
+    image: dunebot_prod:0.1
     restart: always
+    ports:
+      - 8017:8017
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       #     todo replace with prod
       - "C:/Java/persistent/log:/var/dunebot/log"
