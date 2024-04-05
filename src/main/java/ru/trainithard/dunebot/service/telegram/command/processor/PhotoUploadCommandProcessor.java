@@ -69,6 +69,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                 if (photoBytes != null) {
                     String dottedFileExtension = getFileExtension(filePath);
                     String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
+                    log.debug("{}: save path: {}", logId, savePath);
                     match.setScreenshotPath(savePath);
                     matchRepository.save(match);
                     log.debug("{}: match photo flag saved", logId);
