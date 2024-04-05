@@ -63,8 +63,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                              "values (10000, 'ExternalPollId', 10000, 10000, '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                              "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, has_onsubmit_photo, state, created_at) " +
-                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, true, '" + MatchState.NEW + "','2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, screenshot_path, state, created_at) " +
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, 'photos/1.jpg', '" + MatchState.NEW + "','2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                              "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -135,7 +135,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotInvokeMatchFinishOnLastCallbackReplyWhenMatchHasNoPhoto() {
-        jdbcTemplate.execute("update matches set submits_count = 3, has_onsubmit_photo = false where id = 15000");
+        jdbcTemplate.execute("update matches set submits_count = 3, screenshot_path = null where id = 15000");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 

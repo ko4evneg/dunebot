@@ -60,8 +60,8 @@ class MatchFinishingServiceTest extends TestContextMock {
                 "values (10000, 'ExternalPollId', 10000, " + MATCH_CHAT_ID + ", '10000', " + MATCH_TOPIC_REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, has_onsubmit_photo, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 3, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, screenshot_path, created_at) " +
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 3, 'photos/1.jpg', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                 "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -141,7 +141,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissingAndNoPhotoSubmitted() {
-        jdbcTemplate.execute("update matches set submits_count = 4, has_onsubmit_photo = false where id = 15000");
+        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = null where id = 15000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                 "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 

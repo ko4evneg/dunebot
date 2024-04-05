@@ -47,8 +47,8 @@ class ScreenshotServiceTest extends TestContextMock {
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, has_onsubmit_photo, created_at) " +
-                "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, false, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, created_at) " +
+                             "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
                 "values (10000, 10000, 10000, 4, '2010-10-10')");
     }

@@ -28,7 +28,7 @@ public class ScreenshotServiceImpl implements ScreenshotService {
     private String photosDirectoryPath;
 
     @Override
-    public void save(long matchId, String dottedFileExtension, byte[] screenshot) throws IOException {
+    public String save(long matchId, String dottedFileExtension, byte[] screenshot) throws IOException {
         int logId = LogId.get();
         log.debug("{}: saving file", logId);
         LocalDate today = LocalDateTime.ofInstant(Instant.now(clock), ZoneId.systemDefault()).toLocalDate();
@@ -40,7 +40,9 @@ public class ScreenshotServiceImpl implements ScreenshotService {
 
         Files.createDirectories(savePath.getParent());
         Files.write(savePath, screenshot);
+
         log.debug("{}: file successfully saved", logId);
+        return savePath.toString();
     }
 
     private void validate(String dottedFileExtension, Path savePath) {

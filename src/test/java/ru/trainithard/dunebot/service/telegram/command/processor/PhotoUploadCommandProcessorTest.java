@@ -69,8 +69,8 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
                 "values (10002, 12347, 9002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10003, 12348, 9003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, has_onsubmit_photo, created_at) " +
-                "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, false, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, created_at) " +
+                             "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
                 "values (10000, 10000, 10000, 4, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
@@ -98,8 +98,8 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSelectCorrectMatchWhenMultipleMatchesPresent() {
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, has_onsubmit_photo, created_at) " +
-                             "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, true, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, screenshot_path, created_at) " +
+                             "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, 'photos/1.jpg', '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
                              "values (10004, 10001, 10000, 4, '2010-10-10')");
 
@@ -196,26 +196,30 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchSubmitPhotoFlagWhenCompressedPhotoReceived() {
+    void shouldSetMatchSubmitPhotoFlagWhenCompressedPhotoReceived() throws IOException {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("/photos/10_10/10000.jpeg").when(screenshotService).save(eq(10000L), eq(".jpeg"), any());
 
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
 
-        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
+        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
+                "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
         assertNotNull(actualSubmitPhotoFlag);
         assertTrue(actualSubmitPhotoFlag);
     }
 
     @Test
-    void shouldSetMatchSubmitPhotoFlagWhenDocumentReceived() {
+    void shouldSetMatchSubmitPhotoFlagWhenDocumentReceived() throws IOException {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("/photos/10_10/10000.jpeg").when(screenshotService).save(eq(10000L), eq(".jpeg"), any());
 
         processor.process(getDocumentCommandMessage());
 
-        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
+        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
+                "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
         assertNotNull(actualSubmitPhotoFlag);
         assertTrue(actualSubmitPhotoFlag);
@@ -229,17 +233,19 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(documentCommandMessage);
 
-        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject("select has_onsubmit_photo from matches where id = 10000", Boolean.class);
+        Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
+                "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
         assertNotNull(actualSubmitPhotoFlag);
         assertFalse(actualSubmitPhotoFlag);
     }
 
     @Test
-    void shouldInvokeMatchFinishOnFileSaveWhenAllPlayersSubmitsAndPhotoPresented() {
+    void shouldInvokeMatchFinishOnFileSaveWhenAllPlayersSubmitsAndPhotoPresented() throws IOException {
         TelegramFileDetailsDto fileDetails = new TelegramFileDetailsDto(FILE_ID, "path/file.jpeg", FILE_SIZE);
         doReturn(CompletableFuture.completedFuture(fileDetails)).when(messagingService).getFileDetails(FILE_ID);
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
+        doReturn("/photos/10_10/10000.jpeg").when(screenshotService).save(eq(10000L), eq(".jpeg"), any());
 
         processor.process(getDocumentCommandMessage());
 

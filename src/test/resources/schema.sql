@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS MATCHES
     SUBMITS_COUNT          INTEGER                  NOT NULL DEFAULT 0,
     SUBMITS_RETRY_COUNT    INTEGER                  NOT NULL DEFAULT 0,
     STATE                  VARCHAR                  NOT NULL,
-    HAS_ONSUBMIT_PHOTO     BOOLEAN                  NOT NULL DEFAULT FALSE,
+    SCREENSHOT_PATH VARCHAR,
     FINISH_DATE            DATE,
     MOD_TYPE               VARCHAR                  NOT NULL,
     CREATED_AT             TIMESTAMP WITH TIME ZONE NOT NULL,

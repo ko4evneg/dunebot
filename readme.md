@@ -2,11 +2,14 @@
 
 | priority | issue                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| critical | multiple on-submit matches                                                          |
+| high     | multiple on-submit matches (temp resolved by submit timeout)                        |
+| high     | cleanup message on startup                                                          |
 | high     | add maintenance windows                                                             |
 | high     | match submits throttling                                                            |
 | high     | add leaders selection flow                                                          |
 | high     | leaders rating                                                                      |
+| medium   | exceptions replacement to messages                                                  |
+| medium   | simultaneous matches spam control                                                   |
 | medium   | simultaneous matches spam control                                                   |
 | medium   | add menu buttons (SetMyCommands)                                                    |
 | medium   | test TelegramApiException to runtime handling                                       |

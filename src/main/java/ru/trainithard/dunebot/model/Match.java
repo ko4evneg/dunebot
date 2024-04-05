@@ -1,7 +1,6 @@
 package ru.trainithard.dunebot.model;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -55,12 +54,6 @@ public class Match extends BaseEntity {
     @Column(name = "state")
     private MatchState state;
     /**
-     * Describes whether the match have results photo submitted.
-     */
-    @Getter(AccessLevel.NONE)
-    @Column(name = "has_onsubmit_photo")
-    private boolean hasSubmitPhoto;
-    /**
      * Count of positive votes in the match poll.
      */
     private int positiveAnswersCount;
@@ -73,6 +66,10 @@ public class Match extends BaseEntity {
      */
     private int submitsRetryCount;
     /**
+     * Path of the screenshot for the match
+     */
+    private String screenshotPath;
+    /**
      * Finish match date.
      */
     private LocalDate finishDate;
@@ -83,11 +80,11 @@ public class Match extends BaseEntity {
     }
 
     public boolean hasSubmitPhoto() {
-        return hasSubmitPhoto;
+        return screenshotPath != null;
     }
 
     public boolean canBeFinished() {
-        return submitsCount == matchPlayers.size() && hasSubmitPhoto;
+        return submitsCount == matchPlayers.size() && screenshotPath != null;
     }
 
     public boolean isResubmitAllowed(int resubmitsLimit) {

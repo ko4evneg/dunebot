@@ -60,7 +60,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         log.debug("{}: matchPlayers retrieved", logId());
-        updateSubmitsData(match);
+        resetMatchData(match);
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(registeredMatchPlayers);
@@ -71,9 +71,10 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         log.debug("{}: RESUBMIT(internal) ended", logId());
     }
 
-    private void updateSubmitsData(Match match) {
+    private void resetMatchData(Match match) {
         match.setSubmitsRetryCount(match.getSubmitsRetryCount() + 1);
         match.setSubmitsCount(0);
+        match.setScreenshotPath(null);
         match.getMatchPlayers().forEach(matchPlayer -> {
             matchPlayer.setCandidatePlace(null);
             matchPlayer.setSubmitMessageId(null);
