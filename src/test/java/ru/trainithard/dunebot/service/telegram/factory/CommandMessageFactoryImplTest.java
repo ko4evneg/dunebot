@@ -56,6 +56,17 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
+    void shouldIgnoreExcessiveSpacesBetweenArguments() {
+        Update textUpdate = getTextUpdate("/" + Command.REGISTER + "   arg1  arg2   arg3    ");
+
+        CommandMessage commandMessage = factory.getInstance(textUpdate);
+
+        assertEquals(3, commandMessage.getArgumentsCount());
+        assertEquals("arg1 arg2 arg3", commandMessage.getAllArguments());
+    }
+
+
+    @Test
     void shouldGetEmptyStringCommandArgsForSlashWordTextUpdate() {
         Update textUpdate = getTextUpdate("/" + Command.REGISTER);
 
