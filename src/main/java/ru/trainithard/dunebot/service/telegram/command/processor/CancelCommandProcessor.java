@@ -9,7 +9,9 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -52,6 +54,10 @@ public class CancelCommandProcessor extends CommandProcessor {
                     matchRepository.delete(latestOwnedMatch);
                     log.debug("{}: match and matchPlayers deleted", logId());
                 });
+            } else {
+                MessageDto messageDto = new MessageDto(commandMessage,
+                        new ExternalMessage("Не найдены матчи, которые можно завершить!"), null);
+                messagingService.sendMessageAsync(messageDto);
             }
         });
 

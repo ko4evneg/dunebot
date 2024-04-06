@@ -22,6 +22,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -45,13 +46,13 @@ class CancelCommandProcessorTest extends TestContextMock {
         doNothing().when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, 12345, 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, 12345, 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                              "values (10000, 'ExternalPollId'," + MESSAGE_ID + ", " + TestConstants.CHAT_ID + ", " + REPLY_ID + ", '12346', '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
-                "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
+                             "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10000, 10000, 10000, '2010-10-10')");
+                             "values (10000, 10000, 10000, '2010-10-10')");
     }
 
     @AfterEach
@@ -87,7 +88,7 @@ class CancelCommandProcessorTest extends TestContextMock {
     @Test
     void shouldDeleteMatchPlayers() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, 12346, 9000, 'st_pl2', 'name2', 'l1', 'e1', '2010-10-10') ");
+                             "values (10001, 12346, 9000, 'st_pl2', 'name2', 'l1', 'e1', '2010-10-10') ");
 
         processor.process(commandMessage);
 
@@ -146,6 +147,19 @@ class CancelCommandProcessorTest extends TestContextMock {
         }
 
         verifyNoInteractions(messagingService);
+    }
+
+    @Test
+    void shouldSendMessageOnInvalidIdMatchCancelRequest() {
+        jdbcTemplate.execute("delete from match_players where match_id = (select id from matches where id in (10000, 10001))");
+        jdbcTemplate.execute("delete from matches where id = 10000");
+
+        processor.process(commandMessage);
+
+        verify(messagingService).sendMessageAsync(argThat((MessageDto message) ->
+                TestConstants.CHAT_ID.equals(message.getChatId())
+                && REPLY_ID.equals(message.getReplyMessageId())
+                && "Не найдены матчи, которые можно завершить!".equals(message.getText())));
     }
 
     @ParameterizedTest
