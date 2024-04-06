@@ -40,6 +40,9 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
                     } else {
                         try {
                             updatePlayerNames(player, allArguments);
+                            if (player.isGuest()) {
+                                player.setGuest(false);
+                            }
                         } catch (WrongNamesInputException exception) {
                             throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
                         } finally {

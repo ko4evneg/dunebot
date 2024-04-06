@@ -134,9 +134,21 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
         Player actualPlayer = jdbcTemplate.queryForObject("select * from players where id = 10000", new BeanPropertyRowMapper<>(Player.class));
 
-        assertEquals(actualPlayer.getFirstName(), "abc");
-        assertEquals(actualPlayer.getLastName(), "cde");
-        assertEquals(actualPlayer.getSteamName(), "stm");
+        assertEquals("abc", actualPlayer.getFirstName());
+        assertEquals("cde", actualPlayer.getLastName());
+        assertEquals("stm", actualPlayer.getSteamName());
+    }
+
+    @Test
+    void shouldMigrateGuestPlayerToRegular() {
+        jdbcTemplate.execute("update players set is_guest = true where id = 10000");
+
+        processor.process(getCommandMessage("abc (stm) cde"));
+
+        Boolean actualIsGuest = jdbcTemplate.queryForObject("select is_guest from players where id = 10000", Boolean.class);
+
+        assertNotNull(actualIsGuest);
+        assertFalse(actualIsGuest);
     }
 
     private CommandMessage getCommandMessage(String newSteamName) {
