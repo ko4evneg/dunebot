@@ -38,7 +38,7 @@ public class MessageDto {
     }
 
     public MessageDto(CommandMessage commandMessage, ExternalMessage externalMessage, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getReplyMessageId(), null, linedButtons);
+        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getTopicId(), commandMessage.getReplyMessageId(), linedButtons);
     }
 
     public MessageDto(ExternalMessageId externalMessageId, ExternalMessage externalMessage) {

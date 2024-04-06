@@ -159,7 +159,7 @@ class CancelCommandProcessorTest extends TestContextMock {
         verify(messagingService).sendMessageAsync(argThat((MessageDto message) ->
                 TestConstants.CHAT_ID.equals(message.getChatId())
                 && REPLY_ID.equals(message.getReplyMessageId())
-                && "Не найдены матчи, которые можно завершить!".equals(message.getText())));
+                && "Не найдены матчи, которые можно завершить\\!".equals(message.getText())));
     }
 
     @ParameterizedTest
