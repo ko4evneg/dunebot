@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Java CI with Maven
+name: Java tests
 
 on:
   pull_request:
@@ -26,4 +26,4 @@ jobs:
         distribution: 'oracle'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml -DforkCount=1 -DreuseForks=false -Dparallel=classes -DthreadCount=1
+      run: mvn -B package --file pom.xml

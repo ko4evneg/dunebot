@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -18,6 +19,9 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 public class HelpCommandProcessor extends CommandProcessor {
     private final MessagingService messagingService;
 
+    @Value("${bot.version}")
+    private String version;
+
     @Override
     public void process(CommandMessage commandMessage) {
         log.debug("{}: HELP started", logId());
@@ -32,6 +36,7 @@ public class HelpCommandProcessor extends CommandProcessor {
 
     private ExternalMessage getHelpText() {
         return new ExternalMessage()
+                .startBold().append("Dunebot v").append(version).endBold().newLine()
                 .appendLink("Подробное описание бота", "https://github.com/ko4evneg/dunebot/blob/master/help.md")
                 .newLine().newLine()
                 .append("Список доступных команд:").newLine()
