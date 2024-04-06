@@ -5,7 +5,6 @@ bot:
 logging:
   level:
     root: error
-    ru.trainithard.dunebot: debug
   charset:
     console: UTF-8
     file: UTF-8
@@ -39,7 +38,11 @@ spring:
       mode: never
   liquibase:
     change-log: classpath:changelog.xml
-
+logging:
+  level:
+    ru.trainithard.dunebot: debug
+bot:
+  version: @project.version@
 ---
 
 spring:
@@ -66,7 +69,11 @@ spring:
       schema-locations: classpath:schema.sql
   liquibase:
     enabled: false
+logging:
+  level:
+    ru.trainithard.dunebot: error
 bot:
   token: fake_token
   photos-directory: photos
   pdf-directory: pdf
+  version: 1.3
