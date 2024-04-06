@@ -94,7 +94,7 @@ class RegisterCommandProcessorTest extends TestContextMock {
 
         AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage));
         assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME +
-                     "! Для смены ника выполните команду '/refresh_profile Имя (steam никнейм) Фамилия'", exception.getMessage());
+                     "! Для смены ника выполните команду '/refresh_profile Имя (ник в steam) Фамилия'", exception.getMessage());
     }
 
     @Test

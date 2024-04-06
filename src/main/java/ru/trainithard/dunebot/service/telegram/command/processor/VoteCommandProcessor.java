@@ -95,7 +95,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .append(" - это значит, что вы не можете выполнять некоторые команды бота и не будете включены " +
                         "в результаты рейтинга.").newLine()
                 .append("Для того, чтобы подтвердить регистрацию, выполните в этом чате команду")
-                .appendBold(" '/refresh_profile Имя (Steam) Фамилия'").append(".").newLine()
+                .appendBold(" '/refresh_profile Имя (ник в steam) Фамилия'").append(".").newLine()
                 .appendBold("Желательно это  сделать прямо сейчас.").newLine()
                 .append("Подробная информация о боте: /help.");
         return new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
