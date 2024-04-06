@@ -24,4 +24,4 @@ jobs:
         distribution: 'oracle'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml -DforkCount=1 -DreuseForks=false -Dparallel=methods -DthreadCount=1
+      run: mvn -B package --file pom.xml -DforkCount=1 -DreuseForks=false -Dparallel=classes -DthreadCount=1
