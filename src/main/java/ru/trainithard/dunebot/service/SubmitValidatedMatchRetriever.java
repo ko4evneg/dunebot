@@ -28,15 +28,15 @@ public class SubmitValidatedMatchRetriever {
 
     public Match getValidatedResubmitMatch(CommandMessage commandMessage) {
         log.debug("{}: match for RESUBMIT retrieval...", LogId.get());
-        String rawMatchId = commandMessage.getArgument(1);
+        long telegramChatId = commandMessage.getChatId();
         try {
-            long matchId = Long.parseLong(rawMatchId);
+            long matchId = Long.parseLong(commandMessage.getArgument(1));
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
             log.debug("{}: match {} found...", LogId.get(), matchId);
             validateMatch(commandMessage, match, true);
             return match;
         } catch (NumberFormatException | MatchNotExistsException exception) {
-            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, commandMessage.getChatId());
+            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, exception, telegramChatId);
         }
     }
 
@@ -50,7 +50,7 @@ public class SubmitValidatedMatchRetriever {
             validateMatch(commandMessage, match, false);
             return match;
         } catch (NumberFormatException | MatchNotExistsException exception) {
-            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, telegramChatId);
+            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, exception, telegramChatId);
         }
     }
 

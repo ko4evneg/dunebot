@@ -58,7 +58,10 @@ public class TelegramUpdateProcessor {
                 }
             } catch (AnswerableDuneBotException answerableException) {
                 messagingService.sendMessageAsync(new MessageDto(answerableException));
-                log.error(logId + ": command failed due to app-specific exception", answerableException);
+                log.error("{}: command failed due to app-specific exception. {}", logId, answerableException.getMessage());
+                if (answerableException.getCause() != null) {
+                    log.error(logId + ":", answerableException);
+                }
             } catch (Exception exception) {
                 log.error(logId + ": command failed due to an exception", exception);
             } finally {

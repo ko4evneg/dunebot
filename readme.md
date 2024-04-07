@@ -7,7 +7,6 @@
 | high     | add leaders selection flow                                                          |
 | medium   | multiple on-submit matches                                                          |
 | high     | leaders rating                                                                      |
-| medium   | exceptions replacement to messages                                                  |
 | medium   | simultaneous matches spam control                                                   |
 | medium   | test TelegramApiException to runtime handling                                       |
 | medium   | test TelegramUpdateProcessor unknown exceptions handling for both methods           |

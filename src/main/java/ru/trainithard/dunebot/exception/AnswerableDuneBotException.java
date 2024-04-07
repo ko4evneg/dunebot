@@ -14,8 +14,20 @@ public class AnswerableDuneBotException extends DuneBotException {
         this.telegramReplyId = null;
     }
 
+    public AnswerableDuneBotException(String message, Throwable cause, long telegramChatId) {
+        super(message, cause);
+        this.telegramChatId = telegramChatId;
+        this.telegramReplyId = null;
+    }
+
     public AnswerableDuneBotException(String message, CommandMessage commandMessage) {
         super(message);
+        this.telegramChatId = commandMessage.getChatId();
+        this.telegramReplyId = commandMessage.getReplyMessageId();
+    }
+
+    public AnswerableDuneBotException(String message, Throwable cause, CommandMessage commandMessage) {
+        super(message, cause);
         this.telegramChatId = commandMessage.getChatId();
         this.telegramReplyId = commandMessage.getReplyMessageId();
     }

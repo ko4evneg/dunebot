@@ -6,7 +6,7 @@ public class DuneBotException extends RuntimeException {
         super(message);
     }
 
-    public DuneBotException() {
-        super();
+    public DuneBotException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

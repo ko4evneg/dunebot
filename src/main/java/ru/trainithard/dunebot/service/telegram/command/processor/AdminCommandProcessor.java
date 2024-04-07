@@ -67,7 +67,7 @@ public class AdminCommandProcessor extends CommandProcessor {
                 try {
                     Integer.parseInt(settingValue);
                 } catch (NumberFormatException exception) {
-                    throw new AnswerableDuneBotException(WRONG_SETTING_VALUE_TEXT, commandMessage);
+                    throw new AnswerableDuneBotException(WRONG_SETTING_VALUE_TEXT, exception, commandMessage);
                 }
                 settingsService.saveSetting(settingKey, settingValue);
             }
