@@ -22,6 +22,7 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
             "У вас более одного матча (%s) в процессе регистрации результата. Выйдите из неактуальных опросов и загрузите скриншот вновь.";
     private static final String NO_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE =
             "У вас нет матчей в процессе регистрации результата. Для запуска регистрации выполните команду: '/submit *ID матча*'";
+    private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Скриншот уже загружен";
 
     private final MatchRepository matchRepository;
 
@@ -39,7 +40,7 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
     }
 
     private void validateOnSubmitMatchesCount(CommandMessage commandMessage) {
-        List<Match> onSubmitMatches = matchRepository.findLatestPlayerMatch(commandMessage.getUserId(), MatchState.ON_SUBMIT);
+        List<Match> onSubmitMatches = matchRepository.findLatestPlayerMatch(commandMessage.getUserId(), MatchState.getSubmitStates());
         if (onSubmitMatches.isEmpty()) {
             throw new AnswerableDuneBotException(NO_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE, commandMessage);
         }
@@ -50,6 +51,10 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
         if (onSubmitMatches.size() > 1) {
             String exception = String.format(MULTIPLE_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE, String.join(", ", matchesStrings));
             throw new AnswerableDuneBotException(exception, commandMessage);
+        }
+        MatchState uploadingMatchState = onSubmitMatches.get(0).getState();
+        if (uploadingMatchState == MatchState.ON_SUBMIT_SCREENSHOTTED) {
+            throw new AnswerableDuneBotException(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, commandMessage);
         }
     }
 

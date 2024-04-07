@@ -1,5 +1,7 @@
 package ru.trainithard.dunebot.model;
 
+import java.util.List;
+
 /**
  * Status of <code>Match</code>.
  */
@@ -9,9 +11,13 @@ public enum MatchState {
      */
     NEW,
     /**
-     * Submit command was executed for the match.
+     * Submit command was executed for the match, no screenshot uploaded yet
      */
     ON_SUBMIT,
+    /**
+     * Submit command was executed for the match, screenshot uploaded
+     */
+    ON_SUBMIT_SCREENSHOTTED,
     /**
      * Match is successfully finished.
      */
@@ -20,4 +26,12 @@ public enum MatchState {
      * Match is unsuccessfully finished (without results).
      */
     FAILED;
+
+    public static List<MatchState> getEndedMatchStates() {
+        return List.of(FINISHED, FAILED);
+    }
+
+    public static List<MatchState> getSubmitStates() {
+        return List.of(ON_SUBMIT, ON_SUBMIT_SCREENSHOTTED);
+    }
 }

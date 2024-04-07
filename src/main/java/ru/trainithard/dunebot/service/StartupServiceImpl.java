@@ -28,7 +28,7 @@ public class StartupServiceImpl implements StartupService {
     @Override
     public void startUp() {
         log.info("Startup match validation...");
-        List<Match> notEndedMatches = matchRepository.findAllByStateIn(List.of(MatchState.NEW, MatchState.ON_SUBMIT));
+        List<Match> notEndedMatches = matchRepository.findAllByStateNotIn(MatchState.getEndedMatchStates());
         Map<Integer, String> matchIdStringsByTopicId = new HashMap<>();
         for (Match match : notEndedMatches) {
             log.debug("Set failing state for match {}", match.getId());

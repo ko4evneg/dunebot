@@ -16,7 +16,10 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -27,8 +30,6 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 @Service
 @RequiredArgsConstructor
 public class MatchFinishingServiceImpl implements MatchFinishingService {
-    private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
-
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final TransactionTemplate transactionTemplate;
@@ -42,7 +43,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         log.debug("{}: match found (id: {}, state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
-        if (!finishedMatchStates.contains(match.getState())) {
+        if (!MatchState.getEndedMatchStates().contains(match.getState())) {
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
             } else {

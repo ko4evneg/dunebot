@@ -226,6 +226,36 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSetSubmitScreenshottedStateWhenCompressedPhotoReceived() throws IOException {
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("/photos/10_10/10000.jpeg").when(screenshotService).save(eq(10000L), eq(".jpeg"), any());
+
+        processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
+
+        Boolean hasScreenshottedState = jdbcTemplate.queryForObject(
+                "select exists (select 1 from matches where id = 10000 and matches.state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "')", Boolean.class);
+
+        assertNotNull(hasScreenshottedState);
+        assertTrue(hasScreenshottedState);
+    }
+
+    @Test
+    void shouldSetSubmitScreenshottedStateWhenDocumentReceived() throws IOException {
+        doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
+        doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
+        doReturn("/photos/10_10/10000.jpeg").when(screenshotService).save(eq(10000L), eq(".jpeg"), any());
+
+        processor.process(getDocumentCommandMessage());
+
+        Boolean hasScreenshottedState = jdbcTemplate.queryForObject(
+                "select exists (select 1 from matches where id = 10000 and matches.state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "')", Boolean.class);
+
+        assertNotNull(hasScreenshottedState);
+        assertTrue(hasScreenshottedState);
+    }
+
+    @Test
     void shouldNotSetMatchSubmitPhotoFlagWhenScreenshotServiceThrows() throws IOException {
         doThrow(new ScreenshotSavingException("saving exception")).when(screenshotService).save(anyLong(), any(), any());
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI.replace(".jpeg", ".bmp")), eq(byte[].class));
