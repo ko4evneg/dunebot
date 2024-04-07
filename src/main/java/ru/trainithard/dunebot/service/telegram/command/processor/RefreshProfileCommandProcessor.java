@@ -44,7 +44,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
                                 player.setGuest(false);
                             }
                         } catch (WrongNamesInputException exception) {
-                            throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
+                            throw new AnswerableDuneBotException(exception.getMessage(), exception, commandMessage);
                         } finally {
                             updateAndSaveTelegramProperties(commandMessage, player);
                             MessageDto messageDto = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPDATE_MESSAGE), null);

@@ -63,7 +63,7 @@ public class RegisterCommandProcessor extends CommandProcessor {
             log.debug("{}: validation successful", logId());
             return parsedNames;
         } catch (WrongNamesInputException exception) {
-            throw new AnswerableDuneBotException(exception.getMessage(), commandMessage);
+            throw new AnswerableDuneBotException(exception.getMessage(), exception, commandMessage);
         }
     }
 
