@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
-class MonthlyRating {
+class RatingReport {
     @Getter(AccessLevel.NONE)
     private static final Map<Integer, Double> efficiencyRateByPlaceNames = new HashMap<>();
     private final int matchesCount;
@@ -26,7 +26,7 @@ class MonthlyRating {
         efficiencyRateByPlaceNames.put(4, 0.1);
     }
 
-    public MonthlyRating(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
+    public RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
         this.matchesCount = getMatchesCount(monthMatchPlayers);
         this.matchesRatingThreshold = matchesRatingThreshold;
         fillPlayerRatings(monthMatchPlayers, modType.getPlayersCount());

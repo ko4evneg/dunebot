@@ -8,7 +8,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-class MonthlyRatingPdf {
+public class RatingReportPdf {
     private static final BaseColor TABLE_HEADER_BACKGROUND_COLOR = new BaseColor(180, 200, 200);
     private static final BaseColor EVEN_COLUMN_BACKGROUND_COLOR = new BaseColor(240, 250, 250);
     private static final List<String> TABLE_HEADER_COLUMNS_NAMES = List.of("Место", "Имя (Никнейм) Фамилия",
@@ -20,7 +20,7 @@ class MonthlyRatingPdf {
     private final String documentHeader;
     private final List<List<String>> tableRows;
 
-    public MonthlyRatingPdf(String documentHeader, List<List<String>> tableRows) {
+    RatingReportPdf(String documentHeader, List<List<String>> tableRows) {
         this.documentHeader = documentHeader;
         this.tableRows = tableRows;
     }
