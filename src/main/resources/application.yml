@@ -2,6 +2,7 @@ bot:
   #TODO: split file locs for test/prod
   photos-directory: /var/dunebot/photo
   pdf-directory: /var/dunebot/pdf
+  admin-pdf-directory: /var/dunebot/pdf/admin
 logging:
   level:
     root: error

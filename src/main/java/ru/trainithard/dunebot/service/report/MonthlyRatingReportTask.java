@@ -1,5 +1,6 @@
 package ru.trainithard.dunebot.service.report;
 
+import com.itextpdf.text.DocumentException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,19 +44,13 @@ public class MonthlyRatingReportTask implements Runnable {
             LocalDate from = previousMonth.atDay(1);
             LocalDate to = previousMonth.atEndOfMonth();
             try {
-                RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createRating(from, to, ModType.CLASSIC, getReportName(previousMonth));
-                byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
-                saveRating(ratingBytes, previousMonth);
-                sendTopicNotifications(previousMonth, ratingBytes, ModType.CLASSIC);
+                reportRating(from, to, ModType.CLASSIC, previousMonth);
             } catch (Exception exception) {
                 log.error("Failed to execute MonthlyRatingReportTask#run for CLASSIC mod", exception);
             }
 
             try {
-                RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createRating(from, to, ModType.UPRISING_4, getReportName(previousMonth));
-                byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
-                saveRating(ratingBytes, previousMonth);
-                sendTopicNotifications(previousMonth, ratingBytes, ModType.UPRISING_4);
+                reportRating(from, to, ModType.UPRISING_4, previousMonth);
             } catch (Exception exception) {
                 log.error("Failed to execute MonthlyRatingReportTask#run for UPRISING_4 mod", exception);
             }
@@ -63,10 +58,17 @@ public class MonthlyRatingReportTask implements Runnable {
         }
     }
 
-    private void saveRating(byte[] ratingPdfBytes, YearMonth month) throws IOException {
+    private void reportRating(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth) throws DocumentException, IOException {
+        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createRating(from, to, classic, getReportName(previousMonth));
+        byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
+        saveRating(ratingBytes, getPdfFileName(previousMonth, classic));
+        sendTopicNotifications(previousMonth, ratingBytes, classic);
+    }
+
+    private void saveRating(byte[] ratingPdfBytes, String fileName) throws IOException {
         Path savingPath = Path.of(pdfPath);
         Files.createDirectories(savingPath);
-        Files.write(savingPath.resolve(getPdfFileName(month)), ratingPdfBytes);
+        Files.write(savingPath.resolve(fileName), ratingPdfBytes);
     }
 
     private String getReportName(YearMonth month) {
@@ -77,8 +79,8 @@ public class MonthlyRatingReportTask implements Runnable {
         return month.getMonth().getValue() + "." + month.getYear();
     }
 
-    private String getPdfFileName(YearMonth month) {
-        return month.getYear() + "_" + month.getMonth() + ".pdf";
+    private String getPdfFileName(YearMonth month, ModType modType) {
+        return String.format("%s_%s_%s.pdf", modType.getAlias(), month.getYear(), month.getMonth());
     }
 
     private void sendTopicNotifications(YearMonth month, byte[] pdfFile, ModType modType) {

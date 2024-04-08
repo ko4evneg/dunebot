@@ -11,8 +11,8 @@ public class FileMessageDto extends MessageDto {
     private byte[] file;
     private String fileName;
 
-    public FileMessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer replyMessageId, byte[] file, String fileName) {
-        super(chatId, externalMessage, replyMessageId, null);
+    public FileMessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, byte[] file, String fileName) {
+        super(chatId, externalMessage, topicId, null);
         this.file = file;
         this.fileName = fileName;
     }

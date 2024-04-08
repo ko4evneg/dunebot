@@ -20,6 +20,7 @@ import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 
@@ -144,7 +145,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
 
         task.run();
 
-        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("2010_OCTOBER.pdf").toString()));
+        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("up4_2010_OCTOBER.pdf").toString()));
         PdfReader pdfReader = new PdfReader(actualFileStream);
         PdfReader referencePdfReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_2.pdf");
         byte[] actualBytes = pdfReader.getPageContent(1);
@@ -154,6 +155,18 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         actualFileStream.close();
         referencePdfReader.close();
         assertArrayEquals(expectedBytes, actualBytes);
+    }
+
+    @Test
+    void shouldSaveBothModesReportsInRun() {
+        LocalDateTime firstDay = LocalDate.of(2010, 11, 1).atTime(15, 0);
+        Clock fixedClock = Clock.fixed(firstDay.toInstant(ZoneOffset.of("+03:00")), ZoneOffset.of("+03:00"));
+        doReturn(fixedClock.instant()).when(clock).instant();
+
+        task.run();
+
+        assertTrue(Files.exists(tempDir.resolve("up4_2010_OCTOBER.pdf")));
+        assertTrue(Files.exists(tempDir.resolve("dune_2010_OCTOBER.pdf")));
     }
 
     @Test
@@ -176,7 +189,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
                              "values (10017, 15003, 10004, 2, '2010-10-10')");
         task.run();
 
-        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("2010_OCTOBER.pdf").toString()));
+        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("up4_2010_OCTOBER.pdf").toString()));
         PdfReader pdfReader = new PdfReader(actualFileStream);
         PdfReader referencePdfReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_2.pdf");
         byte[] actualBytes = pdfReader.getPageContent(1);
@@ -196,7 +209,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
 
         task.run();
 
-        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("2010_OCTOBER.pdf").toString()));
+        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("up4_2010_OCTOBER.pdf").toString()));
         PdfReader referencePdfReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_2.pdf");
         byte[] referenceFileBytes = referencePdfReader.getPageContent(1);
         referencePdfReader.close();
