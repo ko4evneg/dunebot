@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-class MonthlyRatingTest {
+class RatingReportTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
 
     @BeforeEach
@@ -58,14 +58,14 @@ class MonthlyRatingTest {
 
     @Test
     void shouldCountAllPlayerMatches() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertEquals(6, monthlyRating.getMatchesCount());
     }
 
     @Test
     void shouldReturnEachPlayerMatchesCounts() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("matchesCount", is(2L))),
@@ -79,7 +79,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldReturnEachPlayerWinRates() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("winRate", is(50.0))),
@@ -93,7 +93,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldReturnEachPlayerEfficiencies() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 5);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 5);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("efficiency", is(0.7))),
@@ -107,7 +107,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldReturnCorrectlyOrderedPlayers() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 1);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 1);
 
         assertThat(monthlyRating.getPlayerRatings(), contains(
                 hasProperty("playerFriendlyName", is("f6 (s6) l6")), hasProperty("playerFriendlyName", is("f1 (s1) l1")),
@@ -118,7 +118,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldPutPlayersOverRatingThresholdOnTop() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 5);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 5);
 
         assertThat(monthlyRating.getPlayerRatings(), contains(
                 hasProperty("playerFriendlyName", is("f1 (s1) l1")), hasProperty("playerFriendlyName", is("f3 (s3) l3")),
@@ -129,7 +129,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldSetZeroPlacesCountForMissingPlaces() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
                 .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f6 (s6) l6"))
@@ -144,7 +144,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldExcludeZeroPlacesFromRating() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
                 .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f6 (s6) l6"))
@@ -156,7 +156,7 @@ class MonthlyRatingTest {
 
     @Test
     void shouldNotConsiderNoWinsPlayersInRating() {
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         boolean isPlayer7Present = monthlyRating.getPlayerRatings().stream()
                 .anyMatch(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f7 (s7) l7"));
@@ -171,7 +171,7 @@ class MonthlyRatingTest {
                 .filter(player -> Set.of("s5", "s6").contains(player.getSteamName()))
                 .forEach(player -> player.setGuest(true));
 
-        MonthlyRating monthlyRating = new MonthlyRating(matchPlayers, ModType.CLASSIC, 15);
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
                 both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("matchesCount", is(6L))),

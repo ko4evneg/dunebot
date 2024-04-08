@@ -26,7 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
-class MonthlyRatingCalculationServiceTest extends TestContextMock {
+class RatingReportCalculationServiceTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID_1 = 9000;
     private static final int MATCH_TOPIC_REPLY_ID_2 = 9001;

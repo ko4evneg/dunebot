@@ -15,7 +15,7 @@ import java.time.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MonthlyRatingReportTaskTest extends TestContextMock {
+class RatingReportReportTaskTest extends TestContextMock {
 
     @Autowired
     private MonthlyRatingReportTask task;

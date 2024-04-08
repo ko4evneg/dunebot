@@ -9,10 +9,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-class MonthlyRatingPdfTest {
+class RatingReportPdfTest {
     @Test
     void shouldBuildCorrectPdf() throws IOException, DocumentException {
-        MonthlyRatingPdf monthlyRatingPdf = new MonthlyRatingPdf("РЕЙТИНГ 10.2023", List.of(
+        RatingReportPdf monthlyRatingPdf = new RatingReportPdf("РЕЙТИНГ 10.2023", List.of(
                 List.of("1", "Супер пупер длинное имя (ну прям ппц какое длинное)", "231", "25", "35", "45", "99", "0.19", "99.99%"),
                 List.of("2", "Хехе", "1", "58", "1", "9", "12", "0.1", "0.99%"),
                 List.of("3", "Имя Фам", "20", "452", "74", "12", "55", "0.31", "1%"),
