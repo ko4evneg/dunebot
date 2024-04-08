@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class StartupServiceTest extends TestContextMock {
-
     @Autowired
     private StartupService startupService;
 
