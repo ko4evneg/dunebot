@@ -14,8 +14,7 @@ import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RatingReportTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
@@ -61,6 +60,13 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertEquals(6, monthlyRating.getMatchesCount());
+    }
+
+    @Test
+    void shouldNotThrowOnNullPlace() {
+        matchPlayers.add(getMatchPlayer(getMatch(7), 7, null));
+
+        assertDoesNotThrow(() -> new RatingReport(matchPlayers, ModType.CLASSIC, 15));
     }
 
     @Test
@@ -181,7 +187,7 @@ class RatingReportTest {
         ));
     }
 
-    private MatchPlayer getMatchPlayer(Match match, int playerId, int place) {
+    private MatchPlayer getMatchPlayer(Match match, int playerId, Integer place) {
         MatchPlayer matchPlayer = new MatchPlayer(match, getPlayer(playerId));
         matchPlayer.setPlace(place);
         return matchPlayer;
