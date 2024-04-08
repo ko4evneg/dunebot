@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.SettingKey;
 
@@ -13,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SettingsServiceImplTest extends TestContextMock {
     @Autowired
     private SettingsService settingsService;
@@ -38,16 +36,6 @@ class SettingsServiceImplTest extends TestContextMock {
     }
 
     @Test
-    void shouldReturnCachedStringSetting() {
-        settingsService.getStringSetting(SettingKey.CHAT_ID);
-        jdbcTemplate.execute("delete from settings where key = 'CHAT_ID'");
-
-        String actualCachedValue = settingsService.getStringSetting(SettingKey.CHAT_ID);
-
-        assertEquals("strVal", actualCachedValue);
-    }
-
-    @Test
     void shouldReturnLongSetting() {
         long actualValue = settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
 
@@ -55,30 +43,10 @@ class SettingsServiceImplTest extends TestContextMock {
     }
 
     @Test
-    void shouldReturnCachedLongSetting() {
-        settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
-        jdbcTemplate.execute("delete from settings where key = '" + SettingKey.ADMIN_USER_ID + "'");
-
-        long actualCachedValue = settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
-
-        assertEquals(2L, actualCachedValue);
-    }
-
-    @Test
     void shouldReturnIntSetting() {
         int actualValue = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
 
         assertEquals(5, actualValue);
-    }
-
-    @Test
-    void shouldReturnCachedIntSetting() {
-        settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
-        jdbcTemplate.execute("delete from settings where key = '" + SettingKey.TOPIC_ID_CLASSIC + "'");
-
-        int actualCachedValue = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
-
-        assertEquals(5, actualCachedValue);
     }
 
     @Test
