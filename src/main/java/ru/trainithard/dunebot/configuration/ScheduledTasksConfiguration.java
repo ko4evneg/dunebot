@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import ru.trainithard.dunebot.service.report.MonthlyRatingReportTask;
 import ru.trainithard.dunebot.service.telegram.TelegramUpdateProcessor;
 
 import java.time.*;
