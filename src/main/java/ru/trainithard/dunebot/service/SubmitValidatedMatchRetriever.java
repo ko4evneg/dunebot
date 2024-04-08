@@ -10,9 +10,6 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,7 +19,6 @@ public class SubmitValidatedMatchRetriever {
     private static final String NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE = "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос";
     private static final String ALREADY_SUBMITTED_EXCEPTION_MESSAGE = "Запрос на публикацию этого матча уже сделан";
     private static final String MATCH_NOT_EXISTS_EXCEPTION = "Матча с таким ID не существует!";
-    private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
 
     private final MatchRepository matchRepository;
 
@@ -57,13 +53,14 @@ public class SubmitValidatedMatchRetriever {
     private void validateMatch(CommandMessage commandMessage, Match match, boolean isResubmit) {
         log.debug("{}: match {} validation...", LogId.get(), match.getId());
         long telegramChatId = commandMessage.getChatId();
-        if (finishedMatchStates.contains(match.getState())) {
+        MatchState matchState = match.getState();
+        if (MatchState.getEndedMatchStates().contains(matchState)) {
             throw new AnswerableDuneBotException(FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE, telegramChatId);
         }
         if (!match.hasEnoughPlayers()) {
             throw new AnswerableDuneBotException(NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE, telegramChatId);
         }
-        if (!isResubmit && match.getState() == MatchState.ON_SUBMIT) {
+        if (!isResubmit && MatchState.getSubmitStates().contains(matchState)) {
             throw new AnswerableDuneBotException(ALREADY_SUBMITTED_EXCEPTION_MESSAGE, telegramChatId);
         }
         if (!isSubmitAllowed(commandMessage, match)) {

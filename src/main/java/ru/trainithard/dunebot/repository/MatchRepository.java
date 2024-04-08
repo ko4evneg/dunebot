@@ -21,14 +21,16 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query("""
             select m from Match m
             left join fetch m.matchPlayers mp
-            where mp.player.externalId = :externalPlayerId and m.state = :matchState
+            where mp.player.externalId = :externalPlayerId and m.state in :matchStates
             """)
-    List<Match> findLatestPlayerMatch(long externalPlayerId, MatchState matchState);
+    List<Match> findLatestPlayerMatch(long externalPlayerId, Collection<MatchState> matchStates);
 
     @Query("""
             select m from Match m
             left join fetch m.matchPlayers mp
             where m.id = (select mp2.match.id from MatchPlayer mp2 where mp2.match.state = :matchState and mp2.player.externalId = :externalPlayerId)
+            order by m.createdAt desc
+            limit 1
             """)
     List<Match> findLatestPlayerMatchWithMatchPlayerBy(long externalPlayerId, MatchState matchState);
 
@@ -41,5 +43,5 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             """)
     Optional<Match> findWithMatchPlayersBy(long matchId);
 
-    List<Match> findAllByStateIn(Collection<MatchState> states);
+    List<Match> findAllByStateNotIn(Collection<MatchState> states);
 }

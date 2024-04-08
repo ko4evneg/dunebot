@@ -15,9 +15,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.util.EnumSet;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Cancels existing not finished match owned by requester.
@@ -27,7 +25,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CancelCommandProcessor extends CommandProcessor {
     private static final String FINISHED_MATCH_EXCEPTION_MESSAGE = "Запрещено отменять завершенные матчи!";
-    private static final Set<MatchState> finishedMatchStates = EnumSet.of(MatchState.FAILED, MatchState.FINISHED);
 
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
@@ -45,7 +42,7 @@ public class CancelCommandProcessor extends CommandProcessor {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
                 log.debug("{}: match found, id {}", logId(), latestOwnedMatch.getId());
                 //TODO: restrict onsubmit cancel
-                if (finishedMatchStates.contains(latestOwnedMatch.getState())) {
+                if (MatchState.getEndedMatchStates().contains(latestOwnedMatch.getState())) {
                     throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
                 }
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
