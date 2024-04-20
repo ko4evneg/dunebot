@@ -13,7 +13,7 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.ScreenshotSavingException;
+import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
@@ -164,7 +164,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendNotificationWhenScreenshotExceptionThrown() throws IOException {
-        doThrow(new ScreenshotSavingException("saving exception")).when(screenshotService).save(anyLong(), any(), any());
+        doThrow(new ScreenshotFileIOException("saving exception")).when(screenshotService).save(anyLong(), any(), any());
         doReturn(CompletableFuture.completedFuture(fileDetailsDto)).when(messagingService).getFileDetails(FILE_ID);
         CommandMessage documentCommandMessage = getDocumentCommandMessage();
 
@@ -257,7 +257,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldNotSetMatchSubmitPhotoFlagWhenScreenshotServiceThrows() throws IOException {
-        doThrow(new ScreenshotSavingException("saving exception")).when(screenshotService).save(anyLong(), any(), any());
+        doThrow(new ScreenshotFileIOException("saving exception")).when(screenshotService).save(anyLong(), any(), any());
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI.replace(".jpeg", ".bmp")), eq(byte[].class));
         CommandMessage documentCommandMessage = getDocumentCommandMessage();
 

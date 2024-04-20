@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.util.FileSystemUtils;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -24,6 +25,9 @@ import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -100,12 +104,13 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     }
 
     @AfterEach
-    void afterEach() {
+    void afterEach() throws IOException {
         jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
         jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006 or id between 10000 and 10005");
+        FileSystemUtils.deleteRecursively(Path.of("photos"));
     }
 
     @ParameterizedTest
@@ -191,6 +196,20 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                 "select exists (select 1 from matches where id = 15000 and screenshot_path is null)", Boolean.class);
 
         assertTrue(isScreenshotResetted);
+    }
+
+    @Test
+    void shouldDeleteScreenshotFileOnResubmit() throws IOException {
+        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
+        byte[] screenshotBytes = "abc".getBytes();
+        Files.createDirectories(Path.of("photos"));
+        Files.write(Path.of("photos/1.jpg"), screenshotBytes);
+
+        resubmitProcessor.process(resubmitCommandMessage);
+
+        boolean doesFileExist = Files.exists(Path.of("photos/1.jpg"));
+
+        assertFalse(doesFileExist);
     }
 
     @Test

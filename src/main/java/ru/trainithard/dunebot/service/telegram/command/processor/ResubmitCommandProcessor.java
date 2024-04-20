@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.SettingKey;
@@ -15,6 +16,9 @@ import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -72,13 +76,21 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     }
 
     private void resetMatchData(Match match) {
-        match.setSubmitsRetryCount(match.getSubmitsRetryCount() + 1);
-        match.setSubmitsCount(0);
-        match.setScreenshotPath(null);
-        match.getMatchPlayers().forEach(matchPlayer -> {
-            matchPlayer.setCandidatePlace(null);
-            matchPlayer.setSubmitMessageId(null);
-        });
+        try {
+            String screenshotPath = match.getScreenshotPath();
+            if (screenshotPath != null) {
+                Files.deleteIfExists(Path.of(screenshotPath));
+                match.setScreenshotPath(null);
+            }
+            match.setSubmitsRetryCount(match.getSubmitsRetryCount() + 1);
+            match.setSubmitsCount(0);
+            match.getMatchPlayers().forEach(matchPlayer -> {
+                matchPlayer.setCandidatePlace(null);
+                matchPlayer.setSubmitMessageId(null);
+            });
+        } catch (IOException e) {
+            throw new ScreenshotFileIOException("Can not remove old screenshot file");
+        }
     }
 
     @Override

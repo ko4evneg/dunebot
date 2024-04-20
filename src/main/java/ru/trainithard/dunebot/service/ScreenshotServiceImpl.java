@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.exception.ScreenshotSavingException;
+import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,10 +48,10 @@ public class ScreenshotServiceImpl implements ScreenshotService {
     private void validate(String dottedFileExtension, Path savePath) {
         boolean hasValidExtension = !PHOTO_ALLOWED_EXTENSIONS.contains(dottedFileExtension);
         if (hasValidExtension) {
-            throw new ScreenshotSavingException(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
+            throw new ScreenshotFileIOException(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
         }
         if (Files.exists(savePath)) {
-            throw new ScreenshotSavingException(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
+            throw new ScreenshotFileIOException(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
         }
     }
 
