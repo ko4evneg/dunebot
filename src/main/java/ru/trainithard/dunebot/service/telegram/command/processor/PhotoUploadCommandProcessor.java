@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.trainithard.dunebot.exception.DuneBotException;
-import ru.trainithard.dunebot.exception.ScreenshotSavingException;
+import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -80,7 +80,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
                     messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), null));
                 }
-            } catch (ScreenshotSavingException exception) {
+            } catch (ScreenshotFileIOException exception) {
                 log.error(logId + ": file save failed due to an exception", exception);
                 messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(exception.getMessage()), null));
             } catch (IOException exception) {

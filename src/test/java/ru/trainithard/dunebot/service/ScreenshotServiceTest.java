@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.util.FileSystemUtils;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.ScreenshotSavingException;
+import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 
@@ -74,7 +74,7 @@ class ScreenshotServiceTest extends TestContextMock {
     @Test
     void shouldThrowWhenFileExtensionNotAllowed() {
         byte[] file = "this_file".getBytes();
-        ScreenshotSavingException actualException = assertThrows(ScreenshotSavingException.class,
+        ScreenshotFileIOException actualException = assertThrows(ScreenshotFileIOException.class,
                 () -> screenshotService.save(10000L, ".bmp", file));
         assertEquals(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, actualException.getMessage());
     }
@@ -100,7 +100,7 @@ class ScreenshotServiceTest extends TestContextMock {
         Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
 
         byte[] file = "this_file".getBytes();
-        ScreenshotSavingException actualException = assertThrows(ScreenshotSavingException.class,
+        ScreenshotFileIOException actualException = assertThrows(ScreenshotFileIOException.class,
                 () -> screenshotService.save(10000L, FILE_EXTENSION, file));
         assertEquals(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, actualException.getMessage());
     }
