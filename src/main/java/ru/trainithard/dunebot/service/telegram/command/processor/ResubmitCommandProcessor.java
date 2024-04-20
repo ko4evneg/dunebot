@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -84,6 +85,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             }
             match.setSubmitsRetryCount(match.getSubmitsRetryCount() + 1);
             match.setSubmitsCount(0);
+            match.setState(MatchState.ON_SUBMIT);
             match.getMatchPlayers().forEach(matchPlayer -> {
                 matchPlayer.setCandidatePlace(null);
                 matchPlayer.setSubmitMessageId(null);

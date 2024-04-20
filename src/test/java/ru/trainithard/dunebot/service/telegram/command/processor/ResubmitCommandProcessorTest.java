@@ -187,6 +187,17 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldResetMatchStateOnResubmitWhenScreenshotWasUploaded() {
+        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg', state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "' where id = 15000");
+
+        resubmitProcessor.process(resubmitCommandMessage);
+
+        MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
+
+        assertSame(MatchState.ON_SUBMIT, actualMatchState);
+    }
+
+    @Test
     void shouldResetMatchScreenshotPathOnResubmit() {
         jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
 
@@ -195,6 +206,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Boolean isScreenshotResetted = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 15000 and screenshot_path is null)", Boolean.class);
 
+        assertNotNull(isScreenshotResetted);
         assertTrue(isScreenshotResetted);
     }
 
