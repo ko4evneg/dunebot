@@ -10,7 +10,7 @@
     </parent>
     <groupId>ru.trainithard</groupId>
     <artifactId>dunebot</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
     <name>dunebot</name>
     <description>dunebot</description>
     <properties>
@@ -110,7 +110,7 @@
     </dependencies>
 
     <build>
-        <finalName>dunebot_${project.activeProfiles[0].id}</finalName>
+        <finalName>dunebot</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -152,7 +152,7 @@
                             <arguments>
                                 <argument>build</argument>
                                 <argument>-t</argument>
-                                <argument>${project.artifactId}_${project.activeProfiles[0].id}:${project.version}
+                                <argument>${project.artifactId}:${project.version}
                                 </argument>
                                 <argument>.</argument>
                             </arguments>
