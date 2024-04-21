@@ -10,7 +10,6 @@ import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -29,7 +28,6 @@ public class CancelCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
-    private final MessagingService messagingService;
 
     @Override
     public void process(CommandMessage commandMessage) {

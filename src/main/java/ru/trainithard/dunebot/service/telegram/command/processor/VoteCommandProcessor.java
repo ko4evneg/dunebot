@@ -11,7 +11,6 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -37,7 +36,6 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
-    private final MessagingService messagingService;
     private final TaskScheduler dunebotTaskScheduler;
     private final SettingsService settingsService;
     private final Clock clock;

@@ -9,7 +9,6 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.LogId;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -25,7 +24,6 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
     private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены.";
 
     private final PlayerRepository playerRepository;
-    private final MessagingService messagingService;
 
     @Override
     public void process(CommandMessage commandMessage) {
