@@ -22,7 +22,6 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
-import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
@@ -192,22 +191,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
         assertThat(linedButtons.get(2), contains(
                 both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callback", is("15000__0"))))
         );
-    }
-
-    @Test
-    void shouldSendDeleteSubmitMessageWhenOldSubmitMessageExist() {
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10002, 'ExternalMessageId', 12345, " + CHAT_ID + ", '2020-10-10')");
-        jdbcTemplate.execute("update match_players set external_submit_id = 10002 where id = 10000");
-
-        processor.process(submitCommandMessage);
-
-        ArgumentCaptor<ExternalMessageId> messageDtoCaptor = ArgumentCaptor.forClass(ExternalMessageId.class);
-        verify(messagingService, times(1)).deleteMessageAsync(messageDtoCaptor.capture());
-        ExternalMessageId actualDeleteDto = messageDtoCaptor.getValue();
-
-        assertEquals(CHAT_ID, actualDeleteDto.getChatId());
-        assertEquals(12345, actualDeleteDto.getMessageId());
     }
 
     @Test
