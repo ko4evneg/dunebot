@@ -16,7 +16,6 @@ import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -42,7 +41,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %d:";
 
     private final MatchPlayerRepository matchPlayerRepository;
-    private final MessagingService messagingService;
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
     private final TaskScheduler dunebotTaskScheduler;

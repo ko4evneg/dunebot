@@ -11,7 +11,6 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -39,7 +38,6 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
     private final ResubmitCommandProcessor resubmitProcessor;
-    private final MessagingService messagingService;
     private final SettingsService settingsService;
 
     @Override

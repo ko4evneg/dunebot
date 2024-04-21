@@ -9,7 +9,6 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
@@ -49,7 +48,6 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
     private static final DateTimeFormatter DATE_FORAMTTER = DateTimeFormatter.ofPattern("dd.MM.yy");
 
-    private final MessagingService messagingService;
     private final SettingsService settingsService;
     private final RatingReportPdfService reportService;
 

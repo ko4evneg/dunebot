@@ -12,7 +12,6 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -33,7 +32,6 @@ public class NewCommandProcessor extends CommandProcessor {
 
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
-    private final MessagingService messagingService;
     private final SettingsService settingsService;
 
     @Override

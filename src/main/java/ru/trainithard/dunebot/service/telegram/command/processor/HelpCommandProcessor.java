@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -17,8 +16,6 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 @Service
 @RequiredArgsConstructor
 public class HelpCommandProcessor extends CommandProcessor {
-    private final MessagingService messagingService;
-
     @Value("${bot.version}")
     private String version;
 

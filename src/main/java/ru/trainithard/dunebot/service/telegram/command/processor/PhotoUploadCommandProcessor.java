@@ -13,7 +13,6 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -37,7 +36,6 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private static final String UNSUPPORTED_UPDATE_TYPE = "Unsupported photo/document update type";
     private static final String SUCCESSFUL_UPLOAD_TEXT = "Скриншот успешно загружен.";
 
-    private final MessagingService messagingService;
     private final RestTemplate restTemplate;
     private final MatchRepository matchRepository;
     private final ScreenshotService screenshotService;
