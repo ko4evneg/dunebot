@@ -8,12 +8,14 @@ import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.SettingKey;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -35,6 +37,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     private final SubmitCommandProcessor submitCommandProcessor;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
     private final SettingsService settingsService;
+    private final MessagingService messagingService;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -88,10 +91,17 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             match.setState(MatchState.ON_SUBMIT);
             match.getMatchPlayers().forEach(matchPlayer -> {
                 matchPlayer.setCandidatePlace(null);
+                deleteOldSubmitMessage(matchPlayer.getSubmitMessageId());
                 matchPlayer.setSubmitMessageId(null);
             });
         } catch (IOException e) {
             throw new ScreenshotFileIOException("Can not remove old screenshot file");
+        }
+    }
+
+    private void deleteOldSubmitMessage(ExternalMessageId submitMessageExternalId) {
+        if (submitMessageExternalId != null) {
+            messagingService.deleteMessageAsync(submitMessageExternalId);
         }
     }
 

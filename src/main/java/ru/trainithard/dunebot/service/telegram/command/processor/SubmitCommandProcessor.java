@@ -63,7 +63,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
             log.debug("{}: matchPlayer {} processing...", logId(), matchPlayer.getId());
-            deleteOldSubmitMessage(matchPlayer);
 
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId());
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
@@ -92,12 +91,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
         log.debug("{}: forced finish match task scheduled to {}", logId(), forcedFinishTime);
 
         log.debug("{}: SUBMIT(internal) ended", logId());
-    }
-
-    private void deleteOldSubmitMessage(MatchPlayer matchPlayer) {
-        if (matchPlayer.getSubmitMessageId() != null) {
-            messagingService.deleteMessageAsync(matchPlayer.getSubmitMessageId());
-        }
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, List<MatchPlayer> registeredMatchPlayers, long matchId) {

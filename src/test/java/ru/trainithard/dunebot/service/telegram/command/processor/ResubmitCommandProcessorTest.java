@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -21,6 +22,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -36,6 +38,8 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -51,7 +55,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     private final CommandMessage resubmitCommandMessage = getCommandMessage(USER_ID);
 
     @Autowired
-    private ResubmitCommandProcessor resubmitProcessor;
+    private ResubmitCommandProcessor processor;
     @MockBean
     private SubmitCommandProcessor submitProcessor;
     @MockBean
@@ -119,7 +123,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute(query);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> resubmitProcessor.process(resubmitCommandMessage));
+                () -> processor.process(resubmitCommandMessage));
 
         assertEquals(expectedException, actualException.getMessage());
     }
@@ -139,7 +143,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         CommandMessage commandMessage = getCommandMessage(11004L);
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> resubmitProcessor.process(commandMessage));
+                () -> processor.process(commandMessage));
 
         assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
     }
@@ -150,14 +154,14 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id = 15000");
 
         AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> resubmitProcessor.process(resubmitCommandMessage));
+                () -> processor.process(resubmitCommandMessage));
 
         assertEquals("Матча с таким ID не существует!", actualException.getMessage());
     }
 
     @Test
     void shouldIncreaseMatchResubmitCounterOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_retry_count from matches where id = 15000", Integer.class);
 
@@ -166,7 +170,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSubmitProcessorOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         verify(submitProcessor, times(1))
                 .process(argThat((Match match) -> {
@@ -179,7 +183,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldResetMatchSubmitsCountOnResubmit() {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
 
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_count from matches where id = 15000", Integer.class);
 
@@ -190,7 +194,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldResetMatchStateOnResubmitWhenScreenshotWasUploaded() {
         jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg', state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "' where id = 15000");
 
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
@@ -201,7 +205,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldResetMatchScreenshotPathOnResubmit() {
         jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
 
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         Boolean isScreenshotResetted = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 15000 and screenshot_path is null)", Boolean.class);
@@ -217,7 +221,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Files.createDirectories(Path.of("photos"));
         Files.write(Path.of("photos/1.jpg"), screenshotBytes);
 
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         boolean doesFileExist = Files.exists(Path.of("photos/1.jpg"));
 
@@ -226,7 +230,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldResetMatchPlayersCandidatePlaceOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         Boolean isAnyExternalMessageIdExist = jdbcTemplate.queryForObject("select exists" +
                                                                           "(select 1 from match_players where match_id = 15000 and candidate_place is not null)", Boolean.class);
@@ -237,7 +241,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldDeleteOldMatchPlayersExternalMessagesOnResubmit() {
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         Boolean isAnyExternalMessageExist = jdbcTemplate.queryForObject(
                 "select exists(select 1 from external_messages where id between 10002 and 10005)", Boolean.class);
@@ -250,15 +254,32 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldInvokeUnsuccessfulSubmitMatchFinishOnResubmitExceedingMessage() {
         jdbcTemplate.execute("update matches set positive_answers_count = 4, submits_retry_count = 3 where id = 15000");
 
-        resubmitProcessor.process(resubmitCommandMessage);
+        processor.process(resubmitCommandMessage);
 
         verify(finishingService, times(1)).finishNotSubmittedMatch(
                 eq(15000L), argThat(message -> RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT.equals(message.getText())));
     }
 
     @Test
+    void shouldSendDeleteSubmitMessageWhenOldSubmitMessageExist() {
+        processor.process(resubmitCommandMessage);
+
+        ArgumentCaptor<ExternalMessageId> messageDtoCaptor = ArgumentCaptor.forClass(ExternalMessageId.class);
+        verify(messagingService, times(4)).deleteMessageAsync(messageDtoCaptor.capture());
+        List<ExternalMessageId> actualDeleteDto = messageDtoCaptor.getAllValues();
+
+
+        assertThat(actualDeleteDto, containsInAnyOrder(
+                both(hasProperty("chatId", is(10022L))).and(hasProperty("messageId", is(10012))),
+                both(hasProperty("chatId", is(10023L))).and(hasProperty("messageId", is(10013))),
+                both(hasProperty("chatId", is(10024L))).and(hasProperty("messageId", is(10014))),
+                both(hasProperty("chatId", is(10025L))).and(hasProperty("messageId", is(10015)))
+        ));
+    }
+
+    @Test
     void shouldReturnResubmitCommand() {
-        Command actualCommand = resubmitProcessor.getCommand();
+        Command actualCommand = processor.getCommand();
 
         assertEquals(Command.RESUBMIT, actualCommand);
     }
