@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -26,10 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.Mockito.*;
 
 class TelegramMessagingServiceTest {
@@ -53,8 +52,9 @@ class TelegramMessagingServiceTest {
         verify(telegramBot, times(1)).executeAsync(deleteMessageCaptor.capture());
         DeleteMessage actualDeleteMessage = deleteMessageCaptor.getValue();
 
-        assertEquals(MESSAGE_ID, actualDeleteMessage.getMessageId());
-        assertEquals(CHAT_ID.toString(), actualDeleteMessage.getChatId());
+        assertThat(actualDeleteMessage)
+                .extracting(DeleteMessage::getMessageId, DeleteMessage::getChatId)
+                .containsExactly(MESSAGE_ID, CHAT_ID.toString());
     }
 
     @Test
@@ -68,13 +68,11 @@ class TelegramMessagingServiceTest {
         verify(telegramBot, times(1)).executeAsync(sendPollCaptor.capture());
         SendPoll actualSendPoll = sendPollCaptor.getValue();
 
-        assertEquals(TOPIC_ID, actualSendPoll.getReplyToMessageId());
-        assertEquals("Poll question", actualSendPoll.getQuestion());
-        assertNotNull(actualSendPoll.getIsAnonymous());
-        assertFalse(actualSendPoll.getIsAnonymous());
-        assertNotNull(actualSendPoll.getAllowMultipleAnswers());
-        assertFalse(actualSendPoll.getAllowMultipleAnswers());
-        assertThat(actualSendPoll.getOptions(), contains("1", "2", "3"));
+        assertThat(actualSendPoll.getReplyToMessageId()).isEqualTo(TOPIC_ID);
+        assertThat(actualSendPoll.getQuestion()).isEqualTo("Poll question");
+        assertThat(actualSendPoll.getIsAnonymous()).isNotNull().isFalse();
+        assertThat(actualSendPoll.getAllowMultipleAnswers()).isNotNull().isFalse();
+        assertThat(actualSendPoll.getOptions()).containsExactly("1", "2", "3");
     }
 
     private Message getPollMessageReply() {
@@ -101,18 +99,20 @@ class TelegramMessagingServiceTest {
 
         ArgumentCaptor<SendMessage> sendMessageCaptor = ArgumentCaptor.forClass(SendMessage.class);
         verify(telegramBot, times(1)).executeAsync(sendMessageCaptor.capture());
+
         SendMessage actualSendMessage = sendMessageCaptor.getValue();
+        assertThat(actualSendMessage)
+                .extracting(SendMessage::getMessageThreadId, SendMessage::getText, SendMessage::getChatId)
+                .containsExactly(TOPIC_ID, "la text", CHAT_ID.toString());
+
         InlineKeyboardMarkup replyMarkup = (InlineKeyboardMarkup) actualSendMessage.getReplyMarkup();
         List<InlineKeyboardButton> buttons = replyMarkup.getKeyboard().stream().flatMap(Collection::stream).toList();
-
-        assertEquals(TOPIC_ID, actualSendMessage.getMessageThreadId());
-        assertEquals("la text", actualSendMessage.getText());
-        assertEquals(CHAT_ID.toString(), actualSendMessage.getChatId());
-        assertThat(buttons, contains(
-                both(hasProperty("text", is("t1"))).and(hasProperty("callbackData", is("c1"))),
-                both(hasProperty("text", is("t2"))).and(hasProperty("callbackData", is("c2"))),
-                both(hasProperty("text", is("t3"))).and(hasProperty("callbackData", is("c3")))
-        ));
+        assertThat(buttons).extracting(InlineKeyboardButton::getText, InlineKeyboardButton::getCallbackData)
+                .containsExactly(
+                        tuple("t1", "c1"),
+                        tuple("t2", "c2"),
+                        tuple("t3", "c3")
+                );
     }
 
     private List<List<ButtonDto>> getKeyboard() {
@@ -132,7 +132,7 @@ class TelegramMessagingServiceTest {
         verify(telegramBot, times(1)).executeAsync(getFileCaptor.capture());
         GetFile actualGetFile = getFileCaptor.getValue();
 
-        assertEquals(FILE_ID, actualGetFile.getFileId());
+        assertThat(actualGetFile.getFileId()).isEqualTo(FILE_ID);
     }
 
     @Test
@@ -148,10 +148,10 @@ class TelegramMessagingServiceTest {
         SendDocument actualDocument = sendDocumentCaptor.getValue();
         byte[] actualFile = actualDocument.getFile().getNewMediaStream().readAllBytes();
 
-        assertEquals("la text", actualDocument.getCaption());
-        assertEquals(TOPIC_ID, actualDocument.getReplyToMessageId());
-        assertEquals(CHAT_ID.toString(), actualDocument.getChatId());
-        assertArrayEquals(referenceFileContent, actualFile);
+        assertThat(actualDocument.getCaption()).isEqualTo("la text");
+        assertThat(actualDocument.getReplyToMessageId()).isEqualTo(TOPIC_ID);
+        assertThat(actualDocument.getChatId()).isEqualTo(CHAT_ID.toString());
+        assertThat(actualFile).containsExactly(referenceFileContent);
     }
 
     @Test
@@ -164,11 +164,12 @@ class TelegramMessagingServiceTest {
         verify(telegramBot, times(1)).executeAsync(setMyCommandsCaptor.capture());
         SetMyCommands actualSetMyCommands = setMyCommandsCaptor.getValue();
 
-        assertEquals(new BotCommandScopeDefault(), actualSetMyCommands.getScope());
-        assertThat(actualSetMyCommands.getCommands(), containsInAnyOrder(
-                both(hasProperty("command", is("1"))).and(hasProperty("description", is("a"))),
-                both(hasProperty("command", is("2"))).and(hasProperty("description", is("b")))
-        ));
+        assertThat(actualSetMyCommands.getScope()).isEqualTo(new BotCommandScopeDefault());
+        assertThat(actualSetMyCommands.getCommands())
+                .extracting(BotCommand::getCommand, BotCommand::getDescription)
+                .containsExactly(
+                        tuple("1", "a"),
+                        tuple("2", "b"));
     }
 
     private Message getTextMessageReply() {
