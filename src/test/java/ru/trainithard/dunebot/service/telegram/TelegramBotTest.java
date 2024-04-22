@@ -8,8 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TelegramBotTest {
     private final TelegramBot telegramBot = new TelegramBot("uName", "token");
@@ -33,7 +32,7 @@ class TelegramBotTest {
             while (!supplyingFinished.get() || update != null) {
                 if (update != null) {
                     Integer updateId = update.getUpdateId();
-                    assertFalse(updatesConsumed.contains(updateId));
+                    assertThat(updatesConsumed).doesNotContain(updateId);
                     updatesConsumed.add(updateId);
                 } else {
                     try {
@@ -64,7 +63,6 @@ class TelegramBotTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        assertEquals(100_000, updatesConsumed.size());
+        assertThat(updatesConsumed).hasSize(100_000);
     }
-
 }
