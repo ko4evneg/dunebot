@@ -137,19 +137,27 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private ExternalMessage getSubmitText(long matchId, int candidatePlace) {
-        return candidatePlace == 1 ?
-                getAcceptedFirstPlaceSubmitMessageTemplate(matchId, candidatePlace) :
-                getAcceptedSubmitMessageTemplate(matchId, candidatePlace);
+        return switch (candidatePlace) {
+            case 0 -> getAcceptedSubmitMessageTemplateForNonParticipant(matchId);
+            case 1 -> getAcceptedFirstPlaceSubmitMessageTemplate(matchId, candidatePlace);
+            default -> getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
+        };
     }
 
     private ExternalMessage getAcceptedFirstPlaceSubmitMessageTemplate(long matchId, int candidatePlace) {
-        return getAcceptedSubmitMessageTemplate(matchId, candidatePlace).newLine()
-                .append("Теперь загрузите в этот чат скриншот победы.");
+        return getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace).newLine()
+                .appendBold("Теперь загрузите в этот чат скриншот победы.");
     }
 
-    private ExternalMessage getAcceptedSubmitMessageTemplate(long matchId, int candidatePlace) {
+    private ExternalMessage getAcceptedSubmitMessageTemplateForParticipant(long matchId, int candidatePlace) {
         return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
                 .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
+    }
+
+    private ExternalMessage getAcceptedSubmitMessageTemplateForNonParticipant(long matchId) {
+        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксирован статус: ")
+                .appendBold("не участвует").append(".").newLine()
                 .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
     }
 

@@ -249,12 +249,12 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessages = messageCaptor.getValue();
+        MessageDto actualMessage = messageCaptor.getValue();
 
-        assertNull(actualMessages.getTopicId());
-        assertEquals("11002", actualMessages.getChatId());
+        assertNull(actualMessage.getTopicId());
+        assertEquals("11002", actualMessage.getChatId());
         assertEquals("В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'\\.", actualMessages.getText());
+                     "При ошибке используйте команду '/resubmit 15000'\\.", actualMessage.getText());
     }
 
     @Test
@@ -263,13 +263,27 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessages = messageCaptor.getValue();
+        MessageDto actualMessage = messageCaptor.getValue();
 
-        assertNull(actualMessages.getTopicId());
-        assertEquals("11002", actualMessages.getChatId());
+        assertNull(actualMessage.getTopicId());
+        assertEquals("11002", actualMessage.getChatId());
         assertEquals("В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                      "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "Теперь загрузите в этот чат скриншот победы\\.", actualMessages.getText());
+                     "*Теперь загрузите в этот чат скриншот победы\\.*", actualMessage.getText());
+    }
+
+    @Test
+    void shouldSendMessageAboutCallbackAcceptOnNotParticipatedCallbackReply() {
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 0));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        assertNull(actualMessage.getTopicId());
+        assertEquals("11002", actualMessage.getChatId());
+        assertEquals("В матче 15000 за вами зафиксирован статус: *не участвует*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                     "При ошибке используйте команду '/resubmit 15000'\\.", actualMessage.getText());
     }
 
     @Test
