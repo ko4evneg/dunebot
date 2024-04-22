@@ -1,5 +1,6 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -50,8 +51,10 @@ class AdminCommandProcessorTest extends TestContextMock {
         SetCommandsDto actualSetCommandsDto = setCommandsDtoCaptor.getValue();
         Map<String, String> actualCommands = actualSetCommandsDto.getCommandDescriptionsByName();
 
-        assertEquals(HELP_COMMAND_DESCRIPTION, actualCommands.get(HELP_COMMAND_TEXT));
-        assertEquals(COMMANDS_LIST_DESCRIPTION, actualCommands.get(COMMANDS_LIST_COMMAND_TEXT));
+        assertThat(actualCommands)
+                .hasSize(2)
+                .containsEntry(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION)
+                .containsEntry(COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
     }
 
     @Test
@@ -105,16 +108,20 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldThrowOnWrongSettingKey() {
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(getCommandMessage("set wrong_key 40", 10000)));
-        assertEquals(WRONG_SETTING_TEXT, actualException.getMessage());
+        ThrowingCallable actualAction = () -> processor.process(getCommandMessage("set wrong_key 40", 10000));
+
+        assertThatThrownBy(actualAction)
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(WRONG_SETTING_TEXT);
     }
 
     @Test
     void shouldThrowOnWrongSettingValue() {
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(getCommandMessage("set match_start_delay bad_val", 10000)));
-        assertEquals(WRONG_SETTING_VALUE_TEXT, actualException.getMessage());
+        ThrowingCallable actualAction = () -> processor.process(getCommandMessage("set match_start_delay bad_val", 10000));
+
+        assertThatThrownBy(actualAction)
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(WRONG_SETTING_VALUE_TEXT);
     }
 
     @Test
@@ -125,9 +132,9 @@ class AdminCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
-        assertEquals("10011", actualMessageDto.getChatId());
-        assertEquals(10020, actualMessageDto.getReplyMessageId());
-        assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
+        assertThat(actualMessageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getReplyMessageId, MessageDto::getText)
+                .containsExactly("10011", 10020, WRONG_COMMAND_EXCEPTION_MESSAGE);
     }
 
     @Test
@@ -138,23 +145,23 @@ class AdminCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
-        assertEquals("10011", actualMessageDto.getChatId());
-        assertEquals(10020, actualMessageDto.getReplyMessageId());
-        assertEquals(WRONG_COMMAND_EXCEPTION_MESSAGE, actualMessageDto.getText());
+        assertThat(actualMessageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getReplyMessageId, MessageDto::getText)
+                .containsExactly("10011", 10020, WRONG_COMMAND_EXCEPTION_MESSAGE);
     }
 
     @Test
     void shouldReturnAdminCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.ADMIN, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.ADMIN);
     }
 
     @Test
     void shouldSendSingleBroadcastMessageWhenTopicsAreSame() {
-        when(settingsService.getStringSetting(eq(SettingKey.CHAT_ID))).thenReturn("12345");
-        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING))).thenReturn(3);
-        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC))).thenReturn(3);
+        when(settingsService.getStringSetting(SettingKey.CHAT_ID)).thenReturn("12345");
+        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING)).thenReturn(3);
+        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC)).thenReturn(3);
 
         processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020));
 
@@ -162,30 +169,31 @@ class AdminCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
 
-        assertEquals("12345", actualMessageDto.getChatId());
-        assertEquals(3, actualMessageDto.getTopicId());
-        assertEquals("Корова шла по полю, а потом упала\\!$%\\(\\)", actualMessageDto.getText());
+        assertThat(actualMessageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly("12345", 3, "Корова шла по полю, а потом упала\\!$%\\(\\)");
     }
 
     @Test
     void shouldSendTwoBroadcastMessagesWhenTopicsAreDifferent() {
-        when(settingsService.getStringSetting(eq(SettingKey.CHAT_ID))).thenReturn("12345");
-        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING))).thenReturn(1);
-        when(settingsService.getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC))).thenReturn(2);
+        when(settingsService.getStringSetting(SettingKey.CHAT_ID)).thenReturn("12345");
+        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING)).thenReturn(1);
+        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC)).thenReturn(2);
 
         processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(3)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto actualMessageDto1 = messageDtoCaptor.getAllValues().get(0);
-        MessageDto actualMessageDto2 = messageDtoCaptor.getAllValues().get(1);
 
-        assertEquals("12345", actualMessageDto1.getChatId());
-        assertEquals("12345", actualMessageDto2.getChatId());
-        assertEquals(1, actualMessageDto1.getTopicId());
-        assertEquals(2, actualMessageDto2.getTopicId());
-        assertEquals("Корова шла по полю, а потом упала\\!$%\\(\\)", actualMessageDto1.getText());
-        assertEquals("Корова шла по полю, а потом упала\\!$%\\(\\)", actualMessageDto2.getText());
+        MessageDto actualMessageDto1 = messageDtoCaptor.getAllValues().get(0);
+        assertThat(actualMessageDto1)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly("12345", 1, "Корова шла по полю, а потом упала\\!$%\\(\\)");
+
+        MessageDto actualMessageDto2 = messageDtoCaptor.getAllValues().get(1);
+        assertThat(actualMessageDto2)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly("12345", 2, "Корова шла по полю, а потом упала\\!$%\\(\\)");
     }
 
     private CommandMessage getCommandMessage(String arg, int replyId) {
