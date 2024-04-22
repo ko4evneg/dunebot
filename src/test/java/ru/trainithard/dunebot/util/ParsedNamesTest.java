@@ -8,8 +8,8 @@ import ru.trainithard.dunebot.exception.WrongNamesInputException;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class ParsedNamesTest {
     private static final String WRONG_INPUT_EXCEPTION_TEXT = "Неверный формат ввода имен. Пример верного формата:" +
@@ -21,9 +21,9 @@ class ParsedNamesTest {
     void shouldParseValidInputs(String input, String[] names) throws WrongNamesInputException {
         ParsedNames parsedNames = new ParsedNames(input);
 
-        assertEquals(names[0], parsedNames.getFirstName());
-        assertEquals(names[1], parsedNames.getSteamName());
-        assertEquals(names[2], parsedNames.getLastName());
+        assertThat(parsedNames)
+                .extracting(ParsedNames::getFirstName, ParsedNames::getSteamName, ParsedNames::getLastName)
+                .containsExactly(names);
     }
 
     private static Stream<Arguments> validInputsSource() {
@@ -40,8 +40,9 @@ class ParsedNamesTest {
     @ParameterizedTest
     @MethodSource("invalidInputsSource")
     void shouldThrowOnInvalidInputs(String input) {
-        WrongNamesInputException actualException = assertThrows(WrongNamesInputException.class, () -> new ParsedNames(input));
-        assertEquals(WRONG_INPUT_EXCEPTION_TEXT, actualException.getMessage());
+        assertThatCode(() -> new ParsedNames(input))
+                .isInstanceOf(WrongNamesInputException.class)
+                .hasMessage(WRONG_INPUT_EXCEPTION_TEXT);
     }
 
     private static Stream<Arguments> invalidInputsSource() {
