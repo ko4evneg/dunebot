@@ -108,4 +108,11 @@ public class Match extends BaseEntity {
     public boolean hasEnoughPlayers() {
         return positiveAnswersCount >= modType.getPlayersCount();
     }
+
+    public void prepareForResubmit() {
+        submitsRetryCount++;
+        submitsCount = 0;
+        state = MatchState.ON_SUBMIT;
+        leaderWon = null;
+    }
 }

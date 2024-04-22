@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
@@ -84,9 +83,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
                 Files.deleteIfExists(Path.of(screenshotPath));
                 match.setScreenshotPath(null);
             }
-            match.setSubmitsRetryCount(match.getSubmitsRetryCount() + 1);
-            match.setSubmitsCount(0);
-            match.setState(MatchState.ON_SUBMIT);
+            match.prepareForResubmit();
             match.getMatchPlayers().forEach(matchPlayer -> {
                 matchPlayer.setCandidatePlace(null);
                 deleteOldSubmitMessage(matchPlayer.getSubmitMessageId());
