@@ -22,7 +22,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -53,7 +53,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
         String actualName = jdbcTemplate.queryForObject("select steam_name from players where id = 10000", String.class);
 
-        assertEquals(expectedName, actualName);
+        assertThat(actualName).isEqualTo(expectedName);
     }
 
     private static Stream<Arguments> inputNamesSource() {
@@ -70,8 +70,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                                                                  "and steam_name = 'st_pl')", Boolean.class);
 
-        assertNotNull(isChangedUserExist);
-        assertTrue(isChangedUserExist);
+        assertThat(isChangedUserExist).isNotNull().isTrue();
     }
 
     @Test
@@ -81,8 +80,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                                                                  "and first_name = 'abc' and last_name = 'cde' and steam_name = 'stm')", Boolean.class);
 
-        assertNotNull(isChangedUserExist);
-        assertTrue(isChangedUserExist);
+        assertThat(isChangedUserExist).isNotNull().isTrue();
     }
 
     @Test
@@ -93,8 +91,10 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
 
-        assertEquals(CHAT_ID.toString(), messageDto.getChatId());
-        assertEquals(SUCCESSFUL_UPDATE_MESSAGE, messageDto.getText());
+
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(CHAT_ID.toString(), SUCCESSFUL_UPDATE_MESSAGE);
     }
 
     @Test
@@ -104,8 +104,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                                                                  "and external_first_name = 'newEFname' and external_name = 'newUname')", Boolean.class);
 
-        assertNotNull(isChangedUserExist);
-        assertTrue(isChangedUserExist);
+        assertThat(isChangedUserExist).isNotNull().isTrue();
     }
 
     @Test
@@ -115,15 +114,14 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         Boolean isChangedUserExist = jdbcTemplate.queryForObject("select exists(select 1 from players where id = 10000 " +
                                                                  "and external_first_name = 'newEFname' and external_name = 'newUname')", Boolean.class);
 
-        assertNotNull(isChangedUserExist);
-        assertTrue(isChangedUserExist);
+        assertThat(isChangedUserExist).isNotNull().isTrue();
     }
 
     @Test
     void shouldReturnRefreshCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.REFRESH_PROFILE, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.REFRESH_PROFILE);
     }
 
     @Test
@@ -134,9 +132,9 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
         Player actualPlayer = jdbcTemplate.queryForObject("select * from players where id = 10000", new BeanPropertyRowMapper<>(Player.class));
 
-        assertEquals("abc", actualPlayer.getFirstName());
-        assertEquals("cde", actualPlayer.getLastName());
-        assertEquals("stm", actualPlayer.getSteamName());
+        assertThat(actualPlayer)
+                .extracting(Player::getFirstName, Player::getLastName, Player::getSteamName)
+                .containsExactly("abc", "cde", "stm");
     }
 
     @Test
@@ -147,8 +145,7 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
 
         Boolean actualIsGuest = jdbcTemplate.queryForObject("select is_guest from players where id = 10000", Boolean.class);
 
-        assertNotNull(actualIsGuest);
-        assertFalse(actualIsGuest);
+        assertThat(actualIsGuest).isNotNull().isFalse();
     }
 
     private CommandMessage getCommandMessage(String newSteamName) {
