@@ -30,8 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
 
@@ -62,23 +66,31 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, 12346, 9001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, 12346, 9001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10002, 12347, 9002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
+                             "values (10002, 12347, 9002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10003, 12348, 9003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
+                             "values (10003, 12348, 9003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, created_at) " +
                              "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10000, 10000, 10000, 4, '2010-10-10')");
+                             "values (10000, 10000, 10000, 4, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10001, 10000, 10001, 3, '2010-10-10')");
+                             "values (10001, 10000, 10001, 3, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10002, 10000, 10002, 2, '2010-10-10')");
+                             "values (10002, 10000, 10002, 2, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10003, 10000, 10003, 1, '2010-10-10')");
+                             "values (10003, 10000, 10003, 1, '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10000, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10001, 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10002, 'la leader 3', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10003, 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
     }
 
     @AfterEach
@@ -87,6 +99,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id between 10000 and 10001");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
         jdbcTemplate.execute("delete from players where id between 10000 and 10003");
+        jdbcTemplate.execute("delete from leaders where id between 10000 and 10003");
     }
 
     @Test
@@ -193,6 +206,14 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         assertEquals(CHAT_ID.toString(), actualMessages.getChatId());
         assertEquals(SUCCESSFUL_UPLOAD_TEXT, actualMessages.getText());
+        assertThat(actualMessages.getKeyboard().get(0), contains(
+                both(hasProperty("text", is("la leader 1"))).and(hasProperty("callback", is("10000_L_10000"))),
+                both(hasProperty("text", is("la leader 2"))).and(hasProperty("callback", is("10000_L_10001"))),
+                both(hasProperty("text", is("la leader 3"))).and(hasProperty("callback", is("10000_L_10002"))))
+        );
+        assertThat(actualMessages.getKeyboard().get(1), contains(
+                both(hasProperty("text", is("la leader 4"))).and(hasProperty("callback", is("10000_L_10003")))
+        ));
     }
 
     @Test

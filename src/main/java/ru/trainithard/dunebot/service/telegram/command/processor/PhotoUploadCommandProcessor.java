@@ -1,18 +1,23 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
+import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
+import ru.trainithard.dunebot.model.Leader;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.repository.LeaderRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -20,6 +25,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
@@ -40,6 +46,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private final MatchRepository matchRepository;
     private final ScreenshotService screenshotService;
     private final MatchFinishingService matchFinishingService;
+    private final LeaderRepository leaderRepository;
 
     @Value("${bot.token}")
     private String botToken;
@@ -76,7 +83,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                         matchFinishingService.finishSubmittedMatch(match.getId());
                     }
 
-                    messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), null));
+                    messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), getLeadersKeyboard(match)));
                 }
             } catch (ScreenshotFileIOException exception) {
                 log.error(logId + ": file save failed due to an exception", exception);
@@ -111,6 +118,15 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private String getFileExtension(String filePath) {
         int lastSlashIndex = filePath.lastIndexOf(".");
         return filePath.substring(lastSlashIndex);
+    }
+
+    private List<List<ButtonDto>> getLeadersKeyboard(Match match) {
+        String callbackPrefix = match.getId() + "_L_";
+        List<Leader> leaders = leaderRepository.findAllByModType(match.getModType(), Sort.sort(Leader.class).by(Leader::getName));
+        List<ButtonDto> leadersButtons = leaders.stream()
+                .map(leader -> new ButtonDto(leader.getName(), callbackPrefix + leader.getId()))
+                .toList();
+        return Lists.partition(leadersButtons, 3);
     }
 
     @Override
