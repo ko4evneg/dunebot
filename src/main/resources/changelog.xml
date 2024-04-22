@@ -8,4 +8,7 @@
     <changeSet id="002-add-match-screenshot-path" author="ko4evneg">
         <sqlFile path="migrations/02_screenhot_flag_replace.sql"/>
     </changeSet>
+    <changeSet id="003-add-leader-entity" author="ko4evneg">
+        <sqlFile path="migrations/03_add_leader_entity.sql"/>
+    </changeSet>
 </databaseChangeLog>
