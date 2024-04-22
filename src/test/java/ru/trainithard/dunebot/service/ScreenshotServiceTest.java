@@ -21,7 +21,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 
@@ -68,7 +68,7 @@ class ScreenshotServiceTest extends TestContextMock {
 
         String actualFileContent = Files.readString(Path.of("photos/11_10/10000" + extension));
 
-        assertEquals("this_file", actualFileContent);
+        assertThat(actualFileContent).isEqualTo("this_file");
     }
 
     @Test
@@ -76,7 +76,7 @@ class ScreenshotServiceTest extends TestContextMock {
         byte[] file = "this_file".getBytes();
         ScreenshotFileIOException actualException = assertThrows(ScreenshotFileIOException.class,
                 () -> screenshotService.save(10000L, ".bmp", file));
-        assertEquals(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE, actualException.getMessage());
+        assertThat(actualException.getMessage()).isEqualTo(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
     }
 
     @Test
@@ -91,7 +91,7 @@ class ScreenshotServiceTest extends TestContextMock {
 
         String actualFileContent = Files.readString(Path.of("photos/11_10/10000.jpeg"));
 
-        assertEquals("hehe", actualFileContent);
+        assertThat(actualFileContent).isEqualTo("hehe");
     }
 
     @Test
@@ -102,7 +102,7 @@ class ScreenshotServiceTest extends TestContextMock {
         byte[] file = "this_file".getBytes();
         ScreenshotFileIOException actualException = assertThrows(ScreenshotFileIOException.class,
                 () -> screenshotService.save(10000L, FILE_EXTENSION, file));
-        assertEquals(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE, actualException.getMessage());
+        assertThat(actualException.getMessage()).isEqualTo(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
     }
 
     @Test
@@ -117,6 +117,6 @@ class ScreenshotServiceTest extends TestContextMock {
 
         String actualFileContent = Files.readString(Path.of("photos/11_10/10000.jpeg"));
 
-        assertEquals("hehe", actualFileContent);
+        assertThat(actualFileContent).isEqualTo("hehe");
     }
 }
