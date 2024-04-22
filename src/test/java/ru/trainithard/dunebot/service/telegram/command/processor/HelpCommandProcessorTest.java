@@ -13,7 +13,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -30,16 +30,16 @@ class HelpCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
-        assertEquals("10222", actualMessageDto.getChatId());
-        assertEquals(10101, actualMessageDto.getReplyMessageId());
-        assertEquals(getExpectedHelpText(), actualMessageDto.getText());
+        assertThat(actualMessageDto.getChatId()).isEqualTo("10222");
+        assertThat(actualMessageDto.getReplyMessageId()).isEqualTo(10101);
+        assertThat(actualMessageDto.getText()).isEqualTo(getExpectedHelpText());
     }
 
     @Test
     void shouldReturnHelpCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.HELP, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.HELP);
     }
 
     private CommandMessage getCommandMessage() {
