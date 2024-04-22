@@ -1,7 +1,9 @@
 package ru.trainithard.dunebot.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import ru.trainithard.dunebot.model.Leader;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 
@@ -44,4 +46,8 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findWithMatchPlayersBy(long matchId);
 
     List<Match> findAllByStateNotIn(Collection<MatchState> states);
+
+    @Modifying
+    @Query("update Match m set m.leaderWon = :leader where m.id = :matchId")
+    void saveLeader(long matchId, Leader leader);
 }
