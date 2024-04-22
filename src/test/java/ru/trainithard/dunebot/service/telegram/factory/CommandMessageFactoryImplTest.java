@@ -23,7 +23,8 @@ class CommandMessageFactoryImplTest {
     private static final int REPLY_ID = 300;
     private static final int MESSAGE_ID = 400;
     private static final String POLL_ID = "100001";
-    private static final String CALLBACK_DATA = "10000__" + NOT_PARTICIPATED_MATCH_PLACE;
+    private static final String ACCEPT_SUBMIT_CALLBACK_DATA = "10000__" + NOT_PARTICIPATED_MATCH_PLACE;
+    private static final String LEADER_CALLBACK_DATA = "10000_L_2";
     private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl();
 
     @Test
@@ -157,20 +158,32 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
-    void shouldCreateCommandMessageForCallbackCommandUpdate() {
-        Update pollAnswerUpdate = getCallbackQueryUpdate();
+    void shouldCreateCommandMessageForSubmitCallbackCommandUpdate() {
+        Update callbackReplyUpdate = getCallbackQueryUpdate(ACCEPT_SUBMIT_CALLBACK_DATA);
 
-        CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
+        CommandMessage commandMessage = factory.getInstance(callbackReplyUpdate);
 
         assertNotNull(commandMessage);
         assertEquals(USER_ID, commandMessage.getUserId());
         assertEquals(Command.ACCEPT_SUBMIT, commandMessage.getCommand());
-        assertEquals(CALLBACK_DATA, commandMessage.getCallback());
+        assertEquals(ACCEPT_SUBMIT_CALLBACK_DATA, commandMessage.getCallback());
+    }
+
+    @Test
+    void shouldCreateCommandMessageForLeaderCallbackCommandUpdate() {
+        Update callbackReplyUpdate = getCallbackQueryUpdate(LEADER_CALLBACK_DATA);
+
+        CommandMessage commandMessage = factory.getInstance(callbackReplyUpdate);
+
+        assertNotNull(commandMessage);
+        assertEquals(USER_ID, commandMessage.getUserId());
+        assertEquals(Command.LEADER, commandMessage.getCommand());
+        assertEquals(LEADER_CALLBACK_DATA, commandMessage.getCallback());
     }
 
     @Test
     void shouldCreateNullCommandMessageForNullCallbackCommandUpdate() {
-        Update pollAnswerUpdate = getCallbackQueryUpdate();
+        Update pollAnswerUpdate = getCallbackQueryUpdate(ACCEPT_SUBMIT_CALLBACK_DATA);
         pollAnswerUpdate.getCallbackQuery().setData(null);
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
@@ -180,7 +193,7 @@ class CommandMessageFactoryImplTest {
 
     @Test
     void shouldCreateNullCommandMessageForEmptyCallbackCommandUpdate() {
-        Update pollAnswerUpdate = getCallbackQueryUpdate();
+        Update pollAnswerUpdate = getCallbackQueryUpdate(ACCEPT_SUBMIT_CALLBACK_DATA);
         pollAnswerUpdate.getCallbackQuery().setData("");
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
@@ -221,7 +234,7 @@ class CommandMessageFactoryImplTest {
         return update;
     }
 
-    private static Update getCallbackQueryUpdate() {
+    private static Update getCallbackQueryUpdate(String callbackData) {
         User user = new User();
         user.setId(USER_ID);
         Message message = new Message();
@@ -229,7 +242,7 @@ class CommandMessageFactoryImplTest {
         message.setFrom(user);
         CallbackQuery callbackQuery = new CallbackQuery();
         callbackQuery.setMessage(message);
-        callbackQuery.setData(CALLBACK_DATA);
+        callbackQuery.setData(callbackData);
         callbackQuery.setFrom(user);
         Update update = new Update();
         update.setCallbackQuery(callbackQuery);

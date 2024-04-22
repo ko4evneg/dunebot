@@ -54,6 +54,10 @@ public enum Command {
      */
     ACCEPT_SUBMIT(CALLBACK, true, false, 0),
     /**
+     * Accepts winner's reply to leader selection request
+     */
+    LEADER(CALLBACK, true, false, 0),
+    /**
      * Shows bot help.
      */
     HELP(TEXT, true, false, 0),

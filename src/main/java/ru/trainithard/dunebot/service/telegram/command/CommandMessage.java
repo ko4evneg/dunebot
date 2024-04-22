@@ -81,9 +81,9 @@ public class CommandMessage {
     }
 
     private CommandMessage(CallbackQuery callbackQuery) {
-        this.command = Command.ACCEPT_SUBMIT;
         this.userId = callbackQuery.getFrom().getId();
         this.callback = callbackQuery.getData();
+        this.command = this.callback.contains("_L_") ? Command.LEADER : Command.ACCEPT_SUBMIT;
     }
 
     private CommandMessage(Message message) {
