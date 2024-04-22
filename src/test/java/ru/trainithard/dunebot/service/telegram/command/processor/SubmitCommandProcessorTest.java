@@ -39,10 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -77,27 +74,27 @@ class SubmitCommandProcessorTest extends TestContextMock {
         doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, 11001, 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, 11001, 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
+                             "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
+                             "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
+                             "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
+                             "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
-                "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, '2010-10-10') ");
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10000, 15000, 10000, '2010-10-10')");
+                             "values (10000, 15000, 10000, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10001, 15000, 10001, '2010-10-10')");
+                             "values (10001, 15000, 10001, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10002, 15000, 10002, '2010-10-10')");
+                             "values (10002, 15000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10003, 15000, 10003, '2010-10-10')");
+                             "values (10003, 15000, 10003, '2010-10-10')");
         jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10000, '" + SettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
     }
@@ -116,10 +113,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void shouldThrowOnUnsuitableMatchSubmit(String query, String expectedException) {
         jdbcTemplate.execute(query);
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(submitCommandMessage));
-
-        assertEquals(expectedException, actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(submitCommandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(expectedException);
     }
 
     private static Stream<Arguments> exceptionsSource() {
@@ -134,13 +130,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldThrowOnAlienMatchSubmit() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
+                             "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
         CommandMessage commandMessage = getCommandMessage(11004L);
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(commandMessage));
 
-        assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Вы не можете инициировать публикацию этого матча");
     }
 
     @Test
@@ -148,10 +144,10 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id = 15000");
         jdbcTemplate.execute("delete from matches where id = 15000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(submitCommandMessage));
 
-        assertEquals("Матча с таким ID не существует!", actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(submitCommandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Матча с таким ID не существует!");
     }
 
     @Test
@@ -162,12 +158,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
         List<MessageDto> actualSendMessages = messageDtoCaptor.getAllValues();
 
-        assertThat(actualSendMessages, containsInAnyOrder(
-                hasProperty("chatId", is("12000")),
-                hasProperty("chatId", is("12001")),
-                hasProperty("chatId", is("12002")),
-                hasProperty("chatId", is("12003")))
-        );
+        assertThat(actualSendMessages)
+                .flatExtracting(MessageDto::getChatId)
+                .containsExactlyInAnyOrder("12000", "12001", "12002", "12003");
     }
 
     @Test
@@ -179,18 +172,17 @@ class SubmitCommandProcessorTest extends TestContextMock {
         MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
         List<List<ButtonDto>> linedButtons = actualMessageDto.getKeyboard();
 
-        assertEquals("Выберите место, которое вы заняли в матче 15000:", actualMessageDto.getText());
-        assertThat(linedButtons.get(0), contains(
-                both(hasProperty("text", is("1"))).and(hasProperty("callback", is("15000__1"))),
-                both(hasProperty("text", is("2"))).and(hasProperty("callback", is("15000__2"))))
-        );
-        assertThat(linedButtons.get(1), contains(
-                both(hasProperty("text", is("3"))).and(hasProperty("callback", is("15000__3"))),
-                both(hasProperty("text", is("4"))).and(hasProperty("callback", is("15000__4"))))
-        );
-        assertThat(linedButtons.get(2), contains(
-                both(hasProperty("text", is("не участвовал(а)"))).and(hasProperty("callback", is("15000__0"))))
-        );
+        assertThat(actualMessageDto.getText()).isEqualTo("Выберите место, которое вы заняли в матче 15000:");
+        assertThat(linedButtons)
+                .flatExtracting(buttonDtos -> buttonDtos)
+                .extracting(ButtonDto::getText, ButtonDto::getCallback)
+                .containsExactly(
+                        tuple("1", "15000__1"),
+                        tuple("2", "15000__2"),
+                        tuple("3", "15000__3"),
+                        tuple("4", "15000__4"),
+                        tuple("не участвовал(а)", "15000__0")
+                );
     }
 
     @Test
@@ -209,9 +201,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
         processor.process(submitCommandMessage);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
-                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001)", Long.class);
+                                                                  "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001)", Long.class);
 
-        assertEquals(4, assignedIdsPlayerCount);
+        assertThat(assignedIdsPlayerCount).isEqualTo(4);
     }
 
     @Test
@@ -231,8 +223,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
-        assertNotNull(actualState);
-        assertEquals(MatchState.ON_SUBMIT, actualState);
+        assertThat(actualState).isNotNull().isEqualTo(MatchState.ON_SUBMIT);
     }
 
     @Test
@@ -248,17 +239,17 @@ class SubmitCommandProcessorTest extends TestContextMock {
         processor.process(submitCommandMessage);
 
         Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
-                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
+                                                                  "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
 
-        assertEquals(4, assignedIdsPlayerCount);
+        assertThat(assignedIdsPlayerCount).isEqualTo(4);
     }
 
     @Test
     void shouldNotSaveSubmitMessageIdsForOtherMatchPlayer() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
+                             "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                "values (10004, 15000, 10004, '2010-10-10')");
+                             "values (10004, 15000, 10004, '2010-10-10')");
 
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
@@ -271,9 +262,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
         processor.process(submitCommandMessage);
 
         List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where external_submit_id in " +
-                "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
+                                                                  "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
 
-        assertFalse(assignedIdsPlayers.contains(11004L));
+        assertThat(assignedIdsPlayers).isNotEmpty().doesNotContain(11004L);
     }
 
     @Test
@@ -286,7 +277,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
         Instant actualInstant = instantCaptor.getValue();
 
-        assertEquals(NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES), actualInstant);
+        assertThat(actualInstant).isEqualTo(NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
     }
 
     @Test
@@ -311,7 +302,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void shouldReturnSubmitCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.SUBMIT, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.SUBMIT);
     }
 
     private CommandMessage getCommandMessage(long userId) {
