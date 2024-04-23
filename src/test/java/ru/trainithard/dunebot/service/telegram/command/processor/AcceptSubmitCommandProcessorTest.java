@@ -28,10 +28,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -101,7 +98,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select candidate_place from match_players where id = 10000", Integer.class);
 
-        assertEquals(expectedPlace, actualCandidatePlace);
+        assertThat(actualCandidatePlace).isEqualTo(expectedPlace);
     }
 
     @Test
@@ -111,7 +108,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select candidate_place from match_players where id = 10000", Integer.class);
 
-        assertEquals(1, actualCandidatePlace);
+        assertThat(actualCandidatePlace).isEqualTo(1);
     }
 
     @Test
@@ -121,7 +118,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select submits_count from matches where id = 15000", Integer.class);
 
-        assertEquals(2, actualCandidatePlace);
+        assertThat(actualCandidatePlace).isEqualTo(2);
     }
 
     @Test
@@ -207,11 +204,10 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 name1 \\(st\\_pl1\\) l1
 
                 Повторный опрос результата\\.\\.\\.""";
-        assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
-        assertThat(actualMessages, containsInAnyOrder(
-                hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
-                hasProperty("chatId", is("12002")), hasProperty("chatId", is("12003"))
-        ));
+        assertThat(actualMessages)
+                .allMatch(message -> conflictText.equals(message.getText()))
+                .extracting(MessageDto::getChatId)
+                .containsExactlyInAnyOrder("12000", "12001", "12002", "12003");
     }
 
     @Test
@@ -227,11 +223,10 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         String conflictText = "Игроки не смогли верно обозначить свои места\\! Превышено количество запросов на регистрацию результатов\\. " +
                               "Результаты не сохранены, регистрация запрещена\\.";
-        assertThat(actualMessages, not(hasItem(hasProperty("text", not(is(conflictText))))));
-        assertThat(actualMessages, containsInAnyOrder(
-                hasProperty("chatId", is("12000")), hasProperty("chatId", is("12001")),
-                hasProperty("chatId", is("12002")), hasProperty("chatId", is("12003"))
-        ));
+        assertThat(actualMessages)
+                .allMatch(message -> conflictText.equals(message.getText()))
+                .extracting(MessageDto::getChatId)
+                .containsExactlyInAnyOrder("12000", "12001", "12002", "12003");
     }
 
     @Test
@@ -249,12 +244,13 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessage = messageCaptor.getValue();
+        MessageDto actualMessages = messageCaptor.getValue();
 
-        assertNull(actualMessage.getTopicId());
-        assertEquals("11002", actualMessage.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'\\.", actualMessage.getText());
+        assertThat(actualMessages)
+                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(null, "11002",
+                        "В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "При ошибке используйте команду '/resubmit 15000'\\.");
     }
 
     @Test
@@ -263,13 +259,14 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessage = messageCaptor.getValue();
+        MessageDto actualMessages = messageCaptor.getValue();
 
-        assertNull(actualMessage.getTopicId());
-        assertEquals("11002", actualMessage.getChatId());
-        assertEquals("В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "*Теперь загрузите в этот чат скриншот победы\\.*", actualMessage.getText());
+        assertThat(actualMessages)
+                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(null, "11002",
+                        "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "Теперь загрузите в этот чат скриншот победы\\.");
     }
 
     @Test
@@ -280,17 +277,18 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
-        assertNull(actualMessage.getTopicId());
-        assertEquals("11002", actualMessage.getChatId());
-        assertEquals("В матче 15000 за вами зафиксирован статус: *не участвует*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                     "При ошибке используйте команду '/resubmit 15000'\\.", actualMessage.getText());
+        assertThat(actualMessage)
+                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(null, "11002",
+                        "В матче 15000 за вами зафиксирован статус: *не участвует*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "При ошибке используйте команду '/resubmit 15000'\\.");
     }
 
     @Test
     void shouldReturnAcceptSubmitCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.ACCEPT_SUBMIT, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.ACCEPT_SUBMIT);
     }
 
     private CommandMessage getCommandMessage(long userId, int messageId, long chatId, String callbackData) {

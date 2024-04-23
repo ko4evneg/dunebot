@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
@@ -62,23 +62,23 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         doReturn("this_file".getBytes()).when(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, 12346, 9001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, 12346, 9001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10002, 12347, 9002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
+                             "values (10002, 12347, 9002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10003, 12348, 9003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
+                             "values (10003, 12348, 9003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, created_at) " +
                              "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10000, 10000, 10000, 4, '2010-10-10')");
+                             "values (10000, 10000, 10000, 4, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10001, 10000, 10001, 3, '2010-10-10')");
+                             "values (10001, 10000, 10001, 3, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10002, 10000, 10002, 2, '2010-10-10')");
+                             "values (10002, 10000, 10002, 2, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10003, 10000, 10003, 1, '2010-10-10')");
+                             "values (10003, 10000, 10003, 1, '2010-10-10')");
     }
 
     @AfterEach
@@ -174,9 +174,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
-        assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
-        assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
-        assertEquals("saving exception", actualMessage.getText());
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getReplyMessageId, MessageDto::getText)
+                .containsExactly(CHAT_ID.toString(), REPLY_ID, "saving exception");
     }
 
     @Test
@@ -189,10 +189,11 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessages = messageCaptor.getValue();
+        MessageDto actualMessage = messageCaptor.getValue();
 
-        assertEquals(CHAT_ID.toString(), actualMessages.getChatId());
-        assertEquals(SUCCESSFUL_UPLOAD_TEXT, actualMessages.getText());
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(CHAT_ID.toString(), SUCCESSFUL_UPLOAD_TEXT);
     }
 
     @Test
@@ -206,8 +207,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
-        assertNotNull(actualSubmitPhotoFlag);
-        assertTrue(actualSubmitPhotoFlag);
+        assertThat(actualSubmitPhotoFlag).isNotNull().isTrue();
     }
 
     @Test
@@ -221,8 +221,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
-        assertNotNull(actualSubmitPhotoFlag);
-        assertTrue(actualSubmitPhotoFlag);
+        assertThat(actualSubmitPhotoFlag).isNotNull().isTrue();
     }
 
     @Test
@@ -236,8 +235,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean hasScreenshottedState = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and matches.state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "')", Boolean.class);
 
-        assertNotNull(hasScreenshottedState);
-        assertTrue(hasScreenshottedState);
+        assertThat(hasScreenshottedState).isNotNull().isTrue();
     }
 
     @Test
@@ -251,8 +249,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean hasScreenshottedState = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and matches.state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "')", Boolean.class);
 
-        assertNotNull(hasScreenshottedState);
-        assertTrue(hasScreenshottedState);
+        assertThat(hasScreenshottedState).isNotNull().isTrue();
     }
 
     @Test
@@ -266,8 +263,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
-        assertNotNull(actualSubmitPhotoFlag);
-        assertFalse(actualSubmitPhotoFlag);
+        assertThat(actualSubmitPhotoFlag).isNotNull().isFalse();
     }
 
     @Test
@@ -298,7 +294,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldReturnPhotoUploadCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.UPLOAD_PHOTO, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.UPLOAD_PHOTO);
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {

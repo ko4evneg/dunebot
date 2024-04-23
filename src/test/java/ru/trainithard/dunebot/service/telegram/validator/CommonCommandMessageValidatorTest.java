@@ -20,7 +20,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class CommonCommandMessageValidatorTest extends TestContextMock {
@@ -51,10 +52,12 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         message.setText("/fake_command");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
-        assertNull(actualException.getTelegramReplyId());
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasFieldOrPropertyWithValue("telegramChatId", TELEGRAM_CHAT_ID)
+                .hasFieldOrPropertyWithValue("telegramReplyId", null);
     }
+
 
     @Test
     void shouldCorrectlyFillChatIdAndReplyIdForTopicMessage() {
@@ -62,11 +65,12 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         replyMessage.setMessageId(9001);
         message.setText("/fake_command");
         message.setReplyToMessage(replyMessage);
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(TELEGRAM_CHAT_ID, actualException.getTelegramChatId());
-        assertEquals(9001, actualException.getTelegramReplyId());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasFieldOrPropertyWithValue("telegramChatId", TELEGRAM_CHAT_ID)
+                .hasFieldOrPropertyWithValue("telegramReplyId", 9001);
     }
 
     @ParameterizedTest
@@ -74,7 +78,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void shouldNotThrowForValidCommandWithoutArguments(Command command) {
         message.setText("/" + command.name().toLowerCase());
 
-        assertDoesNotThrow(() -> validator.validate(CommandMessage.getMessageInstance(message)));
+        assertThatCode(() -> validator.validate(CommandMessage.getMessageInstance(message))).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
@@ -83,17 +87,18 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
 
-        assertDoesNotThrow(() -> validator.validate(CommandMessage.getMessageInstance(message)));
+        assertThatCode(() -> validator.validate(CommandMessage.getMessageInstance(message))).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
     @MethodSource("invalidCommandsProvider")
     void shouldThrowForInvalidCommand(String commandText, String expectedReply) {
         message.setText(commandText);
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(expectedReply, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(expectedReply);
     }
 
     private static Stream<Arguments> invalidCommandsProvider() {
@@ -114,10 +119,11 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(ANONYMOUS_COMMAND_TEXT, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(ANONYMOUS_COMMAND_TEXT);
     }
 
     @ParameterizedTest
@@ -126,10 +132,11 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void shouldThrowForGuestCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("update players set is_guest = true where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(ANONYMOUS_COMMAND_TEXT, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(ANONYMOUS_COMMAND_TEXT);
     }
 
     @ParameterizedTest
@@ -137,10 +144,11 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void shouldThrowOnTextCommandsInNonPrivateChat(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT);
     }
 
     @ParameterizedTest
@@ -148,10 +156,11 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void shouldThrowOnTextCommandsInPublicChat(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.SUBMIT.name().toLowerCase() + " 1");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT);
     }
 
     @Test
@@ -164,7 +173,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         update.setPollAnswer(pollAnswer);
         CommandMessage pollAnswerMessage = CommandMessage.getPollAnswerInstance(pollAnswer);
 
-        assertDoesNotThrow(() -> validator.validate(pollAnswerMessage));
+        assertThatCode(() -> validator.validate(pollAnswerMessage)).doesNotThrowAnyException();
     }
 
     @Test
@@ -179,7 +188,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
         CommandMessage callbackMessage = CommandMessage.getCallbackInstance(callbackQuery);
 
-        assertDoesNotThrow(() -> validator.validate(callbackMessage));
+        assertThatCode(() -> validator.validate(callbackMessage)).doesNotThrowAnyException();
     }
 
     private void fillMessage() {

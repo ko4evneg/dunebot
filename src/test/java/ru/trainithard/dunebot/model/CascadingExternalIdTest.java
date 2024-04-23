@@ -12,7 +12,7 @@ import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Transactional(propagation = Propagation.SUPPORTS)
@@ -47,10 +47,8 @@ class CascadingExternalIdTest {
         Boolean isSubmitIdExist = jdbcTemplate.queryForObject("select exists(select 1 from external_messages where " +
                 "message_id = 10004 and chat_id = 10005 and poll_id = '10006' and reply_id = 10007)", Boolean.class);
 
-        assertNotNull(isPollIdExist);
-        assertNotNull(isSubmitIdExist);
-        assertTrue(isPollIdExist);
-        assertTrue(isSubmitIdExist);
+        assertThat(isPollIdExist).isNotNull().isTrue();
+        assertThat(isSubmitIdExist).isNotNull().isTrue();
     }
 
     @Test
@@ -68,7 +66,7 @@ class CascadingExternalIdTest {
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where message_id in (10000, 10001)", Integer.class);
 
-        assertEquals(0, actualMessagesCount);
+        assertThat(actualMessagesCount).isZero();
     }
 
     @Test
@@ -90,7 +88,7 @@ class CascadingExternalIdTest {
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where message_id in (10000, 10001)", Integer.class);
 
-        assertEquals(0, actualMessagesCount);
+        assertThat(actualMessagesCount).isZero();
     }
 
     @Test
@@ -111,7 +109,7 @@ class CascadingExternalIdTest {
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where chat_id = 12345", Integer.class);
 
-        assertEquals(2, actualMessagesCount);
+        assertThat(actualMessagesCount).isEqualTo(2);
     }
 
     @Test
@@ -133,8 +131,7 @@ class CascadingExternalIdTest {
         Boolean isSubmitIdExist = jdbcTemplate.queryForObject("select exists(select 1 from external_messages where " +
                 "message_id = 10010 and chat_id = 10011 and poll_id = '10012' and reply_id = 10013)", Boolean.class);
 
-        assertNotNull(isSubmitIdExist);
-        assertTrue(isSubmitIdExist);
+        assertThat(isSubmitIdExist).isNotNull().isTrue();
     }
 
     @Test
@@ -152,7 +149,7 @@ class CascadingExternalIdTest {
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where message_id = 10000", Integer.class);
 
-        assertEquals(0, actualMessagesCount);
+        assertThat(actualMessagesCount).isZero();
     }
 
     @Test
@@ -172,7 +169,7 @@ class CascadingExternalIdTest {
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where chat_id = 12345", Integer.class);
 
-        assertEquals(1, actualMessagesCount);
+        assertThat(actualMessagesCount).isEqualTo(1);
     }
 
     @Test
@@ -193,6 +190,6 @@ class CascadingExternalIdTest {
 
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where message_id = 10000", Integer.class);
 
-        assertEquals(0, actualMessagesCount);
+        assertThat(actualMessagesCount).isZero();
     }
 }

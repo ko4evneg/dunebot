@@ -12,8 +12,7 @@ import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -30,14 +29,14 @@ class StartCommandProcessorTest extends TestContextMock {
 
         startCommandProcessor.process(commandMessage);
 
-        verify(helpCommandProcessor, times(1)).process(eq(commandMessage));
+        verify(helpCommandProcessor, times(1)).process(commandMessage);
     }
 
     @Test
     void shouldReturnHelpCommand() {
         Command actualCommand = startCommandProcessor.getCommand();
 
-        assertEquals(Command.START, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.START);
     }
 
     private CommandMessage getCommandMessage() {

@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.report;
 
 import com.itextpdf.text.pdf.PdfReader;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -50,16 +50,16 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
     @BeforeEach
     void beforeEach() {
         doReturn(ZoneId.of("UTC+3")).when(clock).getZone();
-        doReturn(TestConstants.CHAT_ID).when(settingsService).getStringSetting(eq(SettingKey.CHAT_ID));
-        doReturn(TestConstants.TOPIC_ID_UPRISING).when(settingsService).getIntSetting(eq(SettingKey.TOPIC_ID_UPRISING));
-        doReturn(TestConstants.TOPIC_ID_CLASSIC).when(settingsService).getIntSetting(eq(SettingKey.TOPIC_ID_CLASSIC));
+        doReturn(TestConstants.CHAT_ID).when(settingsService).getStringSetting(SettingKey.CHAT_ID);
+        doReturn(TestConstants.TOPIC_ID_UPRISING).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_UPRISING);
+        doReturn(TestConstants.TOPIC_ID_CLASSIC).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
 
         try {
             Field field = MonthlyRatingReportTask.class.getDeclaredField("pdfPath");
             field.setAccessible(true);
             field.set(task, tempDir.toString());
         } catch (ReflectiveOperationException exception) {
-            fail();
+            Assertions.fail("reflection failed");
         }
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
@@ -154,7 +154,8 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         pdfReader.close();
         actualFileStream.close();
         referencePdfReader.close();
-        assertArrayEquals(expectedBytes, actualBytes);
+
+        assertThat(actualBytes).isEqualTo(expectedBytes);
     }
 
     @Test
@@ -165,8 +166,8 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
 
         task.run();
 
-        assertTrue(Files.exists(tempDir.resolve("up4_2010_OCTOBER.pdf")));
-        assertTrue(Files.exists(tempDir.resolve("dune_2010_OCTOBER.pdf")));
+        assertThat(Files.exists(tempDir.resolve("up4_2010_OCTOBER.pdf"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("dune_2010_OCTOBER.pdf"))).isTrue();
     }
 
     @Test
@@ -198,7 +199,8 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         pdfReader.close();
         actualFileStream.close();
         referencePdfReader.close();
-        assertArrayEquals(expectedBytes, actualBytes);
+
+        assertThat(actualBytes).isEqualTo(expectedBytes);
     }
 
     @Test
@@ -222,19 +224,20 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         ByteArrayInputStream actualUprisingInputStream = new ByteArrayInputStream(actualUprisingMessage.getFile());
         PdfReader actualUprisingPdfReader = new PdfReader(actualUprisingInputStream);
 
-        assertEquals(TestConstants.TOPIC_ID_UPRISING, actualUprisingMessage.getTopicId());
-        assertEquals(TestConstants.CHAT_ID, actualUprisingMessage.getChatId());
-        assertEquals("Рейтинг за 10\\.2010:", actualUprisingMessage.getText());
-        assertArrayEquals(referenceFileBytes, actualUprisingPdfReader.getPageContent(1));
+        assertThat(actualUprisingMessage.getTopicId()).isEqualTo(TestConstants.TOPIC_ID_UPRISING);
+        assertThat(actualUprisingMessage.getChatId()).isEqualTo(TestConstants.CHAT_ID);
+        assertThat(actualUprisingMessage.getText()).isEqualTo("Рейтинг за 10\\.2010:");
+        assertThat(actualUprisingPdfReader.getPageContent(1)).isEqualTo(referenceFileBytes);
 
         FileMessageDto actualClassicMessage = messageCaptor.getAllValues().get(0);
         ByteArrayInputStream actualClassicInputStream = new ByteArrayInputStream(actualClassicMessage.getFile());
         PdfReader actualClassicPdfReader = new PdfReader(actualClassicInputStream);
 
-        assertEquals(TestConstants.TOPIC_ID_CLASSIC, actualClassicMessage.getTopicId());
-        assertEquals(TestConstants.CHAT_ID, actualClassicMessage.getChatId());
-        assertEquals("Рейтинг за 10\\.2010:", actualClassicMessage.getText());
-        assertTrue(actualClassicPdfReader.getPageContent(1).length > 0);
+        assertThat(actualClassicMessage.getTopicId()).isEqualTo(TestConstants.TOPIC_ID_CLASSIC);
+        assertThat(actualClassicMessage.getChatId()).isEqualTo(TestConstants.CHAT_ID);
+        assertThat(actualClassicMessage.getText()).isEqualTo("Рейтинг за 10\\.2010:");
+        byte[] page1Content = actualClassicPdfReader.getPageContent(1);
+        assertThat(page1Content).isNotEmpty();
 
         actualClassicInputStream.close();
         actualClassicPdfReader.close();

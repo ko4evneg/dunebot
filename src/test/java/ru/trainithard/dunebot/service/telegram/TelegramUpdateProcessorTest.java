@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -112,7 +112,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         when(telegramBot.poll()).thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/up")).thenReturn(null);
         doThrow(anException).when(commandMessageFactory).getInstance(any());
 
-        assertDoesNotThrow(() -> updateProcessor.process());
+        assertThatCode(() -> updateProcessor.process()).doesNotThrowAnyException();
     }
 
     private static Stream<Arguments> exceptionsProvider() {
@@ -146,7 +146,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         updateProcessor.process();
 
-        verify(validationStrategyFactory, times(1)).getValidator(eq(expectedCommandType));
+        verify(validationStrategyFactory, times(1)).getValidator(expectedCommandType);
     }
 
     private static Stream<Arguments> validatorsSource() {
@@ -166,7 +166,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         updateProcessor.process();
 
-        verify(commonCommandMessageValidator, times(1)).validate(eq(expectedCommandMessage));
+        verify(commonCommandMessageValidator, times(1)).validate(expectedCommandMessage);
     }
 
     private static Stream<Arguments> commonValidatorSource() {
@@ -189,7 +189,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         updateProcessor.process();
 
-        verify(commandProcessorFactory, times(1)).getProcessor(eq(expectedCommand));
+        verify(commandProcessorFactory, times(1)).getProcessor(expectedCommand);
     }
 
     private static Stream<Arguments> processorsSource() {
