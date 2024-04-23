@@ -48,14 +48,16 @@ class RatingReport {
         matchPlayersByPlayer.entrySet().stream()
                 .filter(entry -> entry.getValue().stream().anyMatch(this::hasAssignedPlace))
                 .forEach(entry -> {
-                    Map<Integer, Long> orderedPlaceCountByPlaceNames = getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
+                    Map<Integer, Long> orderedPlaceCountByPlaceNames =
+                            getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
                     long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
                     long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
                     double winRate = calculateWinRate(firstPlacesCount, playerMatchesCount);
                     double efficiency = calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
 
+                    String friendlyName = entry.getKey().getFriendlyName();
                     PlayerMonthlyRating playerMonthlyRating =
-                            new PlayerMonthlyRating(entry.getKey().getFriendlyName(), orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
+                            new PlayerMonthlyRating(friendlyName, orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
                     playerRatings.add(playerMonthlyRating);
                 });
     }
@@ -112,7 +114,9 @@ class RatingReport {
                 return 1;
             }
             int reversedEfficiencyDiff = (int) (comparedRating.efficiency * 100 - this.efficiency * 100);
-            return reversedEfficiencyDiff != 0 ? reversedEfficiencyDiff : this.playerFriendlyName.compareTo(comparedRating.playerFriendlyName);
+            return reversedEfficiencyDiff != 0
+                    ? reversedEfficiencyDiff
+                    : this.playerFriendlyName.compareTo(comparedRating.playerFriendlyName);
         }
 
         @Override

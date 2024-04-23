@@ -174,10 +174,10 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     private void deleteExistingOldSubmitMessage(Match match) {
         if (match.getExternalStartId() != null) {
-            Integer externalStartMessageId = match.getExternalStartId().getMessageId();
-            Long externalStartMessageChatId = match.getExternalStartId().getChatId();
-            Integer startMessageReplyId = match.getExternalStartId().getReplyId();
-            messagingService.deleteMessageAsync(new ExternalMessageId(externalStartMessageId, externalStartMessageChatId, startMessageReplyId));
+            Integer externalMessageId = match.getExternalStartId().getMessageId();
+            Long externalChatId = match.getExternalStartId().getChatId();
+            Integer externalMessageReplyId = match.getExternalStartId().getReplyId();
+            messagingService.deleteMessageAsync(new ExternalMessageId(externalMessageId, externalChatId, externalMessageReplyId));
         }
     }
 

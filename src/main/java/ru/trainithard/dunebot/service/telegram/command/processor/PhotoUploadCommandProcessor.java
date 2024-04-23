@@ -49,7 +49,8 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         int logId = logId();
         log.debug("{}: PHOTO started", logId);
 
-        Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT).iterator().next();
+        Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT)
+                .iterator().next();
         log.debug("{}: match {} found", logId, match.getId());
 
         String fileId = getFileId(commandMessage);

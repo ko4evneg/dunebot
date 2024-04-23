@@ -19,7 +19,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class StartupServiceImpl implements StartupService {
-    private static final String MATCH_FAIL_MESSAGE_TEMPLATE = "Бот был перезапущен, незавершенные матчи %s завершены без регистрации результатов";
+    private static final String MATCH_FAIL_MESSAGE_TEMPLATE =
+            "Бот был перезапущен, незавершенные матчи %s завершены без регистрации результатов";
 
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;

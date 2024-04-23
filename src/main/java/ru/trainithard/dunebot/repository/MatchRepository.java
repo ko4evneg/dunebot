@@ -28,7 +28,11 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query("""
             select m from Match m
             left join fetch m.matchPlayers mp
-            where m.id = (select mp2.match.id from MatchPlayer mp2 where mp2.match.state = :matchState and mp2.player.externalId = :externalPlayerId)
+            where m.id = (
+                select mp2.match.id
+                from MatchPlayer mp2
+                where mp2.match.state = :matchState and mp2.player.externalId = :externalPlayerId
+                )
             order by m.createdAt desc
             limit 1
             """)

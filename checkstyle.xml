@@ -14,10 +14,9 @@
     <!--    <module name="FileLength">-->
     <!--        <property name="max" value="200"/>-->
     <!--    </module>-->
-    <!--    <module name="LineLength">-->
-    <!--        <property name="max" value="160"/>-->
-    <!--    </module>-->
-
+    <module name="LineLength">
+        <property name="max" value="140"/>
+    </module>
     <module name="TreeWalker">
         <module name="MethodCount">
             <property name="maxPublic" value="10"/>

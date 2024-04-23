@@ -32,7 +32,8 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LIN
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE =
-            "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. Результаты не сохранены, регистрация запрещена.";
+            "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. " +
+            "Результаты не сохранены, регистрация запрещена.";
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
