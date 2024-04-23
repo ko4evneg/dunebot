@@ -32,7 +32,7 @@ class TelegramBotTest {
             while (!supplyingFinished.get() || update != null) {
                 if (update != null) {
                     Integer updateId = update.getUpdateId();
-                    assertThat(updatesConsumed).doesNotContain(updateId);
+                    assertThat(updatesConsumed.contains(updateId)).isFalse();
                     updatesConsumed.add(updateId);
                 } else {
                     try {
