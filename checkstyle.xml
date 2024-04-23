@@ -5,17 +5,18 @@
 
 <module name="Checker">
     <property name="charset" value="UTF-8"/>
-
     <module name="SuppressionFilter">
         <property name="file" value="suppressions.xml"/>
         <property name="optional" value="false"/>
     </module>
+
     <module name="FileLength">
         <property name="max" value="250"/>
     </module>
     <module name="LineLength">
         <property name="max" value="140"/>
     </module>
+
     <module name="TreeWalker">
         <module name="MethodCount">
             <property name="maxPublic" value="10"/>
@@ -109,6 +110,12 @@
             <property name="allowMultipleEmptyLines" value="false"/>
             <property name="allowMultipleEmptyLinesInsideClassMembers" value="false"/>
             <property name="allowNoEmptyLineBetweenFields" value="true"/>
+        </module>
+        <module name="Regexp">
+            <property name="format" value="^.*import.*org\.junit\.jupiter\.api\.Assertions.*$"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="message" value="JUpiter assertions are prohibited, use AssertJ assertions instead."/>
         </module>
     </module>
 </module>
