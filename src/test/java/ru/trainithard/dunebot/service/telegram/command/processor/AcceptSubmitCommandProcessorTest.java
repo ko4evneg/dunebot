@@ -266,7 +266,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 .containsExactly(null, "11002",
                         "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                        "Теперь загрузите в этот чат скриншот победы\\.");
+                        "*Теперь загрузите в этот чат скриншот победы\\.*");
     }
 
     @Test
