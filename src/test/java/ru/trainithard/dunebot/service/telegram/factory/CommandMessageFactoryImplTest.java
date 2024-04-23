@@ -58,7 +58,6 @@ class CommandMessageFactoryImplTest {
         assertThat(commandMessage.getAllArguments()).isEqualTo("arg1 arg2 arg3");
     }
 
-
     @Test
     void shouldGetEmptyStringCommandArgsForSlashWordTextUpdate() {
         Update textUpdate = getTextUpdate("/" + Command.REGISTER);

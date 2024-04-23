@@ -91,7 +91,6 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
 
-
         assertThat(messageDto)
                 .extracting(MessageDto::getChatId, MessageDto::getText)
                 .containsExactly(CHAT_ID.toString(), SUCCESSFUL_UPDATE_MESSAGE);

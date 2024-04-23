@@ -260,7 +260,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(4)).deleteMessageAsync(messageDtoCaptor.capture());
         List<ExternalMessageId> actualDeleteDto = messageDtoCaptor.getAllValues();
 
-
         assertThat(actualDeleteDto)
                 .extracting(ExternalMessageId::getChatId, ExternalMessageId::getMessageId)
                 .containsExactlyInAnyOrder(

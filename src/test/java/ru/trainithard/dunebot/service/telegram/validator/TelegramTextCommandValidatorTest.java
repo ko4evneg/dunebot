@@ -80,7 +80,6 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
                 .hasMessage(NOT_AUTHORIZED_EXCEPTION_MESSAGE);
     }
 
-
     @Test
     void shouldNotThrowWhenAdminInvokesAdminCommand() {
         message.setText("/admin init");

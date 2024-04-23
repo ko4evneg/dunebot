@@ -58,7 +58,6 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
                 .hasFieldOrPropertyWithValue("telegramReplyId", null);
     }
 
-
     @Test
     void shouldCorrectlyFillChatIdAndReplyIdForTopicMessage() {
         Message replyMessage = new Message();
