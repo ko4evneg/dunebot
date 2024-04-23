@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.report;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -106,7 +107,7 @@ class RatingReport {
         private final double winRate;
 
         @Override
-        public int compareTo(PlayerMonthlyRating comparedRating) {
+        public int compareTo(@NotNull PlayerMonthlyRating comparedRating) {
             if (this.matchesCount >= matchesRatingThreshold && comparedRating.matchesCount < matchesRatingThreshold) {
                 return -1;
             }
