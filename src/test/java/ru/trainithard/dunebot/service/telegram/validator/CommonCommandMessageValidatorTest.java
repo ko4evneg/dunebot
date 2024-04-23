@@ -178,11 +178,11 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowOnCallbackCommandsInPublicChat() {
-        Message message = new Message();
-        message.setMessageId(123);
-        message.setFrom(getUser());
+        Message messageInfo = new Message();
+        messageInfo.setMessageId(123);
+        messageInfo.setFrom(getUser());
         CallbackQuery callbackQuery = new CallbackQuery();
-        callbackQuery.setMessage(message);
+        callbackQuery.setMessage(messageInfo);
         callbackQuery.setData("10000__-1");
         callbackQuery.setFrom(getUser());
 

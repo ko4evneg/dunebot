@@ -79,8 +79,8 @@ class RatingReport {
         return result;
     }
 
-    private double calculateWinRate(double firstPlacesCount, long matchesCount) {
-        double winRate = firstPlacesCount / matchesCount * 100;
+    private double calculateWinRate(double firstPlacesCount, long playerMatchesCount) {
+        double winRate = firstPlacesCount / playerMatchesCount * 100;
         return (int) (winRate * 100) / 100.0;
     }
 
