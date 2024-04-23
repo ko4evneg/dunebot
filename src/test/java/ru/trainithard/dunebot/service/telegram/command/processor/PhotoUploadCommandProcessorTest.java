@@ -19,6 +19,7 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
+import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -31,8 +32,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
 
@@ -204,16 +205,15 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         assertThat(actualMessage)
                 .extracting(MessageDto::getChatId, MessageDto::getText)
                 .containsExactly(CHAT_ID.toString(), SUCCESSFUL_UPLOAD_TEXT);
-        assertThat(actualMessages.getKeyboard())
-                .extracting()
-        assertThat(actualMessages.getKeyboard().get(0), contains(
-                both(hasProperty("text", is("la leader 1"))).and(hasProperty("callback", is("10000_L_10000"))),
-                both(hasProperty("text", is("la leader 2"))).and(hasProperty("callback", is("10000_L_10001"))),
-                both(hasProperty("text", is("la leader 3"))).and(hasProperty("callback", is("10000_L_10002"))))
-        );
-        assertThat(actualMessages.getKeyboard().get(1), contains(
-                both(hasProperty("text", is("la leader 4"))).and(hasProperty("callback", is("10000_L_10003")))
-        ));
+        assertThat(actualMessage.getKeyboard())
+                .flatExtracting(buttonDtos -> buttonDtos)
+                .extracting(ButtonDto::getText, ButtonDto::getCallback)
+                .containsExactly(
+                        tuple("la leader 1", "10000_L_10000"),
+                        tuple("la leader 2", "10000_L_10001"),
+                        tuple("la leader 3", "10000_L_10002"),
+                        tuple("la leader 4", "10000_L_10003")
+                );
     }
 
     @Test

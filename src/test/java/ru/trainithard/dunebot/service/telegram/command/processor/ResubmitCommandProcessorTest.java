@@ -220,8 +220,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Boolean isLeaderResetted = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 15000 and leader_won is null)", Boolean.class);
 
-        assertNotNull(isLeaderResetted);
-        assertTrue(isLeaderResetted);
+        assertThat(isLeaderResetted).isNotNull().isTrue();
     }
 
     @Test

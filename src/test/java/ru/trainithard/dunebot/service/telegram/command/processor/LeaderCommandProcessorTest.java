@@ -23,7 +23,7 @@ import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactoryImpl
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
@@ -78,7 +78,7 @@ class LeaderCommandProcessorTest extends TestContextMock {
 
         Long actualMatchLeaderId = jdbcTemplate.queryForObject("select leader_won from matches where id = 10000", Long.class);
 
-        assertEquals(leaderId, actualMatchLeaderId);
+        assertThat(leaderId).isEqualTo(actualMatchLeaderId);
     }
 
     @Test
@@ -92,8 +92,8 @@ class LeaderCommandProcessorTest extends TestContextMock {
         verify(messagingService).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessageDto = messageCaptor.getValue();
 
-        assertEquals("9001", actualMessageDto.getChatId());
-        assertEquals("Лидер зарегистрирован\\. Ожидайте регистрации мест других игроков\\.", actualMessageDto.getText());
+        assertThat(actualMessageDto.getChatId()).isEqualTo("9001");
+        assertThat(actualMessageDto.getText()).isEqualTo("Лидер зарегистрирован\\. Ожидайте регистрации мест других игроков\\.");
     }
 
     private static Update getCallbackQueryUpdate(long leaderId) {
