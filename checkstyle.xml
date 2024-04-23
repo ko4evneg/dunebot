@@ -46,7 +46,7 @@
         <module name="RightCurly">
             <property name="option" value="same"/>
         </module>
-        <!--  TODO      <module name="EmptyCatchBlock"/>-->
+        <module name="EmptyCatchBlock"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InnerTypeLast"/>
         <module name="MutableException"/>
