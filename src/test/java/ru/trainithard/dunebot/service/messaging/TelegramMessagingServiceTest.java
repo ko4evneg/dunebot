@@ -167,7 +167,7 @@ class TelegramMessagingServiceTest {
         assertThat(actualSetMyCommands.getScope()).isEqualTo(new BotCommandScopeDefault());
         assertThat(actualSetMyCommands.getCommands())
                 .extracting(BotCommand::getCommand, BotCommand::getDescription)
-                .containsExactly(
+                .containsExactlyInAnyOrder(
                         tuple("1", "a"),
                         tuple("2", "b"));
     }

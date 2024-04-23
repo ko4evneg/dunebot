@@ -38,9 +38,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -122,10 +120,9 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     void shouldThrowOnUnsuitableMatchResubmit(String query, String expectedException) {
         jdbcTemplate.execute(query);
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(resubmitCommandMessage));
-
-        assertEquals(expectedException, actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(resubmitCommandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(expectedException);
     }
 
     private static Stream<Arguments> exceptionsSource() {
@@ -142,10 +139,9 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                              "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
         CommandMessage commandMessage = getCommandMessage(11004L);
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(commandMessage));
-
-        assertEquals("Вы не можете инициировать публикацию этого матча", actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Вы не можете инициировать публикацию этого матча");
     }
 
     @Test
@@ -153,10 +149,9 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id = 15000");
         jdbcTemplate.execute("delete from matches where id = 15000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(resubmitCommandMessage));
-
-        assertEquals("Матча с таким ID не существует!", actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(resubmitCommandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Матча с таким ID не существует!");
     }
 
     @Test
@@ -165,7 +160,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_retry_count from matches where id = 15000", Integer.class);
 
-        assertEquals(2, actualResubmits);
+        assertThat(actualResubmits).isEqualTo(2);
     }
 
     @Test
@@ -187,7 +182,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_count from matches where id = 15000", Integer.class);
 
-        assertEquals(0, actualResubmits);
+        assertThat(actualResubmits).isZero();
     }
 
     @Test
@@ -198,7 +193,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
-        assertSame(MatchState.ON_SUBMIT, actualMatchState);
+        assertThat(actualMatchState).isSameAs(MatchState.ON_SUBMIT);
     }
 
     @Test
@@ -210,8 +205,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Boolean isScreenshotResetted = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 15000 and screenshot_path is null)", Boolean.class);
 
-        assertNotNull(isScreenshotResetted);
-        assertTrue(isScreenshotResetted);
+        assertThat(isScreenshotResetted).isNotNull().isTrue();
     }
 
     @Test
@@ -225,7 +219,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         boolean doesFileExist = Files.exists(Path.of("photos/1.jpg"));
 
-        assertFalse(doesFileExist);
+        assertThat(doesFileExist).isFalse();
     }
 
     @Test
@@ -235,8 +229,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Boolean isAnyExternalMessageIdExist = jdbcTemplate.queryForObject("select exists" +
                                                                           "(select 1 from match_players where match_id = 15000 and candidate_place is not null)", Boolean.class);
 
-        assertNotNull(isAnyExternalMessageIdExist);
-        assertFalse(isAnyExternalMessageIdExist);
+        assertThat(isAnyExternalMessageIdExist).isNotNull().isFalse();
     }
 
     @Test
@@ -246,8 +239,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Boolean isAnyExternalMessageExist = jdbcTemplate.queryForObject(
                 "select exists(select 1 from external_messages where id between 10002 and 10005)", Boolean.class);
 
-        assertNotNull(isAnyExternalMessageExist);
-        assertFalse(isAnyExternalMessageExist);
+        assertThat(isAnyExternalMessageExist).isNotNull().isFalse();
     }
 
     @Test
@@ -269,19 +261,20 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         List<ExternalMessageId> actualDeleteDto = messageDtoCaptor.getAllValues();
 
 
-        assertThat(actualDeleteDto, containsInAnyOrder(
-                both(hasProperty("chatId", is(10022L))).and(hasProperty("messageId", is(10012))),
-                both(hasProperty("chatId", is(10023L))).and(hasProperty("messageId", is(10013))),
-                both(hasProperty("chatId", is(10024L))).and(hasProperty("messageId", is(10014))),
-                both(hasProperty("chatId", is(10025L))).and(hasProperty("messageId", is(10015)))
-        ));
+        assertThat(actualDeleteDto)
+                .extracting(ExternalMessageId::getChatId, ExternalMessageId::getMessageId)
+                .containsExactlyInAnyOrder(
+                        tuple(10022L, 10012),
+                        tuple(10023L, 10013),
+                        tuple(10024L, 10014),
+                        tuple(10025L, 10015));
     }
 
     @Test
     void shouldReturnResubmitCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.RESUBMIT, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.RESUBMIT);
     }
 
     private CommandMessage getCommandMessage(long userId) {
