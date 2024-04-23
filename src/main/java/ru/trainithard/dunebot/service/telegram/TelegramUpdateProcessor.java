@@ -16,8 +16,6 @@ import ru.trainithard.dunebot.service.telegram.factory.ValidationStrategyFactory
 import ru.trainithard.dunebot.service.telegram.validator.CommonCommandMessageValidator;
 import ru.trainithard.dunebot.service.telegram.validator.ValidationStrategy;
 
-import java.util.Random;
-
 /**
  * Core class reponsible for polling and parsing of external messages queue, detecting, validating and processing
  * parsed commands.
@@ -26,8 +24,6 @@ import java.util.Random;
 @Service
 @RequiredArgsConstructor
 public class TelegramUpdateProcessor {
-    private static final Random random = new Random();
-
     private final TelegramBot telegramBot;
     private final MessagingService messagingService;
     private final CommandMessageFactory commandMessageFactory;

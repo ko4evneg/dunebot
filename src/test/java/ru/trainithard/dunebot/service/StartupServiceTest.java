@@ -1,6 +1,6 @@
 package ru.trainithard.dunebot.service;
 
-import org.hamcrest.MatcherAssert;
+import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,8 +15,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -70,8 +69,7 @@ class StartupServiceTest extends TestContextMock {
 
         Boolean isMatchExist = jdbcTemplate.queryForObject("select exists(select 1 from matches where id = 10000)", Boolean.class);
 
-        assertNotNull(isMatchExist);
-        assertTrue(isMatchExist);
+        assertThat(isMatchExist).isNotNull().isTrue();
     }
 
     @ParameterizedTest
@@ -83,8 +81,7 @@ class StartupServiceTest extends TestContextMock {
 
         Boolean isMatchExist = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 10000)", Boolean.class);
 
-        assertNotNull(isMatchExist);
-        assertTrue(isMatchExist);
+        assertThat(isMatchExist).isNotNull().isTrue();
     }
 
     @ParameterizedTest
@@ -96,7 +93,7 @@ class StartupServiceTest extends TestContextMock {
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
 
-        assertEquals(MatchState.FAILED, actualState);
+        assertThat(actualState).isEqualTo(MatchState.FAILED);
     }
 
     @ParameterizedTest
@@ -114,16 +111,11 @@ class StartupServiceTest extends TestContextMock {
         verify(messagingService, times(2)).sendMessageAsync(messageCaptor.capture());
         List<MessageDto> actualMessage = messageCaptor.getAllValues();
 
-        MatcherAssert.assertThat(actualMessage, containsInAnyOrder(
-                allOf(
-                        hasProperty("chatId", is("100500")),
-                        hasProperty("topicId", is(10002)),
-                        hasProperty("text", is("Бот был перезапущен, незавершенные матчи \\(10000\\) завершены без регистрации результатов"))
-                ), allOf(
-                        hasProperty("chatId", is("100500")),
-                        hasProperty("topicId", is(10502)),
-                        hasProperty("text", is("Бот был перезапущен, незавершенные матчи \\(10001\\) завершены без регистрации результатов"))
-                )
-        ));
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("100500", 10002, "Бот был перезапущен, незавершенные матчи \\(10000\\) завершены без регистрации результатов"),
+                        Tuple.tuple("100500", 10502, "Бот был перезапущен, незавершенные матчи \\(10001\\) завершены без регистрации результатов")
+                );
     }
 }

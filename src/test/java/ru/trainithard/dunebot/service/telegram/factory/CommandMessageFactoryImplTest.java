@@ -12,9 +12,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 class CommandMessageFactoryImplTest {
@@ -33,16 +31,11 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertNotNull(commandMessage);
-        assertThat(commandMessage, allOf(
-                hasProperty("userId", is(USER_ID)),
-                hasProperty("externalFirstName", is("fName")),
-                hasProperty("userName", is("uName")),
-                hasProperty("chatId", is(CHAT_ID)),
-                hasProperty("messageId", is(MESSAGE_ID)),
-                hasProperty("replyMessageId", is(REPLY_ID)),
-                hasProperty("command", nullValue())
-        ));
+        assertThat(commandMessage).isNotNull()
+                .extracting("userId", "externalFirstName", "userName",
+                        "chatId", "messageId", "replyMessageId", "command")
+                .containsExactly(USER_ID, "fName", "uName",
+                        CHAT_ID, MESSAGE_ID, REPLY_ID, null);
     }
 
     @ParameterizedTest
@@ -52,8 +45,8 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertEquals(command, commandMessage.getCommand());
-        assertEquals(1, commandMessage.getArgumentsCount());
+        assertThat(commandMessage.getCommand()).isEqualTo(command);
+        assertThat(commandMessage.getArgumentsCount()).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +55,8 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertEquals(3, commandMessage.getArgumentsCount());
-        assertEquals("arg1 arg2 arg3", commandMessage.getAllArguments());
+        assertThat(commandMessage.getArgumentsCount()).isEqualTo(3);
+        assertThat(commandMessage.getAllArguments()).isEqualTo("arg1 arg2 arg3");
     }
 
 
@@ -73,8 +66,8 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertTrue(commandMessage.getAllArguments().isBlank());
-        assertEquals(0, commandMessage.getArgumentsCount());
+        assertThat(commandMessage.getAllArguments()).isBlank();
+        assertThat(commandMessage.getArgumentsCount()).isZero();
     }
 
     @Test
@@ -83,12 +76,12 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertEquals("arg1 arg2 arg3", commandMessage.getAllArguments());
-        assertEquals(3, commandMessage.getArgumentsCount());
-        assertEquals("arg3", commandMessage.getArgument(3));
-        assertEquals("arg1", commandMessage.getArgument(1));
-        assertNull(commandMessage.getArgument(0));
-        assertNull(commandMessage.getArgument(4));
+        assertThat(commandMessage.getAllArguments()).isEqualTo("arg1 arg2 arg3");
+        assertThat(commandMessage.getArgumentsCount()).isEqualTo(3);
+        assertThat(commandMessage.getArgument(3)).isEqualTo("arg3");
+        assertThat(commandMessage.getArgument(1)).isEqualTo("arg1");
+        assertThat(commandMessage.getArgument(0)).isNull();
+        assertThat(commandMessage.getArgument(4)).isNull();
     }
 
     @Test
@@ -97,9 +90,9 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertEquals("arg1 arg2 arg3", commandMessage.getAllArguments());
-        assertEquals(3, commandMessage.getArgumentsCount());
-        assertEquals("arg2", commandMessage.getArgument(2));
+        assertThat(commandMessage.getAllArguments()).isEqualTo("arg1 arg2 arg3");
+        assertThat(commandMessage.getArgumentsCount()).isEqualTo(3);
+        assertThat(commandMessage.getArgument(2)).isEqualTo("arg2");
     }
 
     @ParameterizedTest
@@ -109,7 +102,7 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertNull(commandMessage);
+        assertThat(commandMessage).isNull();
     }
 
     @Test
@@ -118,14 +111,14 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(textUpdate);
 
-        assertNull(commandMessage);
+        assertThat(commandMessage).isNull();
     }
 
     @Test
     void shouldReturnNullForUnknownTypeUpdate() {
         CommandMessage commandMessage = factory.getInstance(new Update());
 
-        assertNull(commandMessage);
+        assertThat(commandMessage).isNull();
     }
 
     @Test
@@ -133,13 +126,14 @@ class CommandMessageFactoryImplTest {
         Update pollAnswerUpdate = getPollAnswerUpdate();
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
-        CommandMessage.PollVote pollVote = commandMessage.getPollVote();
 
-        assertNotNull(commandMessage);
-        assertEquals(USER_ID, commandMessage.getUserId());
-        assertEquals(Command.VOTE, commandMessage.getCommand());
-        assertEquals(POLL_ID, pollVote.pollId());
-        assertThat(pollVote.selectedAnswerId(), contains(0));
+        assertThat(commandMessage).isNotNull()
+                .extracting(CommandMessage::getUserId, CommandMessage::getCommand)
+                .containsExactly(USER_ID, Command.VOTE);
+
+        CommandMessage.PollVote pollVote = commandMessage.getPollVote();
+        assertThat(pollVote.pollId()).isEqualTo(POLL_ID);
+        assertThat(pollVote.selectedAnswerId()).containsExactly(0);
     }
 
     @Test
@@ -148,13 +142,14 @@ class CommandMessageFactoryImplTest {
         pollAnswerUpdate.getPollAnswer().setOptionIds(Collections.emptyList());
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
-        CommandMessage.PollVote pollVote = commandMessage.getPollVote();
 
-        assertNotNull(commandMessage);
-        assertEquals(USER_ID, commandMessage.getUserId());
-        assertEquals(Command.VOTE, commandMessage.getCommand());
-        assertEquals(POLL_ID, pollVote.pollId());
-        assertTrue(pollVote.selectedAnswerId().isEmpty());
+        assertThat(commandMessage).isNotNull()
+                .extracting(CommandMessage::getUserId, CommandMessage::getCommand)
+                .containsExactly(USER_ID, Command.VOTE);
+
+        CommandMessage.PollVote pollVote = commandMessage.getPollVote();
+        assertThat(pollVote.pollId()).isEqualTo(POLL_ID);
+        assertThat(pollVote.selectedAnswerId()).isEmpty();
     }
 
     @Test
@@ -163,10 +158,9 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(callbackReplyUpdate);
 
-        assertNotNull(commandMessage);
-        assertEquals(USER_ID, commandMessage.getUserId());
-        assertEquals(Command.ACCEPT_SUBMIT, commandMessage.getCommand());
-        assertEquals(ACCEPT_SUBMIT_CALLBACK_DATA, commandMessage.getCallback());
+        assertThat(commandMessage).isNotNull()
+                .extracting(CommandMessage::getUserId, CommandMessage::getCommand, CommandMessage::getCallback)
+                .containsExactly(USER_ID, Command.ACCEPT_SUBMIT, ACCEPT_SUBMIT_CALLBACK_DATA);
     }
 
     @Test
@@ -175,10 +169,9 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(callbackReplyUpdate);
 
-        assertNotNull(commandMessage);
-        assertEquals(USER_ID, commandMessage.getUserId());
-        assertEquals(Command.LEADER, commandMessage.getCommand());
-        assertEquals(LEADER_CALLBACK_DATA, commandMessage.getCallback());
+        assertThat(commandMessage).isNotNull()
+                .extracting(CommandMessage::getUserId, CommandMessage::getCommand, CommandMessage::getCallback)
+                .containsExactly(USER_ID, Command.LEADER, LEADER_CALLBACK_DATA);
     }
 
     @Test
@@ -188,7 +181,7 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
 
-        assertNull(commandMessage);
+        assertThat(commandMessage).isNull();
     }
 
     @Test
@@ -198,7 +191,7 @@ class CommandMessageFactoryImplTest {
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
 
-        assertNull(commandMessage);
+        assertThat(commandMessage).isNull();
     }
 
     private static Update getTextUpdate(String text) {

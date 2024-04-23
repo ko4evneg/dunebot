@@ -2,7 +2,7 @@ package ru.trainithard.dunebot.model;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PlayerTest {
     private final Player player = new Player();
@@ -16,19 +16,19 @@ class PlayerTest {
 
     @Test
     void shouldReturnMinimalRequiredName() {
-        assertEquals("f_name (st_name) l_name", player.getFriendlyName());
+        assertThat(player.getFriendlyName()).isEqualTo("f_name (st_name) l_name");
     }
 
     @Test
     void shouldReturnMentionWithoutWhenExternalFirstNameMissing() {
-        assertEquals("@ex_name", player.getMention());
+        assertThat(player.getMention()).isEqualTo("@ex_name");
     }
 
     @Test
     void shouldReturnMentionWithExternalNameWhenExternalFirstNamePresented() {
         player.setExternalFirstName("ex_f_name");
 
-        assertEquals("@ex_name", player.getMention());
+        assertThat(player.getMention()).isEqualTo("@ex_name");
     }
 
     @Test
@@ -36,6 +36,6 @@ class PlayerTest {
         player.setExternalFirstName("ex_f_name");
         player.setExternalName(null);
 
-        assertEquals("@ex_f_name", player.getMention());
+        assertThat(player.getMention()).isEqualTo("@ex_f_name");
     }
 }

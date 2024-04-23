@@ -30,10 +30,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -80,8 +78,7 @@ class NewCommandProcessorTest extends TestContextMock {
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where poll_id = '" + POLL_ID + "'", Long.class);
         Boolean isMatchCreated = jdbcTemplate.queryForObject("select exists(select 1 from matches where external_poll_id = " + actualMessageId + ")", Boolean.class);
 
-        assertNotNull(isMatchCreated);
-        assertTrue(isMatchCreated);
+        assertThat(isMatchCreated).isNotNull().isTrue();
     }
 
     @Test
@@ -93,8 +90,7 @@ class NewCommandProcessorTest extends TestContextMock {
         MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where external_poll_id = " + actualMessageId +
                                                                   " and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and submits_retry_count = 0", MatchState.class);
 
-        assertNotNull(actualMatchState);
-        assertEquals(MatchState.NEW, actualMatchState);
+        assertThat(actualMatchState).isNotNull().isEqualTo(MatchState.NEW);
     }
 
     @Test
@@ -105,8 +101,7 @@ class NewCommandProcessorTest extends TestContextMock {
         Boolean isMatchPlayerExist = jdbcTemplate.queryForObject("select exists(select 1 from match_players " +
                                                                  "where match_id = (select id from matches where external_poll_id = " + actualMessageId + "))", Boolean.class);
 
-        assertNotNull(isMatchPlayerExist);
-        assertFalse(isMatchPlayerExist);
+        assertThat(isMatchPlayerExist).isNotNull().isFalse();
     }
 
     @Test
@@ -117,10 +112,8 @@ class NewCommandProcessorTest extends TestContextMock {
         verify(messagingService).sendPollAsync(pollCaptor.capture());
         PollMessageDto actualPoll = pollCaptor.getValue();
 
-        assertThat(actualPoll, allOf(
-                hasProperty("text", is("Игрок name (st_pl) l1 призывает всех на матч в 'Дюна (классика)'")),
-                hasProperty("options", contains("Да", "Нет", "Результат"))
-        ));
+        assertThat(actualPoll.getText()).isEqualTo("Игрок name (st_pl) l1 призывает всех на матч в 'Дюна (классика)'");
+        assertThat(actualPoll.getOptions()).containsExactly("Да", "Нет", "Результат");
     }
 
     @ParameterizedTest
@@ -132,9 +125,9 @@ class NewCommandProcessorTest extends TestContextMock {
         verify(messagingService).sendPollAsync(pollCaptor.capture());
         PollMessageDto actualPoll = pollCaptor.getValue();
 
-        assertThat(actualPoll,
-                both(hasProperty("chatId", is(TestConstants.CHAT_ID)))
-                        .and(hasProperty("topicId", is(expectedTopicId))));
+        assertThat(actualPoll)
+                .extracting(PollMessageDto::getChatId, PollMessageDto::getTopicId)
+                .containsExactly(TestConstants.CHAT_ID, expectedTopicId);
     }
 
     private static Stream<Arguments> chatIdSource() {
@@ -157,23 +150,23 @@ class NewCommandProcessorTest extends TestContextMock {
         Boolean isMatchExist = jdbcTemplate.queryForObject("select exists(select * from matches where owner_id = " +
                                                            "(select id from players where external_id = " + USER_ID + "))", Boolean.class);
 
-        assertNotNull(isMatchExist);
-        assertFalse(isMatchExist);
+        assertThat(isMatchExist).isNotNull().isFalse();
     }
 
     @Test
     void shouldThrowWhenUnsupportedMatchTypeArgumentProvided() {
         CommandMessage commandMessage = getCommandMessage("fake");
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class,
-                () -> processor.process(commandMessage));
-        assertEquals("Неподдерживаемый тип матча: fake", actualException.getMessage());
+
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Неподдерживаемый тип матча: fake");
     }
 
     @Test
     void shouldReturnNewCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.NEW, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.NEW);
     }
 
     private CommandMessage getCommandMessage(String modNameString) {

@@ -15,7 +15,8 @@ import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class TelegramTextCommandValidatorTest extends TestContextMock {
@@ -46,35 +47,37 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
     @Test
     void shouldThrowForNotEnoughArgumentsCommand() {
         message.setText("/register");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE);
     }
 
     @Test
     void shouldNotThrowForEnoughArgumentsCommand() {
         message.setText("/register a (b) c");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        assertDoesNotThrow(() -> validator.validate(commandMessage));
+
+        assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
     }
 
     @Test
     void shouldNotThrowForEnoughArgumentsCommandWithTrailingSpaces() {
         message.setText("/register a (b) c   ");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        assertDoesNotThrow(() -> validator.validate(commandMessage));
+
+        assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
     }
 
     @Test
     void shouldThrowWhenNonAdminInvokesAdminCommand() {
         message.setText("/admin init");
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> validator.validate(commandMessage));
-        assertEquals(NOT_AUTHORIZED_EXCEPTION_MESSAGE, actualException.getMessage());
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(NOT_AUTHORIZED_EXCEPTION_MESSAGE);
     }
 
 
@@ -82,12 +85,10 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
     void shouldNotThrowWhenAdminInvokesAdminCommand() {
         message.setText("/admin init");
         message.getFrom().setId(TestConstants.ADMIN_USER_ID);
-
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
-        assertDoesNotThrow(() -> validator.validate(commandMessage));
+        assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
     }
-
 
     private void fillMessage() {
         User user = new User();

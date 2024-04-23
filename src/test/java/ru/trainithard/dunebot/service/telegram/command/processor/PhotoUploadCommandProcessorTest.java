@@ -30,10 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -187,9 +184,9 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
-        assertEquals(REPLY_ID, actualMessage.getReplyMessageId());
-        assertEquals(CHAT_ID.toString(), actualMessage.getChatId());
-        assertEquals("saving exception", actualMessage.getText());
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getReplyMessageId, MessageDto::getText)
+                .containsExactly(CHAT_ID.toString(), REPLY_ID, "saving exception");
     }
 
     @Test
@@ -202,10 +199,13 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessages = messageCaptor.getValue();
+        MessageDto actualMessage = messageCaptor.getValue();
 
-        assertEquals(CHAT_ID.toString(), actualMessages.getChatId());
-        assertEquals(SUCCESSFUL_UPLOAD_TEXT, actualMessages.getText());
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(CHAT_ID.toString(), SUCCESSFUL_UPLOAD_TEXT);
+        assertThat(actualMessages.getKeyboard())
+                .extracting()
         assertThat(actualMessages.getKeyboard().get(0), contains(
                 both(hasProperty("text", is("la leader 1"))).and(hasProperty("callback", is("10000_L_10000"))),
                 both(hasProperty("text", is("la leader 2"))).and(hasProperty("callback", is("10000_L_10001"))),
@@ -227,8 +227,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
-        assertNotNull(actualSubmitPhotoFlag);
-        assertTrue(actualSubmitPhotoFlag);
+        assertThat(actualSubmitPhotoFlag).isNotNull().isTrue();
     }
 
     @Test
@@ -242,8 +241,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
-        assertNotNull(actualSubmitPhotoFlag);
-        assertTrue(actualSubmitPhotoFlag);
+        assertThat(actualSubmitPhotoFlag).isNotNull().isTrue();
     }
 
     @Test
@@ -257,8 +255,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean hasScreenshottedState = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and matches.state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "')", Boolean.class);
 
-        assertNotNull(hasScreenshottedState);
-        assertTrue(hasScreenshottedState);
+        assertThat(hasScreenshottedState).isNotNull().isTrue();
     }
 
     @Test
@@ -272,8 +269,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean hasScreenshottedState = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and matches.state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "')", Boolean.class);
 
-        assertNotNull(hasScreenshottedState);
-        assertTrue(hasScreenshottedState);
+        assertThat(hasScreenshottedState).isNotNull().isTrue();
     }
 
     @Test
@@ -287,8 +283,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         Boolean actualSubmitPhotoFlag = jdbcTemplate.queryForObject(
                 "select exists (select 1 from matches where id = 10000 and screenshot_path is not null)", Boolean.class);
 
-        assertNotNull(actualSubmitPhotoFlag);
-        assertFalse(actualSubmitPhotoFlag);
+        assertThat(actualSubmitPhotoFlag).isNotNull().isFalse();
     }
 
     @Test
@@ -319,7 +314,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldReturnPhotoUploadCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.UPLOAD_PHOTO, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.UPLOAD_PHOTO);
     }
 
     private CommandMessage getPhotoCommandMessage(List<PhotoSize> photoSizes) {
