@@ -58,30 +58,11 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
             log.debug("{}: candidatePlace = {}", logId(), candidatePlace);
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
-                log.debug("{}: conflict resolution - resubmit", logId());
-                ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
-                sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
-                resubmitProcessor.process(match);
+                processConflictResubmit(matchPlayers, submittingPlayer, candidatePlace, match);
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
-                log.debug("{}: conflict resolution - failed match", logId());
-                sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
-                ExternalMessage resubmitsLimitExceededMessage = getResubmitsLimitFinishMessage(match.getId());
-                matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage);
+                processConflictMatchFinish(matchPlayers, match);
             } else {
-                log.debug("{}: player's submit processing", logId());
-                submittingPlayer.setCandidatePlace(candidatePlace);
-                match.setSubmitsCount(match.getSubmitsCount() + 1);
-                transactionTemplate.executeWithoutResult(status -> {
-                    matchRepository.save(match);
-                    matchPlayerRepository.save(submittingPlayer);
-                    log.debug("{}: match {} and submitting matchPlayers saved)", logId(), match.getId());
-                });
-                Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
-                messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
-                if (match.canBeFinished()) {
-                    matchFinishingService.finishSubmittedMatch(match.getId());
-                }
-                log.debug("{}: player's submit successfully processed", logId());
+                processNonConflictSubmit(submittingPlayer, candidatePlace, match);
             }
         }
 
@@ -92,6 +73,37 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         return matchPlayers.stream()
                 .filter(mPlayer -> mPlayer.getPlayer().getExternalId() == externalUserId)
                 .findFirst().orElseThrow();
+    }
+
+    private void processConflictResubmit(List<MatchPlayer> matchPlayers, MatchPlayer submittingPlayer, int candidatePlace, Match match) {
+        log.debug("{}: conflict resolution - resubmit", logId());
+        ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
+        sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
+        resubmitProcessor.process(match);
+    }
+
+    private void processConflictMatchFinish(List<MatchPlayer> matchPlayers, Match match) {
+        log.debug("{}: conflict resolution - failed match", logId());
+        sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
+        ExternalMessage resubmitsLimitExceededMessage = getResubmitsLimitFinishMessage(match.getId());
+        matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage);
+    }
+
+    private void processNonConflictSubmit(MatchPlayer submittingPlayer, int candidatePlace, Match match) {
+        log.debug("{}: player's submit processing", logId());
+        submittingPlayer.setCandidatePlace(candidatePlace);
+        match.setSubmitsCount(match.getSubmitsCount() + 1);
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.save(submittingPlayer);
+            log.debug("{}: match {} and submitting matchPlayers saved)", logId(), match.getId());
+        });
+        Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
+        messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
+        if (match.canBeFinished()) {
+            matchFinishingService.finishSubmittedMatch(match.getId());
+        }
+        log.debug("{}: player's submit successfully processed", logId());
     }
 
     private void deleteOldSubmitMessage(MatchPlayer submittingPlayer) {

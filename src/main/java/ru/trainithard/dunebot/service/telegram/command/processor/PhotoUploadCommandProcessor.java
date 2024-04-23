@@ -57,37 +57,41 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         log.debug("{}: file telegram id: {}", logId, fileId);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
         file.whenComplete((telegramFileDetailsDto, throwable) -> {
-            log.debug("{}: file detail callback received from telegram", logId);
-
-            String filePath = telegramFileDetailsDto.path();
-            String effectiveFilePath = filePath.startsWith(PATH_SEPARATOR) ? filePath : PATH_SEPARATOR + filePath;
-            byte[] photoBytes = restTemplate.getForObject(getFileUri(effectiveFilePath), byte[].class);
-            log.debug("{}: file bytes[] received from telegram", logId);
-
-            try {
-                if (photoBytes != null) {
-                    String dottedFileExtension = getFileExtension(filePath);
-                    String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
-                    log.debug("{}: save path: {}", logId, savePath);
-                    match.setScreenshotPath(savePath);
-                    match.setState(MatchState.ON_SUBMIT_SCREENSHOTTED);
-                    matchRepository.save(match);
-                    log.debug("{}: match photo flag saved", logId);
-                    if (match.canBeFinished()) {
-                        matchFinishingService.finishSubmittedMatch(match.getId());
-                    }
-
-                    messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), null));
-                }
-            } catch (ScreenshotFileIOException exception) {
-                log.error(logId + ": file save failed due to an exception", exception);
-                messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(exception.getMessage()), null));
-            } catch (IOException exception) {
-                log.error(logId + ": encountered an exception", exception);
-            }
+            processTelegramFile(commandMessage, telegramFileDetailsDto, logId, match);
         });
 
         log.debug("{}: PHOTO ended", logId);
+    }
+
+    private void processTelegramFile(CommandMessage commandMessage, TelegramFileDetailsDto telegramFileDetailsDto, int logId, Match match) {
+        log.debug("{}: file detail callback received from telegram", logId);
+
+        String filePath = telegramFileDetailsDto.path();
+        String effectiveFilePath = filePath.startsWith(PATH_SEPARATOR) ? filePath : PATH_SEPARATOR + filePath;
+        byte[] photoBytes = restTemplate.getForObject(getFileUri(effectiveFilePath), byte[].class);
+        log.debug("{}: file bytes[] received from telegram", logId);
+
+        try {
+            if (photoBytes != null) {
+                String dottedFileExtension = getFileExtension(filePath);
+                String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
+                log.debug("{}: save path: {}", logId, savePath);
+                match.setScreenshotPath(savePath);
+                match.setState(MatchState.ON_SUBMIT_SCREENSHOTTED);
+                matchRepository.save(match);
+                log.debug("{}: match photo flag saved", logId);
+                if (match.canBeFinished()) {
+                    matchFinishingService.finishSubmittedMatch(match.getId());
+                }
+
+                messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), null));
+            }
+        } catch (ScreenshotFileIOException exception) {
+            log.error(logId + ": file save failed due to an exception", exception);
+            messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(exception.getMessage()), null));
+        } catch (IOException exception) {
+            log.error(logId + ": encountered an exception", exception);
+        }
     }
 
     private String getFileId(CommandMessage commandMessage) {

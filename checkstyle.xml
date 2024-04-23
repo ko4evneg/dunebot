@@ -58,11 +58,10 @@
         <module name="AnonInnerLength">
             <property name="max" value="60"/>
         </module>
-        <!--        TODO -->
-        <!--        <module name="MethodLength">-->
-        <!--            <property name="max" value="30"/>-->
-        <!--            <property name="countEmpty" value="false"/>-->
-        <!--        </module>-->
+        <module name="MethodLength">
+            <property name="max" value="30"/>
+            <property name="countEmpty" value="false"/>
+        </module>
         <module name="OuterTypeNumber"/>
         <module name="GenericWhitespace"/>
         <module name="NoWhitespaceAfter"/>

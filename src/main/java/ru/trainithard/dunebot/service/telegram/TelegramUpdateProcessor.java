@@ -53,17 +53,21 @@ public class TelegramUpdateProcessor {
                     log.debug("{}: successfully processed", logId);
                 }
             } catch (AnswerableDuneBotException answerableException) {
-                messagingService.sendMessageAsync(new MessageDto(answerableException));
-                log.error("{}: command failed due to app-specific exception. {}", logId, answerableException.getMessage());
-                if (answerableException.getCause() != null) {
-                    log.error(logId + ":", answerableException);
-                }
+                sendAnswerableExceptionMessage(answerableException, logId);
             } catch (Exception exception) {
                 log.error(logId + ": command failed due to an exception", exception);
             } finally {
                 LogId.clear();
                 update = telegramBot.poll();
             }
+        }
+    }
+
+    private void sendAnswerableExceptionMessage(AnswerableDuneBotException answerableException, int logId) {
+        messagingService.sendMessageAsync(new MessageDto(answerableException));
+        log.error("{}: command failed due to app-specific exception. {}", logId, answerableException.getMessage());
+        if (answerableException.getCause() != null) {
+            log.error(logId + ":", answerableException);
         }
     }
 }
