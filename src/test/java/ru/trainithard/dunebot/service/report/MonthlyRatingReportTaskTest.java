@@ -213,7 +213,6 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
 
         InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("up4_2010_OCTOBER.pdf").toString()));
         PdfReader referencePdfReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_2.pdf");
-        byte[] referenceFileBytes = referencePdfReader.getPageContent(1);
         referencePdfReader.close();
         actualFileStream.close();
 
@@ -224,6 +223,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         ByteArrayInputStream actualUprisingInputStream = new ByteArrayInputStream(actualUprisingMessage.getFile());
         PdfReader actualUprisingPdfReader = new PdfReader(actualUprisingInputStream);
 
+        byte[] referenceFileBytes = referencePdfReader.getPageContent(1);
         assertThat(actualUprisingMessage.getTopicId()).isEqualTo(TestConstants.TOPIC_ID_UPRISING);
         assertThat(actualUprisingMessage.getChatId()).isEqualTo(TestConstants.CHAT_ID);
         assertThat(actualUprisingMessage.getText()).isEqualTo("Рейтинг за 10\\.2010:");

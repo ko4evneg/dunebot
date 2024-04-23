@@ -26,7 +26,7 @@ class RatingReport {
         efficiencyRateByPlaceNames.put(4, 0.1);
     }
 
-    public RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
+    RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
         this.matchesCount = getMatchesCount(monthMatchPlayers);
         this.matchesRatingThreshold = matchesRatingThreshold;
         fillPlayerRatings(monthMatchPlayers, modType.getPlayersCount());
@@ -117,8 +117,12 @@ class RatingReport {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             PlayerMonthlyRating that = (PlayerMonthlyRating) o;
             return Objects.equals(playerFriendlyName, that.playerFriendlyName);
         }
