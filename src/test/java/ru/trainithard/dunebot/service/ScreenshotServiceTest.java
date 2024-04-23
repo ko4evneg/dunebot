@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest
@@ -46,11 +46,11 @@ class ScreenshotServiceTest extends TestContextMock {
         doReturn(fixedClock.getZone()).when(clock).getZone();
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + EXTERNAL_USER_ID + ", 9000, 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, created_at) " +
                              "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
-                "values (10000, 10000, 10000, 4, '2010-10-10')");
+                             "values (10000, 10000, 10000, 4, '2010-10-10')");
     }
 
     @AfterEach
@@ -74,9 +74,9 @@ class ScreenshotServiceTest extends TestContextMock {
     @Test
     void shouldThrowWhenFileExtensionNotAllowed() {
         byte[] file = "this_file".getBytes();
-        ScreenshotFileIOException actualException = assertThrows(ScreenshotFileIOException.class,
-                () -> screenshotService.save(10000L, ".bmp", file));
-        assertThat(actualException.getMessage()).isEqualTo(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
+        assertThatThrownBy(() -> screenshotService.save(10000L, ".bmp", file))
+                .isInstanceOf(ScreenshotFileIOException.class)
+                .hasMessage(WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE);
     }
 
     @Test
@@ -100,9 +100,10 @@ class ScreenshotServiceTest extends TestContextMock {
         Files.write(PHOTO_FILE_PATH, "hehe".getBytes());
 
         byte[] file = "this_file".getBytes();
-        ScreenshotFileIOException actualException = assertThrows(ScreenshotFileIOException.class,
-                () -> screenshotService.save(10000L, FILE_EXTENSION, file));
-        assertThat(actualException.getMessage()).isEqualTo(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
+
+        assertThatThrownBy(() -> screenshotService.save(10000L, FILE_EXTENSION, file))
+                .isInstanceOf(ScreenshotFileIOException.class)
+                .hasMessage(SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE);
     }
 
     @Test

@@ -28,7 +28,6 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -169,9 +168,9 @@ class CancelCommandProcessorTest extends TestContextMock {
     void shouldThrowOnFinishedMatchCancelRequest(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage));
-
-        assertThat(actualException.getMessage()).isEqualTo("Запрещено отменять завершенные матчи!");
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Запрещено отменять завершенные матчи!");
     }
 
     @Test

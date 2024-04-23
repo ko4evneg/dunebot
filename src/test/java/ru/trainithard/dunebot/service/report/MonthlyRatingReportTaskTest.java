@@ -1,8 +1,8 @@
 package ru.trainithard.dunebot.service.report;
 
 import com.itextpdf.text.pdf.PdfReader;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -59,7 +59,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
             field.setAccessible(true);
             field.set(task, tempDir.toString());
         } catch (ReflectiveOperationException exception) {
-            Assertions.fail();
+            Assertions.fail("reflection failed");
         }
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
