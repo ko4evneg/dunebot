@@ -10,10 +10,9 @@
         <property name="file" value="suppressions.xml"/>
         <property name="optional" value="false"/>
     </module>
-    <!-- TODO -->
-    <!--    <module name="FileLength">-->
-    <!--        <property name="max" value="200"/>-->
-    <!--    </module>-->
+    <module name="FileLength">
+        <property name="max" value="250"/>
+    </module>
     <module name="LineLength">
         <property name="max" value="140"/>
     </module>
@@ -48,7 +47,7 @@
             <property name="option" value="same"/>
         </module>
         <!--  TODO      <module name="EmptyCatchBlock"/>-->
-        <!--  TODO      <module name="HideUtilityClassConstructor"/>-->
+        <module name="HideUtilityClassConstructor"/>
         <module name="InnerTypeLast"/>
         <module name="MutableException"/>
         <module name="OneTopLevelClass"/>

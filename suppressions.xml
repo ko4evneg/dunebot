@@ -6,4 +6,5 @@
 <suppressions>
     <suppress checks="FileLengthCheck" files=".*Test\.java"/>
     <suppress checks="LineLength" files=".*Test\.java"/>
+    <suppress checks="HideUtilityClassConstructor" files="DunebotApplication\.java|LogId\.java"/>
 </suppressions>

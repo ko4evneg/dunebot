@@ -3,6 +3,9 @@ package ru.trainithard.dunebot.util;
 import java.util.Set;
 
 public class MarkdownEscaper {
+    private MarkdownEscaper() {
+    }
+
     private static final Set<Character> escapedChars =
             Set.of('_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!');
 
