@@ -56,9 +56,8 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         String fileId = getFileId(commandMessage);
         log.debug("{}: file telegram id: {}", logId, fileId);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
-        file.whenComplete((telegramFileDetailsDto, throwable) -> {
-            processTelegramFile(commandMessage, telegramFileDetailsDto, logId, match);
-        });
+        file.whenComplete((telegramFileDetailsDto, throwable) ->
+                processTelegramFile(commandMessage, telegramFileDetailsDto, logId, match));
 
         log.debug("{}: PHOTO ended", logId);
     }
