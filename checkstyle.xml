@@ -69,7 +69,7 @@
         <module name="NoWhitespaceBefore"/>
         <module name="SingleSpaceSeparator"/>
         <module name="AvoidDoubleBraceInitialization"/>
-        <!--     todo   <module name="DeclarationOrder"/>-->
+        <module name="DeclarationOrder"/>
         <module name="DefaultComesLast"/>
         <module name="EmptyStatement"/>
         <module name="EqualsAvoidNull"/>

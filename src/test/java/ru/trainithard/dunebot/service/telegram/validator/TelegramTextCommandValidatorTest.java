@@ -22,11 +22,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TelegramTextCommandValidatorTest extends TestContextMock {
     private static final String NOT_AUTHORIZED_EXCEPTION_MESSAGE = "Команда требует прав администратора.";
     private static final String NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE = "Данная команда должна иметь 3 параметр(а).";
-    @Autowired
-    private TelegramTextCommandValidator validator;
-
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
+
+    @Autowired
+    private TelegramTextCommandValidator validator;
     private final Message message = new Message();
 
     @BeforeEach
