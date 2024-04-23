@@ -8,8 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.SettingKey;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class SettingsServiceImplTest extends TestContextMock {
@@ -32,21 +31,21 @@ class SettingsServiceImplTest extends TestContextMock {
     void shouldReturnStringSetting() {
         String actualValue = settingsService.getStringSetting(SettingKey.CHAT_ID);
 
-        assertEquals("strVal", actualValue);
+        assertThat(actualValue).isEqualTo("strVal");
     }
 
     @Test
     void shouldReturnLongSetting() {
         long actualValue = settingsService.getLongSetting(SettingKey.ADMIN_USER_ID);
 
-        assertEquals(2L, actualValue);
+        assertThat(actualValue).isEqualTo(2L);
     }
 
     @Test
     void shouldReturnIntSetting() {
         int actualValue = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
 
-        assertEquals(5, actualValue);
+        assertThat(actualValue).isEqualTo(5);
     }
 
     @Test
@@ -56,7 +55,7 @@ class SettingsServiceImplTest extends TestContextMock {
 
         String actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + SettingKey.CHAT_ID + "'", String.class);
 
-        assertEquals("val", actualValue);
+        assertThat(actualValue).isEqualTo("val");
     }
 
     @Test
@@ -65,7 +64,6 @@ class SettingsServiceImplTest extends TestContextMock {
 
         Integer actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + SettingKey.TOPIC_ID_CLASSIC + "'", Integer.class);
 
-        assertNotNull(actualValue);
-        assertEquals(100, actualValue);
+        assertThat(actualValue).isNotNull().isEqualTo(100);
     }
 }

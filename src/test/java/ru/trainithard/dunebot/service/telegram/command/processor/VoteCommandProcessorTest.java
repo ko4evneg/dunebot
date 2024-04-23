@@ -38,10 +38,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -112,7 +109,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
-        assertThat(actualPlayerIds, containsInAnyOrder(10000L, 10001L));
+        assertThat(actualPlayerIds).containsExactlyInAnyOrder(10000L, 10001L);
     }
 
     @Test
@@ -123,7 +120,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                                                                        "left join players p on p.id = mp.player_id " +
                                                                        "where mp.match_id = 10000", Long.class);
 
-        assertThat(actualPlayerExternalIds, containsInAnyOrder(USER_1_ID, GUEST_ID));
+        assertThat(actualPlayerExternalIds).containsExactlyInAnyOrder(USER_1_ID, GUEST_ID);
     }
 
     @Test
@@ -134,10 +131,9 @@ class VoteCommandProcessorTest extends TestContextMock {
                 .queryForObject("select * from players p join match_players mp on p.id = mp.player_id " +
                                 "where mp.match_id = 10000 and p.external_id = " + GUEST_ID, new BeanPropertyRowMapper<>(Player.class));
 
-        assertEquals("Vasya", actualPlayer.getFirstName());
-        assertEquals("Pupkin", actualPlayer.getLastName());
-        assertEquals("guest1", actualPlayer.getSteamName());
-        assertEquals(GUEST_ID, actualPlayer.getExternalChatId());
+        assertThat(actualPlayer)
+                .extracting(Player::getFirstName, Player::getLastName, Player::getSteamName, Player::getExternalChatId)
+                .containsExactly("Vasya", "Pupkin", "guest1", GUEST_ID);
     }
 
     @Test
@@ -150,7 +146,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 .queryForObject("select steam_name from players p join match_players mp on p.id = mp.player_id " +
                                 "where mp.match_id = 10000 and p.external_id = " + GUEST_ID, String.class);
 
-        assertEquals("guest413", actualGuestName);
+        assertThat(actualGuestName).isEqualTo("guest413");
     }
 
     @ParameterizedTest
@@ -160,7 +156,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
-        assertThat(actualPlayerIds, containsInAnyOrder(10000L));
+        assertThat(actualPlayerIds).containsExactly(10000L);
     }
 
     @ParameterizedTest
@@ -173,7 +169,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
-        assertThat(actualPlayerIds, contains(10000L));
+        assertThat(actualPlayerIds).containsExactly(10000L);
     }
 
     @ParameterizedTest
@@ -189,7 +185,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
-        assertThat(actualPlayerIds, contains(10000L));
+        assertThat(actualPlayerIds).containsExactly(10000L);
     }
 
     @ParameterizedTest
@@ -203,7 +199,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
-        assertThat(actualPlayerIds, contains(10000L, 10001L));
+        assertThat(actualPlayerIds).containsExactly(10000L, 10001L);
     }
 
     @Test
@@ -240,7 +236,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         List<Long> actualPlayerIds = jdbcTemplate.queryForList("select player_id from match_players where match_id = 10000", Long.class);
 
-        assertThat(actualPlayerIds, contains(10000L));
+        assertThat(actualPlayerIds).containsExactly(10000L);
     }
 
     // TODO:  del from here
@@ -250,7 +246,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
-        assertEquals(2, actualPlayersCount);
+        assertThat(actualPlayersCount).isEqualTo(2);
     }
 
     @ParameterizedTest
@@ -260,7 +256,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
-        assertEquals(1, actualPlayersCount);
+        assertThat(actualPlayersCount).isEqualTo(1);
     }
 
     @Test
@@ -273,7 +269,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
-        assertEquals(1, actualPlayersCount);
+        assertThat(actualPlayersCount).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -283,7 +279,7 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select positive_answers_count from matches where id = 10000", Long.class);
 
-        assertEquals(1, actualPlayersCount);
+        assertThat(actualPlayersCount).isEqualTo(1);
     }
 
     @Test
@@ -296,7 +292,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         verify(dunebotTaskScheduler, times(1)).schedule(any(), instantCaptor.capture());
         Instant actualInstant = instantCaptor.getValue();
 
-        assertEquals(NOW.plusSeconds(60), actualInstant);
+        assertThat(actualInstant).isEqualTo(NOW.plusSeconds(60));
     }
 
     @Test
@@ -318,12 +314,12 @@ class VoteCommandProcessorTest extends TestContextMock {
         String[] textRows = messageDto.getText().split("\n");
         List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
 
-        assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
-        assertEquals(TOPIC_ID, messageDto.getTopicId());
-        assertEquals(REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("*Матч 10000* собран\\. Участники:", textRows[0]);
-        assertThat(names, containsInAnyOrder("@en1", "@ef2", "@en3", "@en4"));
-        assertNull(messageDto.getKeyboard());
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId)
+                .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID);
+        assertThat(textRows[0]).isEqualTo("*Матч 10000* собран\\. Участники:");
+        assertThat(names).containsExactlyInAnyOrder("@en1", "@ef2", "@en3", "@en4");
+        assertThat(messageDto.getKeyboard()).isNull();
     }
 
     @Test
@@ -347,16 +343,15 @@ class VoteCommandProcessorTest extends TestContextMock {
         List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
         List<String> guestsNames = Arrays.stream(textRows[4].split(", ")).toList();
 
-        assertEquals(TestConstants.CHAT_ID, messageDto.getChatId());
-        assertEquals(TOPIC_ID, messageDto.getTopicId());
-        assertEquals(REPLY_ID, messageDto.getReplyMessageId());
-        assertEquals("*Матч 10000* собран\\. Участники:", textRows[0]);
-        assertThat(names, containsInAnyOrder("@en1", "@ef2"));
-        assertTrue(textRows[2].isBlank());
-        assertEquals("*Внимание:* в матче есть незарегистрированные игроки\\. Они автоматически зарегистрированы " +
-                     "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:", textRows[3]);
-        assertThat(guestsNames, containsInAnyOrder("@en3", "@fName"));
-        assertNull(messageDto.getKeyboard());
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getKeyboard)
+                .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID, null);
+        assertThat(textRows[0]).isEqualTo("*Матч 10000* собран\\. Участники:");
+        assertThat(names).containsExactlyInAnyOrder("@en1", "@ef2");
+        assertThat(textRows[2]).isBlank();
+        assertThat(textRows[3]).isEqualTo("*Внимание:* в матче есть незарегистрированные игроки\\. Они автоматически зарегистрированы " +
+                                          "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:");
+        assertThat(guestsNames).containsExactlyInAnyOrder("@en3", "@fName");
     }
 
     @Test
@@ -368,7 +363,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         String actualText = messageDto.getText().replace("\\", "");
-        assertEquals("""
+        assertThat(actualText).isEqualTo("""
                 Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
                 игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
                 случае победы) - не волнуйтесь, бот подскажет что делать.
@@ -376,9 +371,9 @@ class VoteCommandProcessorTest extends TestContextMock {
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду* '/refresh_profile Имя (ник в steam) Фамилия'*.
                 *Желательно это  сделать прямо сейчас.*
-                Подробная информация о боте: /help.""", actualText);
-        assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
-        assertNull(messageDto.getTopicId());
+                Подробная информация о боте: /help.""");
+        assertThat(Long.parseLong(messageDto.getChatId())).isEqualTo(GUEST_ID);
+        assertThat(messageDto.getTopicId()).isNull();
     }
 
     @Test
@@ -394,7 +389,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         String actualText = messageDto.getText().replace("\\", "");
-        assertEquals("""
+        assertThat(actualText).isEqualTo("""
                 Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
                 игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
                 случае победы) - не волнуйтесь, бот подскажет что делать.
@@ -402,9 +397,9 @@ class VoteCommandProcessorTest extends TestContextMock {
                 можете выполнять некоторые команды бота и не будете включены в результаты рейтинга.
                 Для того, чтобы подтвердить регистрацию, выполните в этом чате команду* '/refresh_profile Имя (ник в steam) Фамилия'*.
                 *Желательно это  сделать прямо сейчас.*
-                Подробная информация о боте: /help.""", actualText);
-        assertEquals(GUEST_ID, Long.parseLong(messageDto.getChatId()));
-        assertNull(messageDto.getTopicId());
+                Подробная информация о боте: /help.""");
+        assertThat(Long.parseLong(messageDto.getChatId())).isEqualTo(GUEST_ID);
+        assertThat(messageDto.getTopicId()).isNull();
     }
 
     @Test
@@ -419,15 +414,14 @@ class VoteCommandProcessorTest extends TestContextMock {
         Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_start_id = " +
                                                               "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001))", Boolean.class);
 
-        assertNotNull(isExternalIsSet);
-        assertTrue(isExternalIsSet);
+        assertThat(isExternalIsSet).isNotNull().isTrue();
     }
 
     @Test
     void shouldReturnVoteCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.VOTE, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.VOTE);
     }
 
     private void syncRunScheduledTaskAction() throws InterruptedException {

@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 class RatingReportTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
@@ -59,93 +57,95 @@ class RatingReportTest {
     void shouldCountAllPlayerMatches() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
-        assertEquals(6, monthlyRating.getMatchesCount());
+        assertThat(monthlyRating.getMatchesCount()).isEqualTo(6);
     }
 
     @Test
     void shouldNotThrowOnNullPlace() {
         matchPlayers.add(getMatchPlayer(getMatch(7), 7, null));
 
-        assertDoesNotThrow(() -> new RatingReport(matchPlayers, ModType.CLASSIC, 15));
+        assertThatCode(() -> new RatingReport(matchPlayers, ModType.CLASSIC, 15))
+                .doesNotThrowAnyException();
     }
 
     @Test
     void shouldReturnEachPlayerMatchesCounts() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
-        assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("matchesCount", is(2L))),
-                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("matchesCount", is(6L))),
-                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("matchesCount", is(5L))),
-                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerFriendlyName", is("f5 (s5) l5"))).and(hasProperty("matchesCount", is(3L)))
-        ));
+        assertThat(monthlyRating.getPlayerRatings())
+                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getMatchesCount)
+                .containsExactlyInAnyOrder(
+                        tuple("f6 (s6) l6", 2L),
+                        tuple("f1 (s1) l1", 6L),
+                        tuple("f4 (s4) l4", 4L),
+                        tuple("f3 (s3) l3", 5L),
+                        tuple("f2 (s2) l2", 4L),
+                        tuple("f5 (s5) l5", 3L)
+                );
     }
+
 
     @Test
     void shouldReturnEachPlayerWinRates() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
-        assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("winRate", is(50.0))),
-                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("winRate", is(33.33))),
-                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("winRate", is(25.0))),
-                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("winRate", is(20.0))),
-                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("winRate", is(0.0))),
-                both(hasProperty("playerFriendlyName", is("f5 (s5) l5"))).and(hasProperty("winRate", is(0.0)))
-        ));
+        assertThat(monthlyRating.getPlayerRatings())
+                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getWinRate)
+                .containsExactlyInAnyOrder(
+                        tuple("f6 (s6) l6", 50.0),
+                        tuple("f1 (s1) l1", 33.33),
+                        tuple("f4 (s4) l4", 25.0),
+                        tuple("f3 (s3) l3", 20.0),
+                        tuple("f2 (s2) l2", 0.0),
+                        tuple("f5 (s5) l5", 0.0)
+                );
     }
 
     @Test
     void shouldReturnEachPlayerEfficiencies() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 5);
 
-        assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("f6 (s6) l6"))).and(hasProperty("efficiency", is(0.7))),
-                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("efficiency", is(0.58))),
-                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("efficiency", is(0.45))),
-                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("efficiency", is(0.44))),
-                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("efficiency", is(0.37))),
-                both(hasProperty("playerFriendlyName", is("f5 (s5) l5"))).and(hasProperty("efficiency", is(0.53)))
-        ));
+        assertThat(monthlyRating.getPlayerRatings())
+                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getEfficiency)
+                .containsExactlyInAnyOrder(
+                        tuple("f6 (s6) l6", 0.7),
+                        tuple("f1 (s1) l1", 0.58),
+                        tuple("f4 (s4) l4", 0.45),
+                        tuple("f3 (s3) l3", 0.44),
+                        tuple("f2 (s2) l2", 0.37),
+                        tuple("f5 (s5) l5", 0.53)
+                );
     }
 
     @Test
     void shouldReturnCorrectlyOrderedPlayers() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 1);
 
-        assertThat(monthlyRating.getPlayerRatings(), contains(
-                hasProperty("playerFriendlyName", is("f6 (s6) l6")), hasProperty("playerFriendlyName", is("f1 (s1) l1")),
-                hasProperty("playerFriendlyName", is("f5 (s5) l5")), hasProperty("playerFriendlyName", is("f4 (s4) l4")),
-                hasProperty("playerFriendlyName", is("f3 (s3) l3")), hasProperty("playerFriendlyName", is("f2 (s2) l2"))
-        ));
+        assertThat(monthlyRating.getPlayerRatings())
+                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName)
+                .containsExactly("f6 (s6) l6", "f1 (s1) l1", "f5 (s5) l5", "f4 (s4) l4", "f3 (s3) l3", "f2 (s2) l2");
     }
 
     @Test
     void shouldPutPlayersOverRatingThresholdOnTop() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 5);
 
-        assertThat(monthlyRating.getPlayerRatings(), contains(
-                hasProperty("playerFriendlyName", is("f1 (s1) l1")), hasProperty("playerFriendlyName", is("f3 (s3) l3")),
-                hasProperty("playerFriendlyName", is("f6 (s6) l6")), hasProperty("playerFriendlyName", is("f5 (s5) l5")),
-                hasProperty("playerFriendlyName", is("f4 (s4) l4")), hasProperty("playerFriendlyName", is("f2 (s2) l2"))
-        ));
+        assertThat(monthlyRating.getPlayerRatings())
+                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName)
+                .containsExactly("f1 (s1) l1", "f3 (s3) l3", "f6 (s6) l6", "f5 (s5) l5", "f4 (s4) l4", "f2 (s2) l2");
     }
 
     @Test
     void shouldSetZeroPlacesCountForMissingPlaces() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
-        Map<Integer, Long> player6Places = monthlyRating.getPlayerRatings().stream()
-                .filter(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f6 (s6) l6"))
-                .findFirst().orElseThrow()
-                .getOrderedPlaceCountByPlaceNames();
+        Set<RatingReport.PlayerMonthlyRating> actualPlayerRatings = monthlyRating.getPlayerRatings();
 
-        assertEquals(1, player6Places.get(1));
-        assertEquals(0, player6Places.get(2));
-        assertEquals(1, player6Places.get(3));
-        assertEquals(0, player6Places.get(4));
+        assertThat(actualPlayerRatings)
+                .filteredOn(playerMonthlyRating -> "f6 (s6) l6".equals(playerMonthlyRating.getPlayerFriendlyName()))
+                .extracting(RatingReport.PlayerMonthlyRating::getOrderedPlaceCountByPlaceNames)
+                .flatExtracting(Map::values)
+                .contains(1L, 0L, 1L, 0L);
     }
 
     @Test
@@ -157,7 +157,7 @@ class RatingReportTest {
                 .findFirst().orElseThrow()
                 .getOrderedPlaceCountByPlaceNames();
 
-        assertEquals(4, player6Places.size());
+        assertThat(player6Places).hasSize(4);
     }
 
     @Test
@@ -167,7 +167,7 @@ class RatingReportTest {
         boolean isPlayer7Present = monthlyRating.getPlayerRatings().stream()
                 .anyMatch(playerMonthlyRating -> playerMonthlyRating.getPlayerFriendlyName().equals("f7 (s7) l7"));
 
-        assertFalse(isPlayer7Present);
+        assertThat(isPlayer7Present).isFalse();
     }
 
     @Test
@@ -179,12 +179,14 @@ class RatingReportTest {
 
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
-        assertThat(monthlyRating.getPlayerRatings(), containsInAnyOrder(
-                both(hasProperty("playerFriendlyName", is("f1 (s1) l1"))).and(hasProperty("matchesCount", is(6L))),
-                both(hasProperty("playerFriendlyName", is("f4 (s4) l4"))).and(hasProperty("matchesCount", is(4L))),
-                both(hasProperty("playerFriendlyName", is("f3 (s3) l3"))).and(hasProperty("matchesCount", is(5L))),
-                both(hasProperty("playerFriendlyName", is("f2 (s2) l2"))).and(hasProperty("matchesCount", is(4L)))
-        ));
+        assertThat(monthlyRating.getPlayerRatings())
+                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getMatchesCount)
+                .containsExactlyInAnyOrder(
+                        tuple("f1 (s1) l1", 6L),
+                        tuple("f4 (s4) l4", 4L),
+                        tuple("f3 (s3) l3", 5L),
+                        tuple("f2 (s2) l2", 4L)
+                );
     }
 
     private MatchPlayer getMatchPlayer(Match match, int playerId, Integer place) {

@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class RatingReportPdfServiceImplTest extends TestContextMock {
     private static final String REPORT_NAME = "РЕЙТИНГ 10.2010";
-    private static LocalDate to = YearMonth.of(2010, 10).atEndOfMonth();
-    private static LocalDate from = YearMonth.of(2010, 10).atDay(1);
+    private static final LocalDate to = YearMonth.of(2010, 10).atEndOfMonth();
+    private static final LocalDate from = YearMonth.of(2010, 10).atDay(1);
 
     @Autowired
     private RatingReportPdfService service;
@@ -117,7 +117,8 @@ class RatingReportPdfServiceImplTest extends TestContextMock {
 
         pdfReader.close();
         referencePdfReader.close();
-        assertArrayEquals(expectedBytes, actualBytes);
+
+        assertThat(actualBytes).isEqualTo(expectedBytes);
     }
 
     @Test
@@ -145,6 +146,7 @@ class RatingReportPdfServiceImplTest extends TestContextMock {
 
         pdfReader.close();
         referencePdfReader.close();
-        assertArrayEquals(expectedBytes, actualBytes);
+
+        assertThat(actualBytes).isEqualTo(expectedBytes);
     }
 }

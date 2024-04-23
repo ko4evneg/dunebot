@@ -26,19 +26,19 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class CancelCommandProcessorTest extends TestContextMock {
-    @Autowired
-    private CancelCommandProcessor processor;
-
     private static final Integer REPLY_ID = 9000;
     private static final int MESSAGE_ID = 100500;
     private static final long TELEGRAM_USER_ID = 12345L;
     private final CommandMessage commandMessage = getCommandMessage();
+
+    @Autowired
+    private CancelCommandProcessor processor;
 
     @BeforeEach
     @SneakyThrows
@@ -71,9 +71,9 @@ class CancelCommandProcessorTest extends TestContextMock {
         verify(messagingService).deleteMessageAsync(messageIdCaptor.capture());
         ExternalMessageId actualMessageId = messageIdCaptor.getValue();
 
-        assertEquals(MESSAGE_ID, actualMessageId.getMessageId());
-        assertEquals(TestConstants.CHAT_ID, actualMessageId.getChatId().toString());
-        assertEquals(REPLY_ID, actualMessageId.getReplyId());
+        assertThat(actualMessageId)
+                .extracting(ExternalMessageId::getMessageId, ExternalMessageId::getChatId, ExternalMessageId::getReplyId)
+                .containsExactly(MESSAGE_ID, Long.parseLong(TestConstants.CHAT_ID), REPLY_ID);
     }
 
     @Test
@@ -82,7 +82,7 @@ class CancelCommandProcessorTest extends TestContextMock {
 
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
 
-        assertEquals(0, actualMatchesCount);
+        assertThat(actualMatchesCount).isZero();
     }
 
     @Test
@@ -94,14 +94,15 @@ class CancelCommandProcessorTest extends TestContextMock {
 
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
-        assertEquals(0, actualMatchPlayersCount);
+        assertThat(actualMatchPlayersCount).isZero();
     }
 
     @Test
     void shouldThrowOnFailedCancel() {
         doThrow(new TelegramApiCallException("", new TelegramApiException())).when(messagingService).deleteMessageAsync(ArgumentMatchers.any(ExternalMessageId.class));
 
-        assertThrows(TelegramApiCallException.class, () -> processor.process(commandMessage));
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(TelegramApiCallException.class);
     }
 
     @Test
@@ -115,8 +116,8 @@ class CancelCommandProcessorTest extends TestContextMock {
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
-        assertEquals(1, actualMatchesCount);
-        assertEquals(1, actualMatchPlayersCount);
+        assertThat(actualMatchesCount).isEqualTo(1);
+        assertThat(actualMatchPlayersCount).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -132,8 +133,8 @@ class CancelCommandProcessorTest extends TestContextMock {
         Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
         Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
 
-        assertEquals(1, actualMatchesCount);
-        assertEquals(1, actualMatchPlayersCount);
+        assertThat(actualMatchesCount).isEqualTo(1);
+        assertThat(actualMatchPlayersCount).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -167,16 +168,16 @@ class CancelCommandProcessorTest extends TestContextMock {
     void shouldThrowOnFinishedMatchCancelRequest(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 10000");
 
-        AnswerableDuneBotException actualException = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage));
-
-        assertEquals("Запрещено отменять завершенные матчи!", actualException.getMessage());
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Запрещено отменять завершенные матчи!");
     }
 
     @Test
     void shouldReturnCancelCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.CANCEL, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.CANCEL);
     }
 
     private CommandMessage getCommandMessage() {

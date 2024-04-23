@@ -18,7 +18,8 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -47,10 +48,10 @@ class RegisterCommandProcessorTest extends TestContextMock {
         processor.process(commandMessage);
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
-                "where first_name = '" + FIRST_NAME + "' and last_name = '" + LAST_NAME + "' " +
-                "and steam_name = '" + STEAM_NAME + "' and external_first_name = '" + EXTERNAL_FIRST_NAME + "'", Long.class);
+                                                              "where first_name = '" + FIRST_NAME + "' and last_name = '" + LAST_NAME + "' " +
+                                                              "and steam_name = '" + STEAM_NAME + "' and external_first_name = '" + EXTERNAL_FIRST_NAME + "'", Long.class);
 
-        assertEquals(1, actualPlayersCount);
+        assertThat(actualPlayersCount).isEqualTo(1);
     }
 
     @Test
@@ -58,10 +59,10 @@ class RegisterCommandProcessorTest extends TestContextMock {
         processor.process(getCommandMessage(STEAM_NAME, "uName"));
 
         Long actualPlayersCount = jdbcTemplate.queryForObject("select count(*) from players " +
-                "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "' and last_name = '" +
-                LAST_NAME + "' and external_name = 'uName' and external_first_name = '" + EXTERNAL_FIRST_NAME + "'", Long.class);
+                                                              "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "' and last_name = '" +
+                                                              LAST_NAME + "' and external_name = 'uName' and external_first_name = '" + EXTERNAL_FIRST_NAME + "'", Long.class);
 
-        assertEquals(1, actualPlayersCount);
+        assertThat(actualPlayersCount).isEqualTo(1);
     }
 
     @Test
@@ -69,11 +70,11 @@ class RegisterCommandProcessorTest extends TestContextMock {
         processor.process(commandMessage);
 
         Player actualPlayer = jdbcTemplate.queryForObject("select external_id, external_chat_id from players " +
-                "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", new BeanPropertyRowMapper<>(Player.class));
+                                                          "where first_name = '" + FIRST_NAME + "' and steam_name = '" + STEAM_NAME + "'", new BeanPropertyRowMapper<>(Player.class));
 
-        assertNotNull(actualPlayer);
-        assertEquals(TELEGRAM_USER_ID, actualPlayer.getExternalId());
-        assertEquals(TELEGRAM_CHAT_ID, actualPlayer.getExternalChatId());
+        assertThat(actualPlayer).isNotNull()
+                .extracting(Player::getExternalId, Player::getExternalChatId)
+                .containsExactly(TELEGRAM_USER_ID, TELEGRAM_CHAT_ID);
     }
 
     @Test
@@ -81,30 +82,32 @@ class RegisterCommandProcessorTest extends TestContextMock {
         processor.process(getCommandMessage("Vasiliy Prostoy V", "uName"));
 
         String actualSteamName = jdbcTemplate.queryForObject("select steam_name from players " +
-                "where first_name = '" + FIRST_NAME + "' and last_name = 'lName' and external_name = 'uName'", String.class);
+                                                             "where first_name = '" + FIRST_NAME + "' and last_name = 'lName' and external_name = 'uName'", String.class);
 
-        assertEquals("Vasiliy Prostoy V", actualSteamName);
+        assertThat(actualSteamName).isEqualTo("Vasiliy Prostoy V");
     }
 
     @Test
     void shouldThrowWhenSameTelegramIdUserExists() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" +
-                FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
+                             "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + ", '" + STEAM_NAME + "', '" +
+                             FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
 
-        AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage));
-        assertEquals("Вы уже зарегистрированы под steam ником " + STEAM_NAME +
-                     "! Для смены ника выполните команду '/refresh_profile Имя (ник в steam) Фамилия'", exception.getMessage());
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Вы уже зарегистрированы под steam ником " + STEAM_NAME +
+                            "! Для смены ника выполните команду '/refresh_profile Имя (ник в steam) Фамилия'");
     }
 
     @Test
     void shouldThrowWhenSameSteamNameUserExists() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + (TELEGRAM_CHAT_ID + 1) + ", '" + STEAM_NAME + "', '" +
-                FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
+                             "values (10000, " + (TELEGRAM_USER_ID + 1) + ", " + (TELEGRAM_CHAT_ID + 1) + ", '" + STEAM_NAME + "', '" +
+                             FIRST_NAME + "', 'lName', 'efName', '2000-10-10')");
 
-        AnswerableDuneBotException exception = assertThrows(AnswerableDuneBotException.class, () -> processor.process(commandMessage));
-        assertEquals("Пользователь со steam ником " + STEAM_NAME + " уже существует!", exception.getMessage());
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Пользователь со steam ником " + STEAM_NAME + " уже существует!");
     }
 
     @Test
@@ -115,15 +118,16 @@ class RegisterCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessages = messageCaptor.getValue();
 
-        assertEquals(TELEGRAM_CHAT_ID.toString(), actualMessages.getChatId());
-        assertEquals(REGISTRATION_MESSAGE, actualMessages.getText());
+        assertThat(actualMessages).isNotNull()
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(TELEGRAM_CHAT_ID.toString(), REGISTRATION_MESSAGE);
     }
 
     @Test
     void shouldReturnRegisterCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertEquals(Command.REGISTER, actualCommand);
+        assertThat(actualCommand).isEqualTo(Command.REGISTER);
     }
 
     private static CommandMessage getCommandMessage(String steamName, @Nullable String userName) {

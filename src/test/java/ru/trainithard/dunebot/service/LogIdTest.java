@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class LogIdTest {
     @Test
@@ -42,7 +42,7 @@ class LogIdTest {
                 })
                 .anyMatch(bool -> !bool);
 
-        assertFalse(hasMismatchingId);
+        assertThat(hasMismatchingId).isFalse();
     }
 
     private static class MockTestIdConsumer1 {
