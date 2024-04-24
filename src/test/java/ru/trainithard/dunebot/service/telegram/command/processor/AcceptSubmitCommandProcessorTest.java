@@ -249,8 +249,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         assertThat(actualMessages)
                 .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
                 .containsExactly(null, "11002",
-                        "В матче 15000 за вами зафиксировано *" + place + " место*\\." +
-                        TestConstants.EXTERNAL_LINE_SEPARATOR + "При ошибке используйте команду '/resubmit 15000'\\.");
+                        "В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "При ошибке используйте команду '/resubmit 15000'\\.");
     }
 
     @Test
@@ -266,7 +266,22 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 .containsExactly(null, "11002",
                         "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                        "Теперь загрузите в этот чат скриншот победы\\.");
+                        "*Теперь загрузите в этот чат скриншот победы\\.*");
+    }
+
+    @Test
+    void shouldSendMessageAboutCallbackAcceptOnNotParticipatedCallbackReply() {
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 0));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        assertThat(actualMessage)
+                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(null, "11002",
+                        "В матче 15000 за вами зафиксирован статус: *не участвует*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "При ошибке используйте команду '/resubmit 15000'\\.");
     }
 
     @Test
