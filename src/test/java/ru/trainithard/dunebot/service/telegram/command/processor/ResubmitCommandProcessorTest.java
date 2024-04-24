@@ -112,6 +112,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
         jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006 or id between 10000 and 10005");
+        jdbcTemplate.execute("delete from leaders where id = 10000");
         FileSystemUtils.deleteRecursively(Path.of("photos"));
     }
 
@@ -206,6 +207,20 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                 "select exists (select 1 from matches where id = 15000 and screenshot_path is null)", Boolean.class);
 
         assertThat(isScreenshotResetted).isNotNull().isTrue();
+    }
+
+    @Test
+    void shouldResetMatchLeaderOnResubmit() {
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10000, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg', leader_won = 10000 where id = 15000");
+
+        processor.process(resubmitCommandMessage);
+
+        Boolean isLeaderResetted = jdbcTemplate.queryForObject(
+                "select exists (select 1 from matches where id = 15000 and leader_won is null)", Boolean.class);
+
+        assertThat(isLeaderResetted).isNotNull().isTrue();
     }
 
     @Test

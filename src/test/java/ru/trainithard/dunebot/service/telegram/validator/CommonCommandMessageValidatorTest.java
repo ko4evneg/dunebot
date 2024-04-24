@@ -17,6 +17,7 @@ import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -114,8 +115,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE,
-            names = {"REGISTER", "ADMIN", "HELP", "START", "VOTE", "UPLOAD_PHOTO", "ACCEPT_SUBMIT", "REFRESH_PROFILE"})
+    @MethodSource("nonAnonymousCommandSource")
     void shouldThrowForAnonymousCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("delete from players where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
@@ -127,8 +127,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Command.class, mode = EnumSource.Mode.EXCLUDE,
-            names = {"REGISTER", "ADMIN", "HELP", "START", "VOTE", "UPLOAD_PHOTO", "ACCEPT_SUBMIT", "REFRESH_PROFILE"})
+    @MethodSource("nonAnonymousCommandSource")
     void shouldThrowForGuestCallOfNonAnonymousCommand(Command command) {
         jdbcTemplate.execute("update players set is_guest = true where id = 10000");
         message.setText("/" + command.name().toLowerCase() + " arg1 arg2 arg3");
@@ -137,6 +136,12 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         assertThatThrownBy(() -> validator.validate(commandMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)
                 .hasMessage(ANONYMOUS_COMMAND_TEXT);
+    }
+
+    public static Stream<Arguments> nonAnonymousCommandSource() {
+        return Arrays.stream(Command.values())
+                .filter(command -> !command.isAnonymous())
+                .map(Arguments::of);
     }
 
     @ParameterizedTest
