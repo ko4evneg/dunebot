@@ -39,19 +39,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class VoteCommandProcessorTest extends TestContextMock {
     private static final int REPLY_ID = 111001;
-    @Autowired
-    private VoteCommandProcessor processor;
-    @MockBean
-    private TaskScheduler dunebotTaskScheduler;
-    @MockBean
-    private Clock clock;
-
     private static final String POLL_ID = "100500";
     private static final long CHAT_ID = 100501L;
     private static final int TOPIC_ID = 100500;
@@ -61,6 +53,13 @@ class VoteCommandProcessorTest extends TestContextMock {
     //TODO: check need
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
+
+    @Autowired
+    private VoteCommandProcessor processor;
+    @MockBean
+    private TaskScheduler dunebotTaskScheduler;
+    @MockBean
+    private Clock clock;
 
     @BeforeEach
     @SneakyThrows

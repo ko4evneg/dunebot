@@ -21,7 +21,8 @@ public class MessageDto {
     protected Integer topicId;
     protected List<List<ButtonDto>> keyboard;
 
-    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
+    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId,
+                      @Nullable Integer replyMessageId, @Nullable List<List<ButtonDto>> linedButtons) {
         this.text = externalMessage.getText();
         this.chatId = chatId;
         this.topicId = topicId;
@@ -29,16 +30,19 @@ public class MessageDto {
         this.replyMessageId = replyMessageId;
     }
 
-    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable List<List<ButtonDto>> linedButtons) {
+    public MessageDto(String chatId, ExternalMessage externalMessage, @Nullable Integer topicId,
+                      @Nullable List<List<ButtonDto>> linedButtons) {
         this(chatId, externalMessage, topicId, null, linedButtons);
     }
 
-    public MessageDto(long chatId, ExternalMessage externalMessage, @Nullable Integer topicId, @Nullable List<List<ButtonDto>> linedButtons) {
+    public MessageDto(long chatId, ExternalMessage externalMessage, @Nullable Integer topicId,
+                      @Nullable List<List<ButtonDto>> linedButtons) {
         this(Long.toString(chatId), externalMessage, topicId, null, linedButtons);
     }
 
     public MessageDto(CommandMessage commandMessage, ExternalMessage externalMessage, @Nullable List<List<ButtonDto>> linedButtons) {
-        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getTopicId(), commandMessage.getReplyMessageId(), linedButtons);
+        this(Long.toString(commandMessage.getChatId()), externalMessage, commandMessage.getTopicId(),
+                commandMessage.getReplyMessageId(), linedButtons);
     }
 
     public MessageDto(ExternalMessageId externalMessageId, ExternalMessage externalMessage) {
@@ -46,6 +50,7 @@ public class MessageDto {
     }
 
     public MessageDto(AnswerableDuneBotException exception) {
-        this(Long.toString(exception.getTelegramChatId()), new ExternalMessage(exception.getMessage()), exception.getTelegramReplyId(), null);
+        this(Long.toString(exception.getTelegramChatId()),
+                new ExternalMessage(exception.getMessage()), exception.getTelegramReplyId(), null);
     }
 }

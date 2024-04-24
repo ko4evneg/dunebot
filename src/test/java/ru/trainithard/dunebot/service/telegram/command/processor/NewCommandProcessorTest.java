@@ -36,14 +36,14 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class NewCommandProcessorTest extends TestContextMock {
-    @Autowired
-    private NewCommandProcessor processor;
-
     private static final long USER_ID = 12345;
     private static final String POLL_ID = "12345";
     private static final int REPLY_ID = 23456;
     private static final int MESSAGE_ID = 100500;
     private static final long CHAT_ID = 9000L;
+
+    @Autowired
+    private NewCommandProcessor processor;
     private final CommandMessage pollCommandMessage = getCommandMessage(ModType.CLASSIC.getAlias());
 
     @BeforeEach

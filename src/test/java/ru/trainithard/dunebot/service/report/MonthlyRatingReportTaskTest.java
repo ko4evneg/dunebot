@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.time.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -211,12 +210,6 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
 
         task.run();
 
-        InputStream actualFileStream = new BufferedInputStream(new FileInputStream(tempDir.resolve("up4_2010_OCTOBER.pdf").toString()));
-        PdfReader referencePdfReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_2.pdf");
-        byte[] referenceFileBytes = referencePdfReader.getPageContent(1);
-        referencePdfReader.close();
-        actualFileStream.close();
-
         ArgumentCaptor<FileMessageDto> messageCaptor = ArgumentCaptor.forClass(FileMessageDto.class);
         verify(messagingService, times(2)).sendFileAsync(messageCaptor.capture());
 
@@ -224,10 +217,14 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         ByteArrayInputStream actualUprisingInputStream = new ByteArrayInputStream(actualUprisingMessage.getFile());
         PdfReader actualUprisingPdfReader = new PdfReader(actualUprisingInputStream);
 
+        PdfReader referencePdfReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_2.pdf");
+        byte[] referenceFileBytes = referencePdfReader.getPageContent(1);
+        referencePdfReader.close();
+
+        assertThat(actualUprisingPdfReader.getPageContent(1)).isEqualTo(referenceFileBytes);
         assertThat(actualUprisingMessage.getTopicId()).isEqualTo(TestConstants.TOPIC_ID_UPRISING);
         assertThat(actualUprisingMessage.getChatId()).isEqualTo(TestConstants.CHAT_ID);
         assertThat(actualUprisingMessage.getText()).isEqualTo("Рейтинг за 10\\.2010:");
-        assertThat(actualUprisingPdfReader.getPageContent(1)).isEqualTo(referenceFileBytes);
 
         FileMessageDto actualClassicMessage = messageCaptor.getAllValues().get(0);
         ByteArrayInputStream actualClassicInputStream = new ByteArrayInputStream(actualClassicMessage.getFile());

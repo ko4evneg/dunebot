@@ -14,7 +14,8 @@ public class RatingReportPdf {
     private static final List<String> TABLE_HEADER_COLUMNS_NAMES = List.of("Место", "Имя (Никнейм) Фамилия",
             "Кол-во партий", "1-х мест", "2-х мест", "3-х мест", "4-х мест", "Коэф. эффективности", "Коэф. побед");
     private static final float[] COLUMN_WIDTHS = new float[]{8, 30, 8, 6, 6, 6, 6, 10, 10};
-    private static final Font TABLE_CELL_FONT = FontFactory.getFont("fonts/arial.ttf", "cp1251", 12f, Font.FontStyle.NORMAL.ordinal(), BaseColor.BLACK);
+    private static final Font TABLE_CELL_FONT =
+            FontFactory.getFont("fonts/arial.ttf", "cp1251", 12f, Font.FontStyle.NORMAL.ordinal(), BaseColor.BLACK);
 
     private final Document document = new Document();
     private final String documentHeader;

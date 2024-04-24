@@ -27,13 +27,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 class CommonCommandMessageValidatorTest extends TestContextMock {
     private static final String PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT = "Команда запрещена в групповых чатах - напишите боту напрямую.";
-    private static final String ANONYMOUS_COMMAND_TEXT = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
+    private static final String ANONYMOUS_COMMAND_TEXT =
+            "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
+    private static final Long TELEGRAM_USER_ID = 12345L;
+    private static final Long TELEGRAM_CHAT_ID = 9000L;
 
     @Autowired
     private CommonCommandMessageValidator validator;
-
-    private static final Long TELEGRAM_USER_ID = 12345L;
-    private static final Long TELEGRAM_CHAT_ID = 9000L;
     private final Message message = new Message();
 
     @BeforeEach
@@ -58,7 +58,6 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
                 .hasFieldOrPropertyWithValue("telegramChatId", TELEGRAM_CHAT_ID)
                 .hasFieldOrPropertyWithValue("telegramReplyId", null);
     }
-
 
     @Test
     void shouldCorrectlyFillChatIdAndReplyIdForTopicMessage() {
@@ -183,11 +182,11 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowOnCallbackCommandsInPublicChat() {
-        Message message = new Message();
-        message.setMessageId(123);
-        message.setFrom(getUser());
+        Message messageInfo = new Message();
+        messageInfo.setMessageId(123);
+        messageInfo.setFrom(getUser());
         CallbackQuery callbackQuery = new CallbackQuery();
-        callbackQuery.setMessage(message);
+        callbackQuery.setMessage(messageInfo);
         callbackQuery.setData("10000__-1");
         callbackQuery.setFrom(getUser());
 

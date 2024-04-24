@@ -84,7 +84,6 @@ class RatingReportTest {
                 );
     }
 
-
     @Test
     void shouldReturnEachPlayerWinRates() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);

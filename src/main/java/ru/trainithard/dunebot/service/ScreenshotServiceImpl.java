@@ -19,7 +19,8 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.PHOTO_ALLOWE
 @RequiredArgsConstructor
 public class ScreenshotServiceImpl implements ScreenshotService {
     private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Ошибка: скриншот уже загружен";
-    private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE = "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
+    private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE =
+            "Неподдерживаемое расширение файла. Список поддерживаемых расширений: 'jpg', 'jpeg', 'png'.";
     private static final String FILE_PATH_SEPARATOR = "/";
 
     private final Clock clock;

@@ -99,14 +99,7 @@ public class CommandMessage {
         if (replyToMessage != null) {
             this.replyMessageId = replyToMessage.getMessageId();
         }
-        String text = message.getText();
-        if (text != null && text.length() > 1) {
-            String[] commandWithArguments = text.substring(1).split("\\s+");
-            this.command = Command.getCommand(commandWithArguments[0]);
-            this.args = commandWithArguments.length > 1 ? Arrays.copyOfRange(commandWithArguments, 1, commandWithArguments.length) : new String[0];
-        } else {
-            this.args = new String[0];
-        }
+        assignTextSourcedValues(message);
         if (message.hasDocument()) {
             this.file = new File(message.getDocument());
             this.command = Command.UPLOAD_PHOTO;
@@ -114,6 +107,19 @@ public class CommandMessage {
         if (message.hasPhoto()) {
             this.photo = message.getPhoto().stream().map(Photo::new).toList();
             this.command = Command.UPLOAD_PHOTO;
+        }
+    }
+
+    private void assignTextSourcedValues(Message message) {
+        String text = message.getText();
+        if (text != null && text.length() > 1) {
+            String[] commandWithArguments = text.substring(1).split("\\s+");
+            this.command = Command.getCommand(commandWithArguments[0]);
+            this.args = commandWithArguments.length > 1
+                    ? Arrays.copyOfRange(commandWithArguments, 1, commandWithArguments.length)
+                    : new String[0];
+        } else {
+            this.args = new String[0];
         }
     }
 

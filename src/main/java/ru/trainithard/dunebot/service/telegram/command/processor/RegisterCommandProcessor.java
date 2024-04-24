@@ -21,8 +21,8 @@ import ru.trainithard.dunebot.util.ParsedNames;
 @RequiredArgsConstructor
 public class RegisterCommandProcessor extends CommandProcessor {
     private static final String NICKNAME_IS_BUSY_MESSAGE_TEMPLATE = "Пользователь со steam ником %s уже существует!";
-    private static final String ALREADY_REGISTERED_MESSAGE_TEMPLATE = "Вы уже зарегистрированы под steam ником %s! " +
-                                                                      "Для смены ника выполните команду '/refresh_profile Имя (ник в steam) Фамилия'";
+    private static final String ALREADY_REGISTERED_MESSAGE_TEMPLATE =
+            "Вы уже зарегистрированы под steam ником %s! Для смены ника выполните команду '/refresh_profile Имя (ник в steam) Фамилия'";
     private static final String REGISTRATION_MESSAGE_TEMPLATE = "Вы зарегистрированы как '%s'";
 
     private final PlayerRepository playerRepository;
@@ -53,9 +53,11 @@ public class RegisterCommandProcessor extends CommandProcessor {
                 String playerSteamName = player.getSteamName();
                 log.debug("{}: validation failed, player found: ({}, {})", logId(), playerExternalId, playerSteamName);
                 if (externalId == playerExternalId) {
-                    throw new AnswerableDuneBotException(String.format(ALREADY_REGISTERED_MESSAGE_TEMPLATE, playerSteamName), player.getExternalChatId());
+                    String exceptionMessage = String.format(ALREADY_REGISTERED_MESSAGE_TEMPLATE, playerSteamName);
+                    throw new AnswerableDuneBotException(exceptionMessage, player.getExternalChatId());
                 } else if (newSteamName.equals(playerSteamName)) {
-                    throw new AnswerableDuneBotException(String.format(NICKNAME_IS_BUSY_MESSAGE_TEMPLATE, newSteamName), player.getExternalChatId());
+                    String exceptionMessage = String.format(NICKNAME_IS_BUSY_MESSAGE_TEMPLATE, newSteamName);
+                    throw new AnswerableDuneBotException(exceptionMessage, player.getExternalChatId());
                 }
             });
             log.debug("{}: validation successful", logId());

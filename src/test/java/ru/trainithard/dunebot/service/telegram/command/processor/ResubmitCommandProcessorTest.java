@@ -39,7 +39,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -274,7 +273,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         ArgumentCaptor<ExternalMessageId> messageDtoCaptor = ArgumentCaptor.forClass(ExternalMessageId.class);
         verify(messagingService, times(4)).deleteMessageAsync(messageDtoCaptor.capture());
         List<ExternalMessageId> actualDeleteDto = messageDtoCaptor.getAllValues();
-
 
         assertThat(actualDeleteDto)
                 .extracting(ExternalMessageId::getChatId, ExternalMessageId::getMessageId)

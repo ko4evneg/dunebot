@@ -8,4 +8,7 @@ public class TestConstants {
     public static final int TOPIC_ID_UPRISING = 4;
     public static final int RESUBMITS_LIMIT = 3;
     public static final String EXTERNAL_LINE_SEPARATOR = "\n";
+
+    private TestConstants() {
+    }
 }

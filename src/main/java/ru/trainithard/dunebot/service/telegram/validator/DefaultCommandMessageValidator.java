@@ -8,6 +8,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandType;
 public class DefaultCommandMessageValidator implements ValidationStrategy {
     @Override
     public void validate(CommandMessage commandMessage) {
+        //This method used when no other validators present. Such a case require successful validation now.
     }
 
     @Override

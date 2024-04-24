@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.report;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ class RatingReport {
         efficiencyRateByPlaceNames.put(4, 0.1);
     }
 
-    public RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
+    RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
         this.matchesCount = getMatchesCount(monthMatchPlayers);
         this.matchesRatingThreshold = matchesRatingThreshold;
         fillPlayerRatings(monthMatchPlayers, modType.getPlayersCount());
@@ -48,14 +49,16 @@ class RatingReport {
         matchPlayersByPlayer.entrySet().stream()
                 .filter(entry -> entry.getValue().stream().anyMatch(this::hasAssignedPlace))
                 .forEach(entry -> {
-                    Map<Integer, Long> orderedPlaceCountByPlaceNames = getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
+                    Map<Integer, Long> orderedPlaceCountByPlaceNames =
+                            getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
                     long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
                     long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
                     double winRate = calculateWinRate(firstPlacesCount, playerMatchesCount);
                     double efficiency = calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
 
+                    String friendlyName = entry.getKey().getFriendlyName();
                     PlayerMonthlyRating playerMonthlyRating =
-                            new PlayerMonthlyRating(entry.getKey().getFriendlyName(), orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
+                            new PlayerMonthlyRating(friendlyName, orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
                     playerRatings.add(playerMonthlyRating);
                 });
     }
@@ -77,8 +80,8 @@ class RatingReport {
         return result;
     }
 
-    private double calculateWinRate(double firstPlacesCount, long matchesCount) {
-        double winRate = firstPlacesCount / matchesCount * 100;
+    private double calculateWinRate(double firstPlacesCount, long playerMatchesCount) {
+        double winRate = firstPlacesCount / playerMatchesCount * 100;
         return (int) (winRate * 100) / 100.0;
     }
 
@@ -104,7 +107,7 @@ class RatingReport {
         private final double winRate;
 
         @Override
-        public int compareTo(PlayerMonthlyRating comparedRating) {
+        public int compareTo(@NotNull PlayerMonthlyRating comparedRating) {
             if (this.matchesCount >= matchesRatingThreshold && comparedRating.matchesCount < matchesRatingThreshold) {
                 return -1;
             }
@@ -112,13 +115,19 @@ class RatingReport {
                 return 1;
             }
             int reversedEfficiencyDiff = (int) (comparedRating.efficiency * 100 - this.efficiency * 100);
-            return reversedEfficiencyDiff != 0 ? reversedEfficiencyDiff : this.playerFriendlyName.compareTo(comparedRating.playerFriendlyName);
+            return reversedEfficiencyDiff != 0
+                    ? reversedEfficiencyDiff
+                    : this.playerFriendlyName.compareTo(comparedRating.playerFriendlyName);
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             PlayerMonthlyRating that = (PlayerMonthlyRating) o;
             return Objects.equals(playerFriendlyName, that.playerFriendlyName);
         }

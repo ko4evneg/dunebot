@@ -25,8 +25,7 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Override
     public String getStringSetting(SettingKey key) {
-        String value = settingRepository.findByKey(key).getValue();
-        return value;
+        return settingRepository.findByKey(key).getValue();
     }
 
     @Override

@@ -40,8 +40,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -133,7 +131,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
                              "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
         CommandMessage commandMessage = getCommandMessage(11004L);
 
-
         assertThatThrownBy(() -> processor.process(commandMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)
                 .hasMessage("Вы не можете инициировать публикацию этого матча");
@@ -143,7 +140,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void shouldThrowOnNotExistentMatchSubmit() {
         jdbcTemplate.execute("delete from match_players where match_id = 15000");
         jdbcTemplate.execute("delete from matches where id = 15000");
-
 
         assertThatThrownBy(() -> processor.process(submitCommandMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)

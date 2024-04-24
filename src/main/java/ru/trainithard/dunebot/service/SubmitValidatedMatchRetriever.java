@@ -16,7 +16,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 public class SubmitValidatedMatchRetriever {
     private static final String SUBMIT_NOT_ALLOWED_EXCEPTION_MESSAGE = "Вы не можете инициировать публикацию этого матча";
     private static final String FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE = "Запрещено регистрировать результаты завершенных матчей";
-    private static final String NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE = "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос";
+    private static final String NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE =
+            "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос";
     private static final String ALREADY_SUBMITTED_EXCEPTION_MESSAGE = "Запрос на публикацию этого матча уже сделан";
     private static final String MATCH_NOT_EXISTS_EXCEPTION = "Матча с таким ID не существует!";
 

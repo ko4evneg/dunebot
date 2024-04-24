@@ -11,7 +11,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 @Service
 @RequiredArgsConstructor
 public class CommonCommandMessageValidator {
-    private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
+    private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! " +
+                                                         "Для регистрации выполните команду '/register *steam_name*'";
     private static final String WRONG_COMMAND = "Неверная команда!";
     private static final String PUBLIC_PROHIBITED_COMMAND = "Команда запрещена в групповых чатах - напишите боту напрямую.";
 
