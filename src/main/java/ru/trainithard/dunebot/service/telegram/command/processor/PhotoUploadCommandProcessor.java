@@ -90,7 +90,8 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
 
-                messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), getLeadersKeyboard(match)));
+                MessageDto message = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), getLeadersKeyboard(match));
+                messagingService.sendMessageAsync(message);
             }
         } catch (ScreenshotFileIOException exception) {
             log.error(logId + ": file save failed due to an exception", exception);
