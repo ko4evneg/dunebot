@@ -43,6 +43,12 @@ public class Match extends BaseEntity {
     @JoinColumn(name = "EXTERNAL_START_ID")
     private ExternalMessageId externalStartId;
     /**
+     * Leader, who won this match.
+     */
+    @OneToOne
+    @JoinColumn(name = "LEADER_WON")
+    private Leader leaderWon;
+    /**
      * Game mode of the match.
      */
     @Enumerated(EnumType.STRING)
@@ -101,5 +107,12 @@ public class Match extends BaseEntity {
 
     public boolean hasEnoughPlayers() {
         return positiveAnswersCount >= modType.getPlayersCount();
+    }
+
+    public void prepareForResubmit() {
+        submitsRetryCount++;
+        submitsCount = 0;
+        state = MatchState.ON_SUBMIT;
+        leaderWon = null;
     }
 }
