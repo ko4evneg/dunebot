@@ -237,6 +237,20 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
                 .doesNotThrowAnyException();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldThrowBotNotConfiguredWhenPrivateCommandSentToPublicChatAndNoChatTopicIdsConfigured(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
+
+        message.getChat().setType(chatType.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(BOT_NOT_CONFIGURED_TEXT);
+    }
+
     private void fillMessage() {
         Chat chat = new Chat();
         chat.setId(TELEGRAM_CHAT_ID);

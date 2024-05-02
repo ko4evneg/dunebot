@@ -30,9 +30,6 @@ public class CommonCommandMessageValidator {
         if (!command.isAnonymous() && !playerRepository.existsNonGuestByTelegramId(commandMessage.getUserId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, commandMessage);
         }
-        if (!command.isPublicCommand() && commandMessage.getChatType() != null && commandMessage.getChatType() != ChatType.PRIVATE) {
-            throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND_TEXT, commandMessage);
-        }
         if (command != Command.ADMIN) {
             String stringSetting = settingsService.getStringSetting(SettingKey.CHAT_ID);
             if (stringSetting == null) {
@@ -46,6 +43,9 @@ public class CommonCommandMessageValidator {
             if (uprisingTopicId == null) {
                 throw new AnswerableDuneBotException(BOT_NOT_CONFIGURED, commandMessage);
             }
+        }
+        if (!command.isPublicCommand() && commandMessage.getChatType() != null && commandMessage.getChatType() != ChatType.PRIVATE) {
+            throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND_TEXT, commandMessage);
         }
     }
 }
