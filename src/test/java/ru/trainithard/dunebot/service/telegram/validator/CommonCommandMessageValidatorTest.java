@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.telegram.telegrambots.meta.api.objects.*;
@@ -29,6 +30,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     private static final String PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT = "Команда запрещена в групповых чатах - напишите боту напрямую.";
     private static final String ANONYMOUS_COMMAND_TEXT =
             "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
+    private static final String BOT_NOT_CONFIGURED_TEXT = "Бот не настроен. Разрешены только административные команды.";
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
 
@@ -41,11 +43,15 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         fillMessage();
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '9000', '2010-01-02')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10002, 'TOPIC_ID_UPRISING', '9001', '2010-01-02')");
     }
 
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from players where id = 10000");
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
     }
 
     @Test
@@ -193,6 +199,42 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         CommandMessage callbackMessage = CommandMessage.getCallbackInstance(callbackQuery);
 
         assertThatCode(() -> validator.validate(callbackMessage)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldThrowForNonAdminCommandWhenChatIdIsNotConfigured() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
+        message.getChat().setType(ChatType.PRIVATE.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(BOT_NOT_CONFIGURED_TEXT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {10001, 10002})
+    void shouldThrowForNonAdminCommandWhenTopicIdIsNotConfigured(int topicDatabaseRowId) {
+        jdbcTemplate.execute("delete from settings where id = " + topicDatabaseRowId);
+        message.getChat().setType(ChatType.PRIVATE.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(BOT_NOT_CONFIGURED_TEXT);
+    }
+
+    @Test
+    void shouldNotThrowForAdminCommandWhenChatAndTopicAreNotConfigured() {
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
+        message.getChat().setType(ChatType.PRIVATE.getValue());
+        message.setText("/" + Command.ADMIN.name().toLowerCase());
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatCode(() -> validator.validate(commandMessage))
+                .doesNotThrowAnyException();
     }
 
     private void fillMessage() {
