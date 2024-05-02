@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service;
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
@@ -16,8 +17,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class StartupServiceTest extends TestContextMock {
@@ -117,5 +117,19 @@ class StartupServiceTest extends TestContextMock {
                         Tuple.tuple("100500", 10002, "Бот был перезапущен, незавершенные матчи \\(10000\\) завершены без регистрации результатов"),
                         Tuple.tuple("100500", 10502, "Бот был перезапущен, незавершенные матчи \\(10001\\) завершены без регистрации результатов")
                 );
+    }
+
+    @Test
+    void shouldNotSendMessagesWhenChatSettingMissing() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
+                             "values (10001, 'ExternalPollId', 10500, 10501, 10502, 10503, '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, created_at) " +
+                             "values (10001, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', '2010-10-10') ");
+
+        startupService.startUp();
+
+        verifyNoInteractions(messagingService);
     }
 }
