@@ -204,6 +204,17 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         verify(commandProcessorFactory, times(1)).getProcessor(expectedCommand);
     }
 
+    @Test
+    void shouldSkipProcessingWhenCommonValidatorReturnFalse() {
+        doReturn(false).when(commonCommandMessageValidator).validate(any());
+        when(telegramBot.poll()).thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/wrongcommand")).thenReturn(null);
+
+        updateProcessor.process();
+
+        verifyNoInteractions(validationStrategyFactory);
+        verifyNoInteractions(commandProcessorFactory);
+    }
+
     private static Stream<Arguments> processorsSource() {
         return Stream.of(
                 Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE), Command.REFRESH_PROFILE),
