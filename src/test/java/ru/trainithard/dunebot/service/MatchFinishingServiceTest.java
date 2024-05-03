@@ -22,6 +22,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -98,19 +99,6 @@ class MatchFinishingServiceTest extends TestContextMock {
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
         assertThat(playersPlaces).containsExactly(4, 2, 3, 1);
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
-    void shouldNotDoAnythingWithFinishedMatchOnUnsuccessfullySubmittedMatchFinish(MatchState matchState) {
-        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
-
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
-
-        Boolean areMatchPlayersChanged = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 15000 and place is not null)", Boolean.class);
-
-        verify(messagingService, never()).sendMessageAsync(any());
-        assertThat(areMatchPlayersChanged).isNotNull().isFalse();
     }
 
     @Test
@@ -250,5 +238,28 @@ class MatchFinishingServiceTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
                         "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED"})
+    void shouldThrowOnUnsuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
+        jdbcTemplate.execute("update matches set submits_count = 4, state = '" + matchState + "' where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+
+        assertThatCode(() -> finishingService.finishSubmittedMatch(15000L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Can't accept submit for match 15000 due to its ended state");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED"})
+    void shouldThrowOnSuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
+        jdbcTemplate.execute("update matches set submits_count = 4, state = '" + matchState + "' where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+        ExternalMessage reason = new ExternalMessage();
+
+        assertThatCode(() -> finishingService.finishNotSubmittedMatch(15000L, reason))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Can't accept submit for match 15000 due to its ended state");
     }
 }
