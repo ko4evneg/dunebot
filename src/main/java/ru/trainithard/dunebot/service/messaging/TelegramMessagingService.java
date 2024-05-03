@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
     private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
-    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception";
+    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception. Chat id: ";
     private static final String SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE = "sendDocumentAsync() call encounters API exception";
     private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
     private static final String SET_COMMANDS_LIST_EXCEPTION_MESSAGE = "sendSetCommands() call encounters API exception";
@@ -88,11 +88,11 @@ public class TelegramMessagingService implements MessagingService {
                     telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
                 } else {
                     telegramMessageCompletableFuture.completeExceptionally(throwable);
-                    log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, throwable);
+                    log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE + messageDto.getChatId(), throwable);
                 }
             });
         } catch (TelegramApiException exception) {
-            log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+            log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE + messageDto.getChatId(), exception);
         }
         return telegramMessageCompletableFuture;
     }
