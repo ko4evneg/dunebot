@@ -53,6 +53,11 @@ public class Player extends BaseEntity {
      */
     @Column(name = "IS_GUEST")
     private boolean guest;
+    /**
+     * Shows if player has blocked chat, so he can't be used for sending messages.
+     */
+    @Column(name = "IS_CHAT_BLOCKED")
+    private boolean chatBlocked;
 
     private Player(CommandMessage commandMessage, ParsedNames parsedNames) {
         this.externalId = commandMessage.getUserId();
