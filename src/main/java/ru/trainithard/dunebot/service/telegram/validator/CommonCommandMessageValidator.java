@@ -50,7 +50,7 @@ public class CommonCommandMessageValidator {
 
     private boolean shouldSkipCommandProcessing(CommandMessage commandMessage, Command command, Set<Integer> topicIds) {
         CommandType commandType = command.getCommandType();
-        return commandType == CommandType.TEXT && command != Command.ADMIN
+        return (commandType == CommandType.TEXT && command != Command.ADMIN || commandType == CommandType.FILE_UPLOAD)
                && commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
     }
 

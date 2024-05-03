@@ -42,7 +42,7 @@ public class TelegramUpdateProcessor {
                     log.debug("{}: received {} command from {}", logId, commandMessage.getCommand(), commandMessage.getUserId());
 
                     boolean isProcessingRequired = commonCommandMessageValidator.validate(commandMessage);
-                    log.debug("{}: successfully passed common validation", logId);
+                    log.debug("{}: successfully passed common validation, processing required: {}", logId, isProcessingRequired);
                     if (isProcessingRequired) {
                         ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
                         validator.validate(commandMessage);

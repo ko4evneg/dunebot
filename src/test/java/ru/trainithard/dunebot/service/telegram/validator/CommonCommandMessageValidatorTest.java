@@ -20,6 +20,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
@@ -243,6 +244,114 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     void shouldReturnFalseForNonAdminCommandWhenTopicIdsAreNotConfigured_PublicChat(ChatType chatType) {
         jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnFalseForNonAdminCommandWhenChatIsNotConfigured_PublicChat_Document(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id = 10000");
+        message.setDocument(new Document());
+        message.getChat().setType(chatType.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnFalseForNonAdminCommandWhenTopicIdsAreNotConfigured_PublicChat_Document(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setDocument(new Document());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnFalseForNonAdminCommandInNonBotTopic_Text(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setMessageThreadId(93124);
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnTrueForNonAdminCommandInBotTopic_Text(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setMessageThreadId(9000);
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnFalseForNonAdminCommandInNonBotTopic_Document(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setDocument(new Document());
+        message.setMessageThreadId(93124);
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnTrueForNonAdminCommandInBotTopic_Document(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setDocument(new Document());
+        message.setMessageThreadId(9000);
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnFalseForNonAdminCommandInNonBotTopic_Photo(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setPhoto(List.of(new PhotoSize()));
+        message.setMessageThreadId(93124);
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnTrueForNonAdminCommandInBotTopic_Photo(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setPhoto(List.of(new PhotoSize()));
+        message.setMessageThreadId(9000);
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
