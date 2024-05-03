@@ -42,9 +42,9 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
         int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
-        log.debug("{}: resubmit limit {}", logId(), resubmitsLimit);
+        log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
-            log.debug("{}: resubmitting...", logId());
+            log.debug("{}: resubmit is not allowed. Finishing by timeout...", logId());
             ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
             matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage);
         }
