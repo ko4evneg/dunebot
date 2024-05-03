@@ -54,7 +54,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(match.getMatchPlayers());
-                    log.debug("{}: match {} and its matchPlayers saved)", logId, match.getId());
+                    log.debug("{}: match {} and its matchPlayers saved", logId, match.getId());
                 });
 
                 ExternalPollId externalPollId = match.getExternalPollId();
@@ -96,7 +96,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(match.getMatchPlayers());
-            log.debug("{}: match {} and its matchPlayers saved)", LogId.get(), match.getId());
+            log.debug("{}: match {} and its matchPlayers saved", LogId.get(), match.getId());
         });
         messagingService.sendMessageAsync(getMatchFinishMessage(match));
     }
