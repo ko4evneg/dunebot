@@ -22,8 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 class CommonCommandMessageValidatorTest extends TestContextMock {
@@ -151,21 +150,10 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldThrowOnTextCommandsInNonPrivateChat(ChatType chatType) {
-        message.getChat().setType(chatType.getValue());
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
-        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
-
-        assertThatThrownBy(() -> validator.validate(commandMessage))
-                .isInstanceOf(AnswerableDuneBotException.class)
-                .hasMessage(PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT);
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldThrowOnTextCommandsInPublicChat(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.SUBMIT.name().toLowerCase() + " 1");
+        message.setMessageThreadId(9000);
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatThrownBy(() -> validator.validate(commandMessage))
@@ -202,7 +190,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     }
 
     @Test
-    void shouldThrowForNonAdminCommandWhenChatIdIsNotConfigured() {
+    void shouldThrowForNonAdminCommandWhenChatIdIsNotConfigured_PrivateChat() {
         jdbcTemplate.execute("delete from settings where id = 10000");
         message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
@@ -215,7 +203,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @ValueSource(ints = {10001, 10002})
-    void shouldThrowForNonAdminCommandWhenTopicIdIsNotConfigured(int topicDatabaseRowId) {
+    void shouldThrowForNonAdminCommandWhenTopicIdIsNotConfigured_PrivateChat(int topicDatabaseRowId) {
         jdbcTemplate.execute("delete from settings where id = " + topicDatabaseRowId);
         message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
@@ -226,23 +214,56 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
                 .hasMessage(BOT_NOT_CONFIGURED_TEXT);
     }
 
-    @Test
-    void shouldNotThrowForAdminCommandWhenChatAndTopicAreNotConfigured() {
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class)
+    void shouldReturnTrueForAdminCommandWhenChatAndTopicAreNotConfigured(ChatType chatType) {
         jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
-        message.getChat().setType(ChatType.PRIVATE.getValue());
+        message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.ADMIN.name().toLowerCase());
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
-        assertThatCode(() -> validator.validate(commandMessage))
-                .doesNotThrowAnyException();
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isTrue();
     }
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldThrowBotNotConfiguredWhenPrivateCommandSentToPublicChatAndNoChatTopicIdsConfigured(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
-
+    void shouldReturnFalseForNonAdminCommandWhenChatIsNotConfigured_PublicChat(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id = 10000");
         message.getChat().setType(chatType.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
+    void shouldReturnFalseForNonAdminCommandWhenTopicIdsAreNotConfigured_PublicChat(ChatType chatType) {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        message.getChat().setType(chatType.getValue());
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+        assertThat(actualIsProcessingRequired).isFalse();
+    }
+
+    @Test
+    void shouldThrowForNonAdminCommandWhenChatIsNotConfigured_PrivateChat() {
+        jdbcTemplate.execute("delete from settings where id = 10000");
+        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(BOT_NOT_CONFIGURED_TEXT);
+    }
+
+    @Test
+    void shouldThrowForNonAdminCommandWhenTopicIdsAreNotConfigured_PrivateChat() {
+        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
