@@ -59,7 +59,7 @@ public class TelegramMessagingService implements MessagingService {
                 if (throwable == null) {
                     telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
                 } else {
-                    telegramMessageCompletableFuture.isCompletedExceptionally();
+                    telegramMessageCompletableFuture.completeExceptionally(throwable);
                     log.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, throwable);
                 }
             });
@@ -87,7 +87,7 @@ public class TelegramMessagingService implements MessagingService {
                 if (throwable == null) {
                     telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
                 } else {
-                    telegramMessageCompletableFuture.isCompletedExceptionally();
+                    telegramMessageCompletableFuture.completeExceptionally(throwable);
                     log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, throwable);
                 }
             });
@@ -129,7 +129,7 @@ public class TelegramMessagingService implements MessagingService {
             if (throwable == null) {
                 telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
             } else {
-                telegramMessageCompletableFuture.isCompletedExceptionally();
+                telegramMessageCompletableFuture.completeExceptionally(throwable);
                 log.error(SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE, throwable);
             }
         });
@@ -156,7 +156,7 @@ public class TelegramMessagingService implements MessagingService {
                 if (throwable == null) {
                     telegramMessageCompletableFuture.complete(new TelegramFileDetailsDto(message));
                 } else {
-                    telegramMessageCompletableFuture.isCompletedExceptionally();
+                    telegramMessageCompletableFuture.completeExceptionally(throwable);
                     log.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, throwable);
                 }
             });
