@@ -13,10 +13,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.scheduling.TaskScheduler;
+import org.telegram.telegrambots.meta.api.objects.ApiResponse;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
@@ -69,6 +71,9 @@ class VoteCommandProcessorTest extends TestContextMock {
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         doReturn(scheduledFuture).when(dunebotTaskScheduler).schedule(any(), any(Instant.class));
+        CompletableFuture<ExternalMessageDto> mockResponse = new CompletableFuture<>();
+        mockResponse.complete(new ExternalMessageDto());
+        doReturn(mockResponse).when(messagingService).sendMessageAsync(any());
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
                              "last_name, external_first_name, external_name, created_at) " +
@@ -131,8 +136,45 @@ class VoteCommandProcessorTest extends TestContextMock {
                                 "where mp.match_id = 10000 and p.external_id = " + GUEST_ID, new BeanPropertyRowMapper<>(Player.class));
 
         assertThat(actualPlayer)
-                .extracting(Player::getFirstName, Player::getLastName, Player::getSteamName, Player::getExternalChatId)
-                .containsExactly("Vasya", "Pupkin", "guest1", GUEST_ID);
+                .extracting(Player::getFirstName, Player::getLastName, Player::getSteamName, Player::getExternalChatId, Player::isChatBlocked)
+                .containsExactly("Vasya", "Pupkin", "guest1", GUEST_ID, false);
+    }
+
+    @Test
+    void shouldSetGuestBlockedChatFlagWhenUserChatIsBlocked() {
+        ApiResponse<?> apiResponse = mock(ApiResponse.class);
+        doReturn(403).when(apiResponse).getErrorCode();
+        TelegramApiRequestException exception = new TelegramApiRequestException("lol, blocked", apiResponse);
+        CompletableFuture<ExternalMessageDto> mockExceptionalResponse = new CompletableFuture<>();
+        mockExceptionalResponse.completeExceptionally(exception);
+        doReturn(mockExceptionalResponse).when(messagingService).sendMessageAsync(any());
+
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
+
+        Boolean actualIsChatBlocked = jdbcTemplate
+                .queryForObject("select exists(select 1 from players p join match_players mp on p.id = mp.player_id " +
+                                "where p.is_chat_blocked and mp.match_id = 10000 and p.external_id = " + GUEST_ID + ")", Boolean.class);
+
+        assertThat(actualIsChatBlocked).isNotNull().isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {401, 402, 500})
+    void shouldNotSetGuestBlockedChatFlagWhenExceptionThrownButUserChatIsNotBlocked(int exceptionCode) {
+        ApiResponse<?> apiResponse = mock(ApiResponse.class);
+        doReturn(exceptionCode).when(apiResponse).getErrorCode();
+        TelegramApiRequestException exception = new TelegramApiRequestException("lol, blocked", apiResponse);
+        CompletableFuture<ExternalMessageDto> mockExceptionalResponse = new CompletableFuture<>();
+        mockExceptionalResponse.completeExceptionally(exception);
+        doReturn(mockExceptionalResponse).when(messagingService).sendMessageAsync(any());
+
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
+
+        Boolean actualIsChatBlocked = jdbcTemplate
+                .queryForObject("select exists(select 1 from players p join match_players mp on p.id = mp.player_id " +
+                                "where p.is_chat_blocked and mp.match_id = 10000 and p.external_id = " + GUEST_ID + ")", Boolean.class);
+
+        assertThat(actualIsChatBlocked).isNotNull().isFalse();
     }
 
     @Test
