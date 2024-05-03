@@ -56,11 +56,12 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     void process(Match match) {
-        log.debug("{}: SUBMIT(internal) started", logId());
+        int logId = logId();
+        log.debug("{}: SUBMIT(internal) started", logId);
 
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
-            log.debug("{}: matchPlayer {} processing...", logId(), matchPlayer.getId());
+            log.debug("{}: matchPlayer {} processing...", logId, matchPlayer.getId());
 
             MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, match);
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
@@ -69,26 +70,30 @@ public class SubmitCommandProcessor extends CommandProcessor {
                     //todo: transaction?
                     matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                     matchPlayerRepository.save(matchPlayer);
-                    log.debug("{}: matchPlayer {} saved", logId(), matchPlayer.getId());
+                    log.debug("{}: matchPlayer {} saved", logId, matchPlayer.getId());
                     if (match.getState() == MatchState.NEW) {
                         match.setState(MatchState.ON_SUBMIT);
                         matchRepository.save(match);
-                        log.debug("{}: match {} saved", logId(), match.getId());
+                        log.debug("{}: match {} saved", logId, match.getId());
                     }
                 } else {
-                    log.error(logId() + ": sending external message encountered an exception", throwable);
+                    log.error(logId + ": sending external message encountered an exception", throwable);
                 }
             });
         }
 
+        scheduleForcedFailFinish(match, logId);
+
+        log.debug("{}: SUBMIT(internal) ended", logId);
+    }
+
+    private void scheduleForcedFailFinish(Match match, int logId) {
         int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId(), finishMatchTimeout);
         dunebotTaskScheduler.schedule(() -> matchFinishingService
                 .finishNotSubmittedMatch(match.getId(), forcedFinishMessage), forcedFinishTime);
-        log.debug("{}: forced finish match task scheduled to {}", logId(), forcedFinishTime);
-
-        log.debug("{}: SUBMIT(internal) ended", logId());
+        log.debug("{}: forced finish match task scheduled to {}", logId, forcedFinishTime);
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {

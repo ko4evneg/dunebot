@@ -16,6 +16,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.factory.ExternalMessageFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -41,6 +42,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final MatchRepository matchRepository;
     private final TaskScheduler dunebotTaskScheduler;
     private final SettingsService settingsService;
+    private final ExternalMessageFactory externalMessageFactory;
     private final Clock clock;
 
     private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
@@ -78,8 +80,9 @@ public class VoteCommandProcessor extends CommandProcessor {
                                 log.debug("{}: player telegram id {} found", logId(), commandMessage.getUserId());
                             }
                     if (player.isGuest()) {
-                        messagingService.sendMessageAsync(getGuestMessageDto(player))
-                                .exceptionally(processException(player));
+                        ExternalMessage guestVoteMessage = externalMessageFactory.getGuestMessageDto(player);
+                        MessageDto messageDto = new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
+                        messagingService.sendMessageAsync(messageDto).exceptionally(processException(player, logId()));
                     }
                     processPlayerVoteRegistration(player, match);
                         }
@@ -87,27 +90,12 @@ public class VoteCommandProcessor extends CommandProcessor {
         log.debug("{}: vote registered", logId());
     }
 
-    private MessageDto getGuestMessageDto(Player player) {
-        ExternalMessage guestVoteMessage = new ExternalMessage("""
-                Вас приветствует DuneBot! Вы ответили да в опросе по рейтинговой игре - это значит, что по завершении \
-                игры вам придет опрос, где нужно будет указать занятое в игре место (и загрузить скриншот матча в \
-                случае победы) - не волнуйтесь, бот подскажет что делать.""").newLine()
-                .append("Также вы автоматически зарегистрированы у бота как гость под именем ")
-                .append(player.getFirstName()).append(" (").append(player.getSteamName()).append(") ").append(player.getLastName())
-                .append(" - это значит, что вы не можете выполнять некоторые команды бота и не будете включены " +
-                        "в результаты рейтинга.").newLine()
-                .append("Для того, чтобы подтвердить регистрацию, выполните в этом чате команду")
-                .appendBold(" '/refresh_profile Имя (ник в steam) Фамилия'").append(".").newLine()
-                .appendBold("Желательно это  сделать прямо сейчас.").newLine()
-                .append("Подробная информация о боте: /help.");
-        return new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
-    }
-
-    private Function<Throwable, ExternalMessageDto> processException(Player player) {
+    private Function<Throwable, ExternalMessageDto> processException(Player player, int logId) {
         return exception -> {
             if (exception instanceof TelegramApiRequestException telegramException && telegramException.getErrorCode().equals(403)) {
                 player.setChatBlocked(true);
                 playerRepository.save(player);
+                log.debug("{}: player ext {} received chat_block flag", logId, player.getExternalId());
             }
             return null;
         };
