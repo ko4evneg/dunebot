@@ -51,11 +51,13 @@ public class CommonCommandMessageValidator {
     }
 
     private boolean shouldSkipCommandProcessing(CommandMessage commandMessage, Command command, Collection<Integer> topicIds) {
-        if (command == null) {
+        boolean isPublicUnknownTopic = commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
+        if (command == null && isPublicUnknownTopic) {
             return true;
+        } else if (command == null) {
+            return false;
         }
         CommandType commandType = command.getCommandType();
-        boolean isPublicUnknownTopic = commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
         return (commandType == CommandType.TEXT && command != Command.ADMIN
                 || commandType == CommandType.FILE_UPLOAD)
                && isPublicUnknownTopic;
