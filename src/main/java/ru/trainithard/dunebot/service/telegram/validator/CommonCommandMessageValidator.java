@@ -38,12 +38,12 @@ public class CommonCommandMessageValidator {
      */
     public boolean validate(CommandMessage commandMessage) {
         Command command = commandMessage.getCommand();
-        validateCorrectCommand(commandMessage, command);
 
         List<Integer> topicIds = getTopicIds();
         if (shouldSkipCommandProcessing(commandMessage, command, topicIds)) {
             return false;
         }
+        validateCorrectCommand(commandMessage, command);
         validateAnonymousCallForNonAnonymousCommand(commandMessage, command);
         validateBotIsConfiguredForNonAdminCommands(commandMessage, command, topicIds);
         validatePrivateCommandExecutedInPublicChat(commandMessage, command);
@@ -51,9 +51,14 @@ public class CommonCommandMessageValidator {
     }
 
     private boolean shouldSkipCommandProcessing(CommandMessage commandMessage, Command command, Collection<Integer> topicIds) {
+        if (command == null) {
+            return true;
+        }
         CommandType commandType = command.getCommandType();
-        return (commandType == CommandType.TEXT && command != Command.ADMIN || commandType == CommandType.FILE_UPLOAD)
-               && commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
+        boolean isPublicUnknownTopic = commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
+        return (commandType == CommandType.TEXT && command != Command.ADMIN
+                || commandType == CommandType.FILE_UPLOAD)
+               && isPublicUnknownTopic;
     }
 
     private void validateCorrectCommand(CommandMessage commandMessage, Command command) {
