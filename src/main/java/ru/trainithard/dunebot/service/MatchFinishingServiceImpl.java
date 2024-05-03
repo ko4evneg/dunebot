@@ -42,6 +42,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         log.debug("{}: finishing not submitted match started", logId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
+        validate(match);
         log.debug("{}: match found (id: {}, state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
         if (!MatchState.getEndedMatchStates().contains(match.getState())) {
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
@@ -76,8 +77,15 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     public void finishSubmittedMatch(long matchId) {
         log.debug("{}: finishing submitted match started", LogId.get());
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
+        validate(match);
         finishSuccessfullyAndSave(match);
         log.debug("{}: finishing submitted match ended", LogId.get());
+    }
+
+    private void validate(Match match) {
+        if (MatchState.getEndedMatchStates().contains(match.getState())) {
+            throw new IllegalStateException("Can't accept submit for match " + match.getId() + " due to its ended state");
+        }
     }
 
     private void finishSuccessfullyAndSave(Match match) {
