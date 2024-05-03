@@ -16,6 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactoryImpl;
@@ -24,11 +25,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class LeaderCommandProcessorTest extends TestContextMock {
-    private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl();
+    private final MatchRepository matchRepository = mock(MatchRepository.class);
+    private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl(matchRepository);
 
     @Autowired
     private LeaderCommandProcessor processor;

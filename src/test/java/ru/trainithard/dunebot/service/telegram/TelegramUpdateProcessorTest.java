@@ -16,6 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.DuneBotException;
+import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.SettingsService;
@@ -24,7 +26,7 @@ import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandType;
-import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactoryImpl;
+import ru.trainithard.dunebot.service.telegram.factory.CommandMessageFactory;
 import ru.trainithard.dunebot.service.telegram.factory.CommandProcessorFactory;
 import ru.trainithard.dunebot.service.telegram.factory.ValidationStrategyFactory;
 import ru.trainithard.dunebot.service.telegram.validator.CommonCommandMessageValidator;
@@ -56,14 +58,13 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     private ValidationStrategyFactory validationStrategyFactory;
     @MockBean
     private CommandProcessorFactory commandProcessorFactory;
-    @MockBean
-    private CommandMessageFactoryImpl commandMessageFactory;
+    @SpyBean
+    private CommandMessageFactory commandMessageFactory;
     @SpyBean
     private CommonCommandMessageValidator commonCommandMessageValidator;
 
     @BeforeEach
     void beforeEach() {
-        doCallRealMethod().when(commandMessageFactory).getInstance(any());
         doCallRealMethod().when(commonCommandMessageValidator).validate(any());
         doReturn("100").when(settingsService).getStringSetting(SettingKey.CHAT_ID);
         doReturn(124).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
@@ -73,14 +74,18 @@ class TelegramUpdateProcessorTest extends TestContextMock {
                 "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10001, " + TELEGRAM_USER_ID_2 + ", " + TELEGRAM_CHAT_ID_2 + " , 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
+                             "values (10001, 'ExternalPollId', 10001, 10004, 10005, 100001, '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, created_at) " +
+                             "values (10001, 10001, null, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', '2010-10-10') ");
     }
 
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
-        jdbcTemplate.execute("delete from matches where id = 10000 or external_poll_id = (select id from external_messages where poll_id = '100001')");
-        jdbcTemplate.execute("delete from players where id in(10000, 10001)");
-        jdbcTemplate.execute("delete from external_messages where id in (10000)");
+        jdbcTemplate.execute("delete from matches where id in (10000, 10001) or external_poll_id = (select id from external_messages where poll_id = '100001')");
+        jdbcTemplate.execute("delete from players where id in (10000, 10001)");
+        jdbcTemplate.execute("delete from external_messages where id in (10000, 10001)");
     }
 
     @Test
