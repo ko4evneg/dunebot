@@ -11,8 +11,9 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandType;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class CommonCommandMessageValidator {
         Command command = commandMessage.getCommand();
         validateCorrectCommand(commandMessage, command);
 
-        Set<Integer> topicIds = getTopicIds();
+        List<Integer> topicIds = getTopicIds();
         if (shouldSkipCommandProcessing(commandMessage, command, topicIds)) {
             return false;
         }
@@ -48,7 +49,7 @@ public class CommonCommandMessageValidator {
         return true;
     }
 
-    private boolean shouldSkipCommandProcessing(CommandMessage commandMessage, Command command, Set<Integer> topicIds) {
+    private boolean shouldSkipCommandProcessing(CommandMessage commandMessage, Command command, Collection<Integer> topicIds) {
         CommandType commandType = command.getCommandType();
         return (commandType == CommandType.TEXT && command != Command.ADMIN || commandType == CommandType.FILE_UPLOAD)
                && commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
@@ -66,7 +67,7 @@ public class CommonCommandMessageValidator {
         }
     }
 
-    private void validateBotIsConfiguredForNonAdminCommands(CommandMessage commandMessage, Command command, Set<Integer> topicIds) {
+    private void validateBotIsConfiguredForNonAdminCommands(CommandMessage commandMessage, Command command, Collection<Integer> topicIds) {
         if (command != Command.ADMIN) {
             String stringSetting = settingsService.getStringSetting(SettingKey.CHAT_ID);
             if (stringSetting == null) {
@@ -84,8 +85,8 @@ public class CommonCommandMessageValidator {
         }
     }
 
-    private Set<Integer> getTopicIds() {
-        Set<Integer> topicIds = new HashSet<>();
+    private List<Integer> getTopicIds() {
+        List<Integer> topicIds = new ArrayList<>();
         topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC));
         topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING));
         topicIds.remove(null);
