@@ -317,14 +317,14 @@ class VoteCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId)
                 .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID);
         assertThat(textRows[0]).isEqualTo("*Матч 10000* собран\\. Участники:");
-        assertThat(names).containsExactlyInAnyOrder("@en1", "@ef2", "@en3", "@en4");
+        assertThat(names).containsExactlyInAnyOrder(
+                "[@en1](tg://user?id=12345)", "[@ef2](tg://user?id=12346)", "[@en3](tg://user?id=12347)", "[@en4](tg://user?id=12348)");
         assertThat(messageDto.getKeyboard()).isNull();
     }
 
     @Test
     void shouldSendGuestWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
         doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10001, 10000, 10001, '2010-10-10')");
@@ -346,11 +346,11 @@ class VoteCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getKeyboard)
                 .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID, null);
         assertThat(textRows[0]).isEqualTo("*Матч 10000* собран\\. Участники:");
-        assertThat(names).containsExactlyInAnyOrder("@en1", "@ef2");
+        assertThat(names).containsExactlyInAnyOrder("[@en1](tg://user?id=12345)", "[@ef2](tg://user?id=12346)");
         assertThat(textRows[2]).isBlank();
         assertThat(textRows[3]).isEqualTo("*Внимание:* в матче есть незарегистрированные игроки\\. Они автоматически зарегистрированы " +
                                           "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:");
-        assertThat(guestsNames).containsExactlyInAnyOrder("@en3", "@fName");
+        assertThat(guestsNames).containsExactlyInAnyOrder("[@en3](tg://user?id=12347)", "[@fName](tg://user?id=12400)");
     }
 
     @Test

@@ -161,13 +161,13 @@ public class VoteCommandProcessor extends CommandProcessor {
         Integer replyMessageId = match.getExternalPollId().getMessageId();
         ExternalMessage startMessage = new ExternalMessage()
                 .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
-                .newLine().append(String.join(", ", regularPlayerMentions));
+                .newLine().appendRaw(String.join(", ", regularPlayerMentions));
         if (!guestPlayerMentions.isEmpty()) {
             startMessage.newLine().newLine()
                     .appendBold("Внимание:")
                     .append(" в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
                             "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
-                    .newLine().append(String.join(", ", guestPlayerMentions));
+                    .newLine().appendRaw(String.join(", ", guestPlayerMentions));
         }
         return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
     }

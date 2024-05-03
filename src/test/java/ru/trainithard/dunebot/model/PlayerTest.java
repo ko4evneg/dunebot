@@ -8,6 +8,7 @@ class PlayerTest {
     private final Player player = new Player();
 
     {
+        player.setExternalId(123000L);
         player.setSteamName("st_name");
         player.setFirstName("f_name");
         player.setLastName("l_name");
@@ -20,22 +21,22 @@ class PlayerTest {
     }
 
     @Test
-    void shouldReturnMentionWithoutWhenExternalFirstNameMissing() {
-        assertThat(player.getMention()).isEqualTo("@ex_name");
+    void shouldReturnExternalNameMentionWhenExternalFirstNameMissing() {
+        assertThat(player.getMention()).isEqualTo("[@ex_name](tg://user?id=123000)");
     }
 
     @Test
-    void shouldReturnMentionWithExternalNameWhenExternalFirstNamePresented() {
+    void shouldReturnExternalNameMentionWhenExternalFirstNamePresented() {
         player.setExternalFirstName("ex_f_name");
 
-        assertThat(player.getMention()).isEqualTo("@ex_name");
+        assertThat(player.getMention()).isEqualTo("[@ex_name](tg://user?id=123000)");
     }
 
     @Test
-    void shouldReturnMentionWithExternalFirstNameWhenExternalNameMissing() {
+    void shouldReturnExternalFirstNameMentionWhenExternalNameMissing() {
         player.setExternalFirstName("ex_f_name");
         player.setExternalName(null);
 
-        assertThat(player.getMention()).isEqualTo("@ex_f_name");
+        assertThat(player.getMention()).isEqualTo("[@ex_f_name](tg://user?id=123000)");
     }
 }
