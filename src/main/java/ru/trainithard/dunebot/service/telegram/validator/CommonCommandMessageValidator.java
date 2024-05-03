@@ -14,6 +14,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -89,7 +90,7 @@ public class CommonCommandMessageValidator {
         List<Integer> topicIds = new ArrayList<>();
         topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC));
         topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING));
-        topicIds.remove(null);
+        topicIds.removeIf(Objects::isNull);
         return topicIds;
     }
 }
