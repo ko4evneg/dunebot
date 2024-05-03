@@ -6,4 +6,7 @@
     <changeSet id="001-database-initialization" author="ko4evneg">
         <sqlFile path="migrations/01_init.sql"/>
     </changeSet>
+    <changeSet id="002-blocked-chat-player" author="ko4evneg">
+        <sqlFile path="migrations/02_blocked_chat_player.sql"/>
+    </changeSet>
 </databaseChangeLog>

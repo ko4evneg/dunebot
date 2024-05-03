@@ -59,6 +59,7 @@ public class RefreshProfileCommandProcessor extends CommandProcessor {
         String userName = commandMessage.getUserName();
         player.setExternalFirstName(firstName);
         player.setExternalName(userName);
+        player.setChatBlocked(false);
         playerRepository.save(player);
         log.debug("{}: player telegram {} names saved (name: {}, username: {})", LogId.get(), player.getId(), firstName, userName);
     }

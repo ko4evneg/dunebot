@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
@@ -11,6 +12,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -23,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
 
 /**
  * Accepts the vote in a match poll from external messaging system.
@@ -69,13 +72,14 @@ public class VoteCommandProcessor extends CommandProcessor {
                                 int nextGuestIndex = playerRepository.findNextGuestIndex();
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
                                 player = playerRepository.save(guestPlayer);
-                                log.debug("{}: new guest player saved", logId(), commandMessage.getUserId());
+                                log.debug("{}: new guest player {} saved", logId(), commandMessage.getUserId());
                             } else {
                                 player = playerOptional.get();
                                 log.debug("{}: player telegram id {} found", logId(), commandMessage.getUserId());
                             }
                     if (player.isGuest()) {
-                        messagingService.sendMessageAsync(getGuestMessageDto(player));
+                        messagingService.sendMessageAsync(getGuestMessageDto(player))
+                                .exceptionally(processException(player));
                     }
                     processPlayerVoteRegistration(player, match);
                         }
@@ -97,6 +101,16 @@ public class VoteCommandProcessor extends CommandProcessor {
                 .appendBold("Желательно это  сделать прямо сейчас.").newLine()
                 .append("Подробная информация о боте: /help.");
         return new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
+    }
+
+    private Function<Throwable, ExternalMessageDto> processException(Player player) {
+        return exception -> {
+            if (exception instanceof TelegramApiRequestException telegramException && telegramException.getErrorCode().equals(403)) {
+                player.setChatBlocked(true);
+                playerRepository.save(player);
+            }
+            return null;
+        };
     }
 
     private void processPlayerVoteRegistration(Player player, Match match) {
@@ -146,30 +160,43 @@ public class VoteCommandProcessor extends CommandProcessor {
     private MessageDto getMatchStartMessage(Match match) {
         List<String> regularPlayerMentions = new ArrayList<>();
         List<String> guestPlayerMentions = new ArrayList<>();
+        List<String> blockedChatMentions = new ArrayList<>();
         for (MatchPlayer matchPlayer : matchPlayerRepository.findByMatch(match)) {
             Player player = matchPlayer.getPlayer();
             String mention = player.getMention();
             if (player.isGuest()) {
                 guestPlayerMentions.add(mention);
+            } else if (player.isChatBlocked()) {
+                blockedChatMentions.add(mention);
             } else {
                 regularPlayerMentions.add(mention);
             }
         }
-
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer topicId = match.getExternalPollId().getReplyId();
         Integer replyMessageId = match.getExternalPollId().getMessageId();
+        ExternalMessage startMessage = getStartMessage(match, regularPlayerMentions, guestPlayerMentions, blockedChatMentions);
+        return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
+    }
+
+    private ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
+                                            List<String> guestPlayerMentions, List<String> blockedChatGuests) {
         ExternalMessage startMessage = new ExternalMessage()
                 .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
                 .newLine().appendRaw(String.join(", ", regularPlayerMentions));
         if (!guestPlayerMentions.isEmpty()) {
-            startMessage.newLine().newLine()
-                    .appendBold("Внимание:")
+            startMessage.newLine().newLine().appendBold("Внимание:")
                     .append(" в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
                             "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
                     .newLine().appendRaw(String.join(", ", guestPlayerMentions));
         }
-        return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
+        if (!blockedChatGuests.isEmpty()) {
+            startMessage.newLine().newLine().appendBold("Особое внимание:")
+                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота,")
+                    .appendBold(" завершить данный матч будет невозможно!").newLine()
+                    .append(String.join(", ", blockedChatGuests));
+        }
+        return startMessage;
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {
@@ -183,7 +210,6 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     private void unregisterMatchPlayerVote(CommandMessage commandMessage) {
         log.debug("{}: vote revocation...", logId());
-
         matchPlayerRepository
                 .findByMatchExternalPollIdPollIdAndPlayerExternalId(commandMessage.getPollVote().pollId(), commandMessage.getUserId())
                 .ifPresent(matchPlayer -> {
