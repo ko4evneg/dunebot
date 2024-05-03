@@ -131,7 +131,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         List<ButtonDto> leadersButtons = leaders.stream()
                 .map(leader -> new ButtonDto(leader.getName(), callbackPrefix + leader.getId()))
                 .toList();
-        return Lists.partition(leadersButtons, 3);
+        return Lists.partition(leadersButtons, 2);
     }
 
     @Override
