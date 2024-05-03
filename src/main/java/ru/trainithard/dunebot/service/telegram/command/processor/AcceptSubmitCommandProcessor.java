@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -47,6 +48,11 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
         Callback callback = new Callback(commandMessage.getCallback());
         Match match = matchRepository.findWithMatchPlayersBy(callback.matchId).orElseThrow();
+        if (MatchState.getEndedMatchStates().contains(match.getState())) {
+            log.debug("{}: submit received for match in {} state. Nothing done.", logId(), match.getState());
+            log.debug("{}: ACCEPT_SUBMIT ended", logId());
+            return;
+        }
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
         MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
         log.debug("{}: match id: {}, player id: {}", logId(), match.getId(), submittingPlayer.getPlayer().getId());

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,6 +110,18 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         Integer actualCandidatePlace = jdbcTemplate.queryForObject("select candidate_place from match_players where id = 10000", Integer.class);
 
         assertThat(actualCandidatePlace).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
+    void shouldDoNothingWhenCallbackReplyForEndedMatchReceived(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
+
+        verifyNoInteractions(matchFinishingService);
+        verifyNoInteractions(messagingService);
+        verifyNoInteractions(resubmitCommandProcessor);
     }
 
     @Test
