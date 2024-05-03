@@ -182,6 +182,33 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSendCorrectSubmitMessageWhenMatchHasMorePlayersThanAllowed() {
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                             "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10004, 15000, 10004, '2010-10-10')");
+
+        processor.process(submitCommandMessage);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(5)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
+        List<List<ButtonDto>> linedButtons = actualMessageDto.getKeyboard();
+
+        assertThat(actualMessageDto.getText()).isEqualTo("Выберите место, которое вы заняли в матче 15000:");
+        assertThat(linedButtons)
+                .flatExtracting(buttonDtos -> buttonDtos)
+                .extracting(ButtonDto::getText, ButtonDto::getCallback)
+                .containsExactly(
+                        tuple("1", "15000__1"),
+                        tuple("2", "15000__2"),
+                        tuple("3", "15000__3"),
+                        tuple("4", "15000__4"),
+                        tuple("не участвовал(а)", "15000__0")
+                );
+    }
+
+    @Test
     void shouldSaveSubmitMessageIdsToMatchPlayers() {
         Message replyMessage = new Message();
         replyMessage.setMessageId(111001);

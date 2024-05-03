@@ -9,6 +9,10 @@ import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.CommandType;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -18,34 +22,73 @@ public class CommonCommandMessageValidator {
     private static final String WRONG_COMMAND_TEXT = "Неверная команда!";
     private static final String PUBLIC_PROHIBITED_COMMAND_TEXT = "Команда запрещена в групповых чатах - напишите боту напрямую.";
     private static final String BOT_NOT_CONFIGURED = "Бот не настроен. Разрешены только административные команды.";
+    private static final int TOPIC_QUANTITY = 2;
 
     private final PlayerRepository playerRepository;
     private final SettingsService settingsService;
 
-    public void validate(CommandMessage commandMessage) {
+    /**
+     * Perform validation of the command messages and checks if command processing is required
+     *
+     * @param commandMessage message to validate
+     * @return <code>false</code> if command processing is not required, <code>true</code> otherwise
+     * @throws AnswerableDuneBotException when validation fails
+     */
+    public boolean validate(CommandMessage commandMessage) {
         Command command = commandMessage.getCommand();
+        validateCorrectCommand(commandMessage, command);
+
+        Set<Integer> topicIds = getTopicIds();
+        if (shouldSkipCommandProcessing(commandMessage, command, topicIds)) {
+            return false;
+        }
+        validateAnonymousCallForNonAnonymousCommand(commandMessage, command);
+        validateBotIsConfiguredForNonAdminCommands(commandMessage, command, topicIds);
+        validatePrivateCommandExecutedInPublicChat(commandMessage, command);
+        return true;
+    }
+
+    private boolean shouldSkipCommandProcessing(CommandMessage commandMessage, Command command, Set<Integer> topicIds) {
+        CommandType commandType = command.getCommandType();
+        return (commandType == CommandType.TEXT && command != Command.ADMIN || commandType == CommandType.FILE_UPLOAD)
+               && commandMessage.getChatType() != ChatType.PRIVATE && !topicIds.contains(commandMessage.getTopicId());
+    }
+
+    private void validateCorrectCommand(CommandMessage commandMessage, Command command) {
         if (command == null) {
             throw new AnswerableDuneBotException(WRONG_COMMAND_TEXT, commandMessage);
         }
+    }
+
+    private void validateAnonymousCallForNonAnonymousCommand(CommandMessage commandMessage, Command command) {
         if (!command.isAnonymous() && !playerRepository.existsNonGuestByTelegramId(commandMessage.getUserId())) {
             throw new AnswerableDuneBotException(ANONYMOUS_COMMAND_CALL, commandMessage);
         }
+    }
+
+    private void validateBotIsConfiguredForNonAdminCommands(CommandMessage commandMessage, Command command, Set<Integer> topicIds) {
         if (command != Command.ADMIN) {
             String stringSetting = settingsService.getStringSetting(SettingKey.CHAT_ID);
             if (stringSetting == null) {
                 throw new AnswerableDuneBotException(BOT_NOT_CONFIGURED, commandMessage);
             }
-            Integer classicTopicId = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
-            if (classicTopicId == null) {
-                throw new AnswerableDuneBotException(BOT_NOT_CONFIGURED, commandMessage);
-            }
-            Integer uprisingTopicId = settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
-            if (uprisingTopicId == null) {
+            if (topicIds.size() != TOPIC_QUANTITY) {
                 throw new AnswerableDuneBotException(BOT_NOT_CONFIGURED, commandMessage);
             }
         }
+    }
+
+    private void validatePrivateCommandExecutedInPublicChat(CommandMessage commandMessage, Command command) {
         if (!command.isPublicCommand() && commandMessage.getChatType() != null && commandMessage.getChatType() != ChatType.PRIVATE) {
             throw new AnswerableDuneBotException(PUBLIC_PROHIBITED_COMMAND_TEXT, commandMessage);
         }
+    }
+
+    private Set<Integer> getTopicIds() {
+        Set<Integer> topicIds = new HashSet<>();
+        topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC));
+        topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING));
+        topicIds.remove(null);
+        return topicIds;
     }
 }

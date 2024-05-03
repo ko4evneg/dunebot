@@ -62,7 +62,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
             log.debug("{}: matchPlayer {} processing...", logId(), matchPlayer.getId());
 
-            MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, registeredMatchPlayers, match.getId());
+            MessageDto submitCallbackMessage = getSubmitCallbackMessage(matchPlayer, match);
             CompletableFuture<ExternalMessageDto> messageCompletableFuture = messagingService.sendMessageAsync(submitCallbackMessage);
             messageCompletableFuture.whenComplete((message, throwable) -> {
                 if (throwable == null) {
@@ -91,17 +91,18 @@ public class SubmitCommandProcessor extends CommandProcessor {
         log.debug("{}: SUBMIT(internal) ended", logId());
     }
 
-    private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, List<MatchPlayer> registeredMatchPlayers, long matchId) {
+    private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {
+        Long matchId = match.getId();
         String text = String.format(MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE, matchId);
-        List<List<ButtonDto>> pollKeyboard = getSubmitCallbackKeyboard(registeredMatchPlayers, matchId);
+        List<List<ButtonDto>> pollKeyboard = getSubmitCallbackKeyboard(match);
         String playersChatId = Long.toString(matchPlayer.getPlayer().getExternalChatId());
         return new MessageDto(playersChatId, new ExternalMessage(text), null, pollKeyboard);
     }
 
-    private List<List<ButtonDto>> getSubmitCallbackKeyboard(List<MatchPlayer> registeredMatchPlayers, long matchIdString) {
+    private List<List<ButtonDto>> getSubmitCallbackKeyboard(Match match) {
         List<ButtonDto> buttons = new ArrayList<>();
-        String callbackPrefix = matchIdString + "__";
-        for (int i = 0; i < registeredMatchPlayers.size(); i++) {
+        String callbackPrefix = match.getId() + "__";
+        for (int i = 0; i < match.getModType().getPlayersCount(); i++) {
             int callbackCandidatePlace = i + 1;
             ButtonDto buttonDto = new ButtonDto(Integer.toString(callbackCandidatePlace), callbackPrefix + callbackCandidatePlace);
             buttons.add(buttonDto);

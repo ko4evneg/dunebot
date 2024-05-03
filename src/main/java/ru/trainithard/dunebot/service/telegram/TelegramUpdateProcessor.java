@@ -41,16 +41,17 @@ public class TelegramUpdateProcessor {
                 if (commandMessage != null) {
                     log.debug("{}: received {} command from {}", logId, commandMessage.getCommand(), commandMessage.getUserId());
 
-                    commonCommandMessageValidator.validate(commandMessage);
-                    log.debug("{}: successfully passed common validation", logId);
+                    boolean isProcessingRequired = commonCommandMessageValidator.validate(commandMessage);
+                    log.debug("{}: successfully passed common validation, processing required: {}", logId, isProcessingRequired);
+                    if (isProcessingRequired) {
+                        ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
+                        validator.validate(commandMessage);
+                        log.debug("{}: successfully passed specific validation", logId);
 
-                    ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
-                    validator.validate(commandMessage);
-                    log.debug("{}: successfully passed specific validation", logId);
-
-                    CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
-                    processor.process(commandMessage);
-                    log.debug("{}: successfully processed", logId);
+                        CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
+                        processor.process(commandMessage);
+                        log.debug("{}: successfully processed", logId);
+                    }
                 }
             } catch (AnswerableDuneBotException answerableException) {
                 sendAnswerableExceptionMessage(answerableException, logId);

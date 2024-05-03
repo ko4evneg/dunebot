@@ -6,13 +6,18 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
+import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 class CommandMessageFactoryImplTest {
@@ -23,7 +28,8 @@ class CommandMessageFactoryImplTest {
     private static final String POLL_ID = "100001";
     private static final String ACCEPT_SUBMIT_CALLBACK_DATA = "10000__" + NOT_PARTICIPATED_MATCH_PLACE;
     private static final String LEADER_CALLBACK_DATA = "10000_L_2";
-    private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl();
+    private final MatchRepository matchRepository = mock(MatchRepository.class);
+    private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl(matchRepository);
 
     @Test
     void shouldCreateCommandMessageForSlashTextUpdate() {
@@ -121,7 +127,8 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
-    void shouldCreateCommandMessageForPollAnswerCommandUpdate() {
+    void shouldCreateCommandMessageForPollAnswerCommandUpdateWhenMatchWithSamePollIdExists() {
+        doReturn(Optional.of(new Match())).when(matchRepository).findByExternalPollIdPollId(POLL_ID);
         Update pollAnswerUpdate = getPollAnswerUpdate();
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
@@ -136,7 +143,18 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
+    void shouldNotCreateCommandMessageForPollAnswerCommandUpdateWhenNoMatchWithSamePollIdExists() {
+        doReturn(Optional.empty()).when(matchRepository).findByExternalPollIdPollId(POLL_ID);
+        Update pollAnswerUpdate = getPollAnswerUpdate();
+
+        CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
+
+        assertThat(commandMessage).isNull();
+    }
+
+    @Test
     void shouldCreateCommandMessageForPollAnswerWithoutOptionsCommandUpdate() {
+        doReturn(Optional.of(new Match())).when(matchRepository).findByExternalPollIdPollId(POLL_ID);
         Update pollAnswerUpdate = getPollAnswerUpdate();
         pollAnswerUpdate.getPollAnswer().setOptionIds(Collections.emptyList());
 
