@@ -41,11 +41,13 @@ public class StartupServiceImpl implements StartupService {
         log.debug("All failed matches saved");
 
         String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
-        matchIdStringsByTopicId.forEach((topicId, matchIds) -> {
-            ExternalMessage externalMessage = new ExternalMessage(String.format(MATCH_FAIL_MESSAGE_TEMPLATE, "(" + matchIds + ")"));
-            MessageDto messageDto = new MessageDto(chatId, externalMessage, topicId, null);
-            messagingService.sendMessageAsync(messageDto);
-        });
+        if (chatId != null) {
+            matchIdStringsByTopicId.forEach((topicId, matchIds) -> {
+                ExternalMessage externalMessage = new ExternalMessage(String.format(MATCH_FAIL_MESSAGE_TEMPLATE, "(" + matchIds + ")"));
+                MessageDto messageDto = new MessageDto(chatId, externalMessage, topicId, null);
+                messagingService.sendMessageAsync(messageDto);
+            });
+        }
         log.info("Startup match validation finished");
     }
 }

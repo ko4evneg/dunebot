@@ -16,7 +16,9 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.DuneBotException;
+import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -49,6 +51,8 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @Autowired
     private DefaultCommandMessageValidator defaultValidator;
     @MockBean
+    private SettingsService settingsService;
+    @MockBean
     private ValidationStrategyFactory validationStrategyFactory;
     @MockBean
     private CommandProcessorFactory commandProcessorFactory;
@@ -61,6 +65,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     void beforeEach() {
         doCallRealMethod().when(commandMessageFactory).getInstance(any());
         doCallRealMethod().when(commonCommandMessageValidator).validate(any());
+        doReturn("100").when(settingsService).getStringSetting(SettingKey.CHAT_ID);
+        doReturn(124).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+        doReturn(125).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_UPRISING);
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                 "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");

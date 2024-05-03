@@ -19,7 +19,7 @@ services:
       interval: 3s
   bot:
     container_name: bot
-    image: dunebot:0.1.3
+    image: ko4evneg/dunebot:latest
     restart: always
     ports:
       - 8017:8017

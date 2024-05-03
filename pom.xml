@@ -176,8 +176,7 @@
                             <arguments>
                                 <argument>build</argument>
                                 <argument>-t</argument>
-                                <argument>${project.artifactId}:${project.version}
-                                </argument>
+                                <argument>ko4evneg/dunebot:latest</argument>
                                 <argument>.</argument>
                             </arguments>
                         </configuration>

@@ -12,9 +12,9 @@ public class SettingsServiceImpl implements SettingsService {
     private final SettingRepository settingRepository;
 
     @Override
-    public int getIntSetting(SettingKey key) {
-        String value = settingRepository.findByKey(key).getValue();
-        return Integer.parseInt(value);
+    public Integer getIntSetting(SettingKey key) {
+        Setting setting = settingRepository.findByKey(key);
+        return setting == null ? null : Integer.parseInt(setting.getValue());
     }
 
     @Override
@@ -25,7 +25,8 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Override
     public String getStringSetting(SettingKey key) {
-        return settingRepository.findByKey(key).getValue();
+        Setting setting = settingRepository.findByKey(key);
+        return setting == null ? null : setting.getValue();
     }
 
     @Override

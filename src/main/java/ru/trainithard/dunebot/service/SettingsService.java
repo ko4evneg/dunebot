@@ -4,7 +4,7 @@ import ru.trainithard.dunebot.model.SettingKey;
 
 public interface SettingsService {
 
-    int getIntSetting(SettingKey key);
+    Integer getIntSetting(SettingKey key);
 
     long getLongSetting(SettingKey key);
 
