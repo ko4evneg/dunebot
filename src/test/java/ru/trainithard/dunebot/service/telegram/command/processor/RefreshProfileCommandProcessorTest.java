@@ -147,6 +147,17 @@ class RefreshProfileCommandProcessorTest extends TestContextMock {
         assertThat(actualIsGuest).isNotNull().isFalse();
     }
 
+    @Test
+    void shouldRemoveChatBlockedFlagOnGuestsRefreshCommand() {
+        jdbcTemplate.execute("update players set is_guest = true, is_chat_blocked = true where id = 10000");
+
+        processor.process(getCommandMessage("abc (stm) cde"));
+
+        Boolean actualIsChatBlocked = jdbcTemplate.queryForObject("select is_chat_blocked from players where id = 10000", Boolean.class);
+
+        assertThat(actualIsChatBlocked).isNotNull().isFalse();
+    }
+
     private CommandMessage getCommandMessage(String newSteamName) {
         Message message = new Message();
         message.setMessageId(10000);
