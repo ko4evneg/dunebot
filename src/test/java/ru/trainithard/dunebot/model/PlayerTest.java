@@ -21,22 +21,22 @@ class PlayerTest {
     }
 
     @Test
-    void shouldReturnExternalNameMentionWhenExternalFirstNameMissing() {
-        assertThat(player.getMention()).isEqualTo("[@ex_name](tg://user?id=123000)");
+    void shouldReturnExternalMentionNameWhenExternalFirstNameMissing() {
+        assertThat(player.getMentionTag()).isEqualTo("ex_name");
     }
 
     @Test
-    void shouldReturnExternalNameMentionWhenExternalFirstNamePresented() {
+    void shouldReturnExternalMentionNameWhenExternalFirstNamePresented() {
         player.setExternalFirstName("ex_f_name");
 
-        assertThat(player.getMention()).isEqualTo("[@ex_name](tg://user?id=123000)");
+        assertThat(player.getMentionTag()).isEqualTo("ex_name");
     }
 
     @Test
-    void shouldReturnExternalFirstNameMentionWhenExternalNameMissing() {
+    void shouldReturnExternalFirstNameWhenExternalNameMissing() {
         player.setExternalFirstName("ex_f_name");
         player.setExternalName(null);
 
-        assertThat(player.getMention()).isEqualTo("[@ex_f_name](tg://user?id=123000)");
+        assertThat(player.getMentionTag()).isEqualTo("ex_f_name");
     }
 }
