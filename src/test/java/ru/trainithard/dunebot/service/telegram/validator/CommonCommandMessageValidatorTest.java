@@ -101,9 +101,33 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @MethodSource("invalidCommandsProvider")
-    void shouldReturnFalseForInvalidCommand(String commandText, String expectedReply) {
+    void shouldThrowForInvalidCommandInPrivateChat(String commandText, String expectedReply) {
         message.setText(commandText);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(expectedReply);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCommandsProvider")
+    void shouldThrowForInvalidCommandInBotTopic(String commandText, String expectedReply) {
+        message.setText(commandText);
+        message.getChat().setType(ChatType.CHANNEL.getValue());
         message.setMessageThreadId(9000);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(expectedReply);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCommandsProvider")
+    void shouldReturnFalseForInvalidCommandInNonBotTopic(String commandText, String expectedReply) {
+        message.setText(commandText);
+        message.getChat().setType(ChatType.CHANNEL.getValue());
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
