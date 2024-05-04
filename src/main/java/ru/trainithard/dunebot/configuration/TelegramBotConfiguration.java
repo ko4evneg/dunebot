@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 @Configuration
-@Profile(value = "prod")
+@Profile(value = "!test")
 public class TelegramBotConfiguration {
     @Value("${bot.token}")
     private String botToken;

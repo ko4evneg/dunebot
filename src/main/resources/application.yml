@@ -21,15 +21,9 @@ logging:
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: prod, dev
   main:
     web-application-type: none
-  datasource:
-    url: jdbc:postgresql://@db.hostname@:5432/postgres
-    #    todo
-    username: sa
-    password: sa
-    driver-class-name: org.postgresql.Driver
   task:
     scheduling:
       pool:
@@ -44,6 +38,30 @@ logging:
     ru.trainithard.dunebot: debug
 bot:
   version: @project.version@
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://@db.hostname@:5432/postgres
+    #    todo
+    username: sa
+    password: sa
+    driver-class-name: org.postgresql.Driver
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    #    todo
+    username: sa
+    password: sa
+    driver-class-name: org.postgresql.Driver
 ---
 
 spring:

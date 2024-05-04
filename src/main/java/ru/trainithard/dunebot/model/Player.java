@@ -93,8 +93,7 @@ public class Player extends BaseEntity {
         return String.format("%s (%s) %s", firstName, steamName, lastName);
     }
 
-    public String getMention() {
-        String mentionTag = externalName == null ? externalFirstName : externalName;
-        return String.format("[@%s](tg://user?id=%s)", mentionTag, externalId);
+    public String getMentionTag() {
+        return externalName == null ? externalFirstName : externalName;
     }
 }
