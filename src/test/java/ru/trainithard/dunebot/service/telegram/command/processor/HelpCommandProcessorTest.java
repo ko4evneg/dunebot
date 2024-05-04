@@ -72,8 +72,9 @@ class HelpCommandProcessorTest extends TestContextMock {
                 [История изменений](https://github.com/ko4evneg/dunebot/blob/master/changelog.txt)
                               
                 Список доступных команд:
-                '/register Имя \\(ник\\_steam\\) Фамилия' Регистрация игрока в рейтинге
-                '/refresh\\_profile Имя \\(ник\\_steam\\) Фамилия' Изменение данных существующего игрока
+                '/profile Имя \\(ник\\_steam\\) Фамилия' Регистрация игрока в рейтинге
+                '/profile Имя \\(ник\\_steam\\) Фамилия' Изменение данных существующего игрока
+                '/profile' Обновление данных Telegram \\(только для зарегистрированных игроков\\)
                 '/new dune' Создание опроса для классической Dune
                 '/new up4' Создание опроса для Dune Uprising \\(4 игрока\\)
                 '/cancel' Удаление последнего опроса, созданного игроком
