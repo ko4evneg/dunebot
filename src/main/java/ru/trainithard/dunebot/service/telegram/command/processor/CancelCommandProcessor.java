@@ -38,7 +38,7 @@ public class CancelCommandProcessor extends CommandProcessor {
             Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatchWithMatchPlayersBy(player.getId());
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
-                log.debug("{}: match found, id {}", logId(), latestOwnedMatch.getId());
+                log.debug("{}: to-cancel match found, id {}", logId(), latestOwnedMatch.getId());
                 //TODO: restrict onsubmit cancel
                 if (MatchState.getEndedMatchStates().contains(latestOwnedMatch.getState())) {
                     throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
@@ -50,6 +50,7 @@ public class CancelCommandProcessor extends CommandProcessor {
                     log.debug("{}: match and matchPlayers deleted", logId());
                 });
             } else {
+                log.debug("{}: no matches found to cancel, sending message...", logId());
                 MessageDto messageDto = new MessageDto(commandMessage,
                         new ExternalMessage("Не найдены матчи, которые можно завершить!"), null);
                 messagingService.sendMessageAsync(messageDto);
