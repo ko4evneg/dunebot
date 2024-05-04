@@ -10,7 +10,7 @@ import ru.trainithard.dunebot.service.StartupService;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 @Configuration
-@Profile(value = "prod")
+@Profile(value = "!test")
 @RequiredArgsConstructor
 public class TelegramBotInitializer implements CommandLineRunner {
     private final TelegramBot telegramBot;
