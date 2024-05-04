@@ -41,7 +41,6 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class TelegramUpdateProcessorTest extends TestContextMock {
-    private static final String COMMAND_REFRESH_PROFILE = "/refresh_profile";
     private static final int TELEGRAM_REPLY_ID = 10010;
     private static final long TELEGRAM_USER_ID_1 = 10000L;
     private static final long TELEGRAM_USER_ID_2 = 10001L;
@@ -138,8 +137,8 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     @Test
     void shouldMoveToNextUpdateWhenExceptionOccurs() {
         when(telegramBot.poll())
-                .thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE))
-                .thenReturn(getTextUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, null, COMMAND_REFRESH_PROFILE)).thenReturn(null);
+                .thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/help"))
+                .thenReturn(getTextUpdate(TELEGRAM_USER_ID_2, TELEGRAM_CHAT_ID_2, null, "/help")).thenReturn(null);
         doThrow(new RuntimeException()).when(commandMessageFactory).getInstance(any());
 
         updateProcessor.process();
@@ -163,7 +162,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     private static Stream<Arguments> validatorsSource() {
         return Stream.of(
-                Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE), CommandType.TEXT),
+                Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/new 1"), CommandType.TEXT),
                 Arguments.of(getPollAnswerUpdate(), CommandType.POLL_VOTE),
                 Arguments.of(getCallbackQueryUpdate(), CommandType.CALLBACK),
                 Arguments.of(getFileUploadUpdate(), CommandType.FILE_UPLOAD)
@@ -182,7 +181,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
     }
 
     private static Stream<Arguments> commonValidatorSource() {
-        Update textUpdate = getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE);
+        Update textUpdate = getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/new 1");
         return Stream.of(
                 Arguments.of(textUpdate, CommandMessage.getMessageInstance(textUpdate.getMessage())),
                 Arguments.of(textUpdate, CommandMessage.getMessageInstance(textUpdate.getMessage())),
@@ -204,6 +203,15 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         verify(commandProcessorFactory, times(1)).getProcessor(expectedCommand);
     }
 
+    private static Stream<Arguments> processorsSource() {
+        return Stream.of(
+                Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/profile"), Command.PROFILE),
+                Arguments.of(getPollAnswerUpdate(), Command.VOTE),
+                Arguments.of(getCallbackQueryUpdate(), Command.ACCEPT_SUBMIT),
+                Arguments.of(getFileUploadUpdate(), Command.UPLOAD_PHOTO)
+        );
+    }
+
     @Test
     void shouldSkipProcessingWhenCommonValidatorReturnFalse() {
         doReturn(false).when(commonCommandMessageValidator).validate(any());
@@ -213,15 +221,6 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         verifyNoInteractions(validationStrategyFactory);
         verifyNoInteractions(commandProcessorFactory);
-    }
-
-    private static Stream<Arguments> processorsSource() {
-        return Stream.of(
-                Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, COMMAND_REFRESH_PROFILE), Command.REFRESH_PROFILE),
-                Arguments.of(getPollAnswerUpdate(), Command.VOTE),
-                Arguments.of(getCallbackQueryUpdate(), Command.ACCEPT_SUBMIT),
-                Arguments.of(getFileUploadUpdate(), Command.UPLOAD_PHOTO)
-        );
     }
 
     private static Update getTextUpdate(long telegramUserId, long telegramChatId, Integer replyId, String text) {

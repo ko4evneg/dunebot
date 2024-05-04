@@ -49,7 +49,7 @@ public class Player extends BaseEntity {
     @Nullable
     private String externalName;
     /**
-     * Shows if player was registered using /register command or by voting in rating poll.
+     * Shows if player was registered using /profile command or by voting in rating poll.
      */
     @Column(name = "IS_GUEST")
     private boolean guest;

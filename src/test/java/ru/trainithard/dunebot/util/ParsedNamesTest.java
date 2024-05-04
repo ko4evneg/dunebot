@@ -13,8 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 class ParsedNamesTest {
     private static final String WRONG_INPUT_EXCEPTION_TEXT = "Неверный формат ввода имен. Пример верного формата:" +
-                                                             TestConstants.EXTERNAL_LINE_SEPARATOR + "/register Иван (Лось) Петров" +
-                                                             TestConstants.EXTERNAL_LINE_SEPARATOR + "/refresh_profile Иван (Лось) Петров";
+                                                             TestConstants.EXTERNAL_LINE_SEPARATOR + "/profile Иван (Лось) Петров";
 
     @ParameterizedTest
     @MethodSource("validInputsSource")

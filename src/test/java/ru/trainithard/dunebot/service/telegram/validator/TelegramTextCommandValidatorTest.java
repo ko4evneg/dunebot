@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 class TelegramTextCommandValidatorTest extends TestContextMock {
     private static final String NOT_AUTHORIZED_EXCEPTION_MESSAGE = "Команда требует прав администратора.";
-    private static final String NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE = "Данная команда должна иметь 3 параметр(а).";
+    private static final String NOT_ENOUGH_ARGUMENTS_EXCEPTION_MESSAGE = "Данная команда должна иметь 1 параметр(а).";
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
 
@@ -46,7 +46,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowForNotEnoughArgumentsCommand() {
-        message.setText("/register");
+        message.setText("/new");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatThrownBy(() -> validator.validate(commandMessage))
@@ -56,7 +56,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowForEnoughArgumentsCommand() {
-        message.setText("/register a (b) c");
+        message.setText("/new 1");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
@@ -64,7 +64,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowForEnoughArgumentsCommandWithTrailingSpaces() {
-        message.setText("/register a (b) c   ");
+        message.setText("/new 1  ");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();

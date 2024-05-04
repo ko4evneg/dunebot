@@ -20,7 +20,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CommonCommandMessageValidator {
     private static final String ANONYMOUS_COMMAND_CALL = "Команду могут выполнять только зарегистрированные игроки! " +
-                                                         "Для регистрации выполните команду '/register *steam_name*'";
+                                                         "Для регистрации выполните команду \n/profile Имя (ник_steam) Фамилия";
     private static final String WRONG_COMMAND_TEXT = "Неверная команда!";
     private static final String PUBLIC_PROHIBITED_COMMAND_TEXT = "Команда запрещена в групповых чатах - напишите боту напрямую.";
     private static final String BOT_NOT_CONFIGURED = "Бот не настроен. Разрешены только административные команды.";

@@ -17,7 +17,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .append(" - это значит, что вы не можете выполнять некоторые команды бота и не будете включены " +
                         "в результаты рейтинга.").newLine()
                 .append("Для того, чтобы подтвердить регистрацию, выполните в этом чате команду")
-                .appendBold(" '/refresh_profile Имя (ник в steam) Фамилия'").append(".").newLine()
+                .appendBold(" '/profile Имя (ник в steam) Фамилия'").append(".").newLine()
                 .appendBold("Желательно это  сделать прямо сейчас.").newLine()
                 .append("Подробная информация о боте: /help.");
     }

@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.*;
 class CommonCommandMessageValidatorTest extends TestContextMock {
     private static final String PUBLIC_CHAT_PROHIBITED_COMMAND_TEXT = "Команда запрещена в групповых чатах - напишите боту напрямую.";
     private static final String ANONYMOUS_COMMAND_TEXT =
-            "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду '/register *steam_name*'";
+            "Команду могут выполнять только зарегистрированные игроки! Для регистрации выполните команду \n/profile Имя (ник_steam) Фамилия";
     private static final String BOT_NOT_CONFIGURED_TEXT = "Бот не настроен. Разрешены только административные команды.";
     private static final Long TELEGRAM_USER_ID = 12345L;
     private static final Long TELEGRAM_CHAT_ID = 9000L;
@@ -141,9 +141,9 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
                 Arguments.of("register abc", "Неверная команда!"),
                 Arguments.of("", "Неверная команда!"),
                 Arguments.of("/", "Неверная команда!"),
-                Arguments.of("/registe", "Неверная команда!"),
-                Arguments.of("/registerX", "Неверная команда!"),
-                Arguments.of("/register_X", "Неверная команда!")
+                Arguments.of("/profil", "Неверная команда!"),
+                Arguments.of("/profileX", "Неверная команда!"),
+                Arguments.of("/profile_X", "Неверная команда!")
         );
     }
 
