@@ -69,6 +69,7 @@ class HelpCommandProcessorTest extends TestContextMock {
         return """
                 *Dunebot v1\\.3*
                 [Подробное описание бота](https://github.com/ko4evneg/dunebot/blob/master/help.md)
+                [История изменений](https://github.com/ko4evneg/dunebot/blob/master/changelog.txt)
                               
                 Список доступных команд:
                 '/register Имя \\(ник\\_steam\\) Фамилия' Регистрация игрока в рейтинге

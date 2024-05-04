@@ -20,11 +20,15 @@ public enum Command {
     /**
      * Register new player.
      */
-    REGISTER(TEXT, true, false, 3),
+    REGISTER(TEXT, true, false, 0),
+    /**
+     * Register new player.
+     */
+    PROFILE(TEXT, true, false, 0),
     /**
      * Update existing player profile.
      */
-    REFRESH_PROFILE(TEXT, true, false, 3),
+    REFRESH_PROFILE(TEXT, true, false, 0),
     /**
      * Creates new match gathering poll.
      */

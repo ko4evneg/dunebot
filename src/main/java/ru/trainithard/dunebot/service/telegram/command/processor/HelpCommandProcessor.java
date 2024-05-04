@@ -34,7 +34,8 @@ public class HelpCommandProcessor extends CommandProcessor {
     private ExternalMessage getHelpText() {
         return new ExternalMessage()
                 .startBold().append("Dunebot v").append(version).endBold().newLine()
-                .appendLink("Подробное описание бота", "https://github.com/ko4evneg/dunebot/blob/master/help.md")
+                .appendLink("Подробное описание бота", "https://github.com/ko4evneg/dunebot/blob/master/help.md").newLine()
+                .appendLink("История изменений", "https://github.com/ko4evneg/dunebot/blob/master/changelog.txt")
                 .newLine().newLine()
                 .append("Список доступных команд:").newLine()
                 .append("'/register Имя (ник_steam) Фамилия' Регистрация игрока в рейтинге").newLine()
