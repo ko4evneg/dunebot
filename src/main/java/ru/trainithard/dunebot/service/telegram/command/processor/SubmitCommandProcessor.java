@@ -24,6 +24,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,9 +92,12 @@ public class SubmitCommandProcessor extends CommandProcessor {
         int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId(), finishMatchTimeout);
-        dunebotTaskScheduler.schedule(() -> matchFinishingService
-                .finishNotSubmittedMatch(match.getId(), forcedFinishMessage), forcedFinishTime);
-        log.debug("{}: forced finish match task scheduled to {}", logId, forcedFinishTime);
+        dunebotTaskScheduler.schedule(() -> {
+            log.debug("TIMEOUT match {} finishing started", match.getId());
+            matchFinishingService
+                    .finishNotSubmittedMatch(match.getId(), forcedFinishMessage);
+        }, forcedFinishTime);
+        log.debug("{}: forced finish match {} task scheduled to {}", logId, match.getId(), forcedFinishTime.atZone(ZoneId.systemDefault()));
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {

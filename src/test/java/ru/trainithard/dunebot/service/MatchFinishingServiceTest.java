@@ -9,9 +9,12 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
@@ -38,6 +41,10 @@ class MatchFinishingServiceTest extends TestContextMock {
     private MatchFinishingService finishingService;
     @MockBean
     private Clock clock;
+    @SpyBean
+    private MatchPlayerRepository matchPlayerRepository;
+    @SpyBean
+    private TransactionTemplate transactionTemplate;
 
     @BeforeEach
     void beforeEach() {
@@ -253,13 +260,15 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @ParameterizedTest
     @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED"})
-    void shouldThrowOnSuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
+    void shouldDoNothingOnSuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
         jdbcTemplate.execute("update matches set submits_count = 4, state = '" + matchState + "' where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
         ExternalMessage reason = new ExternalMessage();
 
-        assertThatCode(() -> finishingService.finishNotSubmittedMatch(15000L, reason))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Can't accept submit for match 15000 due to its ended state");
+        finishingService.finishNotSubmittedMatch(15000L, reason);
+
+        verifyNoInteractions(messagingService);
+        verifyNoInteractions(transactionTemplate);
+        verifyNoInteractions(matchPlayerRepository);
     }
 }

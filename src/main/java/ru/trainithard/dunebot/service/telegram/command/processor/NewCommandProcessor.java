@@ -53,8 +53,8 @@ public class NewCommandProcessor extends CommandProcessor {
                                 Match match = new Match(modType);
                                 match.setExternalPollId(telegramPollDto.toExternalPollId());
                                 match.setOwner(player);
-                                matchRepository.save(match);
-                                log.debug("{}: new match saved", logId);
+                                Match savedMatch = matchRepository.save(match);
+                                log.debug("{}: new match {} saved", logId, savedMatch.getId());
                             });
                     log.debug("{}: match creation request sent", logId);
                 });

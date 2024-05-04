@@ -103,7 +103,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void processPlayerVoteRegistration(Player player, Match match) {
-        log.debug("{}: player id: {}, match id: {} vote registration...", logId(), player.getId(), match.getId());
+        log.debug("{}: player {}, match {} vote registration...", logId(), player.getId(), match.getId());
 
         int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
         match.setPositiveAnswersCount(updatedPositiveAnswersCount);
@@ -112,7 +112,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             matchRepository.save(match);
             matchPlayerRepository.save(matchPlayer);
             log.debug("{}: match {} and matchPlayer {} saved, positiveAnswers: {}",
-                    logId(), player.getId(), match.getId(), updatedPositiveAnswersCount);
+                    logId(), match.getId(), player.getId(), updatedPositiveAnswersCount);
         });
 
         if (match.isFull()) {
@@ -138,7 +138,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                                     deleteExistingOldSubmitMessage(match);
                                     match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                                     matchRepository.save(match);
-                                    log.debug("{}: match externalStart updated to '{}' and saved", logId(), matchStartInstant);
+                                    log.debug("Match {} externalStart updated to '{}' and saved", match.getId(), matchStartInstant);
                                 }),
                         matchStartInstant);
 
