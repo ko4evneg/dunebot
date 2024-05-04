@@ -56,7 +56,9 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldCorrectlyFillChatIdAndReplyIdForPersonalMessage() {
-        message.setText("/fake_command");
+        message.setText("/cancel");
+        message.setMessageId(9001);
+        message.getFrom().setId(100500L);
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatThrownBy(() -> validator.validate(commandMessage))
@@ -68,8 +70,9 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @Test
     void shouldCorrectlyFillChatIdAndReplyIdForTopicMessage() {
         Message replyMessage = new Message();
+        message.setText("/cancel");
+        message.getFrom().setId(100500L);
         replyMessage.setMessageId(9001);
-        message.setText("/fake_command");
         message.setReplyToMessage(replyMessage);
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
@@ -98,13 +101,38 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @MethodSource("invalidCommandsProvider")
-    void shouldThrowForInvalidCommand(String commandText, String expectedReply) {
+    void shouldThrowForInvalidCommandInPrivateChat(String commandText, String expectedReply) {
         message.setText(commandText);
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatThrownBy(() -> validator.validate(commandMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)
                 .hasMessage(expectedReply);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCommandsProvider")
+    void shouldThrowForInvalidCommandInBotTopic(String commandText, String expectedReply) {
+        message.setText(commandText);
+        message.getChat().setType(ChatType.CHANNEL.getValue());
+        message.setMessageThreadId(9000);
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(expectedReply);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidCommandsProvider")
+    void shouldReturnFalseForInvalidCommandInNonBotTopic(String commandText, String expectedReply) {
+        message.setText(commandText);
+        message.getChat().setType(ChatType.CHANNEL.getValue());
+        CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
+
+        boolean actualIsProcessingRequired = validator.validate(commandMessage);
+
+        assertThat(actualIsProcessingRequired).withFailMessage(expectedReply).isFalse();
     }
 
     private static Stream<Arguments> invalidCommandsProvider() {

@@ -71,9 +71,9 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         doReturn(125).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_UPRISING);
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + TELEGRAM_USER_ID_1 + ", " + TELEGRAM_CHAT_ID_1 + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10001, " + TELEGRAM_USER_ID_2 + ", " + TELEGRAM_CHAT_ID_2 + " , 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, " + TELEGRAM_USER_ID_2 + ", " + TELEGRAM_CHAT_ID_2 + " , 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                              "values (10001, 'ExternalPollId', 10001, 10004, 10005, 100001, '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, created_at) " +
@@ -100,12 +100,12 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     @Test
     void shouldIncludeReplyMessageIdOnTopicWrongCommandReceive() {
-        when(telegramBot.poll()).thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, 12345, "/wrongcommand")).thenReturn(null);
+        when(telegramBot.poll()).thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, 125, "/wrongcommand")).thenReturn(null);
 
         updateProcessor.process();
 
-        verify(messagingService, times(1)).sendMessageAsync(argThat(messageDto ->
-                messageDto.getTopicId() == 12345));
+        verify(messagingService, times(1))
+                .sendMessageAsync(argThat(messageDto -> messageDto.getTopicId() == 125));
     }
 
     @Test
@@ -202,6 +202,17 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         updateProcessor.process();
 
         verify(commandProcessorFactory, times(1)).getProcessor(expectedCommand);
+    }
+
+    @Test
+    void shouldSkipProcessingWhenCommonValidatorReturnFalse() {
+        doReturn(false).when(commonCommandMessageValidator).validate(any());
+        when(telegramBot.poll()).thenReturn(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/wrongcommand")).thenReturn(null);
+
+        updateProcessor.process();
+
+        verifyNoInteractions(validationStrategyFactory);
+        verifyNoInteractions(commandProcessorFactory);
     }
 
     private static Stream<Arguments> processorsSource() {

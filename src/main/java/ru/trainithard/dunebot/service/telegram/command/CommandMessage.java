@@ -113,7 +113,7 @@ public class CommandMessage {
     private void assignTextSourcedValues(Message message) {
         String text = message.getText();
         if (text != null && text.length() > 1) {
-            String[] commandWithArguments = text.substring(1).split("\\s+");
+            String[] commandWithArguments = text.trim().substring(1).split("\\s+");
             this.command = Command.getCommand(commandWithArguments[0]);
             this.args = commandWithArguments.length > 1
                     ? Arrays.copyOfRange(commandWithArguments, 1, commandWithArguments.length)
