@@ -20,4 +20,8 @@ public class MarkdownEscaper {
         }
         return escapeTextBuilder.toString();
     }
+
+    public static String getEscapedMention(String mentionTag, long externalId) {
+        return String.format("[@%s](tg://user?id=%s)", getEscaped(mentionTag), externalId);
+    }
 }
