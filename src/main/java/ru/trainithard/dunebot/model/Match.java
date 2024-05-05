@@ -90,7 +90,7 @@ public class Match extends BaseEntity {
     }
 
     public boolean canBeFinished() {
-        return submitsCount == matchPlayers.size() && screenshotPath != null;
+        return submitsCount == modType.getPlayersCount() && screenshotPath != null;
     }
 
     public boolean isResubmitAllowed(int resubmitsLimit) {

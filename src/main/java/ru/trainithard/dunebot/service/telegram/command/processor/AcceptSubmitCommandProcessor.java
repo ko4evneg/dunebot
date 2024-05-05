@@ -96,7 +96,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private void processNonConflictSubmit(MatchPlayer submittingPlayer, int candidatePlace, Match match) {
-        log.debug("{}: player's submit processing", logId());
+        log.debug("{}: player's non-conflict submit processing", logId());
         submittingPlayer.setCandidatePlace(candidatePlace);
         match.setSubmitsCount(match.getSubmitsCount() + 1);
         transactionTemplate.executeWithoutResult(status -> {
