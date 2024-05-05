@@ -91,11 +91,9 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private void scheduleForcedFailFinish(Match match, int logId) {
         int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
-        ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId(), finishMatchTimeout);
         dunebotTaskScheduler.schedule(() -> {
             log.debug("TIMEOUT match {} finishing started", match.getId());
-            matchFinishingService
-                    .finishNotSubmittedMatch(match.getId(), forcedFinishMessage);
+            matchFinishingService.finishNotSubmittedMatch(match.getId(), false);
         }, forcedFinishTime);
         log.debug("{}: forced finish match {} task scheduled to {}", logId, match.getId(), forcedFinishTime.atZone(ZoneId.systemDefault()));
     }
@@ -118,13 +116,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
         }
         buttons.add(new ButtonDto("не участвовал(а)", callbackPrefix + NOT_PARTICIPATED_MATCH_PLACE));
         return Lists.partition(buttons, 2);
-    }
-
-    private ExternalMessage getForcedFinishMessage(Long matchId, int finishMatchTimeout) {
-        return new ExternalMessage()
-                .startBold().append("Матч ").append(matchId).endBold()
-                .append(" завершен без результата, так как в матче зарегистрированы не все места за отведенное для регистрации время (")
-                .append(finishMatchTimeout).append(" минут)!");
     }
 
     @Override

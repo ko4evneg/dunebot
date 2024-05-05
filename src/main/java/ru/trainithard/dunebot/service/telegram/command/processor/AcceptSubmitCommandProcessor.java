@@ -32,10 +32,6 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LIN
 @Service
 @RequiredArgsConstructor
 public class AcceptSubmitCommandProcessor extends CommandProcessor {
-    private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE =
-            "Игроки не смогли верно обозначить свои места! Превышено количество запросов на регистрацию результатов. " +
-            "Результаты не сохранены, регистрация запрещена.";
-
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
@@ -66,7 +62,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
                 processConflictResubmit(matchPlayers, submittingPlayer, candidatePlace, match);
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
-                processConflictMatchFinish(matchPlayers, match);
+                processConflictMatchFinish(match);
             } else {
                 processNonConflictSubmit(submittingPlayer, candidatePlace, match);
             }
@@ -88,11 +84,9 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         resubmitProcessor.process(match);
     }
 
-    private void processConflictMatchFinish(List<MatchPlayer> matchPlayers, Match match) {
+    private void processConflictMatchFinish(Match match) {
         log.debug("{}: conflict resolution - failed match", logId());
-        sendMessagesToMatchPlayers(matchPlayers, new ExternalMessage(RESUBMIT_LIMIT_EXCEEDED_MESSAGE));
-        ExternalMessage resubmitsLimitExceededMessage = getResubmitsLimitFinishMessage(match.getId());
-        matchFinishingService.finishNotSubmittedMatch(match.getId(), resubmitsLimitExceededMessage);
+        matchFinishingService.finishNotSubmittedMatch(match.getId(), true);
     }
 
     private void processNonConflictSubmit(MatchPlayer submittingPlayer, int candidatePlace, Match match) {
@@ -147,12 +141,6 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         conflictMessage.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
 
         return conflictMessage;
-    }
-
-    private ExternalMessage getResubmitsLimitFinishMessage(Long matchId) {
-        return new ExternalMessage()
-                .startBold().append("Матч ").append(matchId).endBold()
-                .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     }
 
     private ExternalMessage getSubmitText(long matchId, int candidatePlace) {

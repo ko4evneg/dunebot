@@ -1,8 +1,14 @@
 package ru.trainithard.dunebot.service.telegram.factory;
 
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.util.MarkdownEscaper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
@@ -20,5 +26,51 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .appendBold(" '/profile Имя (ник в steam) Фамилия'").append(".").newLine()
                 .appendBold("Желательно это  сделать прямо сейчас.").newLine()
                 .append("Подробная информация о боте: /help.");
+    }
+
+    @Override
+    public ExternalMessage getFinishReasonMessage(Match match, boolean isFailedByResubmitsLimit) {
+        Long matchId = match.getId();
+        ExternalMessage failMessage = new ExternalMessage()
+                .startBold().append("Матч ").append(matchId).endBold();
+        if (isFailedByResubmitsLimit) {
+            return failMessage.append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест " +
+                                      "(/resubmit). Это может быть вызвано командой или конфликтом мест последнего /resubmit.");
+        }
+        if (!match.hasAllPlacesSubmitted()) {
+            return getFailByMissingSubmitsMessage(match, failMessage);
+        }
+        if (!match.hasSubmitPhoto()) {
+            return failMessage.append(" завершен без результата, так как не загружен скриншот матча.");
+        }
+        return failMessage.append(" завершен без результата по неизвестной причине - вероятно это баг.");
+    }
+
+    private ExternalMessage getFailByMissingSubmitsMessage(Match match, ExternalMessage failMessage) {
+        List<Player> playersWithoutCandidatePlace = match.getMatchPlayers().stream()
+                .filter(matchPlayer -> !matchPlayer.hasCandidateVote())
+                .map(MatchPlayer::getPlayer)
+                .toList();
+        List<String> notAnsweredPlayersMentions = new ArrayList<>();
+        List<String> chatBlockedPlayersMentions = new ArrayList<>();
+        for (Player player : playersWithoutCandidatePlace) {
+            String playerMention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+            if (player.isChatBlocked()) {
+                chatBlockedPlayersMentions.add(playerMention);
+            } else {
+                notAnsweredPlayersMentions.add(playerMention);
+            }
+        }
+        failMessage.append(" завершен без результата!");
+        if (!notAnsweredPlayersMentions.isEmpty()) {
+            failMessage.newLine().append("Игроки ").append(String.join(", ", notAnsweredPlayersMentions))
+                    .append(" не ответили на запрос места.");
+        }
+        if (!chatBlockedPlayersMentions.isEmpty()) {
+            failMessage.newLine().append("Игроки ").append(String.join(", ", chatBlockedPlayersMentions))
+                    .append(" имеют приватный телеграм профиль и не могут получать сообщения без добавления бота в контакты.");
+        }
+
+        return failMessage;
     }
 }

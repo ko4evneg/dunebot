@@ -22,7 +22,6 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -34,9 +33,6 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AcceptSubmitCommandProcessorTest extends TestContextMock {
-    private static final ExternalMessage UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = new ExternalMessage()
-            .appendBold("Матч 15000")
-            .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     private static final long USER_1_ID = 11000L;
     private static final long USER_2_ID = 11001L;
 
@@ -183,13 +179,13 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotInvokeUnsuccessfulMatchFinishOnLastConflictCallbackReply() {
+    void shouldNotInvokeUnsuccessfulMatchFinishOnLastConflictCallbackReplyWhenResubmitsLimitIsNotReached() {
         jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        verify(matchFinishingService, never()).finishNotSubmittedMatch(eq(15000L), eq(UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE));
+        verify(matchFinishingService, never()).finishNotSubmittedMatch(15000L, false);
     }
 
     @Test
@@ -237,22 +233,13 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendMessageAboutResubmitExceedLimitOnResubmitExceedLastConflictCallbackReply() {
+    void shouldInvokeMatchUnsubmittedFinishOnResubmitExceedLastConflictCallbackReply() {
         jdbcTemplate.execute("update matches set submits_count = 3, submits_retry_count = " + TestConstants.RESUBMITS_LIMIT + " where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
-        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(4)).sendMessageAsync(messageCaptor.capture());
-        List<MessageDto> actualMessages = messageCaptor.getAllValues();
-
-        String conflictText = "Игроки не смогли верно обозначить свои места\\! Превышено количество запросов на регистрацию результатов\\. " +
-                              "Результаты не сохранены, регистрация запрещена\\.";
-        assertThat(actualMessages)
-                .allMatch(message -> conflictText.equals(message.getText()))
-                .extracting(MessageDto::getChatId)
-                .containsExactlyInAnyOrder("12000", "12001", "12002", "12003");
+        verify(matchFinishingService).finishNotSubmittedMatch(15000, true);
     }
 
     @Test

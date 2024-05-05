@@ -13,15 +13,13 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.telegram.factory.ExternalMessageFactory;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
@@ -35,9 +33,11 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     private final TransactionTemplate transactionTemplate;
     private final MessagingService messagingService;
     private final Clock clock;
+    private final ExternalMessageFactory externalMessageFactory;
 
     @Override
-    public void finishNotSubmittedMatch(long matchId, ExternalMessage reasonMessage) {
+    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
+    public void finishNotSubmittedMatch(long matchId, boolean isFailedByResubmitsLimit) {
         int logId = LogId.get();
         log.debug("{}: finishing not submitted match {} started", logId, matchId);
 
@@ -48,32 +48,27 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         }
         log.debug("{}: match {} found (state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
         if (!MatchState.getEndedMatchStates().contains(match.getState())) {
-            if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
+            if (match.hasAllPlacesSubmitted() && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
             } else {
-                match.setState(MatchState.FAILED);
-                match.setFinishDate(LocalDate.now(clock));
-                match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
+                ExternalMessage finishReasonMessage = externalMessageFactory.getFinishReasonMessage(match, isFailedByResubmitsLimit);
+                failMatch(match);
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(match.getMatchPlayers());
                     log.debug("{}: match {} and its matchPlayers saved", logId, match.getId());
                 });
 
-                ExternalPollId externalPollId = match.getExternalPollId();
-                MessageDto finishMessage = new MessageDto(externalPollId, reasonMessage);
-                messagingService.sendMessageAsync(finishMessage);
+                messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), finishReasonMessage));
             }
         }
         log.debug("{}: finishing not submitted match ended", logId);
     }
 
-    private boolean hasAllPlacesSubmitted(Match match) {
-        int requiredPlaceSubmits = match.getModType().getPlayersCount();
-        Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());
-        match.getMatchPlayers().forEach(matchPlayer -> possibleMatchPlaces.remove(matchPlayer.getCandidatePlace()));
-        log.debug("{}: match misses {} candidatePlaces", LogId.get(), possibleMatchPlaces.size());
-        return possibleMatchPlaces.isEmpty();
+    private void failMatch(Match match) {
+        match.setState(MatchState.FAILED);
+        match.setFinishDate(LocalDate.now(clock));
+        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
     }
 
     @Override

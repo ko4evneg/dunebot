@@ -47,8 +47,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     private static final long USER_ID = 11000L;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
-    private static final String RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT =
-            "*Матч 15000* завершен без результата, так как истек лимит времени регистрации голосов\\.";
     private final CommandMessage resubmitCommandMessage = getCommandMessage(USER_ID);
 
     @Autowired
@@ -225,7 +223,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldDeleteScreenshotFileOnResubmit() throws IOException {
         jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
-        byte[] screenshotBytes = "abc".getBytes();
+        byte[] screenshotBytes = "abc" .getBytes();
         Files.createDirectories(Path.of("photos"));
         Files.write(Path.of("photos/1.jpg"), screenshotBytes);
 
@@ -262,8 +260,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(resubmitCommandMessage);
 
-        verify(finishingService, times(1)).finishNotSubmittedMatch(
-                eq(15000L), argThat(message -> RESUBMIT_LIMIT_EXCEED_FINISH_MESSAGE_TEXT.equals(message.getText())));
+        verify(finishingService).finishNotSubmittedMatch(eq(15000L), eq(true));
     }
 
     @Test
