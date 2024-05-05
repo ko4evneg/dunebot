@@ -13,7 +13,6 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
-import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -44,21 +43,14 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         log.debug("{}: RESUBMIT ended", logId());
     }
 
-    private ExternalMessage getTimeoutFinishMessage(Long matchId) {
-        return new ExternalMessage()
-                .startBold().append("Матч ").append(matchId).endBold()
-                .append(" завершен без результата, так как истек лимит времени регистрации голосов.");
-    }
-
     void process(Match match) {
         log.debug("{}: RESUBMIT(internal) started", logId());
 
         int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
         log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
-            log.debug("{}: resubmit is not allowed. Finishing by timeout...", logId());
-            ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
-            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage);
+            log.debug("{}: resubmit is not allowed. Finishing by resubmits llimit reached...", logId());
+            matchFinishingService.finishNotSubmittedMatch(match.getId(), true);
         } else {
             List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
             log.debug("{}: matchPlayers retrieved", logId());
