@@ -67,7 +67,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         log.debug("{}: vote registration...", logId());
         matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
                 .ifPresent(match -> {
-                    log.debug("{}: found match {}", logId(), match.getId());
+                            log.debug("{}: found match {}", logId(), match.getId());
                             Optional<Player> playerOptional = playerRepository.findByExternalId(commandMessage.getUserId());
                             Player player;
                             if (playerOptional.isEmpty()) {
@@ -80,12 +80,12 @@ public class VoteCommandProcessor extends CommandProcessor {
                                 player = playerOptional.get();
                                 log.debug("{}: player telegram id {} found", logId(), commandMessage.getUserId());
                             }
-                    if (player.isGuest()) {
-                        ExternalMessage guestVoteMessage = externalMessageFactory.getGuestMessageDto(player);
-                        MessageDto messageDto = new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
-                        messagingService.sendMessageAsync(messageDto).exceptionally(processException(player, logId()));
-                    }
-                    processPlayerVoteRegistration(player, match);
+                            if (player.isGuest()) {
+                                ExternalMessage guestVoteMessage = externalMessageFactory.getGuestMessageDto(player);
+                                MessageDto messageDto = new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
+                                messagingService.sendMessageAsync(messageDto).exceptionally(processException(player, logId()));
+                            }
+                            processPlayerVoteRegistration(player, match);
                         }
                 );
         log.debug("{}: vote registered", logId());

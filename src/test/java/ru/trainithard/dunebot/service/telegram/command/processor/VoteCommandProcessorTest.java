@@ -375,11 +375,13 @@ class VoteCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
+        reset(messagingService);
+
         syncRunScheduledTaskAction();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getAllValues().get(1);
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
         String[] textRows = messageDto.getText().split("\n");
         List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
         List<String> guestsNames = Arrays.stream(textRows[4].split(", ")).toList();
@@ -398,19 +400,24 @@ class VoteCommandProcessorTest extends TestContextMock {
     @Test
     void shouldSendChatBlockerWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
         doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
-        jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411', is_chat_blocked = true where id = 10002");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
+                             "last_name, external_first_name, external_name, is_chat_blocked, created_at) " +
+                             "values (10004, 99999, 12348, 'st_pl5', 'name5', 'l5', 'ef45', 'en5', true, '2010-10-10') ");
+        jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10001, 10000, 10001, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10002, 10000, 10002, '2010-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, 99999));
+        reset(messagingService);
+
         syncRunScheduledTaskAction();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getAllValues().get(1);
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
         String[] textRows = messageDto.getText().split("\n");
         List<String> chatBlockedNames = Arrays.stream(textRows[7].split(", ")).toList();
 
@@ -420,7 +427,7 @@ class VoteCommandProcessorTest extends TestContextMock {
         assertThat(textRows[5]).isBlank();
         assertThat(textRows[6]).isEqualTo("*Особое внимание:* у этих игроков заблокированы чаты\\. Без их регистрации и добавлении в контакты бота" +
                                           "* до начала регистрации результатов, завершить данный матч будет невозможно\\!*");
-        assertThat(chatBlockedNames).containsExactlyInAnyOrder("[@en3](tg://user?id=12347)");
+        assertThat(chatBlockedNames).containsExactlyInAnyOrder("[@en5](tg://user?id=99999)");
     }
 
     @Test
