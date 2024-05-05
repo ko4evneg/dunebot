@@ -71,7 +71,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                     //todo: transaction?
                     matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                     matchPlayerRepository.save(matchPlayer);
-                    log.debug("{}: matchPlayer {} saved", logId, matchPlayer.getId());
+                    log.debug("{}: matchPlayer {} saved (submit message id {})", logId, matchPlayer.getId(), message.getMessageId());
                     if (match.getState() == MatchState.NEW) {
                         match.setState(MatchState.ON_SUBMIT);
                         matchRepository.save(match);
@@ -89,15 +89,18 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     private void scheduleForcedFailFinish(Match match, int logId) {
-        int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
-        Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
-        ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId(), finishMatchTimeout);
-        dunebotTaskScheduler.schedule(() -> {
-            log.debug("TIMEOUT match {} finishing started", match.getId());
-            matchFinishingService
-                    .finishNotSubmittedMatch(match.getId(), forcedFinishMessage);
-        }, forcedFinishTime);
-        log.debug("{}: forced finish match {} task scheduled to {}", logId, match.getId(), forcedFinishTime.atZone(ZoneId.systemDefault()));
+        if (match.getSubmitsRetryCount() == 0) {
+            int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
+            Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
+            ExternalMessage forcedFinishMessage = getForcedFinishMessage(match.getId(), finishMatchTimeout);
+            dunebotTaskScheduler.schedule(() -> {
+                log.debug("TIMEOUT match {} finishing started", match.getId());
+                matchFinishingService
+                        .finishNotSubmittedMatch(match.getId(), forcedFinishMessage);
+            }, forcedFinishTime);
+            log.debug("{}: forced finish match {} task scheduled to {}",
+                    logId, match.getId(), forcedFinishTime.atZone(ZoneId.systemDefault()));
+        }
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {

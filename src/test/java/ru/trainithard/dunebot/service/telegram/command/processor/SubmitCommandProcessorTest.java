@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -291,9 +292,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnSubmit() {
-        jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
-
+    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnSubmitWhenRetryCountIsZero() {
         processor.process(getCommandMessage(USER_ID));
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
@@ -303,10 +302,18 @@ class SubmitCommandProcessorTest extends TestContextMock {
         assertThat(actualInstant).isEqualTo(NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3})
+    void shouldNotScheduleUnsuccessfullySubmittedMatchFinishTaskOnSubmitWhenRetryCountIsNotZero(int retries) {
+        jdbcTemplate.execute("update matches set submits_retry_count = " + retries + " where id = 15000");
+
+        processor.process(getCommandMessage(USER_ID));
+
+        verifyNoInteractions(taskScheduler);
+    }
+
     @Test
     void shouldInvokeUnsuccessfullySubmittedMatchFinishOnScheduledTask() throws InterruptedException {
-        jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
-
         processor.process(getCommandMessage(USER_ID));
 
         ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
