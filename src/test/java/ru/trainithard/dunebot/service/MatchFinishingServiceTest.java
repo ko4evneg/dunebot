@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +16,6 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
-import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 
 import java.time.Clock;
@@ -32,9 +32,6 @@ import static org.mockito.Mockito.*;
 class MatchFinishingServiceTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID = 9000;
-    private static final ExternalMessage UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE = new ExternalMessage()
-            .appendBold("Матч 15000")
-            .append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест");
     private static final LocalDate FINISH_DATE = LocalDate.of(2012, 12, 12);
 
     @Autowired
@@ -110,7 +107,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+        finishingService.finishNotSubmittedMatch(15000L, false);
 
         List<Integer> actualPersistedPlacesCount = jdbcTemplate
                 .queryForList("select id from match_players where match_id = 15000 and place is not null", Integer.class);
@@ -118,13 +115,14 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(actualPersistedPlacesCount).isEmpty();
     }
 
-    @Test
-    void shouldPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissing() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissing(boolean isResubmitLimitExceeded) {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                              "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
 
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
@@ -137,20 +135,21 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                              "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+        finishingService.finishNotSubmittedMatch(15000L, false);
 
         Boolean wasAnyPlaceSaved = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 15000 and place is not null)", Boolean.class);
 
         assertThat(wasAnyPlaceSaved).isNotNull().isFalse();
     }
 
-    @Test
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
         jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
                              "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
 
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -192,18 +191,20 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(actualDate).isNotNull().isEqualTo(FINISH_DATE);
     }
 
-    @Test
-    void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish() {
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
+        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
         assertThat(actualState).isNotNull().isEqualTo(MatchState.FAILED);
     }
 
-    @Test
-    void shouldSetMatchFinishDateOnUnsuccessfullySubmittedMatchFinish() {
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldSetMatchFinishDateOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
+        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
 
         LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
 
@@ -234,8 +235,8 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWithoutResults() {
-        finishingService.finishNotSubmittedMatch(15000L, UNSUCCESSFUL_SUBMIT_MATCH_FINISH_MESSAGE);
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
+        finishingService.finishNotSubmittedMatch(15000L, false);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -244,7 +245,40 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(messageDto)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест");
+                        "*Матч 15000* завершен без результата\\!\n" +
+                        "Игроки \\[@e1\\]\\(tg://user?id\\=11000\\) не ответили на запрос места\\.");
+    }
+
+    @Test
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWhenAllSubmitsDoneAndPhotoIsMissing() {
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+        jdbcTemplate.execute("update matches set screenshot_path = null where id = 15000");
+
+        finishingService.finishNotSubmittedMatch(15000L, false);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
+                        "*Матч 15000* завершен без результата, так как не загружен скриншот матча\\.");
+    }
+
+    @Test
+    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWithoutResultsWhenResubmitsLimitReached() {
+        finishingService.finishNotSubmittedMatch(15000L, true);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
+                        "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест \\(/resubmit\\)\\. " +
+                        "Это может быть вызвано командой или конфликтом мест последнего /resubmit\\.");
     }
 
     @ParameterizedTest
@@ -263,9 +297,8 @@ class MatchFinishingServiceTest extends TestContextMock {
     void shouldDoNothingOnSuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
         jdbcTemplate.execute("update matches set submits_count = 4, state = '" + matchState + "' where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
-        ExternalMessage reason = new ExternalMessage();
 
-        finishingService.finishNotSubmittedMatch(15000L, reason);
+        finishingService.finishNotSubmittedMatch(15000L, true);
 
         verifyNoInteractions(messagingService);
         verifyNoInteractions(transactionTemplate);
