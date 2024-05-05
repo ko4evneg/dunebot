@@ -155,10 +155,10 @@ public class VoteCommandProcessor extends CommandProcessor {
             String mention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
             log.debug("{}: match {} start message building... player {} (guest: {}, chat_blocked: {})",
                     logId(), match.getId(), player.getId(), player.getFriendlyName(), player.isGuest(), player.isChatBlocked());
-            if (player.isGuest()) {
-                guestPlayerMentions.add(mention);
-            } else if (player.isChatBlocked()) {
+            if (player.isChatBlocked()) {
                 blockedChatMentions.add(mention);
+            } else if (player.isGuest()) {
+                guestPlayerMentions.add(mention);
             } else {
                 regularPlayerMentions.add(mention);
             }
@@ -185,9 +185,9 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
         if (!blockedChatGuests.isEmpty()) {
             startMessage.newLine().newLine().appendBold("Особое внимание:")
-                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота,")
-                    .appendBold(" завершить данный матч будет невозможно!").newLine()
-                    .append(String.join(", ", blockedChatGuests));
+                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота")
+                    .appendBold(" до начала регистрации результатов, завершить данный матч будет невозможно!")
+                    .newLine().appendRaw(String.join(", ", blockedChatGuests));
         }
         return startMessage;
     }

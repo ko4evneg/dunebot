@@ -396,6 +396,34 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSendChatBlockerWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
+        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
+        jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411', is_chat_blocked = true where id = 10002");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10001, 10000, 10001, '2010-10-10')");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10002, 10000, 10002, '2010-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
+
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
+        syncRunScheduledTaskAction();
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(2)).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getAllValues().get(1);
+        String[] textRows = messageDto.getText().split("\n");
+        List<String> chatBlockedNames = Arrays.stream(textRows[7].split(", ")).toList();
+
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getKeyboard)
+                .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID, null);
+        assertThat(textRows[5]).isBlank();
+        assertThat(textRows[6]).isEqualTo("*Особое внимание:* у этих игроков заблокированы чаты\\. Без их регистрации и добавлении в контакты бота," +
+                                          "* до начала регистрации результатов, завершить данный матч будет невозможно\\!*");
+        assertThat(chatBlockedNames).containsExactlyInAnyOrder("[@en3](tg://user?id=12347)");
+    }
+
+    @Test
     void shouldSendPrivateMessageOnNewGuestPlayerPositiveRegistration() {
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
