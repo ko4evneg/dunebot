@@ -67,7 +67,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         log.debug("{}: vote registration...", logId());
         matchRepository.findByExternalPollIdPollId(commandMessage.getPollVote().pollId())
                 .ifPresent(match -> {
-                    log.debug("{}: found match {}", logId(), match.getId());
+                            log.debug("{}: found match {}", logId(), match.getId());
                             Optional<Player> playerOptional = playerRepository.findByExternalId(commandMessage.getUserId());
                             Player player;
                             if (playerOptional.isEmpty()) {
@@ -80,12 +80,12 @@ public class VoteCommandProcessor extends CommandProcessor {
                                 player = playerOptional.get();
                                 log.debug("{}: player telegram id {} found", logId(), commandMessage.getUserId());
                             }
-                    if (player.isGuest()) {
-                        ExternalMessage guestVoteMessage = externalMessageFactory.getGuestMessageDto(player);
-                        MessageDto messageDto = new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
-                        messagingService.sendMessageAsync(messageDto).exceptionally(processException(player, logId()));
-                    }
-                    processPlayerVoteRegistration(player, match);
+                            if (player.isGuest()) {
+                                ExternalMessage guestVoteMessage = externalMessageFactory.getGuestMessageDto(player);
+                                MessageDto messageDto = new MessageDto(player.getExternalChatId(), guestVoteMessage, null, null);
+                                messagingService.sendMessageAsync(messageDto).exceptionally(processException(player, logId()));
+                            }
+                            processPlayerVoteRegistration(player, match);
                         }
                 );
         log.debug("{}: vote registered", logId());
@@ -155,10 +155,10 @@ public class VoteCommandProcessor extends CommandProcessor {
             String mention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
             log.debug("{}: match {} start message building... player {} (guest: {}, chat_blocked: {})",
                     logId(), match.getId(), player.getId(), player.getFriendlyName(), player.isGuest(), player.isChatBlocked());
-            if (player.isGuest()) {
-                guestPlayerMentions.add(mention);
-            } else if (player.isChatBlocked()) {
+            if (player.isChatBlocked()) {
                 blockedChatMentions.add(mention);
+            } else if (player.isGuest()) {
+                guestPlayerMentions.add(mention);
             } else {
                 regularPlayerMentions.add(mention);
             }
@@ -185,9 +185,9 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
         if (!blockedChatGuests.isEmpty()) {
             startMessage.newLine().newLine().appendBold("Особое внимание:")
-                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота,")
-                    .appendBold(" завершить данный матч будет невозможно!").newLine()
-                    .append(String.join(", ", blockedChatGuests));
+                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота")
+                    .appendBold(" до начала регистрации результатов, завершить данный матч будет невозможно!")
+                    .newLine().appendRaw(String.join(", ", blockedChatGuests));
         }
         return startMessage;
     }
