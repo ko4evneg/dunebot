@@ -418,7 +418,7 @@ class VoteCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getKeyboard)
                 .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID, null);
         assertThat(textRows[5]).isBlank();
-        assertThat(textRows[6]).isEqualTo("*Особое внимание:* у этих игроков заблокированы чаты\\. Без их регистрации и добавлении в контакты бота," +
+        assertThat(textRows[6]).isEqualTo("*Особое внимание:* у этих игроков заблокированы чаты\\. Без их регистрации и добавлении в контакты бота" +
                                           "* до начала регистрации результатов, завершить данный матч будет невозможно\\!*");
         assertThat(chatBlockedNames).containsExactlyInAnyOrder("[@en3](tg://user?id=12347)");
     }
