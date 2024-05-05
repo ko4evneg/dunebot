@@ -153,6 +153,8 @@ public class VoteCommandProcessor extends CommandProcessor {
         for (MatchPlayer matchPlayer : matchPlayerRepository.findByMatch(match)) {
             Player player = matchPlayer.getPlayer();
             String mention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+            log.debug("{}: match {} start message building... player {} (guest: {}, chat_blocked: {})",
+                    logId(), match.getId(), player.getId(), player.getFriendlyName(), player.isGuest(), player.isChatBlocked());
             if (player.isGuest()) {
                 guestPlayerMentions.add(mention);
             } else if (player.isChatBlocked()) {
@@ -170,6 +172,8 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     private ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
                                             List<String> guestPlayerMentions, List<String> blockedChatGuests) {
+        log.debug("{}: match {} start message composition... guests: {}, chat_blocks: {})",
+                logId(), match.getId(), guestPlayerMentions.size(), blockedChatGuests.size());
         ExternalMessage startMessage = new ExternalMessage()
                 .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
                 .newLine().appendRaw(String.join(", ", regularPlayerMentions));
