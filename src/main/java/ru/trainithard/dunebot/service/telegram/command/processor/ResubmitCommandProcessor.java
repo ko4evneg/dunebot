@@ -39,18 +39,8 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage) {
         log.debug("{}: RESUBMIT started", logId());
-
         Match match = validatedMatchRetriever.getValidatedResubmitMatch(commandMessage);
-        int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
-        log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
-        if (!match.isResubmitAllowed(resubmitsLimit)) {
-            log.debug("{}: resubmit is not allowed. Finishing by timeout...", logId());
-            ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
-            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage);
-        }
-
         process(match);
-
         log.debug("{}: RESUBMIT ended", logId());
     }
 
@@ -63,15 +53,23 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     void process(Match match) {
         log.debug("{}: RESUBMIT(internal) started", logId());
 
-        List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
-        log.debug("{}: matchPlayers retrieved", logId());
-        resetMatchData(match);
-        transactionTemplate.executeWithoutResult(status -> {
-            matchRepository.save(match);
-            matchPlayerRepository.saveAll(registeredMatchPlayers);
-            log.debug("{}: match {} and matchPlayers submit discarded info and updated limits saved.", logId(), match.getId());
-        });
-        submitCommandProcessor.process(match);
+        int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
+        log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
+        if (!match.isResubmitAllowed(resubmitsLimit)) {
+            log.debug("{}: resubmit is not allowed. Finishing by timeout...", logId());
+            ExternalMessage timeoutFinishMessage = getTimeoutFinishMessage(match.getId());
+            matchFinishingService.finishNotSubmittedMatch(match.getId(), timeoutFinishMessage);
+        } else {
+            List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
+            log.debug("{}: matchPlayers retrieved", logId());
+            resetMatchData(match);
+            transactionTemplate.executeWithoutResult(status -> {
+                matchRepository.save(match);
+                matchPlayerRepository.saveAll(registeredMatchPlayers);
+                log.debug("{}: match {} and matchPlayers submit discarded info and updated limits saved.", logId(), match.getId());
+            });
+            submitCommandProcessor.process(match);
+        }
 
         log.debug("{}: RESUBMIT(internal) ended", logId());
     }
