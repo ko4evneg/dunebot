@@ -29,7 +29,7 @@ public class LeaderCommandProcessor extends CommandProcessor {
         Callback callback = new Callback(commandMessage.getCallback());
         long matchId = callback.matchId;
         long leaderId = callback.leaderId;
-        log.debug("{}: callback parsed. Match id: {}, leader id: {}", logId(), matchId, leaderId);
+        log.debug("{}: callback parsed. Match {}, leader {}", logId(), matchId, leaderId);
         Leader leader = leaderRepository.findById(leaderId).orElseThrow();
         log.debug("{}: leader {} found", logId(), leader.getName());
         matchRepository.saveLeader(matchId, leader);

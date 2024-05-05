@@ -103,7 +103,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void processPlayerVoteRegistration(Player player, Match match) {
-        log.debug("{}: player id: {}, match id: {} vote registration...", logId(), player.getId(), match.getId());
+        log.debug("{}: player {}, match {} vote registration...", logId(), player.getId(), match.getId());
 
         int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
         match.setPositiveAnswersCount(updatedPositiveAnswersCount);
@@ -112,7 +112,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             matchRepository.save(match);
             matchPlayerRepository.save(matchPlayer);
             log.debug("{}: match {} and matchPlayer {} saved, positiveAnswers: {}",
-                    logId(), player.getId(), match.getId(), updatedPositiveAnswersCount);
+                    logId(), match.getId(), player.getId(), updatedPositiveAnswersCount);
         });
 
         if (match.isFull()) {
@@ -138,7 +138,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                                     deleteExistingOldSubmitMessage(match);
                                     match.setExternalStartId(new ExternalMessageId(externalMessageDto));
                                     matchRepository.save(match);
-                                    log.debug("{}: match externalStart updated to '{}' and saved", logId(), matchStartInstant);
+                                    log.debug("Match {} externalStart updated to '{}' and saved", match.getId(), matchStartInstant);
                                 }),
                         matchStartInstant);
 
@@ -153,6 +153,8 @@ public class VoteCommandProcessor extends CommandProcessor {
         for (MatchPlayer matchPlayer : matchPlayerRepository.findByMatch(match)) {
             Player player = matchPlayer.getPlayer();
             String mention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+            log.debug("{}: match {} start message building... player {} (guest: {}, chat_blocked: {})",
+                    logId(), match.getId(), player.getId(), player.getFriendlyName(), player.isGuest(), player.isChatBlocked());
             if (player.isGuest()) {
                 guestPlayerMentions.add(mention);
             } else if (player.isChatBlocked()) {
@@ -170,6 +172,8 @@ public class VoteCommandProcessor extends CommandProcessor {
 
     private ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
                                             List<String> guestPlayerMentions, List<String> blockedChatGuests) {
+        log.debug("{}: match {} start message composition... guests: {}, chat_blocks: {})",
+                logId(), match.getId(), guestPlayerMentions.size(), blockedChatGuests.size());
         ExternalMessage startMessage = new ExternalMessage()
                 .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
                 .newLine().appendRaw(String.join(", ", regularPlayerMentions));

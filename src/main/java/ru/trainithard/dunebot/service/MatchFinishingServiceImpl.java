@@ -39,11 +39,14 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     @Override
     public void finishNotSubmittedMatch(long matchId, ExternalMessage reasonMessage) {
         int logId = LogId.get();
-        log.debug("{}: finishing not submitted match started", logId);
+        log.debug("{}: finishing not submitted match {} started", logId, matchId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
-        validate(match);
-        log.debug("{}: match found (id: {}, state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
+        if (MatchState.getEndedMatchStates().contains(match.getState())) {
+            log.debug("{}: Match {} has been ended already. Finishing is not required. Exiting...", logId, matchId);
+            return;
+        }
+        log.debug("{}: match {} found (state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
         if (!MatchState.getEndedMatchStates().contains(match.getState())) {
             if (hasAllPlacesSubmitted(match) && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
@@ -77,15 +80,11 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     public void finishSubmittedMatch(long matchId) {
         log.debug("{}: finishing submitted match started", LogId.get());
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
-        validate(match);
-        finishSuccessfullyAndSave(match);
-        log.debug("{}: finishing submitted match ended", LogId.get());
-    }
-
-    private void validate(Match match) {
         if (MatchState.getEndedMatchStates().contains(match.getState())) {
             throw new IllegalStateException("Can't accept submit for match " + match.getId() + " due to its ended state");
         }
+        finishSuccessfullyAndSave(match);
+        log.debug("{}: finishing submitted match ended", LogId.get());
     }
 
     private void finishSuccessfullyAndSave(Match match) {

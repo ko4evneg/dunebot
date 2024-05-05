@@ -55,7 +55,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         }
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
         MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
-        log.debug("{}: match id: {}, player id: {}", logId(), match.getId(), submittingPlayer.getPlayer().getId());
+        log.debug("{}: match {}, player {}", logId(), match.getId(), submittingPlayer.getPlayer().getId());
 
         if (!submittingPlayer.hasCandidateVote()) {
             deleteOldSubmitMessage(submittingPlayer);

@@ -34,11 +34,11 @@ public class CancelCommandProcessor extends CommandProcessor {
         log.debug("{}: CANCEL started", logId());
 
         playerRepository.findByExternalId(commandMessage.getUserId()).ifPresent(player -> {
-            log.debug("{}: player id ({}) found", logId(), player.getId());
+            log.debug("{}: player {} found", logId(), player.getId());
             Optional<Match> latestOwnedMatchOptional = matchRepository.findLatestOwnedMatchWithMatchPlayersBy(player.getId());
             if (latestOwnedMatchOptional.isPresent()) {
                 Match latestOwnedMatch = latestOwnedMatchOptional.get();
-                log.debug("{}: to-cancel match found, id {}", logId(), latestOwnedMatch.getId());
+                log.debug("{}: to-cancel match {} found", logId(), latestOwnedMatch.getId());
                 //TODO: restrict onsubmit cancel
                 if (MatchState.getEndedMatchStates().contains(latestOwnedMatch.getState())) {
                     throw new AnswerableDuneBotException(FINISHED_MATCH_EXCEPTION_MESSAGE, player.getExternalChatId());
