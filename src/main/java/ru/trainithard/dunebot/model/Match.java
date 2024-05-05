@@ -9,6 +9,9 @@ import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Entity describing specific game match.c
@@ -107,6 +110,13 @@ public class Match extends BaseEntity {
 
     public boolean hasEnoughPlayers() {
         return positiveAnswersCount >= modType.getPlayersCount();
+    }
+
+    public boolean hasAllPlacesSubmitted() {
+        int requiredPlaceSubmits = modType.getPlayersCount();
+        Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());
+        matchPlayers.forEach(matchPlayer -> possibleMatchPlaces.remove(matchPlayer.getCandidatePlace()));
+        return possibleMatchPlaces.isEmpty();
     }
 
     public void prepareForResubmit() {
