@@ -267,6 +267,15 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldNotInvokeSubmitOnResubmitExceedingMessage() {
+        jdbcTemplate.execute("update matches set positive_answers_count = 4, submits_retry_count = 3 where id = 15000");
+
+        processor.process(resubmitCommandMessage);
+
+        verifyNoInteractions(submitProcessor);
+    }
+
+    @Test
     void shouldSendDeleteSubmitMessageWhenOldSubmitMessageExist() {
         processor.process(resubmitCommandMessage);
 
