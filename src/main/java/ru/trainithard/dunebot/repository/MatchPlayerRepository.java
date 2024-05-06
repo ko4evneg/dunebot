@@ -23,4 +23,6 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
     List<MatchPlayer> findByMatchDates(LocalDate from, LocalDate to, MatchState matchState, ModType modType);
 
     List<MatchPlayer> findByMatch(Match match);
+
+    List<MatchPlayer> findByPlayerExternalIdAndMatchState(long externalId, MatchState matchState);
 }

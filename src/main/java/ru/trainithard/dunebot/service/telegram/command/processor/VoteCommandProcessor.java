@@ -16,7 +16,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.service.telegram.factory.ExternalMessageFactory;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.time.Clock;
@@ -154,7 +154,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             Player player = matchPlayer.getPlayer();
             String mention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
             log.debug("{}: match {} start message building... player {} (guest: {}, chat_blocked: {})",
-                    logId(), match.getId(), player.getId(), player.getFriendlyName(), player.isGuest(), player.isChatBlocked());
+                    logId(), match.getId(), player.getId(), player.isGuest(), player.isChatBlocked());
             if (player.isChatBlocked()) {
                 blockedChatMentions.add(mention);
             } else if (player.isGuest()) {

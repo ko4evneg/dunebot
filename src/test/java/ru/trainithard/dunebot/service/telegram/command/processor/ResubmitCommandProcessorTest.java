@@ -207,20 +207,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldResetMatchLeaderOnResubmit() {
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10000, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg', leader_won = 10000 where id = 15000");
-
-        processor.process(resubmitCommandMessage);
-
-        Boolean isLeaderResetted = jdbcTemplate.queryForObject(
-                "select exists (select 1 from matches where id = 15000 and leader_won is null)", Boolean.class);
-
-        assertThat(isLeaderResetted).isNotNull().isTrue();
-    }
-
-    @Test
     void shouldDeleteScreenshotFileOnResubmit() throws IOException {
         jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
         byte[] screenshotBytes = "abc" .getBytes();
@@ -240,6 +226,16 @@ class ResubmitCommandProcessorTest extends TestContextMock {
 
         Boolean isAnyExternalMessageIdExist = jdbcTemplate.queryForObject("select exists" +
                                                                           "(select 1 from match_players where match_id = 15000 and candidate_place is not null)", Boolean.class);
+
+        assertThat(isAnyExternalMessageIdExist).isNotNull().isFalse();
+    }
+
+    @Test
+    void shouldResetMatchPlayersLeadersOnResubmit() {
+        processor.process(resubmitCommandMessage);
+
+        Boolean isAnyExternalMessageIdExist = jdbcTemplate.queryForObject("select exists" +
+                                                                          "(select 1 from match_players where match_id = 15000 and leader is not null)", Boolean.class);
 
         assertThat(isAnyExternalMessageIdExist).isNotNull().isFalse();
     }

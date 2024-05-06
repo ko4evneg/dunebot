@@ -1,18 +1,17 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
-import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
-import ru.trainithard.dunebot.model.Leader;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.repository.LeaderRepository;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
@@ -22,6 +21,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.TelegramFileDetailsDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactory;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -44,9 +44,10 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
     private final RestTemplate restTemplate;
     private final MatchRepository matchRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final ScreenshotService screenshotService;
     private final MatchFinishingService matchFinishingService;
-    private final LeaderRepository leaderRepository;
+    private final KeyboardsFactory keyboardsFactory;
 
     @Value("${bot.token}")
     private String botToken;
@@ -56,20 +57,25 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         int logId = logId();
         log.debug("{}: PHOTO started", logId);
 
-        Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT)
-                .iterator().next();
-        log.debug("{}: match {} found", logId, match.getId());
+        List<MatchPlayer> matchPlayersWithOnSubmitMatches =
+                matchPlayerRepository.findByPlayerExternalIdAndMatchState(commandMessage.getUserId(), MatchState.ON_SUBMIT);
+        if (matchPlayersWithOnSubmitMatches.size() > 1) {
+            throw new AnswerableDuneBotException("У вас несколько матчей в состоянии /submit. Вероятно это баг.", commandMessage);
+        }
+        MatchPlayer matchPlayer = matchPlayersWithOnSubmitMatches.get(0);
+        log.debug("{}: MatchPlayer {} found", logId, matchPlayer.getId());
 
         String fileId = getFileId(commandMessage);
         log.debug("{}: file telegram id: {}", logId, fileId);
         CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
         file.whenComplete((telegramFileDetailsDto, throwable) ->
-                processTelegramFile(commandMessage, telegramFileDetailsDto, logId, match));
+                processTelegramFile(commandMessage, telegramFileDetailsDto, logId, matchPlayer));
 
         log.debug("{}: PHOTO ended", logId);
     }
 
-    private void processTelegramFile(CommandMessage commandMessage, TelegramFileDetailsDto telegramFileDetailsDto, int logId, Match match) {
+    private void processTelegramFile(CommandMessage commandMessage, TelegramFileDetailsDto telegramFileDetailsDto,
+                                     int logId, MatchPlayer matchPlayer) {
         log.debug("{}: file detail callback received from telegram", logId);
 
         String filePath = telegramFileDetailsDto.path();
@@ -79,6 +85,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
         try {
             if (photoBytes != null) {
+                Match match = matchPlayer.getMatch();
                 String dottedFileExtension = getFileExtension(filePath);
                 String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
                 log.debug("{}: save path: {}", logId, savePath);
@@ -90,7 +97,8 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
 
-                MessageDto message = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), getLeadersKeyboard(match));
+                List<List<ButtonDto>> leadersKeyboard = keyboardsFactory.getLeadersKeyboard(matchPlayer);
+                MessageDto message = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), leadersKeyboard);
                 messagingService.sendMessageAsync(message);
             }
         } catch (ScreenshotFileIOException exception) {
@@ -123,15 +131,6 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private String getFileExtension(String filePath) {
         int lastSlashIndex = filePath.lastIndexOf(".");
         return filePath.substring(lastSlashIndex);
-    }
-
-    private List<List<ButtonDto>> getLeadersKeyboard(Match match) {
-        String callbackPrefix = match.getId() + "_L_";
-        List<Leader> leaders = leaderRepository.findAllByModType(match.getModType(), Sort.sort(Leader.class).by(Leader::getName));
-        List<ButtonDto> leadersButtons = leaders.stream()
-                .map(leader -> new ButtonDto(leader.getName(), callbackPrefix + leader.getId()))
-                .toList();
-        return Lists.partition(leadersButtons, 2);
     }
 
     @Override

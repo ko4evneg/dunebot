@@ -4,10 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Leader;
-import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.LeaderRepository;
-import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.repository.PlayerRepository;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -18,8 +16,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 @RequiredArgsConstructor
 public class LeaderCommandProcessor extends CommandProcessor {
     private static final String SUCCESS_LEADER_REGISTRATION_MESSAGE = "Лидер зарегистрирован. Ожидайте регистрации мест других игроков.";
-    private final MatchRepository matchRepository;
-    private final PlayerRepository playerRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final LeaderRepository leaderRepository;
 
     @Override
@@ -27,18 +24,21 @@ public class LeaderCommandProcessor extends CommandProcessor {
         log.debug("{}: LEADER started", logId());
 
         Callback callback = new Callback(commandMessage.getCallback());
-        long matchId = callback.matchId;
-        long leaderId = callback.leaderId;
-        log.debug("{}: callback parsed. Match {}, leader {}", logId(), matchId, leaderId);
-        Leader leader = leaderRepository.findById(leaderId).orElseThrow();
-        log.debug("{}: leader {} found", logId(), leader.getName());
-        matchRepository.saveLeader(matchId, leader);
-        log.debug("{}: leader saved to match", logId());
+        long matchPlayerId = callback.matchPlayerId;
+        matchPlayerRepository.findById(matchPlayerId).ifPresent(matchPlayer -> {
+            long leaderId = callback.leaderId;
+            log.debug("{}: callback parsed. MatchPlayer {}, leader {}", logId(), matchPlayerId, leaderId);
+            Leader leader = leaderRepository.findById(leaderId).orElseThrow();
+            log.debug("{}: leader {} found", logId(), leader.getName());
+            matchPlayer.setLeader(leader);
+            matchPlayerRepository.save(matchPlayer);
+            log.debug("{}: leader saved to match", logId());
 
-        Player answeredPlayer = playerRepository.findByExternalId(commandMessage.getUserId()).orElseThrow();
-        MessageDto messageDto =
-                new MessageDto(answeredPlayer.getExternalChatId(), new ExternalMessage(SUCCESS_LEADER_REGISTRATION_MESSAGE), null, null);
-        messagingService.sendMessageAsync(messageDto);
+            long playerChatId = matchPlayer.getPlayer().getExternalChatId();
+            MessageDto messageDto =
+                    new MessageDto(playerChatId, new ExternalMessage(SUCCESS_LEADER_REGISTRATION_MESSAGE), null, null);
+            messagingService.sendMessageAsync(messageDto);
+        });
 
         log.debug("{}: LEADER ended", logId());
     }
@@ -49,12 +49,12 @@ public class LeaderCommandProcessor extends CommandProcessor {
     }
 
     private static class Callback {
-        private final long matchId;
+        private final long matchPlayerId;
         private final long leaderId;
 
         private Callback(String callbackText) {
             String[] callbackData = callbackText.split("_L_");
-            this.matchId = Long.parseLong(callbackData[0]);
+            this.matchPlayerId = Long.parseLong(callbackData[0]);
             this.leaderId = Long.parseLong(callbackData[1]);
         }
     }

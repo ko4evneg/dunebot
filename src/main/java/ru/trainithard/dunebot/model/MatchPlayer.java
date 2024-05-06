@@ -35,6 +35,12 @@ public class MatchPlayer extends BaseEntity {
     @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
     private ExternalMessageId submitMessageId;
     /**
+     * Leader selected by Player in this Match
+     */
+    @OneToOne
+    @JoinColumn(name = "LEADER")
+    private Leader leader;
+    /**
      * Place in the <code>Match</code>. Is set when all players sent their <code>candidatePlace</code> without conflicts.
      * May have value of integer between 1 and max number of match participants, or <code>null</code> if not set.
      */

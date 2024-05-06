@@ -78,6 +78,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
                 matchPlayer.setCandidatePlace(null);
                 deleteOldSubmitMessage(matchPlayer.getSubmitMessageId());
                 matchPlayer.setSubmitMessageId(null);
+                matchPlayer.setLeader(null);
             });
         } catch (IOException e) {
             throw new ScreenshotFileIOException("Can not remove old screenshot file");
