@@ -1,10 +1,7 @@
 package ru.trainithard.dunebot.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.transaction.annotation.Transactional;
-import ru.trainithard.dunebot.model.Leader;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 
@@ -28,19 +25,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             """)
     List<Match> findLatestPlayerMatch(long externalPlayerId, Collection<MatchState> matchStates);
 
-    @Query("""
-            select m from Match m
-            left join fetch m.matchPlayers mp
-            where m.id = (
-                select mp2.match.id
-                from MatchPlayer mp2
-                where mp2.match.state = :matchState and mp2.player.externalId = :externalPlayerId
-                )
-            order by m.createdAt desc
-            limit 1
-            """)
-    List<Match> findLatestPlayerMatchWithMatchPlayerBy(long externalPlayerId, MatchState matchState);
-
     Optional<Match> findByExternalPollIdPollId(String telegramPollId);
 
     @Query("""
@@ -51,9 +35,4 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findWithMatchPlayersBy(long matchId);
 
     List<Match> findAllByStateNotIn(Collection<MatchState> states);
-
-    @Modifying
-    @Transactional
-    @Query("update Match m set m.leaderWon = :leader where m.id = :matchId")
-    void saveLeader(long matchId, Leader leader);
 }
