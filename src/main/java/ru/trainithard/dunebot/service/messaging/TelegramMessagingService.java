@@ -100,6 +100,7 @@ public class TelegramMessagingService implements MessagingService {
     private SendMessage getSendMessage(MessageDto message) {
         SendMessage sendMessage = new SendMessage(message.getChatId(), message.getText());
         sendMessage.setParseMode(MARKDOWN2_PARSE_MODE);
+        sendMessage.setDisableWebPagePreview(true);
         sendMessage.setMessageThreadId(message.getTopicId());
         sendMessage.setReplyToMessageId(message.getReplyMessageId());
         if (message.getKeyboard() != null) {
