@@ -198,14 +198,24 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldInvokeMatchResubmitOnLastConflictCallbackReply() {
-        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+    void shouldInvokeMatchResubmitOnConflictCallbackReply() {
+        jdbcTemplate.execute("update matches set submits_count = 2 where id = 15000");
         jdbcTemplate.execute("update match_players set candidate_place = 2 where id = 10001");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
         verify(resubmitCommandProcessor, times(1))
                 .process(argThat((Match match) -> match.getId().equals(15000L)));
+    }
+
+    @Test
+    void shouldNotInvokeMatchResubmitOnConflictCallbackReplyWhenNotParticipatedOptionSelected() {
+        jdbcTemplate.execute("update matches set submits_count = 2 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 0 where id = 10001");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__0"));
+
+        verifyNoInteractions(resubmitCommandProcessor);
     }
 
     @Test
