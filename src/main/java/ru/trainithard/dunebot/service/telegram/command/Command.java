@@ -18,7 +18,7 @@ import static ru.trainithard.dunebot.service.telegram.command.CommandType.*;
 public enum Command {
 
     /**
-     * Register new player.
+     * Deprecated - redirect message
      */
     REGISTER(TEXT, true, false, 0),
     /**
@@ -26,13 +26,25 @@ public enum Command {
      */
     PROFILE(TEXT, true, false, 0),
     /**
-     * Update existing player profile.
+     * Deprecated - redirect message
      */
     REFRESH_PROFILE(TEXT, true, false, 0),
     /**
-     * Creates new match gathering poll.
+     * Deprecated - redirect message
      */
-    NEW(TEXT, false, false, 1),
+    NEW(TEXT, false, false, 0),
+    /**
+     * Creates new classic Dune match gathering poll.
+     */
+    NEW_DUNE(TEXT, false, false, 0),
+    /**
+     * Creates new Uprising 4 players Dune match gathering poll.
+     */
+    NEW_UP4(TEXT, false, false, 0),
+    /**
+     * Creates new Uprising 6 players Dune match gathering poll.
+     */
+    NEW_UP6(TEXT, false, false, 0),
     /**
      * Accepts a vote in a match gathering poll.
      */
