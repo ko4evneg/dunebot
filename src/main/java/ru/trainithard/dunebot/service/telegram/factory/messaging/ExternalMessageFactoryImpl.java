@@ -79,4 +79,26 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
 
         return failMessage;
     }
+
+    @Override
+    public ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
+                                           List<String> guestPlayerMentions, List<String> blockedChatGuests) {
+        ExternalMessage startMessage = new ExternalMessage()
+                .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
+                .newLine().appendRaw(String.join(", ", regularPlayerMentions));
+        if (!guestPlayerMentions.isEmpty()) {
+            startMessage.newLine().newLine().appendBold("Внимание:")
+                    .append(" в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
+                            "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
+                    .newLine().appendRaw(String.join(", ", guestPlayerMentions));
+        }
+        if (!blockedChatGuests.isEmpty()) {
+            startMessage.newLine().newLine().appendBold("Особое внимание:")
+                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота")
+                    .appendBold(" до начала регистрации результатов, завершить данный матч будет невозможно!")
+                    .newLine().appendRaw(String.join(", ", blockedChatGuests));
+        }
+        return startMessage;
+    }
+
 }
