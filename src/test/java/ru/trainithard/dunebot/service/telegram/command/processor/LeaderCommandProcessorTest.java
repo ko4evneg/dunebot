@@ -73,13 +73,13 @@ class LeaderCommandProcessorTest extends TestContextMock {
 
     @ParameterizedTest
     @ValueSource(ints = {10000, 10001})
-    void shouldSaveLeaderInMatch(long leaderId) {
+    void shouldSaveLeaderInMatchPlayer(long leaderId) {
         Update callbackQueryUpdate = getCallbackQueryUpdate(leaderId);
         CommandMessage commandMessage = factory.getInstance(callbackQueryUpdate);
 
         processor.process(commandMessage);
 
-        Long actualMatchLeaderId = jdbcTemplate.queryForObject("select leader_won from matches where id = 10000", Long.class);
+        Long actualMatchLeaderId = jdbcTemplate.queryForObject("select leader from match_players where id = 10000", Long.class);
 
         assertThat(leaderId).isEqualTo(actualMatchLeaderId);
     }
@@ -95,13 +95,13 @@ class LeaderCommandProcessorTest extends TestContextMock {
         verify(messagingService).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessageDto = messageCaptor.getValue();
 
-        assertThat(actualMessageDto.getChatId()).isEqualTo("9001");
+        assertThat(actualMessageDto.getChatId()).isEqualTo("9000");
         assertThat(actualMessageDto.getText()).isEqualTo("Лидер зарегистрирован\\. Ожидайте регистрации мест других игроков\\.");
     }
 
     private static Update getCallbackQueryUpdate(long leaderId) {
         User user = new User();
-        user.setId(12346L);
+        user.setId(12345L);
         Message message = new Message();
         message.setMessageId(9000);
         message.setFrom(user);

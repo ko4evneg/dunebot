@@ -279,7 +279,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {2, 3, 4})
     void shouldAttachLeaderKeyboardToMessageAboutCallbackAcceptOnCallbackReplyWneNotFirstPlaceSelected(int place) {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
+        processor.process(getCommandMessage(USER_2_ID, 10002, 11002, "15000__" + place));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -289,9 +289,9 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 .flatExtracting(buttonDtos -> buttonDtos)
                 .extracting(ButtonDto::getText, ButtonDto::getCallback)
                 .containsExactly(
-                        tuple("lead1", "15000_L_10000"),
-                        tuple("lead2", "15000_L_10001"),
-                        tuple("lead3", "15000_L_10002")
+                        tuple("lead1", "10001_L_10000"),
+                        tuple("lead2", "10001_L_10001"),
+                        tuple("lead3", "10001_L_10002")
                 );
     }
 

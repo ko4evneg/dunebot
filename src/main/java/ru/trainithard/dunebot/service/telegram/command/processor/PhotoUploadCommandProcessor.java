@@ -8,7 +8,9 @@ import org.springframework.web.client.RestTemplate;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
@@ -41,6 +43,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
     private final RestTemplate restTemplate;
     private final MatchRepository matchRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final ScreenshotService screenshotService;
     private final MatchFinishingService matchFinishingService;
     private final KeyboardsFactory keyboardsFactory;
@@ -53,20 +56,22 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         int logId = logId();
         log.debug("{}: PHOTO started", logId);
 
-        Match match = matchRepository.findLatestPlayerMatchWithMatchPlayerBy(commandMessage.getUserId(), MatchState.ON_SUBMIT)
-                .iterator().next();
-        log.debug("{}: match {} found", logId, match.getId());
+        matchPlayerRepository.findLatestByPlayerExternalIdAndMatchState(commandMessage.getUserId(), MatchState.ON_SUBMIT)
+                .ifPresent(matchPlayer -> {
+                    log.debug("{}: MatchPlayer {} found", logId, matchPlayer.getId());
 
-        String fileId = getFileId(commandMessage);
-        log.debug("{}: file telegram id: {}", logId, fileId);
-        CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
-        file.whenComplete((telegramFileDetailsDto, throwable) ->
-                processTelegramFile(commandMessage, telegramFileDetailsDto, logId, match));
+                    String fileId = getFileId(commandMessage);
+                    log.debug("{}: file telegram id: {}", logId, fileId);
+                    CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
+                    file.whenComplete((telegramFileDetailsDto, throwable) ->
+                            processTelegramFile(commandMessage, telegramFileDetailsDto, logId, matchPlayer));
+                });
 
         log.debug("{}: PHOTO ended", logId);
     }
 
-    private void processTelegramFile(CommandMessage commandMessage, TelegramFileDetailsDto telegramFileDetailsDto, int logId, Match match) {
+    private void processTelegramFile(CommandMessage commandMessage, TelegramFileDetailsDto telegramFileDetailsDto,
+                                     int logId, MatchPlayer matchPlayer) {
         log.debug("{}: file detail callback received from telegram", logId);
 
         String filePath = telegramFileDetailsDto.path();
@@ -76,6 +81,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
         try {
             if (photoBytes != null) {
+                Match match = matchPlayer.getMatch();
                 String dottedFileExtension = getFileExtension(filePath);
                 String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
                 log.debug("{}: save path: {}", logId, savePath);
@@ -87,7 +93,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
 
-                List<List<ButtonDto>> leadersKeyboard = keyboardsFactory.getLeadersKeyboard(match);
+                List<List<ButtonDto>> leadersKeyboard = keyboardsFactory.getLeadersKeyboard(matchPlayer);
                 MessageDto message = new MessageDto(commandMessage, new ExternalMessage(SUCCESSFUL_UPLOAD_TEXT), leadersKeyboard);
                 messagingService.sendMessageAsync(message);
             }
