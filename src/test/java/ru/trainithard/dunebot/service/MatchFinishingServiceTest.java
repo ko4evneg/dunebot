@@ -246,7 +246,7 @@ class MatchFinishingServiceTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
                         "*Матч 15000* завершен без результата\\!\n" +
-                        "Игроки \\[@e1\\]\\(tg://user?id\\=11000\\) не ответили на запрос места\\.");
+                        "Игроки [@e1](tg://user?id=11000) не ответили на запрос места\\.");
     }
 
     @Test
@@ -263,7 +263,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(messageDto)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        "*Матч 15000* завершен без результата, так как не загружен скриншот матча\\.");
+                        "*Матч 15000* завершен без результата, так как игрок [@e4](tg://user?id=11003) не загрузил скриншот матча\\.");
     }
 
     @Test
@@ -277,7 +277,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(messageDto)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест \\(/resubmit\\)\\. " +
+                        "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест /resubmit\\. " +
                         "Это может быть вызвано командой или конфликтом мест последнего /resubmit\\.");
     }
 

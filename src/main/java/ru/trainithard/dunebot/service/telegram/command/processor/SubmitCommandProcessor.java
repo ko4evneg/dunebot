@@ -83,6 +83,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
             });
         }
 
+        //TODO: possibly works on resubmit
         scheduleForcedFailFinish(match, logId);
 
         log.debug("{}: SUBMIT(internal) ended", logId);
