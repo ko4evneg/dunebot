@@ -162,7 +162,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
     private static Stream<Arguments> validatorsSource() {
         return Stream.of(
-                Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/new 1"), CommandType.TEXT),
+                Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/new_dune"), CommandType.TEXT),
                 Arguments.of(getPollAnswerUpdate(), CommandType.POLL_VOTE),
                 Arguments.of(getCallbackQueryUpdate(), CommandType.CALLBACK),
                 Arguments.of(getFileUploadUpdate(), CommandType.FILE_UPLOAD)

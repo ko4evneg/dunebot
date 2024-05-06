@@ -31,7 +31,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        fillMessage();
+        fillMessage(TELEGRAM_USER_ID);
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
@@ -46,7 +46,7 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowForNotEnoughArgumentsCommand() {
-        message.setText("/new");
+        message.setText("/admin");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatThrownBy(() -> validator.validate(commandMessage))
@@ -56,7 +56,8 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowForEnoughArgumentsCommand() {
-        message.setText("/new 1");
+        fillMessage(TestConstants.ADMIN_USER_ID);
+        message.setText("/admin init");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
@@ -64,7 +65,8 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
 
     @Test
     void shouldNotThrowForEnoughArgumentsCommandWithTrailingSpaces() {
-        message.setText("/new 1  ");
+        fillMessage(TestConstants.ADMIN_USER_ID);
+        message.setText("/admin init  ");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
@@ -89,9 +91,9 @@ class TelegramTextCommandValidatorTest extends TestContextMock {
         assertThatCode(() -> validator.validate(commandMessage)).doesNotThrowAnyException();
     }
 
-    private void fillMessage() {
+    private void fillMessage(Long externalUserid) {
         User user = new User();
-        user.setId(TELEGRAM_USER_ID);
+        user.setId(externalUserid);
         Chat chat = new Chat();
         chat.setId(TELEGRAM_CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());

@@ -16,10 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
@@ -35,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class NewCommandProcessorTest extends TestContextMock {
+class NewMacthCommandProcessorTest extends TestContextMock {
     private static final long USER_ID = 12345;
     private static final String POLL_ID = "12345";
     private static final int REPLY_ID = 23456;
@@ -43,8 +41,8 @@ class NewCommandProcessorTest extends TestContextMock {
     private static final long CHAT_ID = 9000L;
 
     @Autowired
-    private NewCommandProcessor processor;
-    private final CommandMessage pollCommandMessage = getCommandMessage(ModType.CLASSIC.getAlias());
+    private NewDuneCommandProcessor processor;
+    private final CommandMessage pollCommandMessage = getCommandMessage(Command.NEW_DUNE.name());
 
     @BeforeEach
     void beforeEach() {
@@ -118,8 +116,8 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @ParameterizedTest
     @MethodSource("chatIdSource")
-    void shouldSetCorrectTelegramPollChatAndTopicIds(ModType modType, int expectedTopicId) {
-        processor.process(getCommandMessage(modType.getAlias()));
+    void shouldSetCorrectTelegramPollChatAndTopicIds(Command command, int expectedTopicId) {
+        processor.process(getCommandMessage(command.name()));
 
         ArgumentCaptor<PollMessageDto> pollCaptor = ArgumentCaptor.forClass(PollMessageDto.class);
         verify(messagingService).sendPollAsync(pollCaptor.capture());
@@ -132,9 +130,9 @@ class NewCommandProcessorTest extends TestContextMock {
 
     private static Stream<Arguments> chatIdSource() {
         return Stream.of(
-                Arguments.of(ModType.CLASSIC, TestConstants.TOPIC_ID_CLASSIC),
-                Arguments.of(ModType.UPRISING_4, TestConstants.TOPIC_ID_UPRISING),
-                Arguments.of(ModType.UPRISING_6, TestConstants.TOPIC_ID_UPRISING)
+                Arguments.of(Command.NEW_DUNE, TestConstants.TOPIC_ID_CLASSIC),
+                Arguments.of(Command.NEW_UP4, TestConstants.TOPIC_ID_UPRISING),
+                Arguments.of(Command.NEW_UP6, TestConstants.TOPIC_ID_UPRISING)
         );
     }
 
@@ -155,24 +153,24 @@ class NewCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenUnsupportedMatchTypeArgumentProvided() {
-        CommandMessage commandMessage = getCommandMessage("fake");
+        CommandMessage commandMessage = getCommandMessage("/new_dune2");
 
         assertThatThrownBy(() -> processor.process(commandMessage))
-                .isInstanceOf(AnswerableDuneBotException.class)
-                .hasMessage("Неподдерживаемый тип матча: fake");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Неверный тип матча");
     }
 
     @Test
     void shouldReturnNewCommand() {
         Command actualCommand = processor.getCommand();
 
-        assertThat(actualCommand).isEqualTo(Command.NEW);
+        assertThat(actualCommand).isEqualTo(Command.NEW_DUNE);
     }
 
-    private CommandMessage getCommandMessage(String modNameString) {
+    private CommandMessage getCommandMessage(String commandName) {
         Message message = new Message();
         message.setMessageId(MESSAGE_ID);
-        message.setText("/new " + modNameString);
+        message.setText("/" + commandName);
         Chat chat = new Chat();
         chat.setId(CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
