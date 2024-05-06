@@ -118,6 +118,10 @@ public class VoteCommandProcessor extends CommandProcessor {
         if (match.isFull()) {
             cancelScheduledMatchStart(match);
             scheduleNewMatchStart(match);
+            if (match.getModType() == ModType.UPRISING_6) {
+                match.setState(MatchState.FAILED);
+                matchRepository.save(match);
+            }
         }
     }
 
@@ -166,30 +170,9 @@ public class VoteCommandProcessor extends CommandProcessor {
         String matchTopicChatId = match.getExternalPollId().getChatIdString();
         Integer topicId = match.getExternalPollId().getReplyId();
         Integer replyMessageId = match.getExternalPollId().getMessageId();
-        ExternalMessage startMessage = getStartMessage(match, regularPlayerMentions, guestPlayerMentions, blockedChatMentions);
+        ExternalMessage startMessage = externalMessageFactory
+                .getStartMessage(match, regularPlayerMentions, guestPlayerMentions, blockedChatMentions);
         return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
-    }
-
-    private ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
-                                            List<String> guestPlayerMentions, List<String> blockedChatGuests) {
-        log.debug("{}: match {} start message composition... guests: {}, chat_blocks: {})",
-                logId(), match.getId(), guestPlayerMentions.size(), blockedChatGuests.size());
-        ExternalMessage startMessage = new ExternalMessage()
-                .startBold().append("Матч ").append(match.getId()).endBold().append(" собран. Участники:")
-                .newLine().appendRaw(String.join(", ", regularPlayerMentions));
-        if (!guestPlayerMentions.isEmpty()) {
-            startMessage.newLine().newLine().appendBold("Внимание:")
-                    .append(" в матче есть незарегистрированные игроки. Они автоматически зарегистрированы " +
-                            "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:")
-                    .newLine().appendRaw(String.join(", ", guestPlayerMentions));
-        }
-        if (!blockedChatGuests.isEmpty()) {
-            startMessage.newLine().newLine().appendBold("Особое внимание:")
-                    .append(" у этих игроков заблокированы чаты. Без их регистрации и добавлении в контакты бота")
-                    .appendBold(" до начала регистрации результатов, завершить данный матч будет невозможно!")
-                    .newLine().appendRaw(String.join(", ", blockedChatGuests));
-        }
-        return startMessage;
     }
 
     private void deleteExistingOldSubmitMessage(Match match) {

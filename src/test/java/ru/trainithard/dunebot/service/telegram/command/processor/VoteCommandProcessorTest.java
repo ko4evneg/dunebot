@@ -365,6 +365,24 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldFailUprising6MatchOnSixthPlayerRegistration() {
+        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
+
+        jdbcTemplate.execute("update matches set mod_type = '" + ModType.UPRISING_6 + "' where id = 10000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10001, 10000, 10002, '2010-10-10')");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10002, 10000, 10003, '2010-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 5 where id = 10000");
+
+        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
+
+        MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
+
+        assertThat(actualMatchState).isEqualTo(MatchState.FAILED);
+    }
+
+    @Test
     void shouldSendGuestWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
         doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
