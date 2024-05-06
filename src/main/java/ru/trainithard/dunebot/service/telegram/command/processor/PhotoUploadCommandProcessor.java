@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.DuneBotException;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.Match;
@@ -56,16 +57,19 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         int logId = logId();
         log.debug("{}: PHOTO started", logId);
 
-        matchPlayerRepository.findLatestByPlayerExternalIdAndMatchState(commandMessage.getUserId(), MatchState.ON_SUBMIT)
-                .ifPresent(matchPlayer -> {
-                    log.debug("{}: MatchPlayer {} found", logId, matchPlayer.getId());
+        List<MatchPlayer> matchPlayersWithOnSubmitMatches =
+                matchPlayerRepository.findByPlayerExternalIdAndMatchState(commandMessage.getUserId(), MatchState.ON_SUBMIT);
+        if (matchPlayersWithOnSubmitMatches.size() > 1) {
+            throw new AnswerableDuneBotException("У вас несколько матчей в состоянии /submit. Вероятно это баг.", commandMessage);
+        }
+        MatchPlayer matchPlayer = matchPlayersWithOnSubmitMatches.get(0);
+        log.debug("{}: MatchPlayer {} found", logId, matchPlayer.getId());
 
-                    String fileId = getFileId(commandMessage);
-                    log.debug("{}: file telegram id: {}", logId, fileId);
-                    CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
-                    file.whenComplete((telegramFileDetailsDto, throwable) ->
-                            processTelegramFile(commandMessage, telegramFileDetailsDto, logId, matchPlayer));
-                });
+        String fileId = getFileId(commandMessage);
+        log.debug("{}: file telegram id: {}", logId, fileId);
+        CompletableFuture<TelegramFileDetailsDto> file = messagingService.getFileDetails(fileId);
+        file.whenComplete((telegramFileDetailsDto, throwable) ->
+                processTelegramFile(commandMessage, telegramFileDetailsDto, logId, matchPlayer));
 
         log.debug("{}: PHOTO ended", logId);
     }

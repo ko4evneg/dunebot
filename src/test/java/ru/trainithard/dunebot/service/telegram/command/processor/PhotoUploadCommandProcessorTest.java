@@ -13,6 +13,7 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -31,8 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
@@ -108,7 +108,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSelectCorrectMatchWhenMultipleMatchesPresent() {
+    void shouldSelectCorrectMatchWhenMultipleStateMatchesPresent() {
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, screenshot_path, created_at) " +
                              "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, 'photos/1.jpg', '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
@@ -117,6 +117,18 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
 
         verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
+    }
+
+    @Test
+    void shouldThrowWhenMultipleOnSubmitMatchesPresent() {
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, submits_count, screenshot_path, created_at) " +
+                             "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 4, 'photos/1.jpg', '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
+                             "values (10004, 10001, 10000, 4, '2010-10-10')");
+
+        assertThatThrownBy(() -> processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE))))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("У вас несколько матчей в состоянии /submit. Вероятно это баг.");
     }
 
     @ParameterizedTest
