@@ -7,6 +7,7 @@
     <suppress checks="FileLengthCheck" files=".*Test\.java"/>
     <suppress checks="LineLength" files=".*Test\.java"/>
     <suppress checks="MethodLength" files=".*Test\.java|ExternalMessageFactory.*\.java"/>
+    <suppress checks="SingleSpaceSeparator" files="ExternalMessageFactory.*\.java"/>
     <suppress checks="EmptyCatchBlock" files=".*Test\.java"/>
     <suppress checks="HideUtilityClassConstructor" files="DunebotApplication\.java|LogId\.java"/>
 </suppressions>
