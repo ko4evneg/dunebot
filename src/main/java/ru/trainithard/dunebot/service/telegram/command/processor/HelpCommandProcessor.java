@@ -41,8 +41,10 @@ public class HelpCommandProcessor extends CommandProcessor {
                 .append("'/profile Имя (ник_steam) Фамилия' Регистрация игрока в рейтинге").newLine()
                 .append("'/profile Имя (ник_steam) Фамилия' Изменение данных существующего игрока").newLine()
                 .append("'/profile' Обновление данных Telegram (только для зарегистрированных игроков)").newLine()
-                .append("'/new dune' Создание опроса для классической Dune").newLine()
-                .append("'/new up4' Создание опроса для Dune Uprising (4 игрока)").newLine()
+                .append("'/new_dune' Создание опроса для классической Dune").newLine()
+                .append("'/new_up4' Создание опроса для Dune Uprising (4 игрока)").newLine()
+                .append("'/new_up6' Создание опроса для Dune Uprising (6 игроков). " +
+                        "Только для сбора матча по опросу. Результаты не собираются.").newLine()
                 .append("'/cancel' Удаление последнего опроса, созданного игроком").newLine()
                 .append("'/submit ").appendBold("ID_игры").append("' Запуск регистрации результатов игры с номером ")
                 .appendBold("ID_игры").newLine()
