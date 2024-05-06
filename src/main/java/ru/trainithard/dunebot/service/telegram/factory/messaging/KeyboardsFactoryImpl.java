@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Leader;
-import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.repository.LeaderRepository;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 
@@ -17,9 +17,10 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
     private final LeaderRepository leaderRepository;
 
     @Override
-    public List<List<ButtonDto>> getLeadersKeyboard(Match match) {
-        String callbackPrefix = match.getId() + "_L_";
-        List<Leader> leaders = leaderRepository.findAllByModType(match.getModType(), Sort.sort(Leader.class).by(Leader::getName));
+    public List<List<ButtonDto>> getLeadersKeyboard(MatchPlayer submittingPlayer) {
+        String callbackPrefix = submittingPlayer.getId() + "_L_";
+        List<Leader> leaders = leaderRepository
+                .findAllByModType(submittingPlayer.getMatch().getModType(), Sort.sort(Leader.class).by(Leader::getName));
         List<ButtonDto> leadersButtons = leaders.stream()
                 .map(leader -> new ButtonDto(leader.getName(), callbackPrefix + leader.getId()))
                 .toList();
