@@ -12,14 +12,13 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
@@ -37,6 +36,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private final MatchFinishingService matchFinishingService;
     private final ResubmitCommandProcessor resubmitProcessor;
     private final SettingsService settingsService;
+    private final KeyboardsFactory keyboardsFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -99,7 +99,9 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             log.debug("{}: match {} and submitting matchPlayers saved)", logId(), match.getId());
         });
         Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
-        messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, null));
+        List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
+                ? keyboardsFactory.getLeadersKeyboard(match) : null;
+        messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));
         if (match.canBeFinished()) {
             matchFinishingService.finishSubmittedMatch(match.getId());
         }

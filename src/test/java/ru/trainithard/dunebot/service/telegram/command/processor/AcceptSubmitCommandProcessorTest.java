@@ -22,6 +22,7 @@ import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.MatchFinishingService;
+import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -29,6 +30,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -77,10 +79,17 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                              "values (10003, 15000, 10003, 10005, '2010-10-10')");
         jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10000, '" + SettingKey.RESUBMITS_LIMIT + "', 3, '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10000, 'lead1', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10001, 'lead2', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10002, 'lead3', '" + ModType.CLASSIC + "', '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
+        jdbcTemplate.execute("delete from leaders where id in (10000, 10001, 10002)");
         jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
@@ -267,6 +276,25 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                         "*Теперь выберите лидера* которым играли\\.");
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {2, 3, 4})
+    void shouldAttachLeaderKeyboardToMessageAboutCallbackAcceptOnCallbackReplyWneNotFirstPlaceSelected(int place) {
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessages = messageCaptor.getValue();
+
+        assertThat(actualMessages.getKeyboard())
+                .flatExtracting(buttonDtos -> buttonDtos)
+                .extracting(ButtonDto::getText, ButtonDto::getCallback)
+                .containsExactly(
+                        tuple("lead1", "15000_L_10000"),
+                        tuple("lead2", "15000_L_10001"),
+                        tuple("lead3", "15000_L_10002")
+                );
+    }
+
     @Test
     void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenFirstPlaceSelected() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
@@ -276,8 +304,8 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         MessageDto actualMessages = messageCaptor.getValue();
 
         assertThat(actualMessages)
-                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
-                .containsExactly(null, "11002",
+                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getKeyboard, MessageDto::getText)
+                .containsExactly(null, "11002", null,
                         "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "*Теперь загрузите в этот чат скриншот победы\\.*");
