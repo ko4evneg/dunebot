@@ -13,7 +13,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
-import ru.trainithard.dunebot.service.telegram.factory.ExternalMessageFactory;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
 import java.time.Clock;
 import java.time.LocalDate;

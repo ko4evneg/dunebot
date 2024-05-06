@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.factory;
+package ru.trainithard.dunebot.service.telegram.factory.messaging;
 
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.Player;
