@@ -13,4 +13,6 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
                                     List<String> guestPlayerMentions, List<String> blockedChatGuests);
+
+    ExternalMessage getHelpMessage();
 }

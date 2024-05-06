@@ -31,6 +31,11 @@ public class ExternalMessage {
         return this;
     }
 
+    public ExternalMessage appendInline(Object text) {
+        stringBuilder.append("`").append(MarkdownEscaper.getEscaped(text.toString())).append("`");
+        return this;
+    }
+
     public ExternalMessage startBold() {
         stringBuilder.append("*");
         if (boldMarkupEnabled) {
