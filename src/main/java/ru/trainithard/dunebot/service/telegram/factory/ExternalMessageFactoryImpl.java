@@ -9,6 +9,7 @@ import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
@@ -35,13 +36,18 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .startBold().append("Матч ").append(matchId).endBold();
         if (isFailedByResubmitsLimit) {
             return failMessage.append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест " +
-                                      "(/resubmit). Это может быть вызвано командой или конфликтом мест последнего /resubmit.");
+                                      "/resubmit. Это может быть вызвано командой или конфликтом мест последнего /resubmit.");
         }
         if (!match.hasAllPlacesSubmitted()) {
             return getFailByMissingSubmitsMessage(match, failMessage);
         }
         if (!match.hasSubmitPhoto()) {
-            return failMessage.append(" завершен без результата, так как не загружен скриншот матча.");
+            Player winnerPlayer = match.getMatchPlayers().stream()
+                    .filter(matchPlayer -> Objects.requireNonNullElse(matchPlayer.getCandidatePlace(), -1) == 1)
+                    .findFirst().orElseThrow().getPlayer();
+            return failMessage.append(" завершен без результата, так как игрок ")
+                    .appendRaw(MarkdownEscaper.getEscapedMention(winnerPlayer.getMentionTag(), winnerPlayer.getExternalId()))
+                    .append(" не загрузил скриншот матча.");
         }
         return failMessage.append(" завершен без результата по неизвестной причине - вероятно это баг.");
     }
@@ -63,11 +69,11 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         }
         failMessage.append(" завершен без результата!");
         if (!notAnsweredPlayersMentions.isEmpty()) {
-            failMessage.newLine().append("Игроки ").append(String.join(", ", notAnsweredPlayersMentions))
+            failMessage.newLine().append("Игроки ").appendRaw(String.join(", ", notAnsweredPlayersMentions))
                     .append(" не ответили на запрос места.");
         }
         if (!chatBlockedPlayersMentions.isEmpty()) {
-            failMessage.newLine().append("Игроки ").append(String.join(", ", chatBlockedPlayersMentions))
+            failMessage.newLine().append("Игроки ").appendRaw(String.join(", ", chatBlockedPlayersMentions))
                     .append(" имеют приватный телеграм профиль и не могут получать сообщения без добавления бота в контакты.");
         }
 
