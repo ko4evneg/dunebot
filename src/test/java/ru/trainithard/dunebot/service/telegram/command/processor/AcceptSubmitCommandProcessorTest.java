@@ -252,7 +252,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @ParameterizedTest
     @ValueSource(ints = {2, 3, 4})
-    void shouldSendMessageAboutCallbackAcceptOnCallbackReply(int place) {
+    void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWneNotFirstPlaceSelected(int place) {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -263,11 +263,12 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
                 .containsExactly(null, "11002",
                         "В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                        "При ошибке используйте команду '/resubmit 15000'\\.");
+                        "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
+                        "*Теперь выберите лидера* которым играли\\.");
     }
 
     @Test
-    void shouldSendMessageAboutCallbackAcceptOnCallbackReply() {
+    void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenFirstPlaceSelected() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);

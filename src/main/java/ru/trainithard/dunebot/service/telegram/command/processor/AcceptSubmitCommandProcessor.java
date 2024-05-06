@@ -152,14 +152,17 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private ExternalMessage getAcceptedFirstPlaceSubmitMessageTemplate(long matchId, int candidatePlace) {
-        return getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace).newLine()
+        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
+                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
                 .appendBold("Теперь загрузите в этот чат скриншот победы.");
     }
 
     private ExternalMessage getAcceptedSubmitMessageTemplateForParticipant(long matchId, int candidatePlace) {
         return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
                 .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
+                .appendBold("Теперь выберите лидера").append(" которым играли.");
     }
 
     private ExternalMessage getAcceptedSubmitMessageTemplateForNonParticipant(long matchId) {
