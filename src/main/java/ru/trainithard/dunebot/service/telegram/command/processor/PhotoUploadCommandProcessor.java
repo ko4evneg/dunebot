@@ -63,7 +63,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
             throw new AnswerableDuneBotException("У вас несколько матчей в состоянии /submit. Вероятно это баг.", commandMessage);
         }
         MatchPlayer matchPlayer = matchPlayersWithOnSubmitMatches.get(0);
-        log.debug("{}: MatchPlayer {} found", logId, matchPlayer.getId());
+        log.debug("{}: matchPlayer {}, match {} found", logId, matchPlayer.getId(), matchPlayer.getMatch());
 
         String fileId = getFileId(commandMessage);
         log.debug("{}: file telegram id: {}", logId, fileId);

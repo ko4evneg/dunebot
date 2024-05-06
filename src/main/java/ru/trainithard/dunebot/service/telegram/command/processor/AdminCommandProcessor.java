@@ -31,10 +31,6 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AdminCommandProcessor extends CommandProcessor {
-    private static final String HELP_COMMAND_DESCRIPTION = "Как пользоваться ботом";
-    private static final String COMMANDS_LIST_DESCRIPTION = "Показать список доступных команд";
-    private static final String HELP_COMMAND_TEXT = "/help";
-    private static final String COMMANDS_LIST_COMMAND_TEXT = "/commands";
     private static final String INIT_SUBCOMMAND = "init";
     private static final String SET_CHAT_SUBCOMMAND = "set_chat";
     private static final String SET_TOPIC_CLASSIC = "set_topic_dune";
@@ -85,8 +81,13 @@ public class AdminCommandProcessor extends CommandProcessor {
     }
 
     private void sendSetCommands() {
-        Map<String, String> commands = Map.of(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION,
-                COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
+        Map<String, String> commands = Map.of(
+                "/help", "Как пользоваться ботом",
+                "/new_dune", "Создание новой партии в классическую Дюну",
+                "/new_up4", "Создание новой партии в Uprising на 4-х игроков",
+                "/new_up6", "Создание новой партии в Uprising на 6-х игроков",
+                "/cancel", "Отмена *вашего* последнего незавершенного матча"
+        );
         messagingService.sendSetCommands(new SetCommandsDto(commands));
     }
 

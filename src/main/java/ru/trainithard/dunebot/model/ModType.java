@@ -2,6 +2,7 @@ package ru.trainithard.dunebot.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -14,18 +15,22 @@ import java.util.stream.Collectors;
 @Getter
 @RequiredArgsConstructor
 public enum ModType {
-    CLASSIC("'Дюна (классика)'", "dune", 4),
-    UPRISING_4("'Апрайзинг на 4-х'", "up4", 4),
-    UPRISING_6("'Апрайзинг 3х3''", "up6", 6);
+    CLASSIC("'Дюна (классика)'", Command.NEW_DUNE, "dune", 4),
+    UPRISING_4("'Апрайзинг на 4-х'", Command.NEW_UP4, "up4", 4),
+    UPRISING_6("'Апрайзинг 3х3''", Command.NEW_UP6, "up6", 6);
 
-    private static final Map<String, ModType> modTypeByAlias;
+    private static final Map<Command, ModType> modTypeByAlias;
 
     /**
      * Title to display in polls.
      */
     private final String modName;
     /**
-     * Name for command usage.
+     * Creation command.
+     */
+    private final Command command;
+    /**
+     * Alias for ModType
      */
     private final String alias;
     /**
@@ -35,10 +40,14 @@ public enum ModType {
 
     static {
         modTypeByAlias = Arrays.stream(ModType.values())
-                .collect(Collectors.toMap(ModType::getAlias, Function.identity()));
+                .collect(Collectors.toMap(ModType::getCommand, Function.identity()));
     }
 
-    public static ModType getByAlias(String alias) {
-        return modTypeByAlias.get(alias.toLowerCase());
+    public static ModType getByCommand(Command command) {
+        ModType modType = modTypeByAlias.get(command);
+        if (modType == null) {
+            throw new IllegalStateException("Неверный тип матча");
+        }
+        return modType;
     }
 }

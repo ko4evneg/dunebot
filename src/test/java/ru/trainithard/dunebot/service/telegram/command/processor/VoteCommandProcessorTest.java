@@ -280,7 +280,6 @@ class VoteCommandProcessorTest extends TestContextMock {
         assertThat(actualPlayerIds).containsExactly(10000L);
     }
 
-    // TODO:  del from here
     @Test
     void shouldIncreaseMatchRegisteredPlayersCountOnPositiveReplyRegistration() {
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));

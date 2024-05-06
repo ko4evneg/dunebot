@@ -1,79 +1,26 @@
 package ru.trainithard.dunebot.service.telegram.command.processor;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.Match;
-import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.model.Player;
-import ru.trainithard.dunebot.model.SettingKey;
-import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
-import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
+import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.util.List;
-
 /**
- * Creates new poll in external messaging system for new match gathering.
+ * Deprecated - stub message
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@Deprecated(since = "0.1.27")
 public class NewCommandProcessor extends CommandProcessor {
-    private static final String POSITIVE_ANSWER = "Да";
-    private static final List<String> POLL_OPTIONS = List.of(POSITIVE_ANSWER, "Нет", "Результат");
-    private static final String NEW_POLL_MESSAGE_TEMPLATE = "Игрок %s призывает всех на матч в %s";
-    private static final String UNSUPPORTED_MATCH_TYPE_MESSAGE_TEMPLATE = "Неподдерживаемый тип матча: %s";
-
-    private final PlayerRepository playerRepository;
-    private final MatchRepository matchRepository;
-    private final SettingsService settingsService;
-
     @Override
     public void process(CommandMessage commandMessage) {
-        int logId = logId();
-        log.debug("{}: NEW started", logId);
-
-        String modTypeString = commandMessage.getArgument(1);
-        ModType modType = ModType.getByAlias(modTypeString);
-        if (modType == null) {
-            throw new AnswerableDuneBotException(String.format(UNSUPPORTED_MATCH_TYPE_MESSAGE_TEMPLATE, modTypeString), commandMessage);
-        }
-        log.debug("{}: mod type {} detected", logId, modType);
-        playerRepository.findByExternalId(commandMessage.getUserId())
-                .ifPresent(player -> {
-                    messagingService.sendPollAsync(getNewPollMessage(player, modType))
-                            .thenAccept(telegramPollDto -> {
-                                log.debug("{}: match creation request callback received", logId);
-                                Match match = new Match(modType);
-                                match.setExternalPollId(telegramPollDto.toExternalPollId());
-                                match.setOwner(player);
-                                Match savedMatch = matchRepository.save(match);
-                                log.debug("{}: new match {} saved", logId, savedMatch.getId());
-                            });
-                    log.debug("{}: match creation request sent", logId);
-                });
-
-        log.debug("{}: NEW ended", logId);
-    }
-
-    private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
-        String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
-        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
-        ExternalMessage externalMessage = new ExternalMessage().appendRaw(text);
-        return new PollMessageDto(chatId, externalMessage, getTopicId(modType), POLL_OPTIONS);
-    }
-
-    private int getTopicId(ModType modType) {
-        return switch (modType) {
-            case CLASSIC -> settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
-            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
-        };
+        log.debug("{}: NEW fallback", logId());
+        ExternalMessage message = new ExternalMessage(
+                "Команда упразднена! Для создания матчей используйте команды: /new_dune, /new_up4, /new_up6");
+        MessageDto messageDto = new MessageDto(commandMessage, message, null);
+        messagingService.sendMessageAsync(messageDto);
     }
 
     @Override

@@ -50,11 +50,15 @@ class AdminCommandProcessorTest extends TestContextMock {
         verify(messagingService, times(1)).sendSetCommands(setCommandsDtoCaptor.capture());
         SetCommandsDto actualSetCommandsDto = setCommandsDtoCaptor.getValue();
         Map<String, String> actualCommands = actualSetCommandsDto.getCommandDescriptionsByName();
+        Map<String, String> expectedCommands = Map.of(
+                "/help", "Как пользоваться ботом",
+                "/new_dune", "Создание новой партии в классическую Дюну",
+                "/new_up4", "Создание новой партии в Uprising на 4-х игроков",
+                "/new_up6", "Создание новой партии в Uprising на 6-х игроков",
+                "/cancel", "Отмена *вашего* последнего незавершенного матча"
+        );
 
-        assertThat(actualCommands)
-                .hasSize(2)
-                .containsEntry(HELP_COMMAND_TEXT, HELP_COMMAND_DESCRIPTION)
-                .containsEntry(COMMANDS_LIST_COMMAND_TEXT, COMMANDS_LIST_DESCRIPTION);
+        assertThat(actualCommands).containsExactlyEntriesOf(expectedCommands);
     }
 
     @Test
