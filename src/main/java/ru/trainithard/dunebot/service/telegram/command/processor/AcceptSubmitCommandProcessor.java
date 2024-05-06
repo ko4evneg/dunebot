@@ -115,7 +115,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private boolean isConflictSubmit(List<MatchPlayer> matchPlayers, int candidatePlace) {
-        return matchPlayers.stream()
+        return candidatePlace != 0 && matchPlayers.stream()
                 .filter(matchPlayer -> {
                     Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
                     return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
