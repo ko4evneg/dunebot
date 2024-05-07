@@ -95,7 +95,7 @@ public class VoteCommandProcessor extends CommandProcessor {
             if (exception instanceof TelegramApiRequestException telegramException && telegramException.getErrorCode().equals(403)) {
                 player.setChatBlocked(true);
                 playerRepository.save(player);
-                log.debug("{}: player ext {} received chat_block flag", logId, player.getExternalId());
+                log.debug("{}: player {} ({}) received chat_block flag", logId, player.getId(), player.getExternalChatId());
             }
             return null;
         };
@@ -139,10 +139,13 @@ public class VoteCommandProcessor extends CommandProcessor {
         ScheduledFuture<?> scheduledTask =
                 dunebotTaskScheduler.schedule(() -> messagingService.sendMessageAsync(getMatchStartMessage(match))
                                 .whenComplete((externalMessageDto, throwable) -> {
-                                    deleteExistingOldSubmitMessage(match);
-                                    match.setExternalStartId(new ExternalMessageId(externalMessageDto));
-                                    matchRepository.save(match);
-                                    log.debug("Match {} externalStart updated to '{}' and saved", match.getId(), matchStartInstant);
+                                    matchRepository.findById(match.getId()).ifPresent(cbMatch -> {
+                                        deleteExistingOldSubmitMessage(cbMatch);
+                                        cbMatch.setExternalStartId(new ExternalMessageId(externalMessageDto));
+                                        matchRepository.save(cbMatch);
+                                        log.debug("0: match {} externalStart updated to '{}' and saved",
+                                                cbMatch.getId(), matchStartInstant);
+                                    });
                                 }),
                         matchStartInstant);
 
