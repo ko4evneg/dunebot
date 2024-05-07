@@ -82,16 +82,16 @@ public class Match extends BaseEntity {
         this.state = MatchState.NEW;
     }
 
+    public boolean isResubmitAllowed(int resubmitsLimit) {
+        return submitsRetryCount < resubmitsLimit;
+    }
+
     public boolean hasSubmitPhoto() {
         return screenshotPath != null;
     }
 
     public boolean canBeFinished() {
         return submitsCount == modType.getPlayersCount() && screenshotPath != null;
-    }
-
-    public boolean isResubmitAllowed(int resubmitsLimit) {
-        return submitsRetryCount < resubmitsLimit;
     }
 
     public boolean isFull() {
