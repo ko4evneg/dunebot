@@ -61,7 +61,7 @@ public class Match extends BaseEntity {
      */
     private int positiveAnswersCount;
     /**
-     * Count of accepted submit answers for the match (when user selects his place).
+     * Count of accepted submit answers for the match (answer registration for place request).
      */
     private int submitsCount;
     /**
