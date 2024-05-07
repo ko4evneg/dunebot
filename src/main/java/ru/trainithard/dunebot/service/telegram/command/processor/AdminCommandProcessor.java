@@ -3,6 +3,9 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.ModType;
@@ -20,9 +23,15 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * Process admin commands for bot configuration and management.
@@ -32,6 +41,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminCommandProcessor extends CommandProcessor {
     private static final String INIT_SUBCOMMAND = "init";
+    private static final String SHUTDOWN_SUBCOMMAND = "shutdown";
     private static final String SET_CHAT_SUBCOMMAND = "set_chat";
     private static final String SET_TOPIC_CLASSIC = "set_topic_dune";
     private static final String SET_TOPIC_UPRISING4 = "set_topic_up4";
@@ -46,6 +56,10 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private final SettingsService settingsService;
     private final RatingReportPdfService reportService;
+    private final TaskScheduler dunebotTaskScheduler;
+    private final Clock clock;
+    private final ApplicationContext applicationContext;
+    private final Set<ScheduledFuture<?>> shutdownTasks = new CopyOnWriteArraySet<>();
 
     @Value("${bot.admin-pdf-directory}")
     private String adminPdfPath;
@@ -68,8 +82,12 @@ public class AdminCommandProcessor extends CommandProcessor {
             case SET_TOPIC_UPRISING4 ->
                     settingsService.saveSetting(SettingKey.TOPIC_ID_UPRISING, commandMessage.getReplyMessageId().toString());
             case SET_KEY -> setCustomKeySetting(commandMessage);
-            case MESSAGE_KEY -> sendTopicsMessages(allCommandArguments);
+            case MESSAGE_KEY -> {
+                String messageText = allCommandArguments.substring(MESSAGE_KEY.length() + 1);
+                sendTopicsMessages(messageText);
+            }
             case REPORT_KEY -> generateReport(commandMessage);
+            case SHUTDOWN_SUBCOMMAND -> shutdown(commandMessage);
             default -> {
                 log.debug("{}: wrong admin subcommand {}", logId(), subCommand);
                 messageDto = new MessageDto(commandMessage, new ExternalMessage(WRONG_COMMAND_EXCEPTION_MESSAGE), null);
@@ -104,20 +122,6 @@ public class AdminCommandProcessor extends CommandProcessor {
             throw new AnswerableDuneBotException(WRONG_SETTING_VALUE_TEXT, exception, commandMessage);
         }
         settingsService.saveSetting(settingKey, settingValue);
-    }
-
-    private void sendTopicsMessages(String allCommandArguments) {
-        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
-        int up4Topic = settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
-        int duneTopic = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
-        String message = allCommandArguments.substring(MESSAGE_KEY.length() + 1);
-        ExternalMessage userMessage = new ExternalMessage(message);
-        MessageDto up4UserMessageDto = new MessageDto(chatId, userMessage, up4Topic, null);
-        messagingService.sendMessageAsync(up4UserMessageDto);
-        if (up4Topic != duneTopic) {
-            MessageDto duneUserMessageDto = new MessageDto(chatId, userMessage, duneTopic, null);
-            messagingService.sendMessageAsync(duneUserMessageDto);
-        }
     }
 
     private void generateReport(CommandMessage commandMessage) {
@@ -160,6 +164,43 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private String getPdfFileName(LocalDate from, LocalDate to, ModType modType) {
         return String.format("%s_%s_%s.pdf", modType.getAlias(), from.format(DATE_FORAMTTER), to.format(DATE_FORAMTTER));
+    }
+
+    private void shutdown(CommandMessage commandMessage) {
+        String delayArg = commandMessage.getArgument(2);
+        if ("cancel".equalsIgnoreCase(delayArg)) {
+            shutdownTasks.forEach(task -> task.cancel(false));
+            sendTopicsMessages("❎ Перезагрузка бота отменена.");
+            return;
+        }
+
+        try {
+            int delay = Integer.parseInt(delayArg.trim());
+            ScheduledFuture<?> shutdownTask = dunebotTaskScheduler.schedule(
+                    () -> {
+                        sendTopicsMessages("ℹ️ Бот перезагружается.");
+                        SpringApplication.exit(applicationContext, () -> 0);
+                    },
+                    Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
+            shutdownTasks.add(shutdownTask);
+            sendTopicsMessages("⚠️ Бот будет перезагружен через " + delay + " минут.\n" +
+                               "‼️ Все незавершенные матчи будут принудительно завершены без зачета в рейтинг.");
+        } catch (NumberFormatException e) {
+            throw new AnswerableDuneBotException("Неверный аргумент", commandMessage);
+        }
+    }
+
+    private void sendTopicsMessages(String message) {
+        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
+        int up4Topic = settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
+        int duneTopic = settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+        ExternalMessage userMessage = new ExternalMessage(message);
+        MessageDto up4UserMessageDto = new MessageDto(chatId, userMessage, up4Topic, null);
+        messagingService.sendMessageAsync(up4UserMessageDto);
+        if (up4Topic != duneTopic) {
+            MessageDto duneUserMessageDto = new MessageDto(chatId, userMessage, duneTopic, null);
+            messagingService.sendMessageAsync(duneUserMessageDto);
+        }
     }
 
     @Override
