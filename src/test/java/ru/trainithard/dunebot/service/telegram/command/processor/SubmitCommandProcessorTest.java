@@ -29,14 +29,17 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
@@ -316,6 +319,24 @@ class SubmitCommandProcessorTest extends TestContextMock {
         thread.join();
 
         verify(finishingService, times(1)).finishNotSubmittedMatch(eq(15000L), eq(false));
+    }
+
+    @Test
+    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() throws ReflectiveOperationException {
+        ScheduledFuture<?> existinFailFinishTask = mock(ScheduledFuture.class);
+        doReturn(307L).when(existinFailFinishTask).getDelay(TimeUnit.SECONDS);
+        Field tasksMapField = SubmitCommandProcessor.class.getDeclaredField("scheduledFailFinishTasksByMatchIds");
+        tasksMapField.setAccessible(true);
+        Map<Long, ScheduledFuture<?>> tasksMap = (Map<Long, ScheduledFuture<?>>) tasksMapField.get(processor);
+        tasksMap.put(15000L, existinFailFinishTask);
+
+        processor.process(submitCommandMessage);
+
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        Instant actualInstant = instantCaptor.getValue();
+
+        assertThat(actualInstant).isEqualTo(NOW.plus(420 + 307, ChronoUnit.SECONDS));
     }
 
     @Test

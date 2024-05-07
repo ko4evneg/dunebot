@@ -28,7 +28,11 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
@@ -40,6 +44,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
     private static final String MATCH_PLACE_SELECTION_MESSAGE_TEMPLATE = "Выберите место, которое вы заняли в матче %d:";
+    private static final int RESUBMIT_TIME_LIMIT_STEP = 60 * 7;
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
@@ -48,6 +53,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
     private final SettingsService settingsService;
     private final Clock clock;
+    private final Map<Long, ScheduledFuture<?>> scheduledFailFinishTasksByMatchIds = new ConcurrentHashMap<>();
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -91,12 +97,20 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     private void scheduleForcedFailFinish(Match match, int logId) {
+        Long matchId = match.getId();
+        ScheduledFuture<?> oldFailFinishTask = scheduledFailFinishTasksByMatchIds.get(matchId);
         int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
-        dunebotTaskScheduler.schedule(() -> {
+        if (oldFailFinishTask != null) {
+            long delay = oldFailFinishTask.getDelay(TimeUnit.SECONDS);
+            oldFailFinishTask.cancel(false);
+            forcedFinishTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
+        }
+        ScheduledFuture<?> failFinishTask = dunebotTaskScheduler.schedule(() -> {
             log.debug("TIMEOUT match {} finishing started", match.getId());
             matchFinishingService.finishNotSubmittedMatch(match.getId(), false);
         }, forcedFinishTime);
+        scheduledFailFinishTasksByMatchIds.put(matchId, failFinishTask);
         log.debug("{}: forced finish match {} task scheduled to {}", logId, match.getId(), forcedFinishTime.atZone(ZoneId.systemDefault()));
     }
 
