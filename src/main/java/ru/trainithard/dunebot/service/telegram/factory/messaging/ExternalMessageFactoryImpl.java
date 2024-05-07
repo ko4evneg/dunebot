@@ -133,7 +133,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .appendBold("4️⃣  Завершение матча").newLine()
                 .append("Любой игрок выполняет команду ").appendInline("/submit X")
                 .append(", где X - ID матча из пункта 3. ")
-                .append("Каждому игроку придет сообщение с кнопками для выбора занятого места и лидера.")
+                .append("Каждому игроку придет сообщение с кнопками для выбора занятого места и лидера. ")
                 .append("Победителю также придет запрос на загрузку скриншота. Скриншот можно просто перетащить в чат.")
                 .newLine().newLine()
                 .appendBold("5️⃣  Результаты").newLine()

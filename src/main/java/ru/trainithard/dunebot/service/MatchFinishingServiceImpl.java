@@ -20,7 +20,6 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
@@ -43,6 +42,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         log.debug("{}: finishing not submitted match {} started", logId, matchId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
+        log.debug("{}: match state: {}", logId, matchId, LogId.getMatchLogInfo(match));
         if (MatchState.getEndedMatchStates().contains(match.getState())) {
             log.debug("{}: Match {} has been ended already. Finishing is not required. Exiting...", logId, matchId);
             return;
@@ -79,19 +79,9 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         if (MatchState.getEndedMatchStates().contains(match.getState())) {
             throw new IllegalStateException("Can't accept submit for match " + match.getId() + " due to its ended state");
         }
-        log.debug("{}: match {} finishing ({})", LogId.get(), match.getId(), getMatchLogInfo(match));
+        log.debug("{}: match {} finishing ({})", LogId.get(), match.getId(), LogId.getMatchLogInfo(match));
         finishSuccessfullyAndSave(match);
         log.debug("{}: finishing submitted match ended", LogId.get());
-    }
-
-    private String getMatchLogInfo(Match match) {
-        String playerPlaces = match.getMatchPlayers().stream()
-                .map(matchPlayer ->
-                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
-                .collect(Collectors.joining("; "));
-        StringBuilder stringBuilder = new StringBuilder(playerPlaces).append("; ");
-        stringBuilder.append("state: ").append(match.getState()).append(", submits: ").append(match.getSubmitsCount());
-        return stringBuilder.toString();
     }
 
     private void finishSuccessfullyAndSave(Match match) {

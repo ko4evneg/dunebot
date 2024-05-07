@@ -1,11 +1,13 @@
 package ru.trainithard.dunebot.service;
 
 import org.springframework.stereotype.Component;
+import ru.trainithard.dunebot.model.Match;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component
 public class LogId {
@@ -26,5 +28,17 @@ public class LogId {
 
     private static long getThreadId() {
         return Thread.currentThread().getId();
+    }
+
+    //TODO remove after debug:
+    public static String getMatchLogInfo(Match match) {
+        String playerPlaces = match.getMatchPlayers().stream()
+                .map(matchPlayer ->
+                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
+                .collect(Collectors.joining("; "));
+        StringBuilder stringBuilder = new StringBuilder(playerPlaces).append("; ");
+        stringBuilder.append("state: ").append(match.getState()).append(", submits: ").append(match.getSubmitsCount())
+                .append(", votes: ").append(match.getPositiveAnswersCount());
+        return stringBuilder.toString();
     }
 }
