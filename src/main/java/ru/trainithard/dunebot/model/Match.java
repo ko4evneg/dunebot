@@ -102,10 +102,6 @@ public class Match extends BaseEntity {
         return submitsCount == modType.getPlayersCount() && screenshotPath != null;
     }
 
-    public boolean hasEnoughPlayers() {
-        return positiveAnswersCount >= modType.getPlayersCount();
-    }
-
     public boolean hasAllPlacesSubmitted() {
         int requiredPlaceSubmits = modType.getPlayersCount();
         Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());

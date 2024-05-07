@@ -10,6 +10,8 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -58,7 +60,9 @@ public class SubmitValidatedMatchRetriever {
         if (MatchState.getEndedMatchStates().contains(matchState)) {
             throw new AnswerableDuneBotException(FINISHED_MATCH_SUBMIT_EXCEPTION_MESSAGE, telegramChatId);
         }
-        if (!match.hasEnoughPlayers()) {
+        if (match.hasMissingPlayers()) {
+            getMatchPlayersList(match);
+            log.debug("{}: match {} has not enough players to end: {}", LogId.get(), match.getId(), getMatchPlayersList(match));
             throw new AnswerableDuneBotException(NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE, telegramChatId);
         }
         if (!isResubmit && MatchState.getSubmitStates().contains(matchState)) {
@@ -68,6 +72,13 @@ public class SubmitValidatedMatchRetriever {
             throw new AnswerableDuneBotException(SUBMIT_NOT_ALLOWED_EXCEPTION_MESSAGE, telegramChatId);
         }
         log.debug("{}: match {} successfully validated", LogId.get(), match.getId());
+    }
+
+    private String getMatchPlayersList(Match match) {
+        return match.getMatchPlayers().stream()
+                .map(matchPlayer -> matchPlayer.getPlayer().getExternalId())
+                .map(extId -> Long.toString(extId))
+                .collect(Collectors.joining(", "));
     }
 
     private boolean isSubmitAllowed(CommandMessage commandMessage, Match match) {
