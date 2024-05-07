@@ -93,7 +93,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                 match.setState(MatchState.ON_SUBMIT_SCREENSHOTTED);
                 matchRepository.save(match);
                 log.debug("{}: match photo flag saved", logId);
-                if (match.canBeFinished()) {
+                if (match.canBePreliminaryFinished()) {
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
 

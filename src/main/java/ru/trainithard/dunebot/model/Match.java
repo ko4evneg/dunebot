@@ -98,7 +98,7 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
-    public boolean canBeFinished() {
+    public boolean canBePreliminaryFinished() {
         return submitsCount == modType.getPlayersCount() && screenshotPath != null;
     }
 

@@ -102,7 +102,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
         messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));
-        if (match.canBeFinished()) {
+        if (match.canBePreliminaryFinished()) {
             matchFinishingService.finishSubmittedMatch(match.getId());
         }
         log.debug("{}: player's submit successfully processed", logId());

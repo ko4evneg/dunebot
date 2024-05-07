@@ -71,14 +71,14 @@ public class VoteCommandProcessor extends CommandProcessor {
                             Optional<Player> playerOptional = playerRepository.findByExternalId(commandMessage.getUserId());
                             Player player;
                             if (playerOptional.isEmpty()) {
-                                log.debug("{}: player telegram id {} not found", logId(), commandMessage.getUserId());
+                                log.debug("{}: player telegram id {} not exists yet", logId(), commandMessage.getUserId());
                                 int nextGuestIndex = playerRepository.findNextGuestIndex();
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
                                 player = playerRepository.save(guestPlayer);
-                                log.debug("{}: new guest player {} saved", logId(), commandMessage.getUserId());
+                                log.debug("{}: new guest player {} ({}) saved", logId(), player.getId(), commandMessage.getUserId());
                             } else {
                                 player = playerOptional.get();
-                                log.debug("{}: player telegram id {} found", logId(), commandMessage.getUserId());
+                                log.debug("{}: player {} found", logId(), player.getId());
                             }
                             if (player.isGuest()) {
                                 ExternalMessage guestVoteMessage = externalMessageFactory.getGuestMessageDto(player);
@@ -103,7 +103,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void processPlayerVoteRegistration(Player player, Match match) {
-        log.debug("{}: player {}, match {} vote registration...", logId(), player.getId(), match.getId());
+        log.debug("{}: match {}, player {} vote registration...", logId(), match.getId(), player.getId());
 
         int updatedPositiveAnswersCount = match.getPositiveAnswersCount() + 1;
         match.setPositiveAnswersCount(updatedPositiveAnswersCount);
@@ -111,7 +111,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.save(matchPlayer);
-            log.debug("{}: match {} and matchPlayer {} saved, positiveAnswers: {}",
+            log.debug("{}: match {} player {} saved, positiveAnswers: {}",
                     logId(), match.getId(), player.getId(), updatedPositiveAnswersCount);
         });
 
@@ -189,7 +189,7 @@ public class VoteCommandProcessor extends CommandProcessor {
         matchPlayerRepository
                 .findByMatchExternalPollIdPollIdAndPlayerExternalId(commandMessage.getPollVote().pollId(), commandMessage.getUserId())
                 .ifPresent(matchPlayer -> {
-                    log.debug("{}: matchPlayer {} found", logId(), matchPlayer.getId());
+                    log.debug("{}: voted player {} found", logId(), matchPlayer.getPlayer().getId());
                     Match match = matchPlayer.getMatch();
 
                     if (match.getState() == MatchState.NEW) {
@@ -198,7 +198,8 @@ public class VoteCommandProcessor extends CommandProcessor {
                         transactionTemplate.executeWithoutResult(status -> {
                             matchRepository.save(match);
                             matchPlayerRepository.delete(matchPlayer);
-                            log.debug("{}: updated match {} saved. matchPlayer {} deleted", logId(), match.getId(), matchPlayer.getId());
+                            log.debug("{}: updated match {} saved. matchPlayer {} (player {}) deleted",
+                                    logId(), match.getId(), matchPlayer.getId(), matchPlayer.getPlayer().getId());
                         });
                         if (match.hasMissingPlayers()) {
                             removeScheduledMatchStart(match);
