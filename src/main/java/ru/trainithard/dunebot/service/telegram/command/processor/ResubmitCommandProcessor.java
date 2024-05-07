@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Resets current results and initiates match results requests.
@@ -58,12 +59,24 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             transactionTemplate.executeWithoutResult(status -> {
                 matchRepository.save(match);
                 matchPlayerRepository.saveAll(registeredMatchPlayers);
-                log.debug("{}: match {} and matchPlayers submit discarded info and updated limits saved.", logId(), match.getId());
+                log.debug("{}: match {} ({}) and matchPlayers ({}).",
+                        logId(), match.getId(), getMatchLogInfo(match), getMatchPlayersLogInfo(registeredMatchPlayers));
             });
             submitCommandProcessor.process(match);
         }
 
         log.debug("{}: RESUBMIT(internal) ended", logId());
+    }
+
+    private String getMatchLogInfo(Match match) {
+        return String.format("s: %s, submits: %d, retry: %d", match.getState(), match.getSubmitsCount(), match.getSubmitsRetryCount());
+    }
+
+    private String getMatchPlayersLogInfo(List<MatchPlayer> registeredMatchPlayers) {
+        return registeredMatchPlayers.stream()
+                .map(matchPlayer ->
+                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
+                .collect(Collectors.joining("; "));
     }
 
     private void resetMatchData(Match match) {
