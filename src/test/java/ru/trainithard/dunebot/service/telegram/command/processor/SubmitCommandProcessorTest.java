@@ -29,14 +29,17 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
@@ -59,15 +62,20 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private TaskScheduler taskScheduler;
     @MockBean
     private MatchFinishingService finishingService;
+    private Map<Long, ScheduledFuture<?>> tasksMap;
 
     @BeforeEach
-    void beforeEach() {
+    void beforeEach() throws NoSuchFieldException, IllegalAccessException {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
+
+        Field tasksMapField = SubmitCommandProcessor.class.getDeclaredField("scheduledFailFinishTasksByMatchIds");
+        tasksMapField.setAccessible(true);
+        tasksMap = (Map<Long, ScheduledFuture<?>>) tasksMapField.get(processor);
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
@@ -97,6 +105,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
+        tasksMap.clear();
         jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
@@ -316,6 +325,21 @@ class SubmitCommandProcessorTest extends TestContextMock {
         thread.join();
 
         verify(finishingService, times(1)).finishNotSubmittedMatch(eq(15000L), eq(false));
+    }
+
+    @Test
+    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() {
+        ScheduledFuture<?> existinFailFinishTask = mock(ScheduledFuture.class);
+        doReturn(307L).when(existinFailFinishTask).getDelay(TimeUnit.SECONDS);
+        tasksMap.put(15000L, existinFailFinishTask);
+
+        processor.process(submitCommandMessage);
+
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        Instant actualInstant = instantCaptor.getValue();
+
+        assertThat(actualInstant).isEqualTo(NOW.plus(420 + 307, ChronoUnit.SECONDS));
     }
 
     @Test

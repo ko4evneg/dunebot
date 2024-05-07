@@ -306,6 +306,17 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldNotAttachLeaderKeyboardToMessageAboutCallbackAcceptOnCallbackReplyWneFirstPlaceSelected() {
+        processor.process(getCommandMessage(USER_2_ID, 10002, 11002, "15000__1"));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessages = messageCaptor.getValue();
+
+        assertThat(actualMessages.getKeyboard()).isNull();
+    }
+
+    @Test
     void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenFirstPlaceSelected() {
         processor.process(getCommandMessage(USER_2_ID, 10002, 12001, "15000__" + 1));
 
