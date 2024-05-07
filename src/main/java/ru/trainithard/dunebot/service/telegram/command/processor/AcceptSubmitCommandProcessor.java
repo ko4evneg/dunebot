@@ -64,7 +64,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
                 processConflictMatchFinish(match);
             } else {
-                processNonConflictSubmit(submittingPlayer, candidatePlace, match);
+                processNonConflictSubmit(submittingPlayer, match, candidatePlace);
             }
         }
 
@@ -89,7 +89,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         matchFinishingService.finishNotSubmittedMatch(match.getId(), true);
     }
 
-    private void processNonConflictSubmit(MatchPlayer submittingPlayer, int candidatePlace, Match match) {
+    private void processNonConflictSubmit(MatchPlayer submittingPlayer, Match match, int candidatePlace) {
         log.debug("{}: player's non-conflict submit processing", logId());
         submittingPlayer.setCandidatePlace(candidatePlace);
         match.setSubmitsCount(match.getSubmitsCount() + 1);
@@ -98,7 +98,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             matchPlayerRepository.save(submittingPlayer);
             log.debug("{}: match {} player {} submit saved", logId(), match.getId(), submittingPlayer.getPlayer().getId());
         });
-        Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
+        Long chatId = submittingPlayer.getPlayer().getExternalChatId();
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
         messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));

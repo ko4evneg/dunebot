@@ -336,6 +336,16 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                         "При ошибке используйте команду '/resubmit 15000'\\.");
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4})
+    void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenResubmitWasDoneEarlier(int place) {
+        jdbcTemplate.execute("update match_players set external_submit_id = null where id between 10000 and 10003");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
+
+        verify(messagingService).sendMessageAsync(any());
+    }
+
     @Test
     void shouldReturnAcceptSubmitCommand() {
         Command actualCommand = processor.getCommand();
