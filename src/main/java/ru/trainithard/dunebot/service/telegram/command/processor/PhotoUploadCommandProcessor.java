@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
 
@@ -94,7 +93,6 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                 matchRepository.save(match);
                 log.debug("{}: match photo flag saved", logId);
                 if (match.canBePreliminaryFinished()) {
-                    log.debug("{}: match {} finishing ({})", logId, match.getId(), getMatchLogInfo(match));
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
 
@@ -133,17 +131,6 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     private String getFileExtension(String filePath) {
         int lastSlashIndex = filePath.lastIndexOf(".");
         return filePath.substring(lastSlashIndex);
-    }
-
-    //TODO remove
-    private String getMatchLogInfo(Match match) {
-        String playerPlaces = match.getMatchPlayers().stream()
-                .map(matchPlayer ->
-                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
-                .collect(Collectors.joining("; "));
-        StringBuilder stringBuilder = new StringBuilder(playerPlaces).append("; ");
-        stringBuilder.append("state: ").append(match.getState()).append(", submits: ").append(match.getSubmitsCount());
-        return stringBuilder.toString();
     }
 
     @Override

@@ -104,7 +104,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
     void shouldRequestForFileWhenCompressedPhotoReceived() {
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
 
-        verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
+        verify(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
     @Test
@@ -116,7 +116,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
 
-        verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
+        verify(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
     @Test
@@ -141,7 +141,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
 
-        verify(screenshotService, times(1)).save(eq(10000L), eq(extension), eq(MOCK_FILE));
+        verify(screenshotService).save(eq(10000L), eq(extension), eq(MOCK_FILE));
     }
 
     @Test
@@ -150,7 +150,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getPhotoCommandMessage(getPhotos(MAX_SCREENSHOT_SIZE)));
 
-        verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
+        verify(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
     @ParameterizedTest
@@ -163,7 +163,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage());
 
-        verify(screenshotService, times(1)).save(eq(10000L), eq(extension), eq(MOCK_FILE));
+        verify(screenshotService).save(eq(10000L), eq(extension), eq(MOCK_FILE));
     }
 
     @Test
@@ -172,7 +172,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage());
 
-        verify(restTemplate, times(1)).getForObject(eq(FILE_URI), eq(byte[].class));
+        verify(restTemplate).getForObject(eq(FILE_URI), eq(byte[].class));
     }
 
     @Test
@@ -182,7 +182,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(photoCommandMessage);
 
-        verify(messagingService, times(1)).getFileDetails(eq(FILE_ID + "XX"));
+        verify(messagingService).getFileDetails(eq(FILE_ID + "XX"));
     }
 
     @Test
@@ -194,7 +194,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         processor.process(documentCommandMessage);
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        verify(messagingService).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
         assertThat(actualMessage)
@@ -211,7 +211,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
         processor.process(getDocumentCommandMessage());
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
+        verify(messagingService).sendMessageAsync(messageCaptor.capture());
         MessageDto actualMessage = messageCaptor.getValue();
 
         assertThat(actualMessage)
@@ -307,7 +307,7 @@ class PhotoUploadCommandProcessorTest extends TestContextMock {
 
         processor.process(getDocumentCommandMessage());
 
-        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(10000L));
+        verify(matchFinishingService).finishSubmittedMatch(eq(10000L));
     }
 
     @Test
