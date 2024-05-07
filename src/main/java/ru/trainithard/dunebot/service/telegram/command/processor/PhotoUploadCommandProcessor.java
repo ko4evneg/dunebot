@@ -63,7 +63,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
             throw new AnswerableDuneBotException("У вас несколько матчей в состоянии /submit. Вероятно это баг.", commandMessage);
         }
         MatchPlayer matchPlayer = matchPlayersWithOnSubmitMatches.get(0);
-        log.debug("{}: matchPlayer {}, match {} found", logId, matchPlayer.getId(), matchPlayer.getMatch());
+        log.debug("{}: matchPlayer {}, match {} found", logId, matchPlayer.getId(), matchPlayer.getMatch().getId());
 
         String fileId = getFileId(commandMessage);
         log.debug("{}: file telegram id: {}", logId, fileId);
@@ -79,8 +79,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         log.debug("{}: file detail callback received from telegram", logId);
 
         String filePath = telegramFileDetailsDto.path();
-        String effectiveFilePath = filePath.startsWith(PATH_SEPARATOR) ? filePath : PATH_SEPARATOR + filePath;
-        byte[] photoBytes = restTemplate.getForObject(getFileUri(effectiveFilePath), byte[].class);
+        byte[] photoBytes = restTemplate.getForObject(getFileUri(filePath), byte[].class);
         log.debug("{}: file bytes[] received from telegram", logId);
 
         try {
@@ -93,7 +92,7 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
                 match.setState(MatchState.ON_SUBMIT_SCREENSHOTTED);
                 matchRepository.save(match);
                 log.debug("{}: match photo flag saved", logId);
-                if (match.canBeFinished()) {
+                if (match.canBePreliminaryFinished()) {
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
 
@@ -123,7 +122,8 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
     }
 
     private String getFileUri(String filePath) {
-        String fileUri = FILE_DOWNLOAD_URI_PREFIX + botToken + filePath;
+        String effectiveFilePath = filePath.startsWith(PATH_SEPARATOR) ? filePath : PATH_SEPARATOR + filePath;
+        String fileUri = FILE_DOWNLOAD_URI_PREFIX + botToken + effectiveFilePath;
         log.debug("{}: file uri: {}", logId(), fileUri);
         return fileUri;
     }

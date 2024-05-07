@@ -62,13 +62,13 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, positive_answers_count, screenshot_path, state, created_at) " +
                              "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', 4, 'photos/1.jpg', '" + MatchState.NEW + "','2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
+                             "values (10002, 'ExternalMessageId', 10002, 12000, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10003, 'ExternalMessageId', 10003, 11003, '2020-10-10')");
+                             "values (10003, 'ExternalMessageId', 10003, 12001, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10004, 'ExternalMessageId', 10004, 11004, '2020-10-10')");
+                             "values (10004, 'ExternalMessageId', 10004, 12002, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10005, 'ExternalMessageId', 10005, 11005, '2020-10-10')");
+                             "values (10005, 'ExternalMessageId', 10005, 12003, '2020-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
                              "values (10000, 15000, 10000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
@@ -263,16 +263,16 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendDeleteMessageForSubmitMessageOnCallbackReply() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__1"));
+        processor.process(getCommandMessage(USER_1_ID, 10002, 12000, "15000__1"));
 
         verify(messagingService, times(1)).deleteMessageAsync(argThat(messageDto ->
-                messageDto.getMessageId().equals(10002) && messageDto.getChatId().equals(11002L)));
+                messageDto.getMessageId().equals(10002) && messageDto.getChatId().equals(12000L)));
     }
 
     @ParameterizedTest
     @ValueSource(ints = {2, 3, 4})
     void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWneNotFirstPlaceSelected(int place) {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
+        processor.process(getCommandMessage(USER_2_ID, 10002, 12001, "15000__" + place));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -280,7 +280,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertThat(actualMessages)
                 .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
-                .containsExactly(null, "11002",
+                .containsExactly(null, "12001",
                         "В матче 15000 за вами зафиксировано *" + place + " место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "*Теперь выберите лидера* которым играли\\.");
@@ -307,7 +307,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenFirstPlaceSelected() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
+        processor.process(getCommandMessage(USER_2_ID, 10002, 12001, "15000__" + 1));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -315,7 +315,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertThat(actualMessages)
                 .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getKeyboard, MessageDto::getText)
-                .containsExactly(null, "11002", null,
+                .containsExactly(null, "12001", null,
                         "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "*Теперь загрузите в этот чат скриншот победы\\.*");
@@ -323,7 +323,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendMessageAboutCallbackAcceptOnNotParticipatedCallbackReply() {
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 0));
+        processor.process(getCommandMessage(USER_2_ID, 10002, 12001, "15000__" + 0));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
@@ -331,9 +331,19 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
 
         assertThat(actualMessage)
                 .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getText)
-                .containsExactly(null, "11002",
+                .containsExactly(null, "12001",
                         "В матче 15000 за вами зафиксирован статус: *не участвует*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2, 3, 4})
+    void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenResubmitWasDoneEarlier(int place) {
+        jdbcTemplate.execute("update match_players set external_submit_id = null where id between 10000 and 10003");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + place));
+
+        verify(messagingService).sendMessageAsync(any());
     }
 
     @Test

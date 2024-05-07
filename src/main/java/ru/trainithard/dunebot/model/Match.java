@@ -61,7 +61,7 @@ public class Match extends BaseEntity {
      */
     private int positiveAnswersCount;
     /**
-     * Count of accepted submit answers for the match (when user selects his place).
+     * Count of accepted submit answers for the match (answer registration for place request).
      */
     private int submitsCount;
     /**
@@ -82,19 +82,15 @@ public class Match extends BaseEntity {
         this.state = MatchState.NEW;
     }
 
-    public boolean hasSubmitPhoto() {
-        return screenshotPath != null;
-    }
-
-    public boolean canBeFinished() {
-        return submitsCount == modType.getPlayersCount() && screenshotPath != null;
-    }
-
     public boolean isResubmitAllowed(int resubmitsLimit) {
         return submitsRetryCount < resubmitsLimit;
     }
 
-    public boolean isFull() {
+    public boolean hasSubmitPhoto() {
+        return screenshotPath != null;
+    }
+
+    public boolean isReadyToStart() {
         return modType.getPlayersCount() == positiveAnswersCount;
     }
 
@@ -102,8 +98,8 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
-    public boolean hasEnoughPlayers() {
-        return positiveAnswersCount >= modType.getPlayersCount();
+    public boolean canBePreliminaryFinished() {
+        return submitsCount == modType.getPlayersCount() && screenshotPath != null;
     }
 
     public boolean hasAllPlacesSubmitted() {

@@ -60,6 +60,12 @@ public class SubmitCommandProcessor extends CommandProcessor {
         int logId = logId();
         log.debug("{}: SUBMIT(internal) started", logId);
 
+        if (match.getState() == MatchState.NEW) {
+            match.setState(MatchState.ON_SUBMIT);
+            matchRepository.save(match);
+            log.debug("{}: match {} saved state ON_SUBMIT", logId, match.getId());
+        }
+
         List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
         for (MatchPlayer matchPlayer : registeredMatchPlayers) {
             log.debug("{}: matchPlayer {} processing...", logId, matchPlayer.getId());
@@ -71,12 +77,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                     //todo: transaction?
                     matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                     matchPlayerRepository.save(matchPlayer);
-                    log.debug("{}: matchPlayer {} saved", logId, matchPlayer.getId());
-                    if (match.getState() == MatchState.NEW) {
-                        match.setState(MatchState.ON_SUBMIT);
-                        matchRepository.save(match);
-                        log.debug("{}: match {} saved", logId, match.getId());
-                    }
+                    log.debug("{}: matchPlayer {} (player {}) submitId saved", logId, matchPlayer.getId(), matchPlayer.getPlayer().getId());
                 } else {
                     log.error(logId + ": sending external message encountered an exception", throwable);
                 }

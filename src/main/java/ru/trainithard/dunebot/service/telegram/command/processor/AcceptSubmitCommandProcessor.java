@@ -64,7 +64,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             } else if (isConflictSubmit(matchPlayers, candidatePlace)) {
                 processConflictMatchFinish(match);
             } else {
-                processNonConflictSubmit(submittingPlayer, candidatePlace, match);
+                processNonConflictSubmit(submittingPlayer, match, candidatePlace);
             }
         }
 
@@ -89,20 +89,21 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         matchFinishingService.finishNotSubmittedMatch(match.getId(), true);
     }
 
-    private void processNonConflictSubmit(MatchPlayer submittingPlayer, int candidatePlace, Match match) {
+    private void processNonConflictSubmit(MatchPlayer submittingPlayer, Match match, int candidatePlace) {
         log.debug("{}: player's non-conflict submit processing", logId());
         submittingPlayer.setCandidatePlace(candidatePlace);
         match.setSubmitsCount(match.getSubmitsCount() + 1);
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.save(submittingPlayer);
-            log.debug("{}: match {} and submitting matchPlayers saved)", logId(), match.getId());
+            log.debug("{}: match {} (submits {}) and player {} submit accepted",
+                    logId(), match.getId(), match.getSubmitsCount(), submittingPlayer.getPlayer().getId());
         });
-        Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
+        long chatId = submittingPlayer.getPlayer().getExternalChatId();
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
         messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));
-        if (match.canBeFinished()) {
+        if (match.canBePreliminaryFinished()) {
             matchFinishingService.finishSubmittedMatch(match.getId());
         }
         log.debug("{}: player's submit successfully processed", logId());
