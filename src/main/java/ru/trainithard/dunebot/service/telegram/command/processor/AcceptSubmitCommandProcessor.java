@@ -96,7 +96,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.save(submittingPlayer);
-            log.debug("{}: match {} and submitting matchPlayers saved)", logId(), match.getId());
+            log.debug("{}: match {} player {} submit saved", logId(), match.getId(), submittingPlayer.getPlayer().getId());
         });
         Long chatId = submittingPlayer.getSubmitMessageId().getChatId();
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)

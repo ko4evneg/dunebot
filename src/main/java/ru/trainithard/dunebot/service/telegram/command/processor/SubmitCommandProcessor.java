@@ -71,7 +71,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
                     //todo: transaction?
                     matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
                     matchPlayerRepository.save(matchPlayer);
-                    log.debug("{}: matchPlayer {} saved", logId, matchPlayer.getId());
+                    log.debug("{}: matchPlayer {} (player {}) saved", logId, matchPlayer.getId(), matchPlayer.getPlayer().getId());
                     if (match.getState() == MatchState.NEW) {
                         match.setState(MatchState.ON_SUBMIT);
                         matchRepository.save(match);
