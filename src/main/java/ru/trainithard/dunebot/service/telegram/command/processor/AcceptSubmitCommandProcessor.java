@@ -104,6 +104,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
         messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));
         if (match.canBePreliminaryFinished()) {
+            log.debug("{}: match {} finishing ({})", logId(), match.getId(), getMatchLogInfo(match));
             matchFinishingService.finishSubmittedMatch(match.getId());
         }
         log.debug("{}: player's submit successfully processed", logId());
@@ -178,6 +179,17 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         for (MatchPlayer matchPlayer : matchPlayers) {
             messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
         }
+    }
+
+    //TODO remove
+    private String getMatchLogInfo(Match match) {
+        String playerPlaces = match.getMatchPlayers().stream()
+                .map(matchPlayer ->
+                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
+                .collect(Collectors.joining("; "));
+        StringBuilder stringBuilder = new StringBuilder(playerPlaces).append("; ");
+        stringBuilder.append("state: ").append(match.getState()).append(", submits: ").append(match.getSubmitsCount());
+        return stringBuilder.toString();
     }
 
     @Override
