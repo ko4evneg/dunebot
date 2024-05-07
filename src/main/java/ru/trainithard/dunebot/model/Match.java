@@ -98,8 +98,10 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
+    // As players without places submits counts, we need exact match to start preliminary finishing
+    // TODO add test
     public boolean canBePreliminaryFinished() {
-        return submitsCount == modType.getPlayersCount() && screenshotPath != null;
+        return submitsCount == matchPlayers.size() && screenshotPath != null;
     }
 
     public boolean hasAllPlacesSubmitted() {

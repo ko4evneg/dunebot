@@ -149,19 +149,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldInvokeMatchFinishOnLastCallbackReplyWhenVotersMoreThanPlaces() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10004, 11005, 12005, 'st_pl5', 'name5', 'l5', 'ef5', '2010-10-10') ");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                             "values (10004, 15000, 10004, 10005, '2010-10-10')");
-        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
-
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
-
-        verify(matchFinishingService, times(1)).finishSubmittedMatch(eq(15000L));
-    }
-
-    @Test
     void shouldNotInvokeMatchFinishOnLastCallbackReplyWhenMatchHasNoPhoto() {
         jdbcTemplate.execute("update matches set submits_count = 3, screenshot_path = null where id = 15000");
 

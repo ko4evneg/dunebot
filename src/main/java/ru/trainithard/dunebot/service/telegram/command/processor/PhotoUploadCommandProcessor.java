@@ -13,6 +13,7 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.LogId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.ScreenshotService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -26,6 +27,7 @@ import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactor
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.MAX_SCREENSHOT_SIZE;
@@ -84,14 +86,12 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
 
         try {
             if (photoBytes != null) {
-                Match match = matchPlayer.getMatch();
-                String dottedFileExtension = getFileExtension(filePath);
-                String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
-                log.debug("{}: save path: {}", logId, savePath);
-                match.setScreenshotPath(savePath);
-                match.setState(MatchState.ON_SUBMIT_SCREENSHOTTED);
-                matchRepository.save(match);
-                log.debug("{}: match photo flag saved", logId);
+                Optional<Match> matchOptional = matchRepository.findWithMatchPlayersBy(matchPlayer.getMatch().getId());
+                if (matchOptional.isEmpty()) {
+                    return;
+                }
+                Match match = matchOptional.get();
+                saveMatchInfo(filePath, match, photoBytes);
                 if (match.canBePreliminaryFinished()) {
                     matchFinishingService.finishSubmittedMatch(match.getId());
                 }
@@ -106,6 +106,16 @@ public class PhotoUploadCommandProcessor extends CommandProcessor {
         } catch (IOException exception) {
             log.error(logId + ": encountered an exception", exception);
         }
+    }
+
+    private void saveMatchInfo(String filePath, Match match, byte[] photoBytes) throws IOException {
+        String dottedFileExtension = getFileExtension(filePath);
+        String savePath = screenshotService.save(match.getId(), dottedFileExtension, photoBytes);
+        log.debug("{}: save path: {}", LogId.get(), savePath);
+        match.setScreenshotPath(savePath);
+        match.setState(MatchState.ON_SUBMIT_SCREENSHOTTED);
+        matchRepository.save(match);
+        log.debug("{}: match photo flag saved", LogId.get());
     }
 
     private String getFileId(CommandMessage commandMessage) {

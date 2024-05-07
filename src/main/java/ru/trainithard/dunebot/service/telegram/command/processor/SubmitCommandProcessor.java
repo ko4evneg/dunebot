@@ -81,10 +81,15 @@ public class SubmitCommandProcessor extends CommandProcessor {
             messageCompletableFuture.whenComplete((message, throwable) -> {
                 if (throwable == null) {
                     //todo: transaction?
-                    matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
-                    matchPlayerRepository.save(matchPlayer);
-                    log.debug("{}: matchPlayer {} (player {}) submitId saved", logId, matchPlayer.getId(), matchPlayer.getPlayer().getId());
+                    matchPlayerRepository.findById(matchPlayer.getId())
+                            .ifPresent(callbackMatchPlayer -> {
+                                matchPlayer.setSubmitMessageId(new ExternalMessageId(message));
+                                matchPlayerRepository.save(matchPlayer);
+                                log.debug("{}: matchPlayer {} (player {}) submitId saved",
+                                        logId, matchPlayer.getId(), matchPlayer.getPlayer().getId());
+                            });
                 } else {
+                    //TODO: retry
                     log.error(logId + ": sending external message encountered an exception", throwable);
                 }
             });
