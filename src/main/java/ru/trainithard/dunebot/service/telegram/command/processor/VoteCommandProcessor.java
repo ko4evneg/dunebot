@@ -115,7 +115,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                     logId(), match.getId(), player.getId(), updatedPositiveAnswersCount);
         });
 
-        if (match.isFull()) {
+        if (match.isReadyToStart()) {
             cancelScheduledMatchStart(match);
             scheduleNewMatchStart(match);
             if (match.getModType() == ModType.UPRISING_6) {

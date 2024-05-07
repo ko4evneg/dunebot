@@ -90,12 +90,12 @@ public class Match extends BaseEntity {
         return screenshotPath != null;
     }
 
-    public boolean canBeFinished() {
-        return submitsCount == modType.getPlayersCount() && screenshotPath != null;
+    public boolean isReadyToStart() {
+        return modType.getPlayersCount() == positiveAnswersCount;
     }
 
-    public boolean isFull() {
-        return modType.getPlayersCount() == positiveAnswersCount;
+    public boolean canBeFinished() {
+        return submitsCount == modType.getPlayersCount() && screenshotPath != null;
     }
 
     public boolean hasMissingPlayers() {
