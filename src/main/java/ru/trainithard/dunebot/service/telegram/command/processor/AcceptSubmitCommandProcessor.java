@@ -9,6 +9,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.LogId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -51,7 +52,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         }
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
         MatchPlayer submittingPlayer = getSubmittingPlayer(commandMessage.getUserId(), matchPlayers);
-        log.debug("{}: match {}, player {}", logId(), match.getId(), submittingPlayer.getPlayer().getId());
+        log.debug("{}: match {}, player {}. state: {}",
+                logId(), match.getId(), submittingPlayer.getPlayer().getId(), LogId.getMatchLogInfo(match));
 
         if (!submittingPlayer.hasCandidateVote()) {
             deleteOldSubmitMessage(submittingPlayer);
@@ -78,27 +80,28 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     }
 
     private void processConflictResubmit(List<MatchPlayer> matchPlayers, MatchPlayer submittingPlayer, int candidatePlace, Match match) {
-        log.debug("{}: conflict resolution - resubmit", logId());
+        log.debug("{}: conflict detected - resubmit...", logId());
         ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
         sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
         resubmitProcessor.process(match);
     }
 
     private void processConflictMatchFinish(Match match) {
-        log.debug("{}: conflict resolution - failed match", logId());
+        log.debug("{}: conflict detected - not_submitted finish...", logId());
         matchFinishingService.finishNotSubmittedMatch(match.getId(), true);
     }
 
     private void processNonConflictSubmit(MatchPlayer submittingPlayer, Match match, int candidatePlace) {
-        log.debug("{}: player's non-conflict submit processing", logId());
+        log.debug("{}: non-conflict submit processing...", logId());
         submittingPlayer.setCandidatePlace(candidatePlace);
         match.setSubmitsCount(match.getSubmitsCount() + 1);
-        transactionTemplate.executeWithoutResult(status -> {
-            matchRepository.save(match);
+        Match savedMatch = transactionTemplate.execute(status -> {
             matchPlayerRepository.save(submittingPlayer);
-            log.debug("{}: match {} (submits {}) and player {} submit accepted",
-                    logId(), match.getId(), match.getSubmitsCount(), submittingPlayer.getPlayer().getId());
+            return matchRepository.save(match);
+
         });
+        log.debug("{}: match {} player {} (submits: {}) submit accepted",
+                logId(), match.getId(), savedMatch == null ? "null" : savedMatch.getSubmitsCount(), submittingPlayer.getPlayer().getId());
         long chatId = submittingPlayer.getPlayer().getExternalChatId();
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;

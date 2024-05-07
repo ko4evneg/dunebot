@@ -39,15 +39,15 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
     public void finishNotSubmittedMatch(long matchId, boolean isFailedByResubmitsLimit) {
         int logId = LogId.get();
-        log.debug("{}: finishing not submitted match {} started", logId, matchId);
+        log.debug("{}: match {} (not_submitted) finishing...", logId, matchId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
-        log.debug("{}: match state: {}", logId, matchId, LogId.getMatchLogInfo(match));
+        log.debug("{}: match {} state: {}", logId, matchId, LogId.getMatchLogInfo(match));
         if (MatchState.getEndedMatchStates().contains(match.getState())) {
             log.debug("{}: Match {} has been ended already. Finishing is not required. Exiting...", logId, matchId);
             return;
         }
-        log.debug("{}: match {} found (state: {}, photo: {})", logId, match.getId(), match.getState(), match.hasSubmitPhoto());
+        log.debug("{}: match {} found (photo: {}, state: {})", logId, match.getId(), match.hasSubmitPhoto(), match.getState());
         if (!MatchState.getEndedMatchStates().contains(match.getState())) {
             if (match.hasAllPlacesSubmitted() && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
@@ -57,7 +57,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
                     matchPlayerRepository.saveAll(match.getMatchPlayers());
-                    log.debug("{}: match {} and its matchPlayers saved", logId, match.getId());
+                    log.debug("{}: transaction succeed", logId);
                 });
 
                 messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), finishReasonMessage));
@@ -79,7 +79,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         if (MatchState.getEndedMatchStates().contains(match.getState())) {
             throw new IllegalStateException("Can't accept submit for match " + match.getId() + " due to its ended state");
         }
-        log.debug("{}: match {} finishing ({})", LogId.get(), match.getId(), LogId.getMatchLogInfo(match));
+        log.debug("{}: match {} state: {}", LogId.get(), matchId, LogId.getMatchLogInfo(match));
         finishSuccessfullyAndSave(match);
         log.debug("{}: finishing submitted match ended", LogId.get());
     }
@@ -92,7 +92,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(match.getMatchPlayers());
-            log.debug("{}: match {} and its matchPlayers saved", LogId.get(), match.getId());
+            log.debug("{}: transaction succeed", LogId.get());
         });
         messagingService.sendMessageAsync(getMatchFinishMessage(match));
     }
