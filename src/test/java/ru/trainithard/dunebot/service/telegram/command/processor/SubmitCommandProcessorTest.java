@@ -62,15 +62,20 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private TaskScheduler taskScheduler;
     @MockBean
     private MatchFinishingService finishingService;
+    private Map<Long, ScheduledFuture<?>> tasksMap;
 
     @BeforeEach
-    void beforeEach() {
+    void beforeEach() throws NoSuchFieldException, IllegalAccessException {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
+
+        Field tasksMapField = SubmitCommandProcessor.class.getDeclaredField("scheduledFailFinishTasksByMatchIds");
+        tasksMapField.setAccessible(true);
+        tasksMap = (Map<Long, ScheduledFuture<?>>) tasksMapField.get(processor);
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
@@ -100,6 +105,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
+        tasksMap.clear();
         jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
@@ -322,12 +328,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() throws ReflectiveOperationException {
+    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() {
         ScheduledFuture<?> existinFailFinishTask = mock(ScheduledFuture.class);
         doReturn(307L).when(existinFailFinishTask).getDelay(TimeUnit.SECONDS);
-        Field tasksMapField = SubmitCommandProcessor.class.getDeclaredField("scheduledFailFinishTasksByMatchIds");
-        tasksMapField.setAccessible(true);
-        Map<Long, ScheduledFuture<?>> tasksMap = (Map<Long, ScheduledFuture<?>>) tasksMapField.get(processor);
         tasksMap.put(15000L, existinFailFinishTask);
 
         processor.process(submitCommandMessage);
