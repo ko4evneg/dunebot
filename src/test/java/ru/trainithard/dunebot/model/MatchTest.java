@@ -69,4 +69,26 @@ class MatchTest {
 
         assertThat(actualIsReadyToStart).isFalse();
     }
+
+    @ParameterizedTest
+    @CsvSource({"CLASSIC, 3", "UPRISING_4, 3", "UPRISING_6, 5"})
+    void shouldReturnHasMissingPlayersTrueWhenPositiveVotesLessThanModTypeSize(ModType modType, int positiveVotes) {
+        match.setModType(modType);
+        match.setPositiveAnswersCount(positiveVotes);
+
+        boolean actualIsReadyToStart = match.hasMissingPlayers();
+
+        assertThat(actualIsReadyToStart).isTrue();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"CLASSIC, 4", "CLASSIC, 5", "UPRISING_4, 4", "UPRISING_4, 5", "UPRISING_6, 6", "UPRISING_6, 7"})
+    void shouldReturnHasMissingPlayersFalseWhenPositiveVotesMoreThanOrEqualsModTypeSize(ModType modType, int positiveVotes) {
+        match.setModType(modType);
+        match.setPositiveAnswersCount(positiveVotes);
+
+        boolean actualIsReadyToStart = match.hasMissingPlayers();
+
+        assertThat(actualIsReadyToStart).isFalse();
+    }
 }
