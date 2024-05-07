@@ -96,9 +96,10 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.save(submittingPlayer);
-            log.debug("{}: match {} player {} submit saved", logId(), match.getId(), submittingPlayer.getPlayer().getId());
+            log.debug("{}: match {} (submits {}) and player {} submit accepted",
+                    logId(), match.getId(), match.getSubmitsCount(), submittingPlayer.getPlayer().getId());
         });
-        Long chatId = submittingPlayer.getPlayer().getExternalChatId();
+        long chatId = submittingPlayer.getPlayer().getExternalChatId();
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
         messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));

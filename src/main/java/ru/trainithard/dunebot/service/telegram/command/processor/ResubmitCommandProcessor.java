@@ -49,7 +49,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
         int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
         log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
-            log.debug("{}: resubmit is not allowed. Finishing by resubmits llimit reached...", logId());
+            log.debug("{}: resubmit is not allowed. Finishing by resubmits limit reached...", logId());
             matchFinishingService.finishNotSubmittedMatch(match.getId(), true);
         } else {
             List<MatchPlayer> registeredMatchPlayers = match.getMatchPlayers();
