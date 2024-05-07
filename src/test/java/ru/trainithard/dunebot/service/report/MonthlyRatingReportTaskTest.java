@@ -222,17 +222,17 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         referencePdfReader.close();
 
         assertThat(actualUprisingPdfReader.getPageContent(1)).isEqualTo(referenceFileBytes);
-        assertThat(actualUprisingMessage.getTopicId()).isEqualTo(TestConstants.TOPIC_ID_UPRISING);
-        assertThat(actualUprisingMessage.getChatId()).isEqualTo(TestConstants.CHAT_ID);
-        assertThat(actualUprisingMessage.getText()).isEqualTo("Рейтинг за 10\\.2010:");
+        assertThat(actualUprisingMessage)
+                .extracting(FileMessageDto::getTopicId, FileMessageDto::getChatId, FileMessageDto::getFileName, FileMessageDto::getText)
+                .containsExactly(TestConstants.TOPIC_ID_UPRISING, TestConstants.CHAT_ID, "Рейтинг за 10.2010.pdf", "Рейтинг за 10\\.2010:");
 
         FileMessageDto actualClassicMessage = messageCaptor.getAllValues().get(0);
         ByteArrayInputStream actualClassicInputStream = new ByteArrayInputStream(actualClassicMessage.getFile());
         PdfReader actualClassicPdfReader = new PdfReader(actualClassicInputStream);
+        assertThat(actualClassicMessage)
+                .extracting(FileMessageDto::getTopicId, FileMessageDto::getChatId, FileMessageDto::getFileName, FileMessageDto::getText)
+                .containsExactly(TestConstants.TOPIC_ID_CLASSIC, TestConstants.CHAT_ID, "Рейтинг за 10.2010.pdf", "Рейтинг за 10\\.2010:");
 
-        assertThat(actualClassicMessage.getTopicId()).isEqualTo(TestConstants.TOPIC_ID_CLASSIC);
-        assertThat(actualClassicMessage.getChatId()).isEqualTo(TestConstants.CHAT_ID);
-        assertThat(actualClassicMessage.getText()).isEqualTo("Рейтинг за 10\\.2010:");
         byte[] page1Content = actualClassicPdfReader.getPageContent(1);
         assertThat(page1Content).isNotEmpty();
 
