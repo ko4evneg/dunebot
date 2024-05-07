@@ -88,7 +88,7 @@ public class MonthlyRatingReportTask implements Runnable {
         String ratingName = "Рейтинг за " + getDateString(month);
         String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
         FileMessageDto fileMessageDto =
-                new FileMessageDto(chatId, new ExternalMessage(ratingName).append(":"), getTopicId(modType), pdfFile, ratingName);
+                new FileMessageDto(chatId, new ExternalMessage(ratingName).append(":"), getTopicId(modType), pdfFile, ratingName + ".pdf");
         messagingService.sendFileAsync(fileMessageDto);
     }
 
