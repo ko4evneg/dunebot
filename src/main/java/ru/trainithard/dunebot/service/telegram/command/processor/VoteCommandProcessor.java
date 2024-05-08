@@ -131,24 +131,35 @@ public class VoteCommandProcessor extends CommandProcessor {
         if (existingScheduledTask != null) {
             existingScheduledTask.cancel(false);
         }
-        log.debug("{}: vote match start message unscheduled", logId());
+        log.debug("{}: vote match {} start unscheduled", logId(), match.getId());
     }
 
     private void scheduleNewMatchStart(Match match) {
         int matchStartDelay = settingsService.getIntSetting(SettingKey.MATCH_START_DELAY);
         Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
         ScheduledFuture<?> scheduledTask =
-                dunebotTaskScheduler.schedule(() -> messagingService.sendMessageAsync(getMatchStartMessage(match))
-                                .whenComplete((externalMessageDto, throwable) -> {
-                                    matchRepository.findById(match.getId()).ifPresent(cbMatch -> {
-                                        deleteExistingOldSubmitMessage(cbMatch);
-                                        cbMatch.setExternalStartId(new ExternalMessageId(externalMessageDto));
-                                        matchRepository.save(cbMatch);
-                                        log.debug("0: match {} externalStart updated to '{}' and saved",
-                                                cbMatch.getId(), matchStartInstant);
+                dunebotTaskScheduler.schedule(() -> {
+                            Optional<Match> freshMatch = matchRepository.findWithMatchPlayersBy(match.getId());
+                            if (freshMatch.isEmpty()) {
+                                log.debug("0: match {} start not found the match", match.getId());
+                                return;
+                            }
+                            messagingService.sendMessageAsync(getMatchStartMessage(match))
+                                    .whenComplete((externalMessageDto, throwable) -> {
+                                        log.debug("0: match {} start callback received. Current time: {}",
+                                                match.getId(), Instant.now(clock));
+                                        if (throwable != null) {
+                                            log.error("0: match {} start callback failure...", match.getId(), throwable);
+                                        }
+                                        matchRepository.findById(match.getId()).ifPresent(cbMatch -> {
+                                            deleteExistingOldSubmitMessage(cbMatch);
+                                            cbMatch.setExternalStartId(new ExternalMessageId(externalMessageDto));
+                                            matchRepository.save(cbMatch);
+                                        });
                                     });
-                                }),
+                        },
                         matchStartInstant);
+        log.debug("0: match {} start scheduled at '{}'", match.getId(), matchStartInstant);
 
         scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
         log.debug("{}: vote match start message scheduled to '{}'", logId(), matchStartInstant);
