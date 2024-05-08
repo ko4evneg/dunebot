@@ -71,8 +71,9 @@ public class VoteCommandProcessor extends CommandProcessor {
                             Player player;
                             if (playerOptional.isEmpty()) {
                                 log.debug("{}: player {} not found. Creating guest...", logId(), commandMessage.getUserId());
-                                int nextGuestIndex = playerRepository.findNextGuestIndex();
+                                int nextGuestIndex = settingsService.getIntSetting(SettingKey.NEXT_GUEST_INDEX);
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
+                                settingsService.saveSetting(SettingKey.NEXT_GUEST_INDEX, Integer.toString(nextGuestIndex + 1));
                                 player = playerRepository.save(guestPlayer);
                                 log.debug("{}: player {} ({}) saved as guest", logId(), player.getId(), commandMessage.getUserId());
                             } else {
