@@ -37,7 +37,11 @@ public enum SettingKey {
     /**
      * Monthly threshold of required matches for rating participation
      */
-    MONTHLY_MATCHES_THRESHOLD;
+    MONTHLY_MATCHES_THRESHOLD,
+    /**
+     * Index of next guest player
+     */
+    NEXT_GUEST_INDEX;
 
     public static SettingKey getByName(String settingName) {
         if (settingName == null || settingName.isBlank()) {
