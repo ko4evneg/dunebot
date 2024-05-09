@@ -38,6 +38,7 @@ public class CommandMessageFactoryImpl implements CommandMessageFactory {
             //TODO: add validation for callback owner (to avoid excessive processing when multiple bots in channel exist)
             return CommandMessage.getCallbackInstance(update.getCallbackQuery());
         }
+        //TODO: remove
         try {
             log.debug("{}: null command detected: {}", LogId.get(), mapper.writeValueAsString(update));
         } catch (JsonProcessingException e) {
