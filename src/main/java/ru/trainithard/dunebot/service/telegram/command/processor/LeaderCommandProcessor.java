@@ -15,7 +15,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 @Service
 @RequiredArgsConstructor
 public class LeaderCommandProcessor extends CommandProcessor {
-    private static final String SUCCESS_LEADER_REGISTRATION_MESSAGE = "Лидер зарегистрирован. Ожидайте регистрации мест других игроков.";
+    private static final String SUCCESS_LEADER_REGISTRATION_MESSAGE_TEMPLATE =
+            "Лидер для матча %d зарегистрирован. Ожидайте регистрации мест других игроков.";
     private final MatchPlayerRepository matchPlayerRepository;
     private final LeaderRepository leaderRepository;
 
@@ -35,8 +36,9 @@ public class LeaderCommandProcessor extends CommandProcessor {
             log.debug("{}: leader saved to match", logId());
 
             long playerChatId = matchPlayer.getPlayer().getExternalChatId();
+            String message = String.format(SUCCESS_LEADER_REGISTRATION_MESSAGE_TEMPLATE, matchPlayer.getMatch().getId());
             MessageDto messageDto =
-                    new MessageDto(playerChatId, new ExternalMessage(SUCCESS_LEADER_REGISTRATION_MESSAGE), null, null);
+                    new MessageDto(playerChatId, new ExternalMessage(message), null, null);
             messagingService.sendMessageAsync(messageDto);
         });
 
