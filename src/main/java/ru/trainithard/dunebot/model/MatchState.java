@@ -25,7 +25,11 @@ public enum MatchState {
     /**
      * Match is unsuccessfully finished (without results).
      */
-    FAILED;
+    FAILED,
+    /**
+     * Match is cancelled.
+     */
+    CANCELLED;
 
     public static List<MatchState> getEndedMatchStates() {
         return List.of(FINISHED, FAILED);

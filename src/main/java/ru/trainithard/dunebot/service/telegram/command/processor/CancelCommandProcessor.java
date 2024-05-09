@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -27,7 +26,6 @@ public class CancelCommandProcessor extends CommandProcessor {
 
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
-    private final MatchPlayerRepository matchPlayerRepository;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -45,8 +43,8 @@ public class CancelCommandProcessor extends CommandProcessor {
                 }
                 messagingService.deleteMessageAsync(latestOwnedMatch.getExternalPollId());
                 transactionTemplate.executeWithoutResult(status -> {
-                    matchPlayerRepository.deleteAll(latestOwnedMatch.getMatchPlayers());
-                    matchRepository.delete(latestOwnedMatch);
+                    latestOwnedMatch.setState(MatchState.CANCELLED);
+                    matchRepository.save(latestOwnedMatch);
                     log.debug("{}: match and matchPlayers deleted", logId());
                 });
             } else {
