@@ -77,24 +77,12 @@ class CancelCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldDeleteMatch() {
+    void shouldSetMatchCancelledState() {
         processor.process(commandMessage);
 
-        Long actualMatchesCount = jdbcTemplate.queryForObject("select count(*) from matches where id = 10000", Long.class);
+        MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
 
-        assertThat(actualMatchesCount).isZero();
-    }
-
-    @Test
-    void shouldDeleteMatchPlayers() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10001, 12346, 9000, 'st_pl2', 'name2', 'l1', 'e1', '2010-10-10') ");
-
-        processor.process(commandMessage);
-
-        Long actualMatchPlayersCount = jdbcTemplate.queryForObject("select count(*) from match_players where player_id = 10000", Long.class);
-
-        assertThat(actualMatchPlayersCount).isZero();
+        assertThat(actualMatchState).isEqualTo(MatchState.CANCELLED);
     }
 
     @Test

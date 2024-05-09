@@ -33,7 +33,7 @@ public class StartupServiceImpl implements StartupService {
         Map<Integer, String> matchIdStringsByTopicId = new HashMap<>();
         for (Match match : notEndedMatches) {
             log.debug("Set failing state for match {}", match.getId());
-            match.setState(MatchState.FAILED);
+            match.setState(MatchState.CANCELLED);
             Integer chatId = match.getExternalPollId().getReplyId();
             matchIdStringsByTopicId.merge(chatId, match.getId().toString(), (oldVal, val) -> oldVal + ", " + val);
         }

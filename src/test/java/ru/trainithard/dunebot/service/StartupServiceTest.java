@@ -93,7 +93,7 @@ class StartupServiceTest extends TestContextMock {
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
 
-        assertThat(actualState).isEqualTo(MatchState.FAILED);
+        assertThat(actualState).isEqualTo(MatchState.CANCELLED);
     }
 
     @ParameterizedTest
