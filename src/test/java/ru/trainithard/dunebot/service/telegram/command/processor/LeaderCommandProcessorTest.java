@@ -96,7 +96,7 @@ class LeaderCommandProcessorTest extends TestContextMock {
         MessageDto actualMessageDto = messageCaptor.getValue();
 
         assertThat(actualMessageDto.getChatId()).isEqualTo("9000");
-        assertThat(actualMessageDto.getText()).isEqualTo("Лидер зарегистрирован\\. Ожидайте регистрации мест других игроков\\.");
+        assertThat(actualMessageDto.getText()).isEqualTo("Лидер для матча 10000 зарегистрирован\\. Ожидайте регистрации мест других игроков\\.");
     }
 
     private static Update getCallbackQueryUpdate(long leaderId) {
