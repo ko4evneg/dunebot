@@ -97,7 +97,7 @@ class StartupServiceTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED"})
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED"})
     void shouldSendMessageOnNotEndedMatchFail(MatchState state) {
         jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
