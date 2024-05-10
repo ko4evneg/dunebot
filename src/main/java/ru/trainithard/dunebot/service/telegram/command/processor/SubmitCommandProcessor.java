@@ -14,7 +14,6 @@ import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -23,6 +22,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.task.SubmitTimeoutTask;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
@@ -47,11 +48,11 @@ public class SubmitCommandProcessor extends CommandProcessor {
 
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
-    private final MatchFinishingService matchFinishingService;
     private final DuneBotTaskScheduler taskScheduler;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
     private final SettingsService settingsService;
     private final Clock clock;
+    private final Function<Long, SubmitTimeoutTask> submitTimeoutTaskFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -108,10 +109,8 @@ public class SubmitCommandProcessor extends CommandProcessor {
             oldFailFinishTask.cancel(false);
             forcedFinishTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
         }
-        taskScheduler.reschedule(() -> {
-            log.debug("TIMEOUT match {} finishing started", matchId);
-            matchFinishingService.finishNotSubmittedMatch(matchId, false);
-        }, submitTimeoutTaskId, forcedFinishTime);
+        SubmitTimeoutTask submitTimeoutTask = submitTimeoutTaskFactory.apply(matchId);
+        taskScheduler.reschedule(submitTimeoutTask, submitTimeoutTaskId, forcedFinishTime);
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {
