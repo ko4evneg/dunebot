@@ -2,9 +2,11 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
@@ -23,10 +25,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
 
 /**
@@ -41,12 +40,10 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
-    private final TaskScheduler dunebotTaskScheduler;
+    private final DuneBotTaskScheduler taskScheduler;
     private final SettingsService settingsService;
     private final ExternalMessageFactory externalMessageFactory;
     private final Clock clock;
-
-    private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -117,8 +114,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                 logId(), match.getId(), player.getId(), savedMatch == null ? "null" : savedMatch.getPositiveAnswersCount());
 
         if (match.isReadyToStart()) {
-            cancelScheduledMatchStart(match);
-            scheduleNewMatchStart(match);
+            rescheduleNewMatchStart(match.getId());
             if (match.getModType() == ModType.UPRISING_6) {
                 match.setState(MatchState.FAILED);
                 matchRepository.save(match);
@@ -126,42 +122,30 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void cancelScheduledMatchStart(Match match) {
-        ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
-        if (existingScheduledTask != null) {
-            existingScheduledTask.cancel(false);
-        }
-        log.debug("{}: vote match {} start unscheduled", logId(), match.getId());
-    }
-
-    private void scheduleNewMatchStart(Match match) {
+    private void rescheduleNewMatchStart(long matchId) {
         int matchStartDelay = settingsService.getIntSetting(SettingKey.MATCH_START_DELAY);
         Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
-        ScheduledFuture<?> scheduledTask = dunebotTaskScheduler.schedule(() -> {
-                    Optional<Match> freshMatch = matchRepository.findWithMatchPlayersBy(match.getId());
+        taskScheduler.reschedule(() -> {
+                    Optional<Match> freshMatch = matchRepository.findWithMatchPlayersBy(matchId);
                     if (freshMatch.isEmpty()) {
-                        log.debug("0: match {} start not found the match", match.getId());
+                        log.debug("0: match {} start not found the match", matchId);
                         return;
                     }
-                    messagingService.sendMessageAsync(getMatchStartMessage(match))
+                    messagingService.sendMessageAsync(getMatchStartMessage(freshMatch.get()))
                             .whenComplete((externalMessageDto, throwable) -> {
                                 log.debug("0: match {} start callback received. Current time: {}",
-                                        match.getId(), Instant.now(clock));
+                                        matchId, Instant.now(clock));
                                 if (throwable != null) {
-                                    log.error("0: match {} start callback failure...", match.getId(), throwable);
+                                    log.error("0: match {} start callback failure...", matchId, throwable);
                                 }
-                                matchRepository.findById(match.getId()).ifPresent(cbMatch -> {
+                                matchRepository.findById(matchId).ifPresent(cbMatch -> {
                                     deleteExistingOldSubmitMessage(cbMatch);
                                     cbMatch.setExternalStartId(new ExternalMessageId(externalMessageDto));
                                     matchRepository.save(cbMatch);
                                 });
                             });
                 },
-                matchStartInstant);
-        log.debug("0: match {} start scheduled at '{}'", match.getId(), matchStartInstant);
-
-        scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
-        log.debug("{}: vote match start message scheduled to '{}'", logId(), matchStartInstant);
+                new DuneTaskId(DuneTaskType.START_MESSAGE, matchId), matchStartInstant);
     }
 
     private MessageDto getMatchStartMessage(Match match) {
@@ -218,7 +202,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                                         savedMatch == null ? "null" : savedMatch.getPositiveAnswersCount());
 
                                 if (match.hasMissingPlayers()) {
-                                    removeScheduledMatchStart(match);
+                                    taskScheduler.cancel(new DuneTaskId(DuneTaskType.START_MESSAGE, match.getId()));
                                     ExternalMessageId externalStartId = match.getExternalStartId();
                                     if (externalStartId != null) {
                                         messagingService.deleteMessageAsync(externalStartId);
@@ -228,14 +212,6 @@ public class VoteCommandProcessor extends CommandProcessor {
                         },
                         () -> log.debug("{}: matchPlayer for player {} not found", logId(), commandMessage.getUserId())
                 );
-    }
-
-    private void removeScheduledMatchStart(Match match) {
-        ScheduledFuture<?> oldScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
-        if (oldScheduledTask != null) {
-            oldScheduledTask.cancel(false);
-        }
-        log.debug("{}: match {} start unscheduled", logId(), match.getId());
     }
 
     @Override
