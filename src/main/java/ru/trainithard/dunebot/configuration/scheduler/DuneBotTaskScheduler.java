@@ -1,5 +1,6 @@
 package ru.trainithard.dunebot.configuration.scheduler;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.time.Clock;
@@ -8,9 +9,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+@Slf4j
 public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
     private static final int THREAD_POOL_SIZE = 4;
-    private final Map<DuneTaskType, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<DuneTaskId, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     public DuneBotTaskScheduler(Clock clock) {
         super();
@@ -19,18 +21,25 @@ public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
         this.setThreadNamePrefix("dunebot-scheduler");
     }
 
-    public ScheduledFuture<?> reschedule(Runnable task, DuneTaskType taskType, Instant startTime) {
-        cancel(taskType);
+    public ScheduledFuture<?> reschedule(Runnable task, DuneTaskId taskId, Instant startTime) {
+        cancel(taskId);
 
         ScheduledFuture<?> scheduledFeature = schedule(task, startTime);
-        scheduledTasks.put(taskType, scheduledFeature);
+        scheduledTasks.put(taskId, scheduledFeature);
+        log.debug("0: scheduled task of type {} rescheduled", taskId);
+
         return scheduledFeature;
     }
 
-    public void cancel(DuneTaskType taskType) {
-        ScheduledFuture<?> currentTask = scheduledTasks.get(taskType);
+    public void cancel(DuneTaskId taskId) {
+        ScheduledFuture<?> currentTask = scheduledTasks.get(taskId);
         if (currentTask != null) {
             currentTask.cancel(false);
+            log.debug("0: scheduled task of type {} cancelled", taskId);
         }
+    }
+
+    public ScheduledFuture<?> get(DuneTaskId taskId) {
+        return scheduledTasks.get(taskId);
     }
 }
