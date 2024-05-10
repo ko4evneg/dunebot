@@ -32,7 +32,7 @@ public enum MatchState {
     CANCELLED;
 
     public static List<MatchState> getEndedMatchStates() {
-        return List.of(FINISHED, FAILED);
+        return List.of(FINISHED, FAILED, CANCELLED);
     }
 
     public static List<MatchState> getSubmitStates() {
