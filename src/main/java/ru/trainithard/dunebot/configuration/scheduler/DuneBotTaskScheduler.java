@@ -32,7 +32,7 @@ public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
     }
 
     public void cancel(DuneTaskId taskId) {
-        ScheduledFuture<?> currentTask = scheduledTasks.get(taskId);
+        ScheduledFuture<?> currentTask = scheduledTasks.remove(taskId);
         if (currentTask != null) {
             currentTask.cancel(false);
             log.debug("0: scheduled task of type {} cancelled", taskId);
