@@ -60,6 +60,15 @@ public class StartMatchTask implements Runnable {
                 });
     }
 
+    private void deleteExistingOldSubmitMessage(Match match) {
+        if (match.getExternalStartId() != null) {
+            Integer externalMessageId = match.getExternalStartId().getMessageId();
+            Long externalChatId = match.getExternalStartId().getChatId();
+            Integer externalMessageReplyId = match.getExternalStartId().getReplyId();
+            messagingService.deleteMessageAsync(new ExternalMessageId(externalMessageId, externalChatId, externalMessageReplyId));
+        }
+    }
+
     private MessageDto getMatchStartMessage(Match match) {
         List<String> regularPlayerMentions = new ArrayList<>();
         List<String> guestPlayerMentions = new ArrayList<>();
@@ -83,14 +92,5 @@ public class StartMatchTask implements Runnable {
         ExternalMessage startMessage = messageFactory
                 .getStartMessage(match, regularPlayerMentions, guestPlayerMentions, blockedChatMentions);
         return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
-    }
-
-    private void deleteExistingOldSubmitMessage(Match match) {
-        if (match.getExternalStartId() != null) {
-            Integer externalMessageId = match.getExternalStartId().getMessageId();
-            Long externalChatId = match.getExternalStartId().getChatId();
-            Integer externalMessageReplyId = match.getExternalStartId().getReplyId();
-            messagingService.deleteMessageAsync(new ExternalMessageId(externalMessageId, externalChatId, externalMessageReplyId));
-        }
     }
 }
