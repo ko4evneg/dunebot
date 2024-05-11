@@ -39,7 +39,6 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -53,7 +52,6 @@ class VoteCommandProcessorTest extends TestContextMock {
     private static final long USER_1_ID = 12345L;
     private static final long USER_2_ID = 12346L;
     private static final long GUEST_ID = 12400L;
-    //TODO: check need
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
 
@@ -70,8 +68,6 @@ class VoteCommandProcessorTest extends TestContextMock {
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
-        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
-        doReturn(scheduledFuture).when(dunebotTaskScheduler).schedule(any(), any(Instant.class));
         CompletableFuture<ExternalMessageDto> mockResponse = new CompletableFuture<>();
         mockResponse.complete(new ExternalMessageDto());
         doReturn(mockResponse).when(messagingService).sendMessageAsync(any());
