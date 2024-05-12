@@ -106,7 +106,6 @@ public class SubmitCommandProcessor extends CommandProcessor {
         ScheduledFuture<?> oldFailFinishTask = taskScheduler.get(submitTimeoutTaskId);
         if (oldFailFinishTask != null) {
             long delay = oldFailFinishTask.getDelay(TimeUnit.SECONDS);
-            oldFailFinishTask.cancel(false);
             forcedFinishTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
         }
         SubmitTimeoutTask submitTimeoutTask = submitTimeoutTaskFactory.apply(matchId);
