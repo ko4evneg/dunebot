@@ -10,12 +10,12 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.FileSystemUtils;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
@@ -56,7 +56,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     @MockBean
     private Clock clock;
     @MockBean
-    private TaskScheduler taskScheduler;
+    private DuneBotTaskScheduler taskScheduler;
     @MockBean
     private MatchFinishingService finishingService;
 
