@@ -66,4 +66,22 @@ class SettingsServiceImplTest extends TestContextMock {
 
         assertThat(actualValue).isNotNull().isEqualTo(100);
     }
+
+    @Test
+    void shouldReturnCachedValue() {
+        String firstRequest = settingsService.getStringSetting(SettingKey.CHAT_ID);
+        jdbcTemplate.execute("update settings set value = 'newVal' where id = 10000");
+        String secondRequest = settingsService.getStringSetting(SettingKey.CHAT_ID);
+
+        assertThat(secondRequest).isEqualTo(firstRequest).isEqualTo("strVal");
+    }
+
+    @Test
+    void shouldUpdateCachedValue() {
+        String firstRequest = settingsService.getStringSetting(SettingKey.CHAT_ID);
+        settingsService.saveSetting(SettingKey.CHAT_ID, "newVal");
+        String secondRequest = settingsService.getStringSetting(SettingKey.CHAT_ID);
+
+        assertThat(secondRequest).isNotEqualTo(firstRequest).isEqualTo("newVal");
+    }
 }
