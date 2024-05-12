@@ -107,6 +107,8 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
+        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
+
         finishingService.finishNotSubmittedMatch(15000L, false);
 
         List<Integer> actualPersistedPlacesCount = jdbcTemplate
@@ -127,6 +129,31 @@ class MatchFinishingServiceTest extends TestContextMock {
         List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
 
         assertThat(playersPlaces).containsExactly(null, 2, 3, 1, 4);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOneNotFirstCandidatePlaceIsMissing(boolean isResubmitLimitExceeded) {
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+
+        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
+
+        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
+
+        assertThat(playersPlaces).containsExactly(4, 2, 3, 1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOneFirstCandidatePlaceIsMissing(boolean isResubmitLimitExceeded) {
+        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
+        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10003");
+
+        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
+
+        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
+
+        assertThat(playersPlaces).containsExactly(null, null, null, null);
     }
 
     @Test
@@ -194,6 +221,8 @@ class MatchFinishingServiceTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
+        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
+
         finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
@@ -236,6 +265,8 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
+        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
+
         finishingService.finishNotSubmittedMatch(15000L, false);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -246,7 +277,7 @@ class MatchFinishingServiceTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
                         "*Матч 15000* завершен без результата\\!\n" +
-                        "Игроки [@e1](tg://user?id=11000) не ответили на запрос места\\.");
+                        "Игроки [@e1](tg://user?id=11000), [@e2](tg://user?id=11001) не ответили на запрос места\\.");
     }
 
     @Test
@@ -268,6 +299,8 @@ class MatchFinishingServiceTest extends TestContextMock {
 
     @Test
     void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWithoutResultsWhenResubmitsLimitReached() {
+        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
+
         finishingService.finishNotSubmittedMatch(15000L, true);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
