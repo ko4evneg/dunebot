@@ -99,16 +99,20 @@ public class Match extends BaseEntity {
     }
 
     // As players without places submits counts, we need exact match to start preliminary finishing
-    // TODO add test
     public boolean canBePreliminaryFinished() {
         return submitsCount == matchPlayers.size() && screenshotPath != null;
     }
 
     public boolean hasAllPlacesSubmitted() {
+        Set<Integer> missingCandidatePlaces = getMissingCandidatePlaces();
+        return missingCandidatePlaces.isEmpty();
+    }
+
+    public Set<Integer> getMissingCandidatePlaces() {
         int requiredPlaceSubmits = modType.getPlayersCount();
         Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());
         matchPlayers.forEach(matchPlayer -> possibleMatchPlaces.remove(matchPlayer.getCandidatePlace()));
-        return possibleMatchPlaces.isEmpty();
+        return possibleMatchPlaces;
     }
 
     public void prepareForResubmit() {

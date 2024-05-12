@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +53,39 @@ class MatchTest {
         boolean actualHasSubmitPhoto = match.hasSubmitPhoto();
 
         assertThat(actualHasSubmitPhoto).isFalse();
+    }
+
+    @Test
+    void shouldReturnCanBePreliminaryFinishedTrueWhenPhotoPathPresented() {
+        match.setScreenshotPath("/var/log/1.jpg");
+        match.setMatchPlayers(createMatchPlayers(1, 2, 3, 4, 5, 6));
+        match.setSubmitsCount(6);
+
+        boolean actualCanBePreliminaryFinished = match.canBePreliminaryFinished();
+
+        assertThat(actualCanBePreliminaryFinished).isTrue();
+    }
+
+    @Test
+    void shouldReturnCanBePreliminaryFinishedFalseWhenPhotoMissing() {
+        match.setScreenshotPath(null);
+        match.setMatchPlayers(createMatchPlayers(1, 2, 3, 4, 5, 6));
+        match.setSubmitsCount(6);
+
+        boolean actualCanBePreliminaryFinished = match.canBePreliminaryFinished();
+
+        assertThat(actualCanBePreliminaryFinished).isFalse();
+    }
+
+    @Test
+    void shouldReturnCanBePreliminaryFinishedFalseWhenSubmitMissing() {
+        match.setScreenshotPath("/var/log/1.jpg");
+        match.setMatchPlayers(createMatchPlayers(1, 2, 3, 4, 5, 6));
+        match.setSubmitsCount(5);
+
+        boolean actualCanBePreliminaryFinished = match.canBePreliminaryFinished();
+
+        assertThat(actualCanBePreliminaryFinished).isFalse();
     }
 
     @ParameterizedTest
@@ -111,12 +145,12 @@ class MatchTest {
 
     private static Stream<Arguments> submitsMatchPlayerSource() {
         return Stream.of(
-                Arguments.of(ModType.CLASSIC, createMatchPlayer(1, 2, 3, 4)),
-                Arguments.of(ModType.CLASSIC, createMatchPlayer(1, 2, 3, 4, 0, 0)),
-                Arguments.of(ModType.UPRISING_4, createMatchPlayer(1, 2, 3, 4)),
-                Arguments.of(ModType.UPRISING_4, createMatchPlayer(1, 2, 3, 4, 0, 0)),
-                Arguments.of(ModType.UPRISING_6, createMatchPlayer(1, 2, 3, 4, 5, 6)),
-                Arguments.of(ModType.UPRISING_6, createMatchPlayer(1, 2, 3, 4, 5, 6, 0, 0))
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3, 4)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3, 4, 0, 0)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3, 4)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3, 4, 0, 0)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3, 4, 5, 6)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3, 4, 5, 6, 0, 0))
         );
     }
 
@@ -133,22 +167,53 @@ class MatchTest {
 
     private static Stream<Arguments> missingSubmitsMatchPlayerSource() {
         return Stream.of(
-                Arguments.of(ModType.CLASSIC, createMatchPlayer(1, 2, 3)),
-                Arguments.of(ModType.CLASSIC, createMatchPlayer(1, 2, 3, 0)),
-                Arguments.of(ModType.CLASSIC, createMatchPlayer(1, 2, 3, 0, 0)),
-                Arguments.of(ModType.CLASSIC, createMatchPlayer(0, 0, 0, 0, 0)),
-                Arguments.of(ModType.UPRISING_4, createMatchPlayer(1, 2, 3)),
-                Arguments.of(ModType.UPRISING_4, createMatchPlayer(1, 2, 3, 0)),
-                Arguments.of(ModType.UPRISING_4, createMatchPlayer(1, 2, 3, 0, 0)),
-                Arguments.of(ModType.UPRISING_4, createMatchPlayer(0, 0, 0, 0, 0)),
-                Arguments.of(ModType.UPRISING_6, createMatchPlayer(1, 2, 3, 4, 5)),
-                Arguments.of(ModType.UPRISING_6, createMatchPlayer(1, 2, 3, 4, 5, 0)),
-                Arguments.of(ModType.UPRISING_6, createMatchPlayer(1, 2, 3, 4, 5, 0, 0)),
-                Arguments.of(ModType.UPRISING_6, createMatchPlayer(0, 0, 0, 0, 0, 0, 0))
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3, 0)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3, 0, 0)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(0, 0, 0, 0, 0)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3, 0)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3, 0, 0)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(0, 0, 0, 0, 0)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3, 4, 5)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3, 4, 5, 0)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3, 4, 5, 0, 0)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(0, 0, 0, 0, 0, 0, 0))
         );
     }
 
-    private static List<MatchPlayer> createMatchPlayer(int... candidatePlaces) {
+    @ParameterizedTest
+    @MethodSource("missingCandidatePlacesSource")
+    void shouldReturnMissingCandidatePlaces(ModType modType, List<MatchPlayer> matchPlayers, Set<Integer> expectedResult) {
+        match.setModType(modType);
+        match.setMatchPlayers(matchPlayers);
+
+        Set<Integer> actualMissingCandidatePlaces = match.getMissingCandidatePlaces();
+
+        assertThat(actualMissingCandidatePlaces).containsExactlyInAnyOrderElementsOf(expectedResult);
+    }
+
+    private static Stream<Arguments> missingCandidatePlacesSource() {
+        return Stream.of(
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3), Set.of(4)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1), Set.of(2, 3, 4)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(2, 3), Set.of(1, 4)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(1, 2, 3, 0, 0), Set.of(4)),
+                Arguments.of(ModType.CLASSIC, createMatchPlayers(0, 0, 0, 0, 0), Set.of(1, 2, 3, 4)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3), Set.of(4)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1), Set.of(2, 3, 4)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(2, 3), Set.of(1, 4)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(1, 2, 3, 0, 0), Set.of(4)),
+                Arguments.of(ModType.UPRISING_4, createMatchPlayers(0, 0, 0, 0, 0), Set.of(1, 2, 3, 4)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3), Set.of(4, 5, 6)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1), Set.of(2, 3, 4, 5, 6)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(2, 3, 5), Set.of(1, 4, 6)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(1, 2, 3, 0, 0), Set.of(4, 5, 6)),
+                Arguments.of(ModType.UPRISING_6, createMatchPlayers(0, 0, 0, 0, 0), Set.of(1, 2, 3, 4, 5, 6))
+        );
+    }
+
+    private static List<MatchPlayer> createMatchPlayers(int... candidatePlaces) {
         List<MatchPlayer> matchPlayers = new ArrayList<>();
         for (int candidatePlace : candidatePlaces) {
             MatchPlayer matchPlayer = new MatchPlayer();

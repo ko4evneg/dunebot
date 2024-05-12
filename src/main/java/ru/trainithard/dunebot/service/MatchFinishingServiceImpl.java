@@ -17,9 +17,7 @@ import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessage
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
@@ -49,6 +47,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         }
         log.debug("{}: match {} found (photo: {}, state: {})", logId, match.getId(), match.hasSubmitPhoto(), match.getState());
         if (!MatchState.getEndedMatchStates().contains(match.getState())) {
+            assignMissingPlace(match);
             if (match.hasAllPlacesSubmitted() && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
             } else {
@@ -64,6 +63,25 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
             }
         }
         log.debug("{}: finishing not submitted match ended", logId);
+    }
+
+    private void assignMissingPlace(Match match) {
+        List<MatchPlayer> missingCandidatePlacePlayers = match.getMatchPlayers().stream()
+                .filter(matchPlayer -> Objects.isNull(matchPlayer.getCandidatePlace()))
+                .toList();
+        int logId = LogId.get();
+        log.debug("{}: found {} matchPlayers without a place", logId, missingCandidatePlacePlayers.size());
+        Set<Integer> missingCandidatePlaces = match.getMissingCandidatePlaces();
+        if (missingCandidatePlacePlayers.size() == 1 && missingCandidatePlaces.size() == 1) {
+            int missingCandidatePlace = missingCandidatePlaces.iterator().next();
+            if (missingCandidatePlace != 1) {
+                MatchPlayer missingPlaceMatchPlayer = missingCandidatePlacePlayers.get(0);
+                missingPlaceMatchPlayer.setCandidatePlace(missingCandidatePlace);
+                matchPlayerRepository.save(missingPlaceMatchPlayer);
+                log.debug("{}: match {} player {} auto-assigned with {} candidatePlace", logId,
+                        match.getId(), missingPlaceMatchPlayer.getPlayer().getId(), missingCandidatePlace);
+            }
+        }
     }
 
     private void failMatch(Match match) {
