@@ -1,14 +1,14 @@
 package ru.trainithard.dunebot.service;
 
-import ru.trainithard.dunebot.model.SettingKey;
+import ru.trainithard.dunebot.model.AppSettingKey;
 
 public interface SettingsService {
 
-    Integer getIntSetting(SettingKey key);
+    Integer getIntSetting(AppSettingKey key);
 
-    long getLongSetting(SettingKey key);
+    long getLongSetting(AppSettingKey key);
 
-    String getStringSetting(SettingKey key);
+    String getStringSetting(AppSettingKey key);
 
-    void saveSetting(SettingKey key, String value);
+    void saveSetting(AppSettingKey key, String value);
 }

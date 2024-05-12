@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -47,7 +47,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     void process(Match match) {
         log.debug("{}: RESUBMIT(internal) started", logId());
 
-        int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
+        int resubmitsLimit = settingsService.getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
         log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
             log.debug("{}: resubmit is not allowed. Finishing by resubmits limit reached...", logId());

@@ -12,7 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.SettingKey;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -65,49 +65,49 @@ class AdminCommandProcessorTest extends TestContextMock {
     void shouldInvokeSaveChatIdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set_chat", 10000));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.CHAT_ID, "10011");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.CHAT_ID, "10011");
     }
 
     @Test
     void shouldInvokeSaveClassicTopicIdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set_topic_dune", 12345));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_CLASSIC, "12345");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.TOPIC_ID_CLASSIC, "12345");
     }
 
     @Test
     void shouldInvokeSaveUprisingTopicIdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set_topic_up4", 12121));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.TOPIC_ID_UPRISING, "12121");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.TOPIC_ID_UPRISING, "12121");
     }
 
     @Test
     void shouldInvokeSaveFinishMatchTimeoutSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set finish_match_timeout 30", 10000));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.FINISH_MATCH_TIMEOUT, "30");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.FINISH_MATCH_TIMEOUT, "30");
     }
 
     @Test
     void shouldInvokeSaveResubmitsLimitOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set resubmits_limit 3", 10000));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.RESUBMITS_LIMIT, "3");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.RESUBMITS_LIMIT, "3");
     }
 
     @Test
     void shouldInvokeSaveMothlyMatchesThresholdSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set monthly_matches_threshold 10", 10000));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.MONTHLY_MATCHES_THRESHOLD, "10");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD, "10");
     }
 
     @Test
     void shouldInvokeSaveMatchStartDelaySettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set match_start_delay 40", 10000));
 
-        verify(settingsService, times(1)).saveSetting(SettingKey.MATCH_START_DELAY, "40");
+        verify(settingsService, times(1)).saveSetting(AppSettingKey.MATCH_START_DELAY, "40");
     }
 
     @Test
@@ -163,9 +163,9 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendSingleBroadcastMessageWhenTopicsAreSame() {
-        when(settingsService.getStringSetting(SettingKey.CHAT_ID)).thenReturn("12345");
-        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING)).thenReturn(3);
-        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC)).thenReturn(3);
+        when(settingsService.getStringSetting(AppSettingKey.CHAT_ID)).thenReturn("12345");
+        when(settingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING)).thenReturn(3);
+        when(settingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC)).thenReturn(3);
 
         processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020));
 
@@ -180,9 +180,9 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendTwoBroadcastMessagesWhenTopicsAreDifferent() {
-        when(settingsService.getStringSetting(SettingKey.CHAT_ID)).thenReturn("12345");
-        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING)).thenReturn(1);
-        when(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC)).thenReturn(2);
+        when(settingsService.getStringSetting(AppSettingKey.CHAT_ID)).thenReturn("12345");
+        when(settingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING)).thenReturn(1);
+        when(settingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC)).thenReturn(2);
 
         processor.process(getCommandMessage("message Корова шла по полю, а потом упала!$%()", 10020));
 

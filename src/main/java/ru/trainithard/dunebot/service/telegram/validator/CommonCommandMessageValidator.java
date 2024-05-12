@@ -3,7 +3,7 @@ package ru.trainithard.dunebot.service.telegram.validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.SettingKey;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
@@ -77,7 +77,7 @@ public class CommonCommandMessageValidator {
 
     private void validateBotIsConfiguredForNonAdminCommands(CommandMessage commandMessage, Command command, Collection<Integer> topicIds) {
         if (command != Command.ADMIN) {
-            String stringSetting = settingsService.getStringSetting(SettingKey.CHAT_ID);
+            String stringSetting = settingsService.getStringSetting(AppSettingKey.CHAT_ID);
             if (stringSetting == null) {
                 throw new AnswerableDuneBotException(BOT_NOT_CONFIGURED, commandMessage);
             }
@@ -95,8 +95,8 @@ public class CommonCommandMessageValidator {
 
     private List<Integer> getTopicIds() {
         List<Integer> topicIds = new ArrayList<>();
-        topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC));
-        topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING));
+        topicIds.add(settingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC));
+        topicIds.add(settingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING));
         topicIds.removeIf(Objects::isNull);
         return topicIds;
     }

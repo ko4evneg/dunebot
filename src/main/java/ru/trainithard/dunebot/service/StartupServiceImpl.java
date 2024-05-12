@@ -3,9 +3,9 @@ package ru.trainithard.dunebot.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
@@ -40,7 +40,7 @@ public class StartupServiceImpl implements StartupService {
         matchRepository.saveAll(notEndedMatches);
         log.debug("All failed matches saved");
 
-        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
+        String chatId = settingsService.getStringSetting(AppSettingKey.CHAT_ID);
         if (chatId != null) {
             matchIdStringsByTopicId.forEach((topicId, matchIds) -> {
                 ExternalMessage externalMessage = new ExternalMessage(String.format(MATCH_FAIL_MESSAGE_TEMPLATE, "(" + matchIds + ")"));

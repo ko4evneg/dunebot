@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -100,7 +100,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     private void rescheduleForcedFailFinish(long matchId) {
-        int finishMatchTimeout = settingsService.getIntSetting(SettingKey.FINISH_MATCH_TIMEOUT);
+        int finishMatchTimeout = settingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         DuneTaskId submitTimeoutTaskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
         ScheduledFuture<?> oldFailFinishTask = taskScheduler.get(submitTimeoutTaskId);

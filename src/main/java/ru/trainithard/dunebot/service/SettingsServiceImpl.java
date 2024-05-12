@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.trainithard.dunebot.model.AppSetting;
-import ru.trainithard.dunebot.model.SettingKey;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.repository.AppSettingRepository;
 
 @Service
@@ -16,21 +16,21 @@ public class SettingsServiceImpl implements SettingsService {
 
     @Override
     @Cacheable(value = "settings", key = "#key")
-    public Integer getIntSetting(SettingKey key) {
+    public Integer getIntSetting(AppSettingKey key) {
         AppSetting appSetting = appSettingRepository.findByKey(key);
         return appSetting == null ? null : Integer.parseInt(appSetting.getValue());
     }
 
     @Override
     @Cacheable(value = "settings", key = "#key")
-    public long getLongSetting(SettingKey key) {
+    public long getLongSetting(AppSettingKey key) {
         String value = appSettingRepository.findByKey(key).getValue();
         return Long.parseLong(value);
     }
 
     @Override
     @Cacheable(value = "settings", key = "#key")
-    public String getStringSetting(SettingKey key) {
+    public String getStringSetting(AppSettingKey key) {
         AppSetting appSetting = appSettingRepository.findByKey(key);
         return appSetting == null ? null : appSetting.getValue();
     }
@@ -38,7 +38,7 @@ public class SettingsServiceImpl implements SettingsService {
     @Override
     @CacheEvict(value = "settings", key = "#key")
     @Transactional
-    public void saveSetting(SettingKey key, String value) {
+    public void saveSetting(AppSettingKey key, String value) {
         AppSetting existingAppSetting = appSettingRepository.findByKey(key);
         if (existingAppSetting != null) {
             existingAppSetting.setValue(value);

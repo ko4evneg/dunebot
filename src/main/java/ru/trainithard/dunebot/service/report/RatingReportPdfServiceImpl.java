@@ -2,10 +2,10 @@ package ru.trainithard.dunebot.service.report;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.service.SettingsService;
 
@@ -22,7 +22,7 @@ public class RatingReportPdfServiceImpl implements RatingReportPdfService {
     @Override
     public RatingReportPdf createRating(LocalDate from, LocalDate to, ModType modType, String reportName) {
         List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
-        int matchesThreshold = settingsService.getIntSetting(SettingKey.MONTHLY_MATCHES_THRESHOLD);
+        int matchesThreshold = settingsService.getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
         RatingReport monthlyRating = new RatingReport(monthMatchPlayers, modType, matchesThreshold);
 
         return new RatingReportPdf(reportName, convertToReportRows(monthlyRating));
