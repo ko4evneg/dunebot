@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.scheduling.TaskScheduler;
 import org.telegram.telegrambots.meta.api.objects.ApiResponse;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -21,6 +20,9 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
@@ -34,11 +36,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -52,14 +52,13 @@ class VoteCommandProcessorTest extends TestContextMock {
     private static final long USER_1_ID = 12345L;
     private static final long USER_2_ID = 12346L;
     private static final long GUEST_ID = 12400L;
-    //TODO: check need
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
 
     @Autowired
     private VoteCommandProcessor processor;
     @MockBean
-    private TaskScheduler dunebotTaskScheduler;
+    private DuneBotTaskScheduler dunebotTaskScheduler;
     @MockBean
     private Clock clock;
 
@@ -69,8 +68,6 @@ class VoteCommandProcessorTest extends TestContextMock {
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
-        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
-        doReturn(scheduledFuture).when(dunebotTaskScheduler).schedule(any(), any(Instant.class));
         CompletableFuture<ExternalMessageDto> mockResponse = new CompletableFuture<>();
         mockResponse.complete(new ExternalMessageDto());
         doReturn(mockResponse).when(messagingService).sendMessageAsync(any());
@@ -273,6 +270,20 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldCancelMatchStartTaskOnPositiveRegistrationRevocationWhenNotEnoughPlayersLeft() {
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
+                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + TOPIC_ID + ", '2020-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 4, external_start_id = 10001 where id = 10000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10003, 10000, 10001, '2010-10-10')");
+
+        processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
+
+        DuneTaskId duneTaskId = new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L);
+        verify(dunebotTaskScheduler).cancel(duneTaskId);
+    }
+
+    @Test
     void shouldNotSendDeleteStartMessageOnPositiveRegistrationRevocationWhenEnoughPlayersLeft() {
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
                              "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + TOPIC_ID + ", '2020-10-10')");
@@ -283,6 +294,19 @@ class VoteCommandProcessorTest extends TestContextMock {
         processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
 
         verify(messagingService, never()).deleteMessageAsync(any());
+    }
+
+    @Test
+    void shouldNotCancelMatchStartTaskOnPositiveRegistrationRevocationWhenEnoughPlayersLeft() {
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, created_at) " +
+                             "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + TOPIC_ID + ", '2020-10-10')");
+        jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = 10001 where id = 10000");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
+                             "values (10003, 10000, 10001, '2010-10-10')");
+
+        processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
+
+        verifyNoInteractions(dunebotTaskScheduler);
     }
 
     @ParameterizedTest
@@ -338,44 +362,17 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldAddScheduledTaskOnFourthPlayerRegistration() {
+    void shouldScheduleStartMessageTaskOnFourthPlayerRegistration() {
         jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
 
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(dunebotTaskScheduler, times(1)).schedule(any(), instantCaptor.capture());
+        DuneTaskId expectedTaskId = new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L);
+        verify(dunebotTaskScheduler, times(1)).reschedule(any(), eq(expectedTaskId), instantCaptor.capture());
         Instant actualInstant = instantCaptor.getValue();
 
         assertThat(actualInstant).isEqualTo(NOW.plusSeconds(60));
-    }
-
-    @Test
-    void shouldSendMessageOnFourthPlayerRegistration() throws InterruptedException {
-        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10001, 10000, 10002, '2010-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10002, 10000, 10003, '2010-10-10')");
-        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
-
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
-        syncRunScheduledTaskAction();
-
-        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
-        String[] textRows = messageDto.getText().split("\n");
-        List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
-
-        assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId)
-                .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID);
-        assertThat(textRows[0]).isEqualTo("*Матч 10000* собран\\. Участники:");
-        assertThat(names).containsExactlyInAnyOrder(
-                "[@en1](tg://user?id=12345)", "[@ef2](tg://user?id=12346)", "[@en3](tg://user?id=12347)", "[@en4](tg://user?id=12348)");
-        assertThat(messageDto.getKeyboard()).isNull();
     }
 
     @Test
@@ -394,72 +391,6 @@ class VoteCommandProcessorTest extends TestContextMock {
         MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
 
         assertThat(actualMatchState).isEqualTo(MatchState.FAILED);
-    }
-
-    @Test
-    void shouldSendGuestWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
-        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
-        jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10001, 10000, 10001, '2010-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10002, 10000, 10002, '2010-10-10')");
-        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
-
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
-        reset(messagingService);
-
-        syncRunScheduledTaskAction();
-
-        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
-        String[] textRows = messageDto.getText().split("\n");
-        List<String> names = Arrays.stream(textRows[1].split(", ")).toList();
-        List<String> guestsNames = Arrays.stream(textRows[4].split(", ")).toList();
-
-        assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getKeyboard)
-                .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID, null);
-        assertThat(textRows[0]).isEqualTo("*Матч 10000* собран\\. Участники:");
-        assertThat(names).containsExactlyInAnyOrder("[@en1](tg://user?id=12345)", "[@ef2](tg://user?id=12346)");
-        assertThat(textRows[2]).isBlank();
-        assertThat(textRows[3]).isEqualTo("*Внимание:* в матче есть незарегистрированные игроки\\. Они автоматически зарегистрированы " +
-                                          "под именем Vasya Pupkin и смогут подтвердить результаты матчей для регистрации результатов:");
-        assertThat(guestsNames).containsExactlyInAnyOrder("[@en3](tg://user?id=12347)", "[@fName](tg://user?id=12400)");
-    }
-
-    @Test
-    void shouldSendChatBlockerWarningMessageOnFourthPlayerRegistration() throws InterruptedException {
-        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, " +
-                             "last_name, external_first_name, external_name, is_chat_blocked, created_at) " +
-                             "values (10004, 99999, 12348, 'st_pl5', 'name5', 'l5', 'ef45', 'en5', true, '2010-10-10') ");
-        jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest411' where id = 10002");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10001, 10000, 10001, '2010-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10002, 10000, 10002, '2010-10-10')");
-        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
-
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, 99999));
-        reset(messagingService);
-
-        syncRunScheduledTaskAction();
-
-        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
-        String[] textRows = messageDto.getText().split("\n");
-        List<String> chatBlockedNames = Arrays.stream(textRows[7].split(", ")).toList();
-
-        assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getKeyboard)
-                .containsExactly(TestConstants.CHAT_ID, TOPIC_ID, REPLY_ID, null);
-        assertThat(textRows[5]).isBlank();
-        assertThat(textRows[6]).isEqualTo("*Особое внимание:* у этих игроков заблокированы чаты\\. Без их регистрации и добавлении в контакты бота" +
-                                          "* до начала регистрации результатов, завершить данный матч будет невозможно\\!*");
-        assertThat(chatBlockedNames).containsExactlyInAnyOrder("[@en5](tg://user?id=99999)");
     }
 
     @Test
@@ -511,35 +442,10 @@ class VoteCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchSubmitMessageIdOnFourthPlayerRegistration() throws InterruptedException {
-        doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
-        jdbcTemplate.execute("update matches set positive_answers_count = 3 where id = 10000");
-
-        processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
-        syncRunScheduledTaskAction();
-
-        Boolean isExternalIsSet = jdbcTemplate.queryForObject("select exists (select 1 from matches where id = 10000 and external_start_id = " +
-                                                              "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001))", Boolean.class);
-
-        assertThat(isExternalIsSet).isNotNull().isTrue();
-    }
-
-    @Test
     void shouldReturnVoteCommand() {
         Command actualCommand = processor.getCommand();
 
         assertThat(actualCommand).isEqualTo(Command.VOTE);
-    }
-
-    private void syncRunScheduledTaskAction() throws InterruptedException {
-        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(dunebotTaskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
-        Runnable actualRunnable = runnableCaptor.getValue();
-
-        Thread thread = new Thread(actualRunnable);
-        thread.start();
-        thread.join();
     }
 
     private ExternalMessageDto getSubmitExternalMessage() {

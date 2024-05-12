@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.SettingKey;
@@ -29,9 +31,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ScheduledFuture;
 
 /**
  * Process admin commands for bot configuration and management.
@@ -56,10 +55,9 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private final SettingsService settingsService;
     private final RatingReportPdfService reportService;
-    private final TaskScheduler dunebotTaskScheduler;
+    private final DuneBotTaskScheduler taskScheduler;
     private final Clock clock;
     private final ApplicationContext applicationContext;
-    private final Set<ScheduledFuture<?>> shutdownTasks = new CopyOnWriteArraySet<>();
 
     @Value("${bot.admin-pdf-directory}")
     private String adminPdfPath;
@@ -168,21 +166,20 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private void shutdown(CommandMessage commandMessage) {
         String delayArg = commandMessage.getArgument(2);
+        DuneTaskId shutdownTaskId = new DuneTaskId(DuneTaskType.SHUTDOWN);
         if ("cancel".equalsIgnoreCase(delayArg)) {
-            shutdownTasks.forEach(task -> task.cancel(false));
+            taskScheduler.cancel(shutdownTaskId);
             sendTopicsMessages("❎ Перезагрузка бота отменена.");
             return;
         }
 
         try {
             int delay = Integer.parseInt(delayArg.trim());
-            ScheduledFuture<?> shutdownTask = dunebotTaskScheduler.schedule(
-                    () -> {
+            taskScheduler.reschedule(() -> {
                         sendTopicsMessages("ℹ️ Бот перезагружается.");
                         SpringApplication.exit(applicationContext, () -> 0);
                     },
-                    Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
-            shutdownTasks.add(shutdownTask);
+                    shutdownTaskId, Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
             sendTopicsMessages("⚠️ Бот будет перезагружен через " + delay + " минут.\n" +
                                "‼️ Все незавершенные матчи будут принудительно завершены без зачета в рейтинг.");
         } catch (NumberFormatException e) {

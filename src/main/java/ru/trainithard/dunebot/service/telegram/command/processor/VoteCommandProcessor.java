@@ -2,9 +2,11 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
@@ -16,17 +18,13 @@ import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.task.StartMatchTask;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
-import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
 
 /**
@@ -41,12 +39,11 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final PlayerRepository playerRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
-    private final TaskScheduler dunebotTaskScheduler;
+    private final DuneBotTaskScheduler taskScheduler;
     private final SettingsService settingsService;
     private final ExternalMessageFactory externalMessageFactory;
     private final Clock clock;
-
-    private final Map<Long, ScheduledFuture<?>> scheduledTasksByMatchIds = new ConcurrentHashMap<>();
+    private final Function<Long, StartMatchTask> startMatchTaskFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -117,8 +114,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                 logId(), match.getId(), player.getId(), savedMatch == null ? "null" : savedMatch.getPositiveAnswersCount());
 
         if (match.isReadyToStart()) {
-            cancelScheduledMatchStart(match);
-            scheduleNewMatchStart(match);
+            rescheduleNewMatchStart(match.getId());
             if (match.getModType() == ModType.UPRISING_6) {
                 match.setState(MatchState.FAILED);
                 matchRepository.save(match);
@@ -126,76 +122,11 @@ public class VoteCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void cancelScheduledMatchStart(Match match) {
-        ScheduledFuture<?> existingScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
-        if (existingScheduledTask != null) {
-            existingScheduledTask.cancel(false);
-        }
-        log.debug("{}: vote match {} start unscheduled", logId(), match.getId());
-    }
-
-    private void scheduleNewMatchStart(Match match) {
+    private void rescheduleNewMatchStart(long matchId) {
         int matchStartDelay = settingsService.getIntSetting(SettingKey.MATCH_START_DELAY);
         Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
-        ScheduledFuture<?> scheduledTask = dunebotTaskScheduler.schedule(() -> {
-                    Optional<Match> freshMatch = matchRepository.findWithMatchPlayersBy(match.getId());
-                    if (freshMatch.isEmpty()) {
-                        log.debug("0: match {} start not found the match", match.getId());
-                        return;
-                    }
-                    messagingService.sendMessageAsync(getMatchStartMessage(match))
-                            .whenComplete((externalMessageDto, throwable) -> {
-                                log.debug("0: match {} start callback received. Current time: {}",
-                                        match.getId(), Instant.now(clock));
-                                if (throwable != null) {
-                                    log.error("0: match {} start callback failure...", match.getId(), throwable);
-                                }
-                                matchRepository.findById(match.getId()).ifPresent(cbMatch -> {
-                                    deleteExistingOldSubmitMessage(cbMatch);
-                                    cbMatch.setExternalStartId(new ExternalMessageId(externalMessageDto));
-                                    matchRepository.save(cbMatch);
-                                });
-                            });
-                },
-                matchStartInstant);
-        log.debug("0: match {} start scheduled at '{}'", match.getId(), matchStartInstant);
-
-        scheduledTasksByMatchIds.put(match.getId(), scheduledTask);
-        log.debug("{}: vote match start message scheduled to '{}'", logId(), matchStartInstant);
-    }
-
-    private MessageDto getMatchStartMessage(Match match) {
-        List<String> regularPlayerMentions = new ArrayList<>();
-        List<String> guestPlayerMentions = new ArrayList<>();
-        List<String> blockedChatMentions = new ArrayList<>();
-        for (MatchPlayer matchPlayer : matchPlayerRepository.findByMatch(match)) {
-            Player player = matchPlayer.getPlayer();
-            String mention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
-            log.debug("{}: match {} start message building... player {} (guest: {}, chat_blocked: {})",
-                    logId(), match.getId(), player.getId(), player.isGuest(), player.isChatBlocked());
-            if (player.isChatBlocked()) {
-                blockedChatMentions.add(mention);
-            } else if (player.isGuest()) {
-                guestPlayerMentions.add(mention);
-            } else {
-                regularPlayerMentions.add(mention);
-            }
-        }
-        String matchTopicChatId = match.getExternalPollId().getChatIdString();
-        Integer topicId = match.getExternalPollId().getReplyId();
-        Integer replyMessageId = match.getExternalPollId().getMessageId();
-        ExternalMessage startMessage = externalMessageFactory
-                .getStartMessage(match, regularPlayerMentions, guestPlayerMentions, blockedChatMentions);
-        return new MessageDto(matchTopicChatId, startMessage, topicId, replyMessageId, null);
-    }
-
-    private void deleteExistingOldSubmitMessage(Match match) {
-        if (match.getExternalStartId() != null) {
-            Integer externalMessageId = match.getExternalStartId().getMessageId();
-            Long externalChatId = match.getExternalStartId().getChatId();
-            Integer externalMessageReplyId = match.getExternalStartId().getReplyId();
-            messagingService.deleteMessageAsync(new ExternalMessageId(externalMessageId, externalChatId, externalMessageReplyId));
-        }
+        StartMatchTask startMatchTask = startMatchTaskFactory.apply(matchId);
+        taskScheduler.reschedule(startMatchTask, new DuneTaskId(DuneTaskType.START_MESSAGE, matchId), matchStartInstant);
     }
 
     private void unregisterMatchPlayerVote(CommandMessage commandMessage) {
@@ -218,7 +149,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                                         savedMatch == null ? "null" : savedMatch.getPositiveAnswersCount());
 
                                 if (match.hasMissingPlayers()) {
-                                    removeScheduledMatchStart(match);
+                                    taskScheduler.cancel(new DuneTaskId(DuneTaskType.START_MESSAGE, match.getId()));
                                     ExternalMessageId externalStartId = match.getExternalStartId();
                                     if (externalStartId != null) {
                                         messagingService.deleteMessageAsync(externalStartId);
@@ -228,14 +159,6 @@ public class VoteCommandProcessor extends CommandProcessor {
                         },
                         () -> log.debug("{}: matchPlayer for player {} not found", logId(), commandMessage.getUserId())
                 );
-    }
-
-    private void removeScheduledMatchStart(Match match) {
-        ScheduledFuture<?> oldScheduledTask = scheduledTasksByMatchIds.remove(match.getId());
-        if (oldScheduledTask != null) {
-            oldScheduledTask.cancel(false);
-        }
-        log.debug("{}: match {} start unscheduled", logId(), match.getId());
     }
 
     @Override
