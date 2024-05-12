@@ -14,9 +14,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "SETTINGS")
+@Table(name = "APP_SETTINGS")
 @NoArgsConstructor
-public class Setting extends BaseEntity {
+public class AppSetting extends BaseEntity {
     /**
      * Setting name
      */
@@ -28,7 +28,7 @@ public class Setting extends BaseEntity {
      */
     private String value;
 
-    public Setting(SettingKey key, String value) {
+    public AppSetting(SettingKey key, String value) {
         this.key = key;
         this.value = value;
     }

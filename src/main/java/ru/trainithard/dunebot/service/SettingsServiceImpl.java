@@ -5,46 +5,46 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.trainithard.dunebot.model.Setting;
+import ru.trainithard.dunebot.model.AppSetting;
 import ru.trainithard.dunebot.model.SettingKey;
-import ru.trainithard.dunebot.repository.SettingRepository;
+import ru.trainithard.dunebot.repository.AppSettingRepository;
 
 @Service
 @RequiredArgsConstructor
 public class SettingsServiceImpl implements SettingsService {
-    private final SettingRepository settingRepository;
+    private final AppSettingRepository appSettingRepository;
 
     @Override
     @Cacheable(value = "settings", key = "#key")
     public Integer getIntSetting(SettingKey key) {
-        Setting setting = settingRepository.findByKey(key);
-        return setting == null ? null : Integer.parseInt(setting.getValue());
+        AppSetting appSetting = appSettingRepository.findByKey(key);
+        return appSetting == null ? null : Integer.parseInt(appSetting.getValue());
     }
 
     @Override
     @Cacheable(value = "settings", key = "#key")
     public long getLongSetting(SettingKey key) {
-        String value = settingRepository.findByKey(key).getValue();
+        String value = appSettingRepository.findByKey(key).getValue();
         return Long.parseLong(value);
     }
 
     @Override
     @Cacheable(value = "settings", key = "#key")
     public String getStringSetting(SettingKey key) {
-        Setting setting = settingRepository.findByKey(key);
-        return setting == null ? null : setting.getValue();
+        AppSetting appSetting = appSettingRepository.findByKey(key);
+        return appSetting == null ? null : appSetting.getValue();
     }
 
     @Override
     @CacheEvict(value = "settings", key = "#key")
     @Transactional
     public void saveSetting(SettingKey key, String value) {
-        Setting existingSetting = settingRepository.findByKey(key);
-        if (existingSetting != null) {
-            existingSetting.setValue(value);
-            settingRepository.save(existingSetting);
+        AppSetting existingAppSetting = appSettingRepository.findByKey(key);
+        if (existingAppSetting != null) {
+            existingAppSetting.setValue(value);
+            appSettingRepository.save(existingAppSetting);
         } else {
-            settingRepository.save(new Setting(key, value));
+            appSettingRepository.save(new AppSetting(key, value));
         }
     }
 }
