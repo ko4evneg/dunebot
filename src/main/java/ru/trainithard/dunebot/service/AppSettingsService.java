@@ -2,7 +2,7 @@ package ru.trainithard.dunebot.service;
 
 import ru.trainithard.dunebot.model.AppSettingKey;
 
-public interface SettingsService {
+public interface AppSettingsService {
 
     Integer getIntSetting(AppSettingKey key);
 

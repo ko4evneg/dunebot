@@ -24,7 +24,7 @@ public class StartupServiceImpl implements StartupService {
 
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
 
     @Override
     public void startUp() {
@@ -40,7 +40,7 @@ public class StartupServiceImpl implements StartupService {
         matchRepository.saveAll(notEndedMatches);
         log.debug("All failed matches saved");
 
-        String chatId = settingsService.getStringSetting(AppSettingKey.CHAT_ID);
+        String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
         if (chatId != null) {
             matchIdStringsByTopicId.forEach((topicId, matchIds) -> {
                 ExternalMessage externalMessage = new ExternalMessage(String.format(MATCH_FAIL_MESSAGE_TEMPLATE, "(" + matchIds + ")"));

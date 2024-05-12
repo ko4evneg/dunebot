@@ -14,7 +14,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
@@ -50,7 +50,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final MatchRepository matchRepository;
     private final DuneBotTaskScheduler taskScheduler;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
     private final Clock clock;
     private final Function<Long, SubmitTimeoutTask> submitTimeoutTaskFactory;
 
@@ -100,7 +100,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     private void rescheduleForcedFailFinish(long matchId) {
-        int finishMatchTimeout = settingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
+        int finishMatchTimeout = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         DuneTaskId submitTimeoutTaskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
         ScheduledFuture<?> oldFailFinishTask = taskScheduler.get(submitTimeoutTaskId);

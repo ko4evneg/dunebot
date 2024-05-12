@@ -11,7 +11,7 @@ import ru.trainithard.dunebot.repository.AppSettingRepository;
 
 @Service
 @RequiredArgsConstructor
-public class SettingsServiceImpl implements SettingsService {
+public class AppSettingsServiceImpl implements AppSettingsService {
     private final AppSettingRepository appSettingRepository;
 
     @Override

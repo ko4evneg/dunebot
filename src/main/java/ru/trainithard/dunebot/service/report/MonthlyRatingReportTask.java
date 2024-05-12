@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
@@ -24,7 +24,7 @@ import java.time.YearMonth;
 @RequiredArgsConstructor
 public class MonthlyRatingReportTask implements Runnable {
     private final RatingReportPdfService ratingReportPdfService;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
     private final MessagingService messagingService;
     private final Clock clock;
 
@@ -86,7 +86,7 @@ public class MonthlyRatingReportTask implements Runnable {
 
     private void sendTopicNotifications(YearMonth month, byte[] pdfFile, ModType modType) {
         String ratingName = "Рейтинг за " + getDateString(month);
-        String chatId = settingsService.getStringSetting(AppSettingKey.CHAT_ID);
+        String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
         FileMessageDto fileMessageDto =
                 new FileMessageDto(chatId, new ExternalMessage(ratingName).append(":"), getTopicId(modType), pdfFile, ratingName + ".pdf");
         messagingService.sendFileAsync(fileMessageDto);
@@ -94,8 +94,8 @@ public class MonthlyRatingReportTask implements Runnable {
 
     private int getTopicId(ModType modType) {
         return switch (modType) {
-            case CLASSIC -> settingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
-            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
+            case CLASSIC -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
+            case UPRISING_4, UPRISING_6 -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
         };
     }
 }

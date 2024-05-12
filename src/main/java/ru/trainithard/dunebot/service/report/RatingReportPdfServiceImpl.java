@@ -7,7 +7,7 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,12 +17,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RatingReportPdfServiceImpl implements RatingReportPdfService {
     private final MatchPlayerRepository matchPlayerRepository;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
 
     @Override
     public RatingReportPdf createRating(LocalDate from, LocalDate to, ModType modType, String reportName) {
         List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
-        int matchesThreshold = settingsService.getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
+        int matchesThreshold = appSettingsService.getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
         RatingReport monthlyRating = new RatingReport(monthMatchPlayers, modType, matchesThreshold);
 
         return new RatingReportPdf(reportName, convertToReportRows(monthlyRating));

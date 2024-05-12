@@ -12,7 +12,7 @@ import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -53,7 +53,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
     private static final DateTimeFormatter DATE_FORAMTTER = DateTimeFormatter.ofPattern("dd.MM.yy");
 
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
     private final RatingReportPdfService reportService;
     private final DuneBotTaskScheduler taskScheduler;
     private final Clock clock;
@@ -74,11 +74,11 @@ public class AdminCommandProcessor extends CommandProcessor {
         switch (subCommand) {
             case INIT_SUBCOMMAND -> sendSetCommands();
             case SET_CHAT_SUBCOMMAND ->
-                    settingsService.saveSetting(AppSettingKey.CHAT_ID, Long.toString(commandMessage.getChatId()));
+                    appSettingsService.saveSetting(AppSettingKey.CHAT_ID, Long.toString(commandMessage.getChatId()));
             case SET_TOPIC_CLASSIC ->
-                    settingsService.saveSetting(AppSettingKey.TOPIC_ID_CLASSIC, commandMessage.getReplyMessageId().toString());
+                    appSettingsService.saveSetting(AppSettingKey.TOPIC_ID_CLASSIC, commandMessage.getReplyMessageId().toString());
             case SET_TOPIC_UPRISING4 ->
-                    settingsService.saveSetting(AppSettingKey.TOPIC_ID_UPRISING, commandMessage.getReplyMessageId().toString());
+                    appSettingsService.saveSetting(AppSettingKey.TOPIC_ID_UPRISING, commandMessage.getReplyMessageId().toString());
             case SET_KEY -> setCustomKeySetting(commandMessage);
             case MESSAGE_KEY -> {
                 String messageText = allCommandArguments.substring(MESSAGE_KEY.length() + 1);
@@ -119,7 +119,7 @@ public class AdminCommandProcessor extends CommandProcessor {
         } catch (NumberFormatException exception) {
             throw new AnswerableDuneBotException(WRONG_SETTING_VALUE_TEXT, exception, commandMessage);
         }
-        settingsService.saveSetting(appSettingKey, settingValue);
+        appSettingsService.saveSetting(appSettingKey, settingValue);
     }
 
     private void generateReport(CommandMessage commandMessage) {
@@ -188,9 +188,9 @@ public class AdminCommandProcessor extends CommandProcessor {
     }
 
     private void sendTopicsMessages(String message) {
-        String chatId = settingsService.getStringSetting(AppSettingKey.CHAT_ID);
-        int up4Topic = settingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
-        int duneTopic = settingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
+        String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
+        int up4Topic = appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
+        int duneTopic = appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
         ExternalMessage userMessage = new ExternalMessage(message);
         MessageDto up4UserMessageDto = new MessageDto(chatId, userMessage, up4Topic, null);
         messagingService.sendMessageAsync(up4UserMessageDto);

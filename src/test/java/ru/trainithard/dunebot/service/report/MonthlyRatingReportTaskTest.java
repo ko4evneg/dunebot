@@ -16,7 +16,7 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 
 import java.io.*;
@@ -39,7 +39,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
     @SpyBean
     private RatingReportPdfService ratingReportPdfService;
     @MockBean
-    private SettingsService settingsService;
+    private AppSettingsService appSettingsService;
     @MockBean
     private Clock clock;
 
@@ -49,9 +49,9 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
     @BeforeEach
     void beforeEach() {
         doReturn(ZoneId.of("UTC+3")).when(clock).getZone();
-        doReturn(TestConstants.CHAT_ID).when(settingsService).getStringSetting(AppSettingKey.CHAT_ID);
-        doReturn(TestConstants.TOPIC_ID_UPRISING).when(settingsService).getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
-        doReturn(TestConstants.TOPIC_ID_CLASSIC).when(settingsService).getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
+        doReturn(TestConstants.CHAT_ID).when(appSettingsService).getStringSetting(AppSettingKey.CHAT_ID);
+        doReturn(TestConstants.TOPIC_ID_UPRISING).when(appSettingsService).getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
+        doReturn(TestConstants.TOPIC_ID_CLASSIC).when(appSettingsService).getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
 
         try {
             Field field = MonthlyRatingReportTask.class.getDeclaredField("pdfPath");
