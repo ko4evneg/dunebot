@@ -26,7 +26,7 @@ public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
 
         ScheduledFuture<?> scheduledFeature = schedule(task, startTime);
         scheduledTasks.put(taskId, scheduledFeature);
-        log.debug("0: scheduled task of type {} rescheduled", taskId);
+        log.debug("0: rescheduled task of type {}", taskId);
 
         return scheduledFeature;
     }
@@ -35,7 +35,7 @@ public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
         ScheduledFuture<?> currentTask = scheduledTasks.remove(taskId);
         if (currentTask != null) {
             currentTask.cancel(false);
-            log.debug("0: scheduled task of type {} cancelled", taskId);
+            log.debug("0: cancelled task of type {}", taskId);
         }
     }
 

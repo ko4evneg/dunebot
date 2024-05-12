@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -12,11 +13,13 @@ import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.scheduling.TaskScheduler;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -29,17 +32,14 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
@@ -59,23 +59,18 @@ class SubmitCommandProcessorTest extends TestContextMock {
     @MockBean
     private Clock clock;
     @MockBean
-    private TaskScheduler taskScheduler;
+    private DuneBotTaskScheduler taskScheduler;
     @MockBean
     private MatchFinishingService finishingService;
-    private Map<Long, ScheduledFuture<?>> tasksMap;
 
     @BeforeEach
-    void beforeEach() throws NoSuchFieldException, IllegalAccessException {
+    void beforeEach() {
         doAnswer(new MockReplier()).when(messagingService).sendMessageAsync(any(MessageDto.class));
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
-
-        Field tasksMapField = SubmitCommandProcessor.class.getDeclaredField("scheduledFailFinishTasksByMatchIds");
-        tasksMapField.setAccessible(true);
-        tasksMap = (Map<Long, ScheduledFuture<?>>) tasksMapField.get(processor);
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
@@ -105,7 +100,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
-        tasksMap.clear();
         jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
@@ -298,48 +292,40 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnSubmit() {
-        jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
+    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnFirstSubmit() {
+        jdbcTemplate.execute("update matches set submits_count = 0 where id = 15000");
 
         processor.process(getCommandMessage(USER_ID));
 
-        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
-        Instant actualInstant = instantCaptor.getValue();
-
-        assertThat(actualInstant).isEqualTo(NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES));
+        DuneTaskId expectedTaskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+        Instant expectedInstant = NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
+        verify(taskScheduler).reschedule(any(), eq(expectedTaskId), eq(expectedInstant));
     }
 
-    @Test
-    void shouldInvokeUnsuccessfullySubmittedMatchFinishOnScheduledTask() throws InterruptedException {
-        jdbcTemplate.execute("update matches set positive_answers_count = 0 where id = 10000");
+    @ParameterizedTest
+    @CsvSource({"ON_SUBMIT, 1", "ON_SUBMIT, 2", "ON_SUBMIT, 3", "ON_SUBMIT_SCREENSHOTTED, 1", "ON_SUBMIT_SCREENSHOTTED, 2", "ON_SUBMIT_SCREENSHOTTED, 3"})
+    void shouldNotRescheduleUnsuccessfullySubmittedMatchFinishTaskOnNotFirstSubmit(MatchState state, int submitsCount) {
+        jdbcTemplate.execute("update matches set state = '" + state + "', submits_count = " + submitsCount + " where id = 15000");
 
-        processor.process(getCommandMessage(USER_ID));
+        try {
+            processor.process(getCommandMessage(USER_ID));
+        } catch (Exception ignored) {
+        }
 
-        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(taskScheduler, times(1)).schedule(runnableCaptor.capture(), any(Instant.class));
-        Runnable actualRunnable = runnableCaptor.getValue();
-
-        Thread thread = new Thread(actualRunnable);
-        thread.start();
-        thread.join();
-
-        verify(finishingService, times(1)).finishNotSubmittedMatch(eq(15000L), eq(false));
+        verifyNoInteractions(taskScheduler);
     }
 
     @Test
     void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() {
-        ScheduledFuture<?> existinFailFinishTask = mock(ScheduledFuture.class);
-        doReturn(307L).when(existinFailFinishTask).getDelay(TimeUnit.SECONDS);
-        tasksMap.put(15000L, existinFailFinishTask);
+        DuneTaskId taskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+        ScheduledFuture<?> future = mock(ScheduledFuture.class);
+        doReturn(future).when(taskScheduler).get(taskId);
+        doReturn(208L).when(future).getDelay(any());
 
         processor.process(submitCommandMessage);
 
-        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(taskScheduler, times(1)).schedule(any(), instantCaptor.capture());
-        Instant actualInstant = instantCaptor.getValue();
-
-        assertThat(actualInstant).isEqualTo(NOW.plus(420 + 307, ChronoUnit.SECONDS));
+        Instant expectedInstant = NOW.plus(208 + 420, ChronoUnit.SECONDS);
+        verify(taskScheduler).reschedule(any(), eq(taskId), eq(expectedInstant));
     }
 
     @Test
