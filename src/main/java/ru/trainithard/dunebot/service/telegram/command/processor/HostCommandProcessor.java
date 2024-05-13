@@ -44,7 +44,7 @@ public class HostCommandProcessor extends CommandProcessor {
         return new ExternalMessage()
                 .append("Игрок ").append(player.getFriendlyName()).append(" предлагает свой сервер для ")
                 .startBold().append("матча ").append(match.getId()).endBold().append(".")
-                .newLine().append("Сервер: ").append(server);
+                .newLine().append("Сервер: ").appendBold(server);
     }
 
     @Override

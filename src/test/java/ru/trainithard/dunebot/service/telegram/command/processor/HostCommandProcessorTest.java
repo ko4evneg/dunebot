@@ -62,7 +62,7 @@ class HostCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly("strVal", 5, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10000*\\.
-                        Сервер: srv/psw""");
+                        Сервер: *srv/psw*""");
     }
 
     @Test
@@ -82,7 +82,7 @@ class HostCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly("strVal", 5, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10001*\\.
-                        Сервер: srv/psw""");
+                        Сервер: *srv/psw*""");
     }
 
     @Test

@@ -91,6 +91,19 @@ class ConfigCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSendMessageOnSuccessfulSettingSave() {
+        processor.process(getCommandMessage("/config host MyServer 123+-3"));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(TELEGRAM_CHAT_ID.toString(), "Настройка сохранена");
+    }
+
+    @Test
     void shouldThrowOnWrongSubCommand() {
         CommandMessage commandMessage = getCommandMessage("/config fake");
 

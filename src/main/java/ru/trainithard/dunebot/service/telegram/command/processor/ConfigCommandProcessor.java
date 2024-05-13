@@ -51,6 +51,7 @@ public class ConfigCommandProcessor extends CommandProcessor {
                     .orElseThrow(() -> new AnswerableDuneBotException("Неверный аргумент!", commandMessage));
             String commandArgument = commandMessage.getAllArguments().substring(subCommand.length()).trim();
             userSettingsService.saveSetting(player.getId(), userSettingKey, commandArgument);
+            messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage("Настройка сохранена"), null));
         }
     }
 
