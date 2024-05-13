@@ -40,7 +40,7 @@ public class PhotoUploadMessageValidator implements ValidationStrategy {
     }
 
     private void validateOnSubmitMatchesCount(CommandMessage commandMessage) {
-        List<Match> onSubmitMatches = matchRepository.findLatestPlayerMatch(commandMessage.getUserId(), MatchState.getSubmitStates());
+        List<Match> onSubmitMatches = matchRepository.findPlayerMatches(commandMessage.getUserId(), MatchState.getSubmitStates());
         if (onSubmitMatches.isEmpty()) {
             throw new AnswerableDuneBotException(NO_ONSUBMIT_MATCHES_EXCEPTION_MESSAGE_TEMPLATE, commandMessage);
         }

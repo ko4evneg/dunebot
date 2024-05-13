@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.UserSetting;
 
 import java.util.List;
@@ -38,7 +37,7 @@ class UserSettingsServiceImplTest extends TestContextMock {
         jdbcTemplate.execute("insert into user_settings (id, player_id, key, value, created_at) " +
                              "values (10000, 10000, '" + HOST + "', 'abc/123', '2010-10-10')");
 
-        UserSetting actualSetting = userSettingsService.getSetting(HOST).orElseThrow();
+        UserSetting actualSetting = userSettingsService.getSetting(10000L, HOST).orElseThrow();
 
         assertThat(actualSetting.getValue()).isEqualTo("abc/123");
     }
@@ -59,10 +58,8 @@ class UserSettingsServiceImplTest extends TestContextMock {
     void shouldSaveChangedSetting() {
         jdbcTemplate.execute("insert into user_settings (id, player_id, key, value, created_at) " +
                              "values (10000, 10000, '" + HOST + "', 'abc/123', '2010-10-10')");
-        Player player = new Player();
-        player.setId(10000L);
 
-        userSettingsService.saveSetting(player, HOST, "XXX");
+        userSettingsService.saveSetting(10000L, HOST, "XXX");
 
         String actualValue = jdbcTemplate
                 .queryForObject("select value from user_settings where id = 10000", String.class);
@@ -72,10 +69,7 @@ class UserSettingsServiceImplTest extends TestContextMock {
 
     @Test
     void shouldSaveNewSetting() {
-        Player player = new Player();
-        player.setId(10000L);
-
-        userSettingsService.saveSetting(player, HOST, "XXX");
+        userSettingsService.saveSetting(10000L, HOST, "XXX");
 
         String actualValue = jdbcTemplate
                 .queryForObject("select value from user_settings where player_id = 10000 and key = '" + HOST + "'", String.class);
