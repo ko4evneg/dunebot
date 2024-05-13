@@ -5,9 +5,10 @@ import ru.trainithard.dunebot.model.UserSetting;
 import ru.trainithard.dunebot.model.UserSettingKey;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserSettingRepository extends JpaRepository<UserSetting, Long> {
-    UserSetting findByKey(UserSettingKey key);
+    Optional<UserSetting> findByKey(UserSettingKey key);
 
     List<UserSetting> findAllByPlayerId(long playerId);
 }
