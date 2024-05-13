@@ -37,6 +37,8 @@ class HostCommandProcessorTest extends TestContextMock {
                              "values (10000, 10000, 10000, '2010-10-10')");
         jdbcTemplate.execute("insert into user_settings (id, player_id, key, value, created_at) " +
                              "values (10000, 10000, '" + UserSettingKey.HOST + "', 'srv/psw', '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '5', '2010-01-02')");
     }
 
     @AfterEach
@@ -45,6 +47,7 @@ class HostCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
         jdbcTemplate.execute("delete from user_settings where id = 10000");
         jdbcTemplate.execute("delete from players where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
     }
 
     @Test
@@ -56,8 +59,8 @@ class HostCommandProcessorTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getText)
-                .containsExactly("9000", """
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly("strVal", 5, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10000*\\.
                         Сервер: srv/psw""");
     }
