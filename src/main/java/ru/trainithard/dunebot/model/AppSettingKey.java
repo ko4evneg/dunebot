@@ -5,7 +5,7 @@ import java.util.Arrays;
 /**
  * Setting key for receiving setting values from storage
  */
-public enum SettingKey {
+public enum AppSettingKey {
     /**
      * External ID of admin user
      */
@@ -43,7 +43,7 @@ public enum SettingKey {
      */
     NEXT_GUEST_INDEX;
 
-    public static SettingKey getByName(String settingName) {
+    public static AppSettingKey getByName(String settingName) {
         if (settingName == null || settingName.isBlank()) {
             return null;
         }

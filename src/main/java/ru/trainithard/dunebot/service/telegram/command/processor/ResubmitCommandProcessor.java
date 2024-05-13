@@ -4,14 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -34,7 +34,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     private final MatchFinishingService matchFinishingService;
     private final SubmitCommandProcessor submitCommandProcessor;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -47,7 +47,7 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     void process(Match match) {
         log.debug("{}: RESUBMIT(internal) started", logId());
 
-        int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
+        int resubmitsLimit = appSettingsService.getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
         log.debug("{}: match {} resubmit limit {}", logId(), match.getId(), resubmitsLimit);
         if (!match.isResubmitAllowed(resubmitsLimit)) {
             log.debug("{}: resubmit is not allowed. Finishing by resubmits limit reached...", logId());

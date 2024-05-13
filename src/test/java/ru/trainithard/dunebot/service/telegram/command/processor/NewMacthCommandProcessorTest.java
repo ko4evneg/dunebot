@@ -17,8 +17,8 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.TelegramApiCallException;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalPollDto;
 import ru.trainithard.dunebot.service.messaging.dto.PollMessageDto;
@@ -49,19 +49,19 @@ class NewMacthCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
 
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10000, '" + SettingKey.CHAT_ID + "', '" + TestConstants.CHAT_ID + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10001, '" + SettingKey.TOPIC_ID_CLASSIC + "', 2, '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10002, '" + SettingKey.TOPIC_ID_UPRISING + "', 4, '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10000, '" + AppSettingKey.CHAT_ID + "', '" + TestConstants.CHAT_ID + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10001, '" + AppSettingKey.TOPIC_ID_CLASSIC + "', 2, '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10002, '" + AppSettingKey.TOPIC_ID_UPRISING + "', 4, '2010-10-10')");
 
         doReturn(getCompletableFuturePollMessage()).when(messagingService).sendPollAsync(ArgumentMatchers.any(PollMessageDto.class));
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10002");
         jdbcTemplate.execute("delete from match_players where player_id = 10000");
         jdbcTemplate.execute("delete from matches where external_poll_id is null or external_poll_id = " +
                              "(select id from external_messages where chat_id = '" + CHAT_ID + "' or chat_id = '" + TestConstants.CHAT_ID + "')");

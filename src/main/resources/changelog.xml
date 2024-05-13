@@ -15,4 +15,7 @@
     <changeSet id="004-guest-player-index" author="ko4evneg">
         <sqlFile path="migrations/04_guest_player_index.sql"/>
     </changeSet>
+    <changeSet id="005-user-settings" author="ko4evneg">
+        <sqlFile path="migrations/05_user_settings.sql"/>
+    </changeSet>
 </databaseChangeLog>
