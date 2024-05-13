@@ -98,13 +98,13 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                              "values (10002, 15000, 10002, 10004, 2, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
                              "values (10003, 15000, 10003, 10005, '2010-10-10')");
-        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.RESUBMITS_LIMIT + "', 3, '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() throws IOException {
-        jdbcTemplate.execute("delete from app_settings where id = 10000");
+        jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");

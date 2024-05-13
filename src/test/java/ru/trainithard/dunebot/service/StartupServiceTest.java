@@ -48,12 +48,12 @@ class StartupServiceTest extends TestContextMock {
                              "values (10002, 10000, 10002, 3, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
                              "values (10003, 10000, 10003, 1, '2010-10-10')");
-        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10000, 'CHAT_ID', '100500', '2010-01-02')");
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'CHAT_ID', '100500', '2010-01-02')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from app_settings where id = 10000");
+        jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id between 10000 and 10001");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
         jdbcTemplate.execute("delete from external_messages where id between 10000 and 10001");
@@ -121,7 +121,7 @@ class StartupServiceTest extends TestContextMock {
 
     @Test
     void shouldNotSendMessagesWhenChatSettingMissing() {
-        jdbcTemplate.execute("delete from app_settings where id = 10000");
+        jdbcTemplate.execute("delete from settings where id = 10000");
         jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                              "values (10001, 'ExternalPollId', 10500, 10501, 10502, 10503, '2020-10-10')");

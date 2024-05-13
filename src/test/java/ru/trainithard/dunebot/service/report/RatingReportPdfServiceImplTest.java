@@ -86,19 +86,19 @@ class RatingReportPdfServiceImplTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
                              "values (10013, 15002, 10005, 2, '2010-10-10')");
 
-        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.MONTHLY_MATCHES_THRESHOLD + "', 15, '2010-10-10')");
-        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10001, '" + AppSettingKey.CHAT_ID + "', '" + TestConstants.CHAT_ID + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10002, '" + AppSettingKey.TOPIC_ID_CLASSIC + "', '" + 9000 + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
                              "values (10003, '" + AppSettingKey.TOPIC_ID_UPRISING + "', '" + TestConstants.TOPIC_ID_UPRISING + "', '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10003");
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10003");
         jdbcTemplate.execute("delete from match_players where match_id between 15000 and 15003");
         jdbcTemplate.execute("delete from matches where id between 15000 and 15003");
         jdbcTemplate.execute("delete from players where id between 10000 and 10005");

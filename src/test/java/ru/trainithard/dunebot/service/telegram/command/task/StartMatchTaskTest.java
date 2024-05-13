@@ -86,7 +86,7 @@ class StartMatchTaskTest extends TestContextMock {
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10001");
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004 or external_id in (" + USER_2_ID + ", " + GUEST_ID + ")");
@@ -96,7 +96,7 @@ class StartMatchTaskTest extends TestContextMock {
 
     @Test
     void shouldDoNothingWhenNoMatchFound() {
-        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from settings where id between 10000 and 10001");
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
 
