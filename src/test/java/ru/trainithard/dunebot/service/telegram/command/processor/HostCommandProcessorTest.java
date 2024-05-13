@@ -79,8 +79,8 @@ class HostCommandProcessorTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getText)
-                .containsExactly("9000", """
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly("strVal", 5, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10001*\\.
                         Сервер: srv/psw""");
     }
