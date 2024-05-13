@@ -90,15 +90,15 @@ class VoteCommandProcessorTest extends TestContextMock {
                              "values (10000, 10000, 10000, '" + ModType.CLASSIC + "','" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10000, 10000, 10000, '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.MATCH_START_DELAY + "', 60, '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
                              "values (10001, '" + AppSettingKey.NEXT_GUEST_INDEX + "', 1, '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004 or external_id in (" + USER_2_ID + ", " + GUEST_ID + ")");
@@ -180,7 +180,7 @@ class VoteCommandProcessorTest extends TestContextMock {
     void shouldCorrectlySetGuestIndex() {
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest9' where id = 10002");
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest10' where id = 10003");
-        jdbcTemplate.execute("update settings set value = 11 where id = 10001");
+        jdbcTemplate.execute("update app_settings set value = 11 where id = 10001");
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
         String actualGuestName = jdbcTemplate
@@ -194,10 +194,10 @@ class VoteCommandProcessorTest extends TestContextMock {
     void shouldUpdateGuestIndexSettingWhenGuestPlayerRegistered() {
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest9' where id = 10002");
         jdbcTemplate.execute("update players set is_guest = true, steam_name = 'guest10' where id = 10003");
-        jdbcTemplate.execute("update settings set value = 11 where id = 10001");
+        jdbcTemplate.execute("update app_settings set value = 11 where id = 10001");
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, GUEST_ID));
 
-        Integer actualNextIndex = jdbcTemplate.queryForObject("select value from settings where id = 10001", Integer.class);
+        Integer actualNextIndex = jdbcTemplate.queryForObject("select value from app_settings where id = 10001", Integer.class);
 
         assertThat(actualNextIndex).isEqualTo(12);
     }

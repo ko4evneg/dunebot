@@ -17,14 +17,14 @@ class AppSettingsServiceImplTest extends TestContextMock {
 
     @BeforeEach
     void beforeEach() {
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '5', '2010-01-02')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10002, 'ADMIN_USER_ID', '2', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '5', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10002, 'ADMIN_USER_ID', '2', '2010-01-02')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10002 or key = '" + AppSettingKey.CHAT_ID + "'");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10002 or key = '" + AppSettingKey.CHAT_ID + "'");
     }
 
     @Test
@@ -50,10 +50,10 @@ class AppSettingsServiceImplTest extends TestContextMock {
 
     @Test
     void shouldSaveSetting() {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         appSettingsService.saveSetting(AppSettingKey.CHAT_ID, "val");
 
-        String actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + AppSettingKey.CHAT_ID + "'", String.class);
+        String actualValue = jdbcTemplate.queryForObject("select value from app_settings where key = '" + AppSettingKey.CHAT_ID + "'", String.class);
 
         assertThat(actualValue).isEqualTo("val");
     }
@@ -62,7 +62,7 @@ class AppSettingsServiceImplTest extends TestContextMock {
     void shouldUpdateSetting() {
         appSettingsService.saveSetting(AppSettingKey.TOPIC_ID_CLASSIC, "100");
 
-        Integer actualValue = jdbcTemplate.queryForObject("select value from settings where key = '" + AppSettingKey.TOPIC_ID_CLASSIC + "'", Integer.class);
+        Integer actualValue = jdbcTemplate.queryForObject("select value from app_settings where key = '" + AppSettingKey.TOPIC_ID_CLASSIC + "'", Integer.class);
 
         assertThat(actualValue).isNotNull().isEqualTo(100);
     }
@@ -70,7 +70,7 @@ class AppSettingsServiceImplTest extends TestContextMock {
     @Test
     void shouldReturnCachedValue() {
         String firstRequest = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
-        jdbcTemplate.execute("update settings set value = 'newVal' where id = 10000");
+        jdbcTemplate.execute("update app_settings set value = 'newVal' where id = 10000");
         String secondRequest = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
 
         assertThat(secondRequest).isEqualTo(firstRequest).isEqualTo("strVal");
