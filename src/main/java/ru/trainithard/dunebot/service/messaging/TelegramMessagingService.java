@@ -3,13 +3,13 @@ package ru.trainithard.dunebot.service.messaging;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.File;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -17,27 +17,41 @@ import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScope
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.trainithard.dunebot.exception.TelegramRetryException;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramMessagingService implements MessagingService {
-    private static final String SEND_POLL_CALLBACK_EXCEPTION_MESSAGE = "sendPollAsync() call encounters API exception";
-    private static final String SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "sendMessageAsync() call encounters API exception. Chat id: ";
+    private static final String ASYNC_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "asyncRetrySend() call encounters API exception. Chat id: ";
     private static final String SEND_DOCUMENT_CALLBACK_EXCEPTION_MESSAGE = "sendDocumentAsync() call encounters API exception";
-    private static final String GET_FILE_DETAILS_EXCEPTION_MESSAGE = "getFile() call encounters API exception";
     private static final String SET_COMMANDS_LIST_EXCEPTION_MESSAGE = "sendSetCommands() call encounters API exception";
     private static final String DELETE_MESSAGE_CALLBACK_EXCEPTION_MESSAGE = "deleteMessageAsync() call encounters API exception";
     private static final String MARKDOWN2_PARSE_MODE = "MarkdownV2";
+    private static final int MAX_RETRY = 3;
+    private static final Random random = new Random();
+    private final Map<Integer, Long> retryDelayByTryNumber = Map.of(
+            1, 1000L,
+            2, 2000L,
+            3, 3000L,
+            4, 5000L);
 
+    private final ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(2);
     private final TelegramBot telegramBot;
 
     @Override
@@ -52,21 +66,9 @@ public class TelegramMessagingService implements MessagingService {
 
     @Override
     public CompletableFuture<ExternalPollDto> sendPollAsync(PollMessageDto pollMessage) {
-        CompletableFuture<ExternalPollDto> telegramMessageCompletableFuture = new CompletableFuture<>();
-        try {
-            CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendPoll(pollMessage));
-            sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                if (throwable == null) {
-                    telegramMessageCompletableFuture.complete(new ExternalPollDto(message));
-                } else {
-                    telegramMessageCompletableFuture.completeExceptionally(throwable);
-                    log.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, throwable);
-                }
-            });
-        } catch (TelegramApiException exception) {
-            log.error(SEND_POLL_CALLBACK_EXCEPTION_MESSAGE, exception);
-        }
-        return telegramMessageCompletableFuture;
+        CompletableFuture<ExternalPollDto> requestFuture = new CompletableFuture<>();
+        executeRetryAsync(getSendPoll(pollMessage), requestFuture, ExternalPollDto::new, 0, random.nextLong());
+        return requestFuture;
     }
 
     private SendPoll getSendPoll(PollMessageDto pollMessage) {
@@ -74,27 +76,14 @@ public class TelegramMessagingService implements MessagingService {
         sendPoll.setReplyToMessageId(pollMessage.getTopicId());
         sendPoll.setIsAnonymous(false);
         sendPoll.setAllowMultipleAnswers(false);
-
         return sendPoll;
     }
 
     @Override
     public CompletableFuture<ExternalMessageDto> sendMessageAsync(MessageDto messageDto) {
-        CompletableFuture<ExternalMessageDto> telegramMessageCompletableFuture = new CompletableFuture<>();
-        try {
-            CompletableFuture<Message> sendMessageCompletableFuture = telegramBot.executeAsync(getSendMessage(messageDto));
-            sendMessageCompletableFuture.whenComplete((message, throwable) -> {
-                if (throwable == null) {
-                    telegramMessageCompletableFuture.complete(new ExternalMessageDto(message));
-                } else {
-                    telegramMessageCompletableFuture.completeExceptionally(throwable);
-                    log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE + messageDto.getChatId(), throwable);
-                }
-            });
-        } catch (TelegramApiException exception) {
-            log.error(SEND_MESSAGE_CALLBACK_EXCEPTION_MESSAGE + messageDto.getChatId(), exception);
-        }
-        return telegramMessageCompletableFuture;
+        CompletableFuture<ExternalMessageDto> requestFuture = new CompletableFuture<>();
+        executeRetryAsync(getSendMessage(messageDto), requestFuture, ExternalMessageDto::new, 0, random.nextLong());
+        return requestFuture;
     }
 
     private SendMessage getSendMessage(MessageDto message) {
@@ -149,22 +138,9 @@ public class TelegramMessagingService implements MessagingService {
 
     @Override
     public CompletableFuture<TelegramFileDetailsDto> getFileDetails(String fileId) {
-        CompletableFuture<TelegramFileDetailsDto> telegramMessageCompletableFuture = new CompletableFuture<>();
-        try {
-            GetFile getFile = new GetFile(fileId);
-            CompletableFuture<File> fileCompletableFuture = telegramBot.executeAsync(getFile);
-            fileCompletableFuture.whenComplete((message, throwable) -> {
-                if (throwable == null) {
-                    telegramMessageCompletableFuture.complete(new TelegramFileDetailsDto(message));
-                } else {
-                    telegramMessageCompletableFuture.completeExceptionally(throwable);
-                    log.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, throwable);
-                }
-            });
-        } catch (TelegramApiException exception) {
-            log.error(GET_FILE_DETAILS_EXCEPTION_MESSAGE, exception);
-        }
-        return telegramMessageCompletableFuture;
+        CompletableFuture<TelegramFileDetailsDto> requestFuture = new CompletableFuture<>();
+        executeRetryAsync(new GetFile(fileId), requestFuture, TelegramFileDetailsDto::new, 0, random.nextLong());
+        return requestFuture;
 
     }
 
@@ -178,6 +154,41 @@ public class TelegramMessagingService implements MessagingService {
             telegramBot.executeAsync(setMyCommands);
         } catch (TelegramApiException exception) {
             log.error(SET_COMMANDS_LIST_EXCEPTION_MESSAGE, exception);
+        }
+    }
+
+    public <R, T extends Serializable, Method extends BotApiMethod<T>>
+    void executeRetryAsync(Method method, CompletableFuture<R> requestFuture, Function<T, R> factory, int retry, long logId) {
+        if (retry > MAX_RETRY) {
+            requestFuture.completeExceptionally(new TelegramRetryException());
+        }
+
+        Long retryDelay = retryDelayByTryNumber.get(retry + 1);
+        try {
+            CompletableFuture<T> retryFuture = telegramBot.executeAsync(method);
+            retryFuture.whenComplete((message, throwable) -> {
+                if (throwable == null) {
+                    requestFuture.complete(factory.apply(message));
+                    log.debug("{}: successful callback received", logId);
+                } else {
+                    rescheduleIfNeeded(method, requestFuture, factory, retry, logId, throwable, retryDelay);
+                }
+            });
+        } catch (TelegramApiException e) {
+            rescheduleIfNeeded(method, requestFuture, factory, retry, logId, e, retryDelay);
+        }
+    }
+
+    private <R, T extends Serializable, Method extends BotApiMethod<T>> void rescheduleIfNeeded(
+            Method method, CompletableFuture<R> requestFuture, Function<T, R> factory,
+            int retry, long logId, Throwable exception, Long retryDelay) {
+        if (retry > MAX_RETRY) {
+            requestFuture.completeExceptionally(exception);
+            log.error(logId + ": " + ASYNC_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
+        } else {
+            executorService.schedule(() -> executeRetryAsync(method, requestFuture, factory, retry + 1, logId),
+                    retryDelay, TimeUnit.MILLISECONDS);
+            log.error(logId + ": " + ASYNC_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
     }
 }

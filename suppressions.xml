@@ -10,4 +10,5 @@
     <suppress checks="SingleSpaceSeparator" files="ExternalMessageFactory.*\.java"/>
     <suppress checks="EmptyCatchBlock" files=".*Test\.java"/>
     <suppress checks="HideUtilityClassConstructor" files="DunebotApplication\.java|LogId\.java"/>
+    <suppress checks="ParameterNumber" files="TelegramMessagingService\.java"/>
 </suppressions>
