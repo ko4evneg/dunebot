@@ -50,7 +50,8 @@ public class ConfigCommandProcessor extends CommandProcessor {
             UserSettingKey userSettingKey = UserSettingKey.getByName(subCommand)
                     .orElseThrow(() -> new AnswerableDuneBotException("Неверный аргумент!", commandMessage));
             String commandArgument = commandMessage.getAllArguments().substring(subCommand.length()).trim();
-            userSettingsService.saveSetting(player, userSettingKey, commandArgument);
+            userSettingsService.saveSetting(player.getId(), userSettingKey, commandArgument);
+            messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage("Настройка сохранена"), null));
         }
     }
 

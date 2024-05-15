@@ -86,6 +86,10 @@ public enum Command {
      */
     CONFIG(TEXT, false, false, 1),
     /**
+     * Set user configuration setting.
+     */
+    HOST(TEXT, false, false, 0),
+    /**
      * Manage and configure bot.
      */
     ADMIN(TEXT, true, true, 1);

@@ -23,7 +23,15 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             left join fetch m.matchPlayers mp
             where mp.player.externalId = :externalPlayerId and m.state in :matchStates
             """)
-    List<Match> findLatestPlayerMatch(long externalPlayerId, Collection<MatchState> matchStates);
+    List<Match> findPlayerMatches(long externalPlayerId, Collection<MatchState> matchStates);
+
+    @Query("""
+            select m from Match m
+            left join fetch m.matchPlayers mp
+            where mp.player.id = :playerId and m.state in :matchStates
+            order by m.createdAt desc limit 1
+            """)
+    Optional<Match> findLatestPlayerMatch(long playerId, Collection<MatchState> matchStates);
 
     Optional<Match> findByExternalPollIdPollId(String telegramPollId);
 

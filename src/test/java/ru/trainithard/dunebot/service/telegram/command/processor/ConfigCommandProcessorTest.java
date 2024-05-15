@@ -14,9 +14,9 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.UserSettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
-import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.UserSettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,8 +31,6 @@ class ConfigCommandProcessorTest extends TestContextMock {
 
     @Autowired
     private ConfigCommandProcessor processor;
-    @SpyBean
-    private PlayerRepository playerRepository;
     @SpyBean
     private UserSettingsService userSettingsService;
 
@@ -50,7 +48,7 @@ class ConfigCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSaveHostDataOnHostCommandWithArguments() {
-        processor.process(getCommandMessage(TELEGRAM_USER_ID, TELEGRAM_CHAT_ID, "/config host MyServer 123+-3"));
+        processor.process(getCommandMessage("/config host MyServer 123+-3"));
 
         String actualUserSetting = jdbcTemplate
                 .queryForObject("select value from user_settings where player_id = 10000 and key = '" + UserSettingKey.HOST + "'",
@@ -64,7 +62,7 @@ class ConfigCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into user_settings (id, player_id, key, value, created_at) " +
                              "values (10000, 10000, '" + UserSettingKey.HOST + "', 'abc/123', '2010-10-10')");
 
-        processor.process(getCommandMessage(TELEGRAM_USER_ID, TELEGRAM_CHAT_ID, "/config show"));
+        processor.process(getCommandMessage("/config show"));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService).sendMessageAsync(messageCaptor.capture());
@@ -79,7 +77,7 @@ class ConfigCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendEmptyMessageOnHostShowCommandWhenNoSettingsConfigured() {
-        processor.process(getCommandMessage(TELEGRAM_USER_ID, TELEGRAM_CHAT_ID, "/config show"));
+        processor.process(getCommandMessage("/config show"));
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService).sendMessageAsync(messageCaptor.capture());
@@ -93,8 +91,21 @@ class ConfigCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldSendMessageOnSuccessfulSettingSave() {
+        processor.process(getCommandMessage("/config host MyServer 123+-3"));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly(TELEGRAM_CHAT_ID.toString(), "Настройка сохранена");
+    }
+
+    @Test
     void shouldThrowOnWrongSubCommand() {
-        CommandMessage commandMessage = getCommandMessage(TELEGRAM_USER_ID, TELEGRAM_CHAT_ID, "/config fake");
+        CommandMessage commandMessage = getCommandMessage("/config fake");
 
         assertThatThrownBy(() -> processor.process(commandMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)
@@ -103,11 +114,18 @@ class ConfigCommandProcessorTest extends TestContextMock {
         verifyNoInteractions(userSettingsService);
     }
 
-    private CommandMessage getCommandMessage(long userId, long chatId, String text) {
+    @Test
+    void shouldReturnConfigCommand() {
+        Command actualCommand = processor.getCommand();
+
+        assertThat(actualCommand).isEqualTo(Command.CONFIG);
+    }
+
+    private CommandMessage getCommandMessage(String text) {
         User user = new User();
-        user.setId(userId);
+        user.setId(TELEGRAM_USER_ID);
         Chat chat = new Chat();
-        chat.setId(chatId);
+        chat.setId(TELEGRAM_CHAT_ID);
         chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
         message.setMessageId(100500);
