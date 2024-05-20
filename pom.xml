@@ -10,7 +10,7 @@
     </parent>
     <groupId>ru.trainithard</groupId>
     <artifactId>dunebot</artifactId>
-    <version>0.1.42</version>
+    <version>0.2.42</version>
     <name>dunebot</name>
     <description>dunebot</description>
     <properties>
