@@ -43,7 +43,8 @@ public class ConfigCommandProcessor extends CommandProcessor {
             if (playerSettingsByKey.isEmpty()) {
                 externalMessage.append("настроек нет");
             } else {
-                playerSettingsByKey.forEach((key, value) -> externalMessage.appendBold(key).append(": ").append(value));
+                playerSettingsByKey.forEach((key, value) -> externalMessage.appendBold(key).append(": ").append(value).newLine());
+                externalMessage.trimTrailingNewLine();
             }
             messagingService.sendMessageAsync(new MessageDto(commandMessage, externalMessage, null));
         } else {
