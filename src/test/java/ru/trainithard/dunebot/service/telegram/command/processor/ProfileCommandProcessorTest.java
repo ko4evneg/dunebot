@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +34,8 @@ class ProfileCommandProcessorTest extends TestContextMock {
     private static final String WRONG_INPUT_EXCEPTION_TEXT =
             "Неверный формат ввода имен. Пример верного формата:" + SettingConstants.EXTERNAL_LINE_SEPARATOR +
             "/profile Иван (Лось) Петров";
+    private static final String GUEST_USER_EMPTY_ARGUMENTS_MESSAGE =
+            "Вам необходимо подтвердить регистрацию. Используйте команду '/profile Имя (Steam_никнейм) Фамилия'";
     private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены\\.";
 
     private static final Long EXTERNAL_CHAT_ID = 12345L;
@@ -86,6 +87,16 @@ class ProfileCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldThrowWhenNoArgumentsProvidedAndGuestUserExists() {
+        jdbcTemplate.execute("update players set is_guest = true where id = 10000");
+        CommandMessage commandMessage = getCommandMessage("/profile", "newUname");
+
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage(GUEST_USER_EMPTY_ARGUMENTS_MESSAGE);
+    }
+
+    @Test
     void shouldThrowWhenNoArgumentsProvidedAndUserNotExists() {
         jdbcTemplate.execute("delete from players where id = 10000");
         CommandMessage commandMessage = getCommandMessage("/profile", "newUname");
@@ -131,12 +142,11 @@ class ProfileCommandProcessorTest extends TestContextMock {
                 .containsExactly(EXTERNAL_CHAT_ID.toString(), SUCCESSFUL_UPDATE_MESSAGE);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"/profile", "/profile a (b) c"})
-    void shouldRemoveChatBlockedFlag(String commandText) {
+    @Test
+    void shouldRemoveChatBlockedFlagWhenNamesProvided() {
         jdbcTemplate.execute("update players set is_guest = true, is_chat_blocked = true where id = 10000");
 
-        processor.process(getCommandMessage(commandText, "newUname"));
+        processor.process(getCommandMessage("/profile a (b) c", "newUname"));
 
         Boolean actualIsChatBlocked = jdbcTemplate.queryForObject("select is_chat_blocked from players where id = 10000", Boolean.class);
 
