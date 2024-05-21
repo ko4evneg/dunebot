@@ -23,6 +23,7 @@ import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest
@@ -73,6 +74,7 @@ class ScreenshotServiceTest extends TestContextMock {
 
     @Test
     void shouldThrowWhenFileExtensionNotAllowed() {
+        fail();
         byte[] file = "this_file".getBytes();
         assertThatThrownBy(() -> screenshotService.save(10000L, ".bmp", file))
                 .isInstanceOf(ScreenshotFileIOException.class)
