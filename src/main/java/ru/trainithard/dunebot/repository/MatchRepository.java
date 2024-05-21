@@ -43,4 +43,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findWithMatchPlayersBy(long matchId);
 
     List<Match> findAllByStateNotIn(Collection<MatchState> states);
+
+    List<Match> findAllByStateIn(Collection<MatchState> states);
 }
