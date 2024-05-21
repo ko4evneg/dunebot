@@ -29,10 +29,14 @@ public enum MatchState {
     /**
      * Match is cancelled.
      */
-    CANCELLED;
+    CANCELLED,
+    /**
+     * Match is expired.
+     */
+    EXPIRED;
 
     public static List<MatchState> getEndedMatchStates() {
-        return List.of(FINISHED, FAILED, CANCELLED);
+        return List.of(FINISHED, FAILED, CANCELLED, EXPIRED);
     }
 
     public static List<MatchState> getSubmitStates() {

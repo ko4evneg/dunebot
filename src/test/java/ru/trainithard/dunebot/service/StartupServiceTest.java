@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -23,6 +24,8 @@ import static org.mockito.Mockito.*;
 class StartupServiceTest extends TestContextMock {
     @Autowired
     private StartupService startupService;
+    @MockBean
+    private MatchExpirationService expirationService;
 
     @BeforeEach
     void beforeEach() {
@@ -85,7 +88,7 @@ class StartupServiceTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED"})
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED", "EXPIRED"})
     void shouldFailNotEndedMatchesOnStartup(MatchState state) {
         jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
 
@@ -97,7 +100,19 @@ class StartupServiceTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED"})
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED", "CANCELLED", "EXPIRED"})
+    void shouldNotFailEndedMatchesOnStartup(MatchState state) {
+        jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
+
+        startupService.startUp();
+
+        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
+
+        assertThat(actualState).isEqualTo(state);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED", "EXPIRED"})
     void shouldSendMessageOnNotEndedMatchFail(MatchState state) {
         jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
@@ -131,5 +146,12 @@ class StartupServiceTest extends TestContextMock {
         startupService.startUp();
 
         verifyNoInteractions(messagingService);
+    }
+
+    @Test
+    void shouldInvokeMatchExpirationService() {
+        startupService.startUp();
+
+        verify(expirationService).expireUnusedMatches();
     }
 }

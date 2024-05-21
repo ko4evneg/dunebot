@@ -25,10 +25,13 @@ public class StartupServiceImpl implements StartupService {
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
     private final AppSettingsService appSettingsService;
+    private final MatchExpirationService expirationService;
 
     @Override
     public void startUp() {
         log.info("Startup match validation...");
+        expirationService.expireUnusedMatches();
+
         List<Match> notEndedMatches = matchRepository.findAllByStateNotIn(MatchState.getEndedMatchStates());
         Map<Integer, String> matchIdStringsByTopicId = new HashMap<>();
         for (Match match : notEndedMatches) {
