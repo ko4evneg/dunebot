@@ -72,5 +72,13 @@ public class ExternalMessage {
         }
         return stringBuilder.toString();
     }
+
+    public void trimTrailingNewLine() {
+        int lastCharIndex = stringBuilder.length() - 1;
+        char lastChar = stringBuilder.charAt(lastCharIndex);
+        if (EXTERNAL_LINE_SEPARATOR.equals(String.valueOf(lastChar))) {
+            stringBuilder.deleteCharAt(lastCharIndex);
+        }
+    }
     //TODO ADD TEST
 }

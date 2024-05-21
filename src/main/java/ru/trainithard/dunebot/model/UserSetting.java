@@ -1,9 +1,6 @@
 package ru.trainithard.dunebot.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,21 +11,28 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "SETTINGS")
+@Table(name = "USER_SETTINGS")
 @NoArgsConstructor
-public class Setting extends BaseEntity {
+public class UserSetting extends BaseEntity {
     /**
-     * Setting name
+     * Setting's owner.
+     */
+    @OneToOne
+    @JoinColumn(name = "PLAYER_ID")
+    Player player;
+    /**
+     * Setting name.
      */
     @Enumerated(EnumType.STRING)
-    private SettingKey key;
+    private UserSettingKey key;
 
     /**
      * Setting value. Should be deserialized based on setting type.
      */
     private String value;
 
-    public Setting(SettingKey key, String value) {
+    public UserSetting(Player owner, UserSettingKey key, String value) {
+        this.player = owner;
         this.key = key;
         this.value = value;
     }

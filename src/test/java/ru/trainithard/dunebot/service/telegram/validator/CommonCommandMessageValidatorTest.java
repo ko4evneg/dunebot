@@ -43,15 +43,15 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         fillMessage();
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + TELEGRAM_USER_ID + ", " + TELEGRAM_CHAT_ID + " , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '9000', '2010-01-02')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10002, 'TOPIC_ID_UPRISING', '9001', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10000, 'CHAT_ID', 'strVal', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10001, 'TOPIC_ID_CLASSIC', '9000', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10002, 'TOPIC_ID_UPRISING', '9001', '2010-01-02')");
     }
 
     @AfterEach
     void afterEach() {
         jdbcTemplate.execute("delete from players where id = 10000");
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10002");
     }
 
     @Test
@@ -220,7 +220,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowForNonAdminCommandWhenChatIdIsNotConfigured_PrivateChat() {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
@@ -233,7 +233,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @ValueSource(ints = {10001, 10002})
     void shouldThrowForNonAdminCommandWhenTopicIdIsNotConfigured_PrivateChat(int topicDatabaseRowId) {
-        jdbcTemplate.execute("delete from settings where id = " + topicDatabaseRowId);
+        jdbcTemplate.execute("delete from app_settings where id = " + topicDatabaseRowId);
         message.getChat().setType(ChatType.PRIVATE.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
@@ -246,7 +246,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class)
     void shouldReturnTrueForAdminCommandWhenChatAndTopicAreNotConfigured(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.ADMIN.name().toLowerCase());
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
@@ -258,7 +258,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandWhenChatIsNotConfigured_PublicChat(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
@@ -270,7 +270,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandWhenTopicIdsAreNotConfigured_PublicChat(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
@@ -282,7 +282,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandWhenChatIsNotConfigured_PublicChat_Document(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         message.setDocument(new Document());
         message.getChat().setType(chatType.getValue());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
@@ -295,7 +295,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandWhenTopicIdsAreNotConfigured_PublicChat_Document(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setDocument(new Document());
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
@@ -308,7 +308,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandInNonBotTopic_Text(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setMessageThreadId(93124);
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
@@ -321,7 +321,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnTrueForNonAdminCommandInBotTopic_Text(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setMessageThreadId(9000);
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
@@ -334,7 +334,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandInNonBotTopic_Document(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setDocument(new Document());
         message.setMessageThreadId(93124);
@@ -348,7 +348,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnTrueForNonAdminCommandInBotTopic_Document(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setDocument(new Document());
         message.setMessageThreadId(9000);
@@ -362,7 +362,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnFalseForNonAdminCommandInNonBotTopic_Photo(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setPhoto(List.of(new PhotoSize()));
         message.setMessageThreadId(93124);
@@ -376,7 +376,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
     void shouldReturnTrueForNonAdminCommandInBotTopic_Photo(ChatType chatType) {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setPhoto(List.of(new PhotoSize()));
         message.setMessageThreadId(9000);
@@ -389,7 +389,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowForNonAdminCommandWhenChatIsNotConfigured_PrivateChat() {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
@@ -400,7 +400,7 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @Test
     void shouldThrowForNonAdminCommandWhenTopicIdsAreNotConfigured_PrivateChat() {
-        jdbcTemplate.execute("delete from settings where id between 10001 and 10002");
+        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 

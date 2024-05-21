@@ -3,15 +3,15 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.LogId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
-import ru.trainithard.dunebot.service.SettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -36,7 +36,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private final MatchRepository matchRepository;
     private final MatchFinishingService matchFinishingService;
     private final ResubmitCommandProcessor resubmitProcessor;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
     private final KeyboardsFactory keyboardsFactory;
 
     @Override
@@ -59,7 +59,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
             deleteOldSubmitMessage(submittingPlayer);
 
             int candidatePlace = callback.candidatePlace;
-            int resubmitsLimit = settingsService.getIntSetting(SettingKey.RESUBMITS_LIMIT);
+            int resubmitsLimit = appSettingsService.getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
             log.debug("{}: candidatePlace = {}", logId(), candidatePlace);
             if (isConflictSubmit(match.getMatchPlayers(), candidatePlace) && match.isResubmitAllowed(resubmitsLimit)) {
                 processConflictResubmit(matchPlayers, submittingPlayer, candidatePlace, match);

@@ -12,7 +12,7 @@ import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -40,7 +40,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
     private final DuneBotTaskScheduler taskScheduler;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
     private final ExternalMessageFactory externalMessageFactory;
     private final Clock clock;
     private final Function<Long, StartMatchTask> startMatchTaskFactory;
@@ -68,9 +68,9 @@ public class VoteCommandProcessor extends CommandProcessor {
                             Player player;
                             if (playerOptional.isEmpty()) {
                                 log.debug("{}: player {} not found. Creating guest...", logId(), commandMessage.getUserId());
-                                int nextGuestIndex = settingsService.getIntSetting(SettingKey.NEXT_GUEST_INDEX);
+                                int nextGuestIndex = appSettingsService.getIntSetting(AppSettingKey.NEXT_GUEST_INDEX);
                                 Player guestPlayer = Player.createGuestPlayer(commandMessage, nextGuestIndex);
-                                settingsService.saveSetting(SettingKey.NEXT_GUEST_INDEX, Integer.toString(nextGuestIndex + 1));
+                                appSettingsService.saveSetting(AppSettingKey.NEXT_GUEST_INDEX, Integer.toString(nextGuestIndex + 1));
                                 player = playerRepository.save(guestPlayer);
                                 log.debug("{}: player {} ({}) saved as guest", logId(), player.getId(), commandMessage.getUserId());
                             } else {
@@ -123,7 +123,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     }
 
     private void rescheduleNewMatchStart(long matchId) {
-        int matchStartDelay = settingsService.getIntSetting(SettingKey.MATCH_START_DELAY);
+        int matchStartDelay = appSettingsService.getIntSetting(AppSettingKey.MATCH_START_DELAY);
         Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
         StartMatchTask startMatchTask = startMatchTaskFactory.apply(matchId);
         taskScheduler.reschedule(startMatchTask, new DuneTaskId(DuneTaskType.START_MESSAGE, matchId), matchStartInstant);

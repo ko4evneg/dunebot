@@ -3,10 +3,10 @@ package ru.trainithard.dunebot.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
-import ru.trainithard.dunebot.model.SettingKey;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -26,7 +26,7 @@ public class MatchCreationServiceImpl implements MatchCreationService {
     private final PlayerRepository playerRepository;
     private final MatchRepository matchRepository;
     private final MessagingService messagingService;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
 
     @Override
     public void createMatch(long creatorExternalId, ModType modType) {
@@ -48,15 +48,15 @@ public class MatchCreationServiceImpl implements MatchCreationService {
 
     private PollMessageDto getNewPollMessage(Player initiator, ModType modType) {
         String text = String.format(NEW_POLL_MESSAGE_TEMPLATE, initiator.getFriendlyName(), modType.getModName());
-        String chatId = settingsService.getStringSetting(SettingKey.CHAT_ID);
+        String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
         ExternalMessage externalMessage = new ExternalMessage().appendRaw(text);
         return new PollMessageDto(chatId, externalMessage, getTopicId(modType), POLL_OPTIONS);
     }
 
     private int getTopicId(ModType modType) {
         return switch (modType) {
-            case CLASSIC -> settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
-            case UPRISING_4, UPRISING_6 -> settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING);
+            case CLASSIC -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
+            case UPRISING_4, UPRISING_6 -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
         };
     }
 }

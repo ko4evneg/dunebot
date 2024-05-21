@@ -22,6 +22,7 @@ import ru.trainithard.dunebot.service.messaging.dto.*;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +116,77 @@ class TelegramMessagingServiceTest {
                 );
     }
 
+    @Test
+    void shouldRetrySendMessageOnCallbackException() throws TelegramApiException, InterruptedException, ReflectiveOperationException {
+        Map<Integer, Long> testRetryDelays = Map.of(1, 50L, 2, 100L, 3, 250L, 4, 1L);
+        Field field = TelegramMessagingService.class.getDeclaredField("retryDelayByTryNumber");
+        field.setAccessible(true);
+        field.set(telegramMessagingService, testRetryDelays);
+
+        when(telegramBot.executeAsync(any(SendMessage.class)))
+                .thenThrow(new TelegramApiException("xxx"))
+                .thenReturn(CompletableFuture.failedFuture(new TelegramApiException("yyy")))
+                .thenReturn(CompletableFuture.failedFuture(new TelegramApiException("zzz")))
+                .thenReturn(CompletableFuture.completedFuture(getTextMessageReply()));
+
+        MessageDto messageDto = new MessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), TOPIC_ID, REPLY_ID, getKeyboard());
+
+        CompletableFuture<ExternalMessageDto> actualFeature = telegramMessagingService.sendMessageAsync(messageDto);
+        Thread.sleep(300);
+        assertThat(actualFeature.isDone()).isFalse();
+
+        Thread.sleep(300);
+        verify(telegramBot, times(4)).executeAsync(ArgumentMatchers.any(SendMessage.class));
+        assertThat(actualFeature.isDone()).isTrue();
+        assertThat(actualFeature.isCompletedExceptionally()).isFalse();
+
+        reset(telegramBot);
+        Thread.sleep(500);
+        verifyNoInteractions(telegramBot);
+    }
+
+    @Test
+    void shouldNotRetrySendMessageWithoutException() throws TelegramApiException, InterruptedException, ReflectiveOperationException {
+        Map<Integer, Long> testRetryDelays = Map.of(1, 50L, 2, 100L, 3, 250L, 4, 1L);
+        Field field = TelegramMessagingService.class.getDeclaredField("retryDelayByTryNumber");
+        field.setAccessible(true);
+        field.set(telegramMessagingService, testRetryDelays);
+
+        when(telegramBot.executeAsync(any(SendMessage.class)))
+                .thenReturn(CompletableFuture.completedFuture(getTextMessageReply()));
+
+        MessageDto messageDto = new MessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), TOPIC_ID, REPLY_ID, getKeyboard());
+
+        CompletableFuture<ExternalMessageDto> actualFeature = telegramMessagingService.sendMessageAsync(messageDto);
+        Thread.sleep(300);
+
+        verify(telegramBot).executeAsync(ArgumentMatchers.any(SendMessage.class));
+        assertThat(actualFeature.isDone()).isTrue();
+        assertThat(actualFeature.isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
+    void shouldDoTheOnlyRetryWhenOnlyOneExceptionOccurs() throws TelegramApiException, InterruptedException, ReflectiveOperationException {
+        Map<Integer, Long> testRetryDelays = Map.of(1, 50L, 2, 100L, 3, 250L, 4, 1L);
+        Field field = TelegramMessagingService.class.getDeclaredField("retryDelayByTryNumber");
+        field.setAccessible(true);
+        field.set(telegramMessagingService, testRetryDelays);
+
+        when(telegramBot.executeAsync(any(SendMessage.class)))
+                .thenThrow(new TelegramApiException("xxx"))
+                .thenReturn(CompletableFuture.completedFuture(getTextMessageReply()))
+                .thenReturn(CompletableFuture.failedFuture(new TelegramApiException("zzz")));
+
+        MessageDto messageDto = new MessageDto(CHAT_ID.toString(), new ExternalMessage("la text"), TOPIC_ID, REPLY_ID, getKeyboard());
+
+        CompletableFuture<ExternalMessageDto> actualFeature = telegramMessagingService.sendMessageAsync(messageDto);
+        Thread.sleep(250);
+
+        verify(telegramBot, times(2)).executeAsync(ArgumentMatchers.any(SendMessage.class));
+        assertThat(actualFeature.isDone()).isTrue();
+        assertThat(actualFeature.isCompletedExceptionally()).isFalse();
+    }
+
     private List<List<ButtonDto>> getKeyboard() {
         return List.of(
                 List.of(new ButtonDto("t1", "c1")),
@@ -179,6 +251,7 @@ class TelegramMessagingServiceTest {
         chat.setId(CHAT_ID);
         Message message = new Message();
         message.setMessageId(100500);
+        message.setChat(chat);
         message.setText("the text");
         message.setReplyToMessage(replyMessage);
         message.setMessageThreadId(TOPIC_ID);

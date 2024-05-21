@@ -13,10 +13,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.model.SettingKey;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.dto.FileMessageDto;
 
 import java.io.*;
@@ -39,7 +39,7 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
     @SpyBean
     private RatingReportPdfService ratingReportPdfService;
     @MockBean
-    private SettingsService settingsService;
+    private AppSettingsService appSettingsService;
     @MockBean
     private Clock clock;
 
@@ -49,9 +49,9 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
     @BeforeEach
     void beforeEach() {
         doReturn(ZoneId.of("UTC+3")).when(clock).getZone();
-        doReturn(TestConstants.CHAT_ID).when(settingsService).getStringSetting(SettingKey.CHAT_ID);
-        doReturn(TestConstants.TOPIC_ID_UPRISING).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_UPRISING);
-        doReturn(TestConstants.TOPIC_ID_CLASSIC).when(settingsService).getIntSetting(SettingKey.TOPIC_ID_CLASSIC);
+        doReturn(TestConstants.CHAT_ID).when(appSettingsService).getStringSetting(AppSettingKey.CHAT_ID);
+        doReturn(TestConstants.TOPIC_ID_UPRISING).when(appSettingsService).getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
+        doReturn(TestConstants.TOPIC_ID_CLASSIC).when(appSettingsService).getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
 
         try {
             Field field = MonthlyRatingReportTask.class.getDeclaredField("pdfPath");
@@ -117,19 +117,19 @@ class MonthlyRatingReportTaskTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
                              "values (10013, 15002, 10005, 2, '2010-10-10')");
 
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10000, '" + SettingKey.MONTHLY_MATCHES_THRESHOLD + "', 15, '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10001, '" + SettingKey.CHAT_ID + "', '" + TestConstants.CHAT_ID + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10002, '" + SettingKey.TOPIC_ID_CLASSIC + "', '" + MATCH_TOPIC_REPLY_ID_1 + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) " +
-                             "values (10003, '" + SettingKey.TOPIC_ID_UPRISING + "', '" + TestConstants.TOPIC_ID_UPRISING + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10000, '" + AppSettingKey.MONTHLY_MATCHES_THRESHOLD + "', 15, '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10001, '" + AppSettingKey.CHAT_ID + "', '" + TestConstants.CHAT_ID + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10002, '" + AppSettingKey.TOPIC_ID_CLASSIC + "', '" + MATCH_TOPIC_REPLY_ID_1 + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10003, '" + AppSettingKey.TOPIC_ID_UPRISING + "', '" + TestConstants.TOPIC_ID_UPRISING + "', '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from settings where id between 10000 and 10003");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10003");
         jdbcTemplate.execute("delete from match_players where match_id between 15000 and 15003");
         jdbcTemplate.execute("delete from matches where id between 15000 and 15003");
         jdbcTemplate.execute("delete from players where id between 10000 and 10005");

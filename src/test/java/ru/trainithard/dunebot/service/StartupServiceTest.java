@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -23,6 +24,8 @@ import static org.mockito.Mockito.*;
 class StartupServiceTest extends TestContextMock {
     @Autowired
     private StartupService startupService;
+    @MockBean
+    private MatchExpirationService expirationService;
 
     @BeforeEach
     void beforeEach() {
@@ -48,12 +51,12 @@ class StartupServiceTest extends TestContextMock {
                              "values (10002, 10000, 10002, 3, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
                              "values (10003, 10000, 10003, 1, '2010-10-10')");
-        jdbcTemplate.execute("insert into settings (id, key, value, created_at) values (10000, 'CHAT_ID', '100500', '2010-01-02')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) values (10000, 'CHAT_ID', '100500', '2010-01-02')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         jdbcTemplate.execute("delete from match_players where match_id between 10000 and 10001");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
         jdbcTemplate.execute("delete from external_messages where id between 10000 and 10001");
@@ -85,7 +88,7 @@ class StartupServiceTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED"})
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED", "EXPIRED"})
     void shouldFailNotEndedMatchesOnStartup(MatchState state) {
         jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
 
@@ -97,7 +100,19 @@ class StartupServiceTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED"})
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED", "CANCELLED", "EXPIRED"})
+    void shouldNotFailEndedMatchesOnStartup(MatchState state) {
+        jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
+
+        startupService.startUp();
+
+        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 10000", MatchState.class);
+
+        assertThat(actualState).isEqualTo(state);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"FINISHED", "FAILED", "CANCELLED", "EXPIRED"})
     void shouldSendMessageOnNotEndedMatchFail(MatchState state) {
         jdbcTemplate.execute("update matches set state = '" + state + "' where id = 10000");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
@@ -121,7 +136,7 @@ class StartupServiceTest extends TestContextMock {
 
     @Test
     void shouldNotSendMessagesWhenChatSettingMissing() {
-        jdbcTemplate.execute("delete from settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id = 10000");
         jdbcTemplate.execute("update matches set state = '" + MatchState.NEW + "' where id = 10000");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
                              "values (10001, 'ExternalPollId', 10500, 10501, 10502, 10503, '2020-10-10')");
@@ -131,5 +146,12 @@ class StartupServiceTest extends TestContextMock {
         startupService.startUp();
 
         verifyNoInteractions(messagingService);
+    }
+
+    @Test
+    void shouldInvokeMatchExpirationService() {
+        startupService.startUp();
+
+        verify(expirationService).expireUnusedMatches();
     }
 }

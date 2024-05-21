@@ -3,10 +3,10 @@ package ru.trainithard.dunebot.service.telegram.validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.SettingKey;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.messaging.ChatType;
 import ru.trainithard.dunebot.repository.PlayerRepository;
-import ru.trainithard.dunebot.service.SettingsService;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.CommandType;
@@ -27,7 +27,7 @@ public class CommonCommandMessageValidator {
     private static final int TOPIC_QUANTITY = 2;
 
     private final PlayerRepository playerRepository;
-    private final SettingsService settingsService;
+    private final AppSettingsService appSettingsService;
 
     /**
      * Perform validation of the command messages and checks if command processing is required
@@ -77,7 +77,7 @@ public class CommonCommandMessageValidator {
 
     private void validateBotIsConfiguredForNonAdminCommands(CommandMessage commandMessage, Command command, Collection<Integer> topicIds) {
         if (command != Command.ADMIN) {
-            String stringSetting = settingsService.getStringSetting(SettingKey.CHAT_ID);
+            String stringSetting = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
             if (stringSetting == null) {
                 throw new AnswerableDuneBotException(BOT_NOT_CONFIGURED, commandMessage);
             }
@@ -95,8 +95,8 @@ public class CommonCommandMessageValidator {
 
     private List<Integer> getTopicIds() {
         List<Integer> topicIds = new ArrayList<>();
-        topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_CLASSIC));
-        topicIds.add(settingsService.getIntSetting(SettingKey.TOPIC_ID_UPRISING));
+        topicIds.add(appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC));
+        topicIds.add(appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING));
         topicIds.removeIf(Objects::isNull);
         return topicIds;
     }
