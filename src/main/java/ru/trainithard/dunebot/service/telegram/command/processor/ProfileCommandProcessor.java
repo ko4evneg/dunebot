@@ -30,6 +30,8 @@ public class ProfileCommandProcessor extends CommandProcessor {
     private static final String NICKNAME_IS_BUSY_MESSAGE_TEMPLATE = "Пользователь со steam ником '%s' уже существует!";
     private static final String SUCCESSFUL_UPDATE_MESSAGE = "Данные профиля обновлены.";
     private static final String REGISTRATION_MESSAGE_TEMPLATE = "Вы зарегистрированы как '%s'";
+    private static final String GUEST_USER_EMPTY_ARGUMENTS_MESSAGE =
+            "Вам необходимо подтвердить регистрацию. Используйте команду '/profile Имя (Steam_никнейм) Фамилия'";
 
     private final PlayerRepository playerRepository;
 
@@ -47,6 +49,7 @@ public class ProfileCommandProcessor extends CommandProcessor {
         Player player;
         if (playerOptional.isPresent()) {
             player = playerOptional.get();
+            validateGuestUser(commandMessage, player);
             updatePlayerExternalData(player, commandMessage);
             if (commandMessage.getArgumentsCount() > 0) {
                 updatePlayerNames(player, commandMessage);
@@ -66,6 +69,12 @@ public class ProfileCommandProcessor extends CommandProcessor {
         messagingService.sendMessageAsync(messageDto);
 
         log.debug("{}: PROFILE started", logId());
+    }
+
+    private void validateGuestUser(CommandMessage commandMessage, Player player) {
+        if (player.isGuest() && commandMessage.getArgumentsCount() == 0) {
+            throw new AnswerableDuneBotException(GUEST_USER_EMPTY_ARGUMENTS_MESSAGE, commandMessage);
+        }
     }
 
     private ParsedNames getValidatedParsedNames(CommandMessage commandMessage) {
