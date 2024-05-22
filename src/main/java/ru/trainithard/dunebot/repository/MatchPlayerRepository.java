@@ -17,12 +17,11 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
     @Query("""
             select mp from MatchPlayer mp
             join fetch mp.player p
-            join fetch mp.submitMessageId
             join fetch mp.match m
-            join fetch mp.leader
-            join fetch m.externalPollId
-            join fetch m.externalStartId
-            join fetch mp.leader
+            left join fetch mp.submitMessageId
+            left join fetch mp.leader
+            left join fetch m.externalPollId
+            left join fetch m.externalStartId
             where mp.match.finishDate between :from and :to
             and mp.match.state = :matchState
             and mp.match.modType = :modType""")
