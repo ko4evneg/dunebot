@@ -35,7 +35,7 @@ class RatingReport {
 
     private int getMatchesCount(List<MatchPlayer> monthMatchPlayers) {
         return (int) monthMatchPlayers.stream()
-                .filter(this::hasAssignedPlace)
+                .filter(MatchPlayer::hasRateablePlace)
                 .map(matchPlayer -> matchPlayer.getMatch().getId())
                 .distinct()
                 .count();
@@ -47,7 +47,7 @@ class RatingReport {
                 .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
 
         matchPlayersByPlayer.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(this::hasAssignedPlace))
+                .filter(entry -> entry.getValue().stream().anyMatch(MatchPlayer::hasRateablePlace))
                 .forEach(entry -> {
                     Map<Integer, Long> orderedPlaceCountByPlaceNames =
                             getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
@@ -63,14 +63,10 @@ class RatingReport {
                 });
     }
 
-    private boolean hasAssignedPlace(MatchPlayer matchPlayer) {
-        return matchPlayer.getPlace() != null && matchPlayer.getPlace() != 0;
-    }
-
     private TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers, int matchPlayersCount) {
         TreeMap<Integer, Long> result = new TreeMap<>();
         for (MatchPlayer matchPlayer : matchPlayers) {
-            if (Objects.requireNonNull(matchPlayer.getPlace()) != 0) {
+            if (matchPlayer.hasRateablePlace()) {
                 result.merge(matchPlayer.getPlace(), 1L, Long::sum);
             }
         }
