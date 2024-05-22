@@ -2,7 +2,6 @@ package ru.trainithard.dunebot.service.report;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -14,18 +13,9 @@ import java.util.stream.Collectors;
 
 @Getter
 class RatingReport {
-    @Getter(AccessLevel.NONE)
-    private static final Map<Integer, Double> efficiencyRateByPlaceNames = new HashMap<>();
     private final int matchesCount;
     private final Set<PlayerMonthlyRating> playerRatings = new TreeSet<>();
     private final int matchesRatingThreshold;
-
-    static {
-        efficiencyRateByPlaceNames.put(1, 1.0);
-        efficiencyRateByPlaceNames.put(2, 0.6);
-        efficiencyRateByPlaceNames.put(3, 0.4);
-        efficiencyRateByPlaceNames.put(4, 0.1);
-    }
 
     RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
         this.matchesCount = getMatchesCount(monthMatchPlayers);
@@ -53,8 +43,8 @@ class RatingReport {
                             getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
                     long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
                     long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
-                    double winRate = calculateWinRate(firstPlacesCount, playerMatchesCount);
-                    double efficiency = calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
+                    double winRate = RatingCalculator.calculateWinRate(firstPlacesCount, playerMatchesCount);
+                    double efficiency = RatingCalculator.calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
 
                     String friendlyName = entry.getKey().getFriendlyName();
                     PlayerMonthlyRating playerMonthlyRating =
@@ -74,23 +64,6 @@ class RatingReport {
             result.putIfAbsent(i, 0L);
         }
         return result;
-    }
-
-    private double calculateWinRate(double firstPlacesCount, long playerMatchesCount) {
-        double winRate = firstPlacesCount / playerMatchesCount * 100;
-        return (int) (winRate * 100) / 100.0;
-    }
-
-    private double calculateEfficiency(Map<Integer, Long> placeCountByPlaceNames, long allPlacesCount) {
-        double efficiencesSum = 0;
-        for (Map.Entry<Integer, Long> entry : placeCountByPlaceNames.entrySet()) {
-            int place = entry.getKey();
-            double placeEfficiency = efficiencyRateByPlaceNames.getOrDefault(place, 1.0);
-            double placesCount = placeCountByPlaceNames.getOrDefault(place, 0L);
-            efficiencesSum += placesCount / allPlacesCount * placeEfficiency;
-        }
-        return ((int) (efficiencesSum * 100)) / 100.0;
-
     }
 
     @Getter
