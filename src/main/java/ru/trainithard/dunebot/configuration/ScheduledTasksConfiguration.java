@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
+import ru.trainithard.dunebot.service.MatchExpirationService;
 import ru.trainithard.dunebot.service.report.MonthlyRatingReportTask;
 import ru.trainithard.dunebot.service.telegram.TelegramUpdateProcessor;
 
@@ -19,6 +20,7 @@ public class ScheduledTasksConfiguration {
     private final TaskScheduler dunebotTaskScheduler;
     private final TelegramUpdateProcessor updateProcessor;
     private final MonthlyRatingReportTask monthlyRatingReportTask;
+    private final MatchExpirationService expirationService;
     private final Clock clock;
 
     @PostConstruct
@@ -33,5 +35,14 @@ public class ScheduledTasksConfiguration {
 
         dunebotTaskScheduler.scheduleWithFixedDelay(monthlyRatingReportTask, monthlyReportStartTime, Duration.ofDays(1));
         log.info("Scheduled MonthlyRatingReportTask#run for execution every 1 day, starting at {}", monthlyReportStartTime);
+
+        Instant expirationServiceStartTime = getExpirationServiceStartTime(localNow).toInstant(OffsetDateTime.now().getOffset());
+        dunebotTaskScheduler.scheduleAtFixedRate(expirationService::expireUnusedMatches, expirationServiceStartTime, Duration.ofHours(12));
+        log.info("Scheduled MatchExpirationService#run for execution every 12 hours, starting at {}", expirationServiceStartTime);
+    }
+
+    private LocalDateTime getExpirationServiceStartTime(LocalDateTime localNow) {
+        return localNow.getHour() < 12 ? localNow.withHour(12) : localNow.plusDays(1).
+                withHour(0).withMinute(0).withSecond(0).withNano(0);
     }
 }
