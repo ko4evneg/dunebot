@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 import ru.trainithard.dunebot.service.MatchExpirationService;
-import ru.trainithard.dunebot.service.report.MonthlyRatingReportTask;
+import ru.trainithard.dunebot.service.report.DailyRatingReportTask;
 import ru.trainithard.dunebot.service.telegram.TelegramUpdateProcessor;
 
 import java.time.*;
@@ -19,7 +19,7 @@ import java.time.*;
 public class ScheduledTasksConfiguration {
     private final TaskScheduler dunebotTaskScheduler;
     private final TelegramUpdateProcessor updateProcessor;
-    private final MonthlyRatingReportTask monthlyRatingReportTask;
+    private final DailyRatingReportTask dailyRatingReportTask;
     private final MatchExpirationService expirationService;
     private final Clock clock;
 
@@ -33,8 +33,11 @@ public class ScheduledTasksConfiguration {
         dunebotTaskScheduler.scheduleWithFixedDelay(updateProcessor::process, Duration.ofMillis(5));
         log.info("Scheduled TelegramUpdateProcessor#process for execution every 5 ms");
 
-        dunebotTaskScheduler.scheduleWithFixedDelay(monthlyRatingReportTask, monthlyReportStartTime, Duration.ofDays(1));
+        //TODO replace with mothly reporting
+        dunebotTaskScheduler.scheduleWithFixedDelay(dailyRatingReportTask, monthlyReportStartTime, Duration.ofDays(1));
         log.info("Scheduled MonthlyRatingReportTask#run for execution every 1 day, starting at {}", monthlyReportStartTime);
+//        dunebotTaskScheduler.scheduleWithFixedDelay(monthlyRatingReportTask, monthlyReportStartTime, Duration.ofDays(1));
+//        log.info("Scheduled MonthlyRatingReportTask#run for execution every 1 day, starting at {}", monthlyReportStartTime);
 
         Instant expirationServiceStartTime = getExpirationServiceStartTime(localNow).toInstant(OffsetDateTime.now().getOffset());
         dunebotTaskScheduler.scheduleAtFixedRate(expirationService::expireUnusedMatches, expirationServiceStartTime, Duration.ofHours(12));
