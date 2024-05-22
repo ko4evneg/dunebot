@@ -133,19 +133,19 @@ public class AdminCommandProcessor extends CommandProcessor {
             byte[] classicPlayersRatingContent = classicPlayersRating.getPdfBytes();
             String classicPlayersFileName = getPdfFileName(from, to, ModType.CLASSIC);
             saveRating(classicPlayersRatingContent, classicPlayersFileName);
-            sendRating(ModType.CLASSIC, commandMessage, classicPlayersRatingContent, classicPlayersFileName);
+            sendRating(ModType.CLASSIC.getAlias(), commandMessage, classicPlayersRatingContent, classicPlayersFileName);
 
             RatingReportPdf classicLeadersRating = reportService.createLeadersReport(from, to, ModType.CLASSIC, ratingName);
             byte[] classicLeadersRatingContent = classicLeadersRating.getPdfBytes();
             String classicLeadersFileName = "leaders" + getPdfFileName(from, to, ModType.CLASSIC);
             saveRating(classicLeadersRatingContent, classicLeadersFileName);
-            sendRating(ModType.CLASSIC, commandMessage, classicLeadersRatingContent, classicLeadersFileName);
+            sendRating("leaders " + ModType.CLASSIC.getAlias(), commandMessage, classicLeadersRatingContent, classicLeadersFileName);
 
             RatingReportPdf uprisingPlayersRating = reportService.createPlayersReport(from, to, ModType.UPRISING_4, ratingName);
             byte[] uprisingRatingContent = uprisingPlayersRating.getPdfBytes();
             String uprisingFileName = getPdfFileName(from, to, ModType.UPRISING_4);
             saveRating(uprisingRatingContent, uprisingFileName);
-            sendRating(ModType.UPRISING_4, commandMessage, uprisingRatingContent, uprisingFileName);
+            sendRating(ModType.UPRISING_4.getAlias(), commandMessage, uprisingRatingContent, uprisingFileName);
         } catch (Exception exception) {
             throw new AnswerableDuneBotException("Ошибка генерации отчета", exception, commandMessage);
         }
@@ -163,6 +163,14 @@ public class AdminCommandProcessor extends CommandProcessor {
         String uprisingMessageText = uprising4.getAlias();
         FileMessageDto uprisingFileMessageDto =
                 new FileMessageDto(chatId, new ExternalMessage(uprisingMessageText), topicId, classicRatingContent, classicFileName);
+        messagingService.sendFileAsync(uprisingFileMessageDto);
+    }
+
+    private void sendRating(String message, CommandMessage commandMessage, byte[] classicRatingContent, String classicFileName) {
+        String chatId = Long.toString(commandMessage.getChatId());
+        Integer topicId = commandMessage.getTopicId();
+        FileMessageDto uprisingFileMessageDto =
+                new FileMessageDto(chatId, new ExternalMessage(message), topicId, classicRatingContent, classicFileName);
         messagingService.sendFileAsync(uprisingFileMessageDto);
     }
 
