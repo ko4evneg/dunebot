@@ -48,8 +48,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String SUCCESSFUL_COMMAND_TEXT = "Команда успешно выполнена.";
     private static final String SET_KEY = "set";
     private static final String MESSAGE_KEY = "message";
-    private static final String PLAYER_REPORT_KEY = "preport";
-    private static final String LEADER_REPORT_KEY = "lreport";
+    private static final String REPORT_KEY = "report";
     private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
     private static final DateTimeFormatter DATE_FORAMTTER = DateTimeFormatter.ofPattern("dd.MM.yy");
@@ -85,8 +84,7 @@ public class AdminCommandProcessor extends CommandProcessor {
                 String messageText = allCommandArguments.substring(MESSAGE_KEY.length() + 1);
                 sendTopicsMessages(messageText);
             }
-            case PLAYER_REPORT_KEY -> generateReport(commandMessage);
-            case LEADER_REPORT_KEY -> generateReport(commandMessage);
+            case REPORT_KEY -> generateReport(commandMessage);
             case SHUTDOWN_SUBCOMMAND -> shutdown(commandMessage);
             default -> {
                 log.debug("{}: wrong admin subcommand {}", logId(), subCommand);
