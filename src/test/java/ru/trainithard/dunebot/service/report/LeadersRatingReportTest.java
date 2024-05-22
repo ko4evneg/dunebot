@@ -17,7 +17,6 @@ class LeadersRatingReportTest {
     private final List<MatchPlayer> matchPlayers = new ArrayList<>();
     private MatchPlayer matchPlayer6;
     private MatchPlayer matchPlayer7;
-    private MatchPlayer matchPlayer5;
 
     @BeforeEach
     void beforeEach() {
@@ -52,8 +51,7 @@ class LeadersRatingReportTest {
         matchPlayers.add(matchPlayer6);
         matchPlayer7 = getMatchPlayer(match6, 7, 0);
         matchPlayers.add(matchPlayer7);
-        matchPlayer5 = getMatchPlayer(match6, 5, 2);
-        matchPlayers.add(matchPlayer5);
+        matchPlayers.add(getMatchPlayer(match6, 5, 2));
         matchPlayers.add(getMatchPlayer(match6, 3, 4));
         matchPlayers.add(getMatchPlayer(match6, 1, 3));
     }
@@ -107,6 +105,24 @@ class LeadersRatingReportTest {
                         tuple("LEADER 3", 5L),
                         tuple("LEADER 2", 4L),
                         tuple("LEADER 5", 3L)
+                );
+    }
+
+    @Test
+    void shouldNotConsiderMatchesWithNotEnoughLeadersForMatchesCountingInReportBody() {
+        matchPlayer6.setLeader(null);
+
+        LeadersRatingReport monthlyRating = new LeadersRatingReport(matchPlayers, ModType.CLASSIC, 15);
+
+        assertThat(monthlyRating.getPlayerEntityRatings())
+                .extracting(EntityRating::getName, EntityRating::getMatchesCount)
+                .containsExactlyInAnyOrder(
+                        tuple("LEADER 6", 1L),
+                        tuple("LEADER 1", 5L),
+                        tuple("LEADER 4", 4L),
+                        tuple("LEADER 3", 4L),
+                        tuple("LEADER 2", 4L),
+                        tuple("LEADER 5", 2L)
                 );
     }
 
