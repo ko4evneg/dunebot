@@ -18,7 +18,7 @@ import ru.trainithard.dunebot.util.ParsedNames;
 @Entity
 @Table(name = "PLAYERS")
 @NoArgsConstructor
-public class Player extends BaseEntity {
+public class Player extends BaseEntity implements Rateable {
     /**
      * User ID in external messaging system
      */
@@ -86,6 +86,11 @@ public class Player extends BaseEntity {
 
     public static Player createGuestPlayer(CommandMessage commandMessage, int guestId) {
         return new Player(commandMessage, guestId);
+    }
+
+    @Override
+    public String getRatingName() {
+        return getFriendlyName();
     }
 
     public String getFriendlyName() {

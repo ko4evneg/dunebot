@@ -13,8 +13,13 @@ import lombok.Setter;
 @Setter
 @Table(name = "LEADERS")
 @NoArgsConstructor
-public class Leader extends BaseEntity {
+public class Leader extends BaseEntity implements Rateable {
     private String name;
     @Enumerated(EnumType.STRING)
     private ModType modType;
+
+    @Override
+    public String getRatingName() {
+        return name;
+    }
 }

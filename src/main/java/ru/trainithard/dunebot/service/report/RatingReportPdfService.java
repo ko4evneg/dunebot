@@ -5,5 +5,7 @@ import ru.trainithard.dunebot.model.ModType;
 import java.time.LocalDate;
 
 public interface RatingReportPdfService {
-    RatingReportPdf createRating(LocalDate from, LocalDate to, ModType modType, String reportName);
+    RatingReportPdf createPlayersReport(LocalDate from, LocalDate to, ModType modType, String reportName);
+
+    RatingReportPdf createLeadersReport(LocalDate from, LocalDate to, ModType modType, String reportName);
 }
