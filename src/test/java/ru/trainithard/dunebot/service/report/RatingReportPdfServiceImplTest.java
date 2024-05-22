@@ -107,7 +107,7 @@ class RatingReportPdfServiceImplTest extends TestContextMock {
 
     @Test
     void shouldCreateCorrectReport() throws DocumentException, IOException {
-        RatingReportPdf actualRatingPdf = service.createRating(from, to, ModType.UPRISING_4, REPORT_NAME);
+        RatingReportPdf actualRatingPdf = service.createPlayersReport(from, to, ModType.UPRISING_4, REPORT_NAME);
         byte[] actualPdfContent = actualRatingPdf.getPdfBytes();
 
         PdfReader pdfReader = new PdfReader(actualPdfContent);
@@ -136,7 +136,7 @@ class RatingReportPdfServiceImplTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
                              "values (10017, 15003, 10004, 2, '2010-10-10')");
 
-        RatingReportPdf actualRatingPdf = service.createRating(from, to, ModType.UPRISING_4, REPORT_NAME);
+        RatingReportPdf actualRatingPdf = service.createPlayersReport(from, to, ModType.UPRISING_4, REPORT_NAME);
         byte[] actualPdfContent = actualRatingPdf.getPdfBytes();
 
         PdfReader pdfReader = new PdfReader(actualPdfContent);

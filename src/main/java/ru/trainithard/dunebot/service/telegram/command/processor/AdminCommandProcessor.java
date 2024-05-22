@@ -48,7 +48,8 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String SUCCESSFUL_COMMAND_TEXT = "Команда успешно выполнена.";
     private static final String SET_KEY = "set";
     private static final String MESSAGE_KEY = "message";
-    private static final String REPORT_KEY = "report";
+    private static final String PLAYER_REPORT_KEY = "preport";
+    private static final String LEADER_REPORT_KEY = "lreport";
     private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
     private static final DateTimeFormatter DATE_FORAMTTER = DateTimeFormatter.ofPattern("dd.MM.yy");
@@ -84,7 +85,8 @@ public class AdminCommandProcessor extends CommandProcessor {
                 String messageText = allCommandArguments.substring(MESSAGE_KEY.length() + 1);
                 sendTopicsMessages(messageText);
             }
-            case REPORT_KEY -> generateReport(commandMessage);
+            case PLAYER_REPORT_KEY -> generateReport(commandMessage);
+            case LEADER_REPORT_KEY -> generateReport(commandMessage);
             case SHUTDOWN_SUBCOMMAND -> shutdown(commandMessage);
             default -> {
                 log.debug("{}: wrong admin subcommand {}", logId(), subCommand);
@@ -129,14 +131,20 @@ public class AdminCommandProcessor extends CommandProcessor {
             LocalDate to = LocalDate.parse(arguments[2], DATE_FORAMTTER);
             String ratingName = String.format("РЕЙТИНГ %s - %s", arguments[1], arguments[2]);
 
-            RatingReportPdf classicRating = reportService.createRating(from, to, ModType.CLASSIC, ratingName);
-            byte[] classicRatingContent = classicRating.getPdfBytes();
-            String classicFileName = getPdfFileName(from, to, ModType.CLASSIC);
-            saveRating(classicRatingContent, classicFileName);
-            sendRating(ModType.CLASSIC, commandMessage, classicRatingContent, classicFileName);
+            RatingReportPdf classicPlayersRating = reportService.createPlayersReport(from, to, ModType.CLASSIC, ratingName);
+            byte[] classicPlayersRatingContent = classicPlayersRating.getPdfBytes();
+            String classicPlayersFileName = getPdfFileName(from, to, ModType.CLASSIC);
+            saveRating(classicPlayersRatingContent, classicPlayersFileName);
+            sendRating(ModType.CLASSIC, commandMessage, classicPlayersRatingContent, classicPlayersFileName);
 
-            RatingReportPdf uprisingRating = reportService.createRating(from, to, ModType.UPRISING_4, ratingName);
-            byte[] uprisingRatingContent = uprisingRating.getPdfBytes();
+            RatingReportPdf classicLeadersRating = reportService.createLeadersReport(from, to, ModType.CLASSIC, ratingName);
+            byte[] classicLeadersRatingContent = classicLeadersRating.getPdfBytes();
+            String classicLeadersFileName = "leaders" + getPdfFileName(from, to, ModType.CLASSIC);
+            saveRating(classicLeadersRatingContent, classicLeadersFileName);
+            sendRating(ModType.CLASSIC, commandMessage, classicLeadersRatingContent, classicLeadersFileName);
+
+            RatingReportPdf uprisingPlayersRating = reportService.createPlayersReport(from, to, ModType.UPRISING_4, ratingName);
+            byte[] uprisingRatingContent = uprisingPlayersRating.getPdfBytes();
             String uprisingFileName = getPdfFileName(from, to, ModType.UPRISING_4);
             saveRating(uprisingRatingContent, uprisingFileName);
             sendRating(ModType.UPRISING_4, commandMessage, uprisingRatingContent, uprisingFileName);

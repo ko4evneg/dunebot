@@ -60,7 +60,7 @@ public class MonthlyRatingReportTask implements Runnable {
 
     private void reportRating(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth)
             throws DocumentException, IOException {
-        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createRating(from, to, classic, getReportName(previousMonth));
+        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createPlayersReport(from, to, classic, getReportName(previousMonth));
         byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
         saveRating(ratingBytes, getPdfFileName(previousMonth, classic));
         sendTopicNotifications(previousMonth, ratingBytes, classic);

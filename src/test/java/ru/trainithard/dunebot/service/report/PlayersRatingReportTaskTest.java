@@ -250,7 +250,7 @@ class PlayersRatingReportTaskTest extends TestContextMock {
 
         task.run();
 
-        verify(ratingReportPdfService, times(2)).createRating(any(), any(), any(), any());
+        verify(ratingReportPdfService, times(2)).createPlayersReport(any(), any(), any(), any());
     }
 
     @Test
@@ -261,6 +261,6 @@ class PlayersRatingReportTaskTest extends TestContextMock {
 
         task.run();
 
-        verify(ratingReportPdfService, never()).createRating(any(), any(), any(), any());
+        verify(ratingReportPdfService, never()).createPlayersReport(any(), any(), any(), any());
     }
 }

@@ -20,15 +20,23 @@ public class RatingReportPdfServiceImpl implements RatingReportPdfService {
     private final AppSettingsService appSettingsService;
 
     @Override
-    public RatingReportPdf createRating(LocalDate from, LocalDate to, ModType modType, String reportName) {
+    public RatingReportPdf createPlayersReport(LocalDate from, LocalDate to, ModType modType, String reportName) {
         List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
         int matchesThreshold = appSettingsService.getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
-        PlayersRatingReport monthlyRating = new PlayersRatingReport(monthMatchPlayers, modType, matchesThreshold);
+        PlayersRatingReport playersRatingReport = new PlayersRatingReport(monthMatchPlayers, modType, matchesThreshold);
 
-        return new RatingReportPdf(reportName, convertToReportRows(monthlyRating));
+        return new RatingReportPdf(reportName, convertToReportRows(playersRatingReport));
     }
 
-    private List<List<String>> convertToReportRows(PlayersRatingReport monthlyRating) {
+    @Override
+    public RatingReportPdf createLeadersReport(LocalDate from, LocalDate to, ModType modType, String reportName) {
+        List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
+        LeadersRatingReport leadersRatingReport = new LeadersRatingReport(monthMatchPlayers, modType, 1);
+
+        return new RatingReportPdf(reportName, convertToReportRows(leadersRatingReport));
+    }
+
+    private List<List<String>> convertToReportRows(RatingReport monthlyRating) {
         int ratingPlace = 1;
         List<List<String>> rows = new ArrayList<>();
         for (RatingReport.EntityRating playerEntityRating : monthlyRating.getPlayerEntityRatings()) {
