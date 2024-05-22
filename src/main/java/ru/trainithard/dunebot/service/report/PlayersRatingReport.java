@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.Rateable;
 
 import java.util.List;
 import java.util.Map;
@@ -27,29 +27,14 @@ class PlayersRatingReport extends RatingReport {
     }
 
     @Override
-    void fillEntityRatings(List<MatchPlayer> monthMatchPlayers, int matchPlayersCount) {
-        Map<Player, List<MatchPlayer>> matchPlayersByPlayer = monthMatchPlayers.stream()
-                .filter(matchPlayer -> !matchPlayer.getPlayer().isGuest())
+    Map<Rateable, List<MatchPlayer>> getRateableMatchPlayers(List<MatchPlayer> monthMatchPlayers) {
+        return monthMatchPlayers.stream()
+                .filter(matchPlayer -> !matchPlayer.getPlayer().isGuest() && matchPlayer.hasRateablePlace())
                 .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
-
-        matchPlayersByPlayer.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(MatchPlayer::hasRateablePlace))
-                .forEach(entry -> {
-                    Map<Integer, Long> orderedPlaceCountByPlaceNames =
-                            getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
-                    long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
-                    long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
-                    double winRate = RatingCalculator.calculateWinRate(firstPlacesCount, playerMatchesCount);
-                    double efficiency = RatingCalculator.calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
-
-                    String friendlyName = entry.getKey().getFriendlyName();
-                    EntityRating entityRating =
-                            new EntityRating(friendlyName, orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
-                    playerEntityRatings.add(entityRating);
-                });
     }
 
-    private TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers, int matchPlayersCount) {
+    @Override
+    TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers) {
         TreeMap<Integer, Long> result = new TreeMap<>();
         for (MatchPlayer matchPlayer : matchPlayers) {
             if (matchPlayer.hasRateablePlace()) {
