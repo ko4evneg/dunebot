@@ -6,6 +6,7 @@ import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.service.report.RatingReport.PlayerMonthlyRating;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +74,7 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertThat(monthlyRating.getPlayerRatings())
-                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getMatchesCount)
+                .extracting(PlayerMonthlyRating::getPlayerFriendlyName, PlayerMonthlyRating::getMatchesCount)
                 .containsExactlyInAnyOrder(
                         tuple("f6 (s6) l6", 2L),
                         tuple("f1 (s1) l1", 6L),
@@ -89,7 +90,7 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertThat(monthlyRating.getPlayerRatings())
-                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getWinRate)
+                .extracting(PlayerMonthlyRating::getPlayerFriendlyName, PlayerMonthlyRating::getWinRate)
                 .containsExactlyInAnyOrder(
                         tuple("f6 (s6) l6", 50.0),
                         tuple("f1 (s1) l1", 33.33),
@@ -105,7 +106,7 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 5);
 
         assertThat(monthlyRating.getPlayerRatings())
-                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getEfficiency)
+                .extracting(PlayerMonthlyRating::getPlayerFriendlyName, PlayerMonthlyRating::getEfficiency)
                 .containsExactlyInAnyOrder(
                         tuple("f6 (s6) l6", 0.7),
                         tuple("f1 (s1) l1", 0.58),
@@ -121,7 +122,7 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 1);
 
         assertThat(monthlyRating.getPlayerRatings())
-                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName)
+                .extracting(PlayerMonthlyRating::getPlayerFriendlyName)
                 .containsExactly("f6 (s6) l6", "f1 (s1) l1", "f5 (s5) l5", "f4 (s4) l4", "f3 (s3) l3", "f2 (s2) l2");
     }
 
@@ -130,7 +131,7 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 5);
 
         assertThat(monthlyRating.getPlayerRatings())
-                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName)
+                .extracting(PlayerMonthlyRating::getPlayerFriendlyName)
                 .containsExactly("f1 (s1) l1", "f3 (s3) l3", "f6 (s6) l6", "f5 (s5) l5", "f4 (s4) l4", "f2 (s2) l2");
     }
 
@@ -138,11 +139,11 @@ class RatingReportTest {
     void shouldSetZeroPlacesCountForMissingPlaces() {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
-        Set<RatingReport.PlayerMonthlyRating> actualPlayerRatings = monthlyRating.getPlayerRatings();
+        Set<PlayerMonthlyRating> actualPlayerRatings = monthlyRating.getPlayerRatings();
 
         assertThat(actualPlayerRatings)
                 .filteredOn(playerMonthlyRating -> "f6 (s6) l6".equals(playerMonthlyRating.getPlayerFriendlyName()))
-                .extracting(RatingReport.PlayerMonthlyRating::getOrderedPlaceCountByPlaceNames)
+                .extracting(PlayerMonthlyRating::getOrderedPlaceCountByPlaceNames)
                 .flatExtracting(Map::values)
                 .contains(1L, 0L, 1L, 0L);
     }
@@ -179,13 +180,28 @@ class RatingReportTest {
         RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
 
         assertThat(monthlyRating.getPlayerRatings())
-                .extracting(RatingReport.PlayerMonthlyRating::getPlayerFriendlyName, RatingReport.PlayerMonthlyRating::getMatchesCount)
+                .extracting(PlayerMonthlyRating::getPlayerFriendlyName, PlayerMonthlyRating::getMatchesCount)
                 .containsExactlyInAnyOrder(
                         tuple("f1 (s1) l1", 6L),
                         tuple("f4 (s4) l4", 4L),
                         tuple("f3 (s3) l3", 5L),
                         tuple("f2 (s2) l2", 4L)
                 );
+    }
+
+    @Test
+    void shouldNotConsiderPlayersWithoutPlace() {
+        matchPlayers.stream()
+                .filter(matchPlayer -> "s6".equals(matchPlayer.getPlayer().getSteamName()) && matchPlayer.getMatch().getId().equals(6L))
+                .forEach(matchPlayer -> matchPlayer.setPlace(null));
+
+        RatingReport monthlyRating = new RatingReport(matchPlayers, ModType.CLASSIC, 15);
+        Set<PlayerMonthlyRating> actualPlayerRatings = monthlyRating.getPlayerRatings();
+
+        assertThat(actualPlayerRatings)
+                .filteredOn(playersMonthlyRating -> playersMonthlyRating.getPlayerFriendlyName().equals("f6 (s6) l6"))
+                .extracting(PlayerMonthlyRating::getMatchesCount, PlayerMonthlyRating::getWinRate, PlayerMonthlyRating::getEfficiency)
+                .containsExactly(tuple(1L, 100.0, 1.0));
     }
 
     private MatchPlayer getMatchPlayer(Match match, int playerId, Integer place) {

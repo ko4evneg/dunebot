@@ -65,4 +65,8 @@ public class MatchPlayer extends BaseEntity {
     public boolean hasSubmitMessage() {
         return submitMessageId != null;
     }
+
+    public boolean hasRateablePlace() {
+        return place != null && place != 0;
+    }
 }
