@@ -23,23 +23,23 @@ public class RatingReportPdfServiceImpl implements RatingReportPdfService {
     public RatingReportPdf createRating(LocalDate from, LocalDate to, ModType modType, String reportName) {
         List<MatchPlayer> monthMatchPlayers = matchPlayerRepository.findByMatchDates(from, to, MatchState.FINISHED, modType);
         int matchesThreshold = appSettingsService.getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
-        RatingReport monthlyRating = new RatingReport(monthMatchPlayers, modType, matchesThreshold);
+        PlayersRatingReport monthlyRating = new PlayersRatingReport(monthMatchPlayers, modType, matchesThreshold);
 
         return new RatingReportPdf(reportName, convertToReportRows(monthlyRating));
     }
 
-    private List<List<String>> convertToReportRows(RatingReport monthlyRating) {
+    private List<List<String>> convertToReportRows(PlayersRatingReport monthlyRating) {
         int ratingPlace = 1;
         List<List<String>> rows = new ArrayList<>();
-        for (RatingReport.PlayerMonthlyRating playerRating : monthlyRating.getPlayerRatings()) {
+        for (RatingReport.EntityRating playerEntityRating : monthlyRating.getPlayerEntityRatings()) {
             List<String> columnValues = new ArrayList<>();
             columnValues.add(Integer.toString(ratingPlace));
-            columnValues.add(playerRating.getPlayerFriendlyName());
-            columnValues.add(Long.toString(playerRating.getMatchesCount()));
-            playerRating.getOrderedPlaceCountByPlaceNames()
+            columnValues.add(playerEntityRating.getName());
+            columnValues.add(Long.toString(playerEntityRating.getMatchesCount()));
+            playerEntityRating.getOrderedPlaceCountByPlaceNames()
                     .forEach((place, count) -> columnValues.add(count.toString()));
-            columnValues.add(getStrippedZeroesString(playerRating.getEfficiency()));
-            columnValues.add(getStrippedZeroesString(playerRating.getWinRate()) + "%");
+            columnValues.add(getStrippedZeroesString(playerEntityRating.getEfficiency()));
+            columnValues.add(getStrippedZeroesString(playerEntityRating.getWinRate()) + "%");
 
             rows.add(columnValues);
             ratingPlace++;

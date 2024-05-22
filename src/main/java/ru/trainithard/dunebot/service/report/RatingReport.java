@@ -6,87 +6,46 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.ModType;
-import ru.trainithard.dunebot.model.Player;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Getter
-class RatingReport {
-    private final int matchesCount;
-    private final Set<PlayerMonthlyRating> playerRatings = new TreeSet<>();
-    private final int matchesRatingThreshold;
+abstract class RatingReport {
+    final int matchesCount;
+    final int matchesRatingThreshold;
+    final Set<EntityRating> playerEntityRatings = new TreeSet<>();
 
     RatingReport(@NotEmpty List<MatchPlayer> monthMatchPlayers, ModType modType, int matchesRatingThreshold) {
-        this.matchesCount = getMatchesCount(monthMatchPlayers);
         this.matchesRatingThreshold = matchesRatingThreshold;
-        fillPlayerRatings(monthMatchPlayers, modType.getPlayersCount());
+        this.matchesCount = calculateMatchesCount(monthMatchPlayers);
+        fillEntityRatings(monthMatchPlayers, modType.getPlayersCount());
     }
 
-    private int getMatchesCount(List<MatchPlayer> monthMatchPlayers) {
-        return (int) monthMatchPlayers.stream()
-                .filter(MatchPlayer::hasRateablePlace)
-                .map(matchPlayer -> matchPlayer.getMatch().getId())
-                .distinct()
-                .count();
-    }
+    abstract int calculateMatchesCount(List<MatchPlayer> monthMatchPlayers);
 
-    private void fillPlayerRatings(List<MatchPlayer> monthMatchPlayers, int matchPlayersCount) {
-        Map<Player, List<MatchPlayer>> matchPlayersByPlayer = monthMatchPlayers.stream()
-                .filter(matchPlayer -> !matchPlayer.getPlayer().isGuest())
-                .collect(Collectors.groupingBy(MatchPlayer::getPlayer));
-
-        matchPlayersByPlayer.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(MatchPlayer::hasRateablePlace))
-                .forEach(entry -> {
-                    Map<Integer, Long> orderedPlaceCountByPlaceNames =
-                            getOrderedPlaceCountByPlaceNames(entry.getValue(), matchPlayersCount);
-                    long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
-                    long playerMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
-                    double winRate = RatingCalculator.calculateWinRate(firstPlacesCount, playerMatchesCount);
-                    double efficiency = RatingCalculator.calculateEfficiency(orderedPlaceCountByPlaceNames, playerMatchesCount);
-
-                    String friendlyName = entry.getKey().getFriendlyName();
-                    PlayerMonthlyRating playerMonthlyRating =
-                            new PlayerMonthlyRating(friendlyName, orderedPlaceCountByPlaceNames, playerMatchesCount, efficiency, winRate);
-                    playerRatings.add(playerMonthlyRating);
-                });
-    }
-
-    private TreeMap<Integer, Long> getOrderedPlaceCountByPlaceNames(List<MatchPlayer> matchPlayers, int matchPlayersCount) {
-        TreeMap<Integer, Long> result = new TreeMap<>();
-        for (MatchPlayer matchPlayer : matchPlayers) {
-            if (matchPlayer.hasRateablePlace()) {
-                result.merge(matchPlayer.getPlace(), 1L, Long::sum);
-            }
-        }
-        for (int i = 1; i <= matchPlayersCount; i++) {
-            result.putIfAbsent(i, 0L);
-        }
-        return result;
-    }
+    abstract void fillEntityRatings(List<MatchPlayer> monthMatchPlayers, int matchPlayersCount);
 
     @Getter
     @RequiredArgsConstructor
-    public class PlayerMonthlyRating implements Comparable<PlayerMonthlyRating> {
-        private final String playerFriendlyName;
+    public class EntityRating implements Comparable<EntityRating> {
+        private final String name;
         private final Map<Integer, Long> orderedPlaceCountByPlaceNames;
         private final long matchesCount;
         private final double efficiency;
         private final double winRate;
 
         @Override
-        public int compareTo(@NotNull PlayerMonthlyRating comparedRating) {
-            if (this.matchesCount >= matchesRatingThreshold && comparedRating.matchesCount < matchesRatingThreshold) {
+        public int compareTo(@NotNull RatingReport.EntityRating comparedEntityRating) {
+            if (this.matchesCount >= matchesRatingThreshold && comparedEntityRating.matchesCount < matchesRatingThreshold) {
                 return -1;
             }
-            if (comparedRating.matchesCount >= matchesRatingThreshold && this.matchesCount < matchesRatingThreshold) {
+            if (comparedEntityRating.matchesCount >= matchesRatingThreshold && this.matchesCount < matchesRatingThreshold) {
                 return 1;
             }
-            int reversedEfficiencyDiff = (int) (comparedRating.efficiency * 100 - this.efficiency * 100);
+            int reversedEfficiencyDiff = (int) (comparedEntityRating.efficiency * 100 - this.efficiency * 100);
             return reversedEfficiencyDiff != 0
                     ? reversedEfficiencyDiff
-                    : this.playerFriendlyName.compareTo(comparedRating.playerFriendlyName);
+                    : this.name.compareTo(comparedEntityRating.name);
         }
 
         @Override
@@ -97,13 +56,13 @@ class RatingReport {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            PlayerMonthlyRating that = (PlayerMonthlyRating) o;
-            return Objects.equals(playerFriendlyName, that.playerFriendlyName);
+            EntityRating that = (EntityRating) o;
+            return Objects.equals(name, that.name);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(playerFriendlyName);
+            return Objects.hash(name);
         }
     }
 }

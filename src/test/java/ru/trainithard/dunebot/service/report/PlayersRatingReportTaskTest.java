@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class MonthlyRatingReportTaskTest extends TestContextMock {
+class PlayersRatingReportTaskTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID_1 = 9000;
     private static final int MATCH_TOPIC_REPLY_ID_2 = 9001;
