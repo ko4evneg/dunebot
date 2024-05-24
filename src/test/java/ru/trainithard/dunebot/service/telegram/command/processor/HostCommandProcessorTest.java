@@ -32,8 +32,10 @@ class HostCommandProcessorTest extends TestContextMock {
     void beforeEach() {
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, 12345, 9000, 'st_pl', 'name', 'l1', 'e1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, created_at) " +
-                             "values (10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
+                             "values (10000, 'ExternalPollId', 112233, 10001, 10002, 10003, '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, external_poll_id, state, positive_answers_count, created_at) " +
+                             "values (10000, 10000, '" + ModType.CLASSIC + "', 10000, '" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10000, 10000, 10000, '2010-10-10')");
         jdbcTemplate.execute("insert into user_settings (id, player_id, key, value, created_at) " +
@@ -46,6 +48,7 @@ class HostCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id in (select id from matches where id between 10000 and 10001)");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from external_messages where id = 10000");
         jdbcTemplate.execute("delete from user_settings where id between 10000 and 10001");
         jdbcTemplate.execute("delete from players where id between 10000 and 10001");
         jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
@@ -60,8 +63,8 @@ class HostCommandProcessorTest extends TestContextMock {
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
-                .containsExactly("strVal", 5, """
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getReplyMessageId, MessageDto::getText)
+                .containsExactly("strVal", 5, 112233, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10000*\\.
                         Сервер: *srv/psw*""");
     }

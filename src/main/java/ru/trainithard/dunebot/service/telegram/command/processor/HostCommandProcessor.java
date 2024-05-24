@@ -42,7 +42,8 @@ public class HostCommandProcessor extends CommandProcessor {
                                     String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
                                     String server = setting.getValue();
                                     ExternalMessage externalMessage = getServerMessage(player, match, server);
-                                    MessageDto messageDto = new MessageDto(chatId, externalMessage, matchTopic, null);
+                                    Integer pollId = match.getExternalPollId().getMessageId();
+                                    MessageDto messageDto = new MessageDto(chatId, externalMessage, matchTopic, pollId, null);
                                     messagingService.sendMessageAsync(messageDto);
                                 }, () -> {
                                     throw new AnswerableDuneBotException(NO_SETTING_FOUND_MESSAGE, commandMessage);
