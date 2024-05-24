@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.UserSettingKey;
@@ -19,8 +20,8 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class HostCommandProcessorTest extends TestContextMock {
@@ -45,8 +46,8 @@ class HostCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id in (select id from matches where id between 10000 and 10001)");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
-        jdbcTemplate.execute("delete from user_settings where id = 10000");
-        jdbcTemplate.execute("delete from players where id = 10000");
+        jdbcTemplate.execute("delete from user_settings where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from players where id between 10000 and 10001");
         jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
     }
 
@@ -63,6 +64,16 @@ class HostCommandProcessorTest extends TestContextMock {
                 .containsExactly("strVal", 5, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10000*\\.
                         Сервер: *srv/psw*""");
+    }
+
+    @Test
+    void shouldThrowWhenHostWasNotConfiguredBeforeUse() {
+        jdbcTemplate.execute("delete from user_settings where id between 10000 and 10001");
+        CommandMessage commandMessage = getCommandMessage();
+
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Для использования команды необходимо сохранить ваши данные. Ознакомьтесь с разделом 'Хосты' в полной справке");
     }
 
     @Test
@@ -83,6 +94,17 @@ class HostCommandProcessorTest extends TestContextMock {
                 .containsExactly("strVal", 5, """
                         Игрок name \\(st\\_pl\\) l1 предлагает свой сервер для *матча 10001*\\.
                         Сервер: *srv/psw*""");
+    }
+
+    @Test
+    void shouldNotGetOtherPlayersSettings() {
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                             "values (10001, 12346, 9001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+        jdbcTemplate.execute("update user_settings set player_id = 10001 where player_id = 10000");
+
+        processor.process(getCommandMessage());
+
+        verifyNoInteractions(messagingService);
     }
 
     @Test
