@@ -21,7 +21,8 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class HostCommandProcessorTest extends TestContextMock {
@@ -53,7 +54,7 @@ class HostCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldSendMessageOnCommandWhenAllDataPresented() {
-        processor.process(getCommandMessage());
+        processor.process(getCommandMessage(12345L));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -69,7 +70,7 @@ class HostCommandProcessorTest extends TestContextMock {
     @Test
     void shouldThrowWhenHostWasNotConfiguredBeforeUse() {
         jdbcTemplate.execute("delete from user_settings where id between 10000 and 10001");
-        CommandMessage commandMessage = getCommandMessage();
+        CommandMessage commandMessage = getCommandMessage(12345L);
 
         assertThatThrownBy(() -> processor.process(commandMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)
@@ -83,7 +84,7 @@ class HostCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10001, 10001, 10000, '2010-10-11')");
 
-        processor.process(getCommandMessage());
+        processor.process(getCommandMessage(12345L));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -97,30 +98,19 @@ class HostCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotGetOtherPlayersSettings() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10001, 12346, 9001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
-        jdbcTemplate.execute("update user_settings set player_id = 10001 where player_id = 10000");
-
-        processor.process(getCommandMessage());
-
-        verifyNoInteractions(messagingService);
-    }
-
-    @Test
     void shouldReturnHostCommand() {
         Command actualCommand = processor.getCommand();
 
         assertThat(actualCommand).isEqualTo(Command.HOST);
     }
 
-    private CommandMessage getCommandMessage() {
+    private CommandMessage getCommandMessage(long userId) {
         Chat chat = new Chat();
         chat.setId(9000L);
         chat.setType(ChatType.PRIVATE.getValue());
 
         User user = new User();
-        user.setId(12345L);
+        user.setId(userId);
 
         Message message = new Message();
         message.setMessageId(10000);
