@@ -4,7 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.*;
+import ru.trainithard.dunebot.model.AppSettingKey;
+import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.model.UserSettingKey;
+import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.AppSettingsService;
@@ -13,6 +17,7 @@ import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
 import java.util.List;
 
@@ -26,6 +31,7 @@ public class HostCommandProcessor extends CommandProcessor {
     private final UserSettingsService userSettingsService;
     private final PlayerRepository playerRepository;
     private final AppSettingsService appSettingsService;
+    private final ExternalMessageFactory messageFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -41,8 +47,10 @@ public class HostCommandProcessor extends CommandProcessor {
                                     Integer matchTopic = appSettingsService.getIntSetting(appSettingKey);
                                     String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
                                     String server = setting.getValue();
-                                    ExternalMessage externalMessage = getServerMessage(player, match, server);
-                                    MessageDto messageDto = new MessageDto(chatId, externalMessage, matchTopic, null);
+                                    ExternalMessage externalMessage = messageFactory.getHostMessage(player, match, server);
+                                    ExternalPollId externalPollId = match.getExternalPollId();
+                                    Integer pollId = externalPollId == null ? null : externalPollId.getMessageId();
+                                    MessageDto messageDto = new MessageDto(chatId, externalMessage, matchTopic, pollId, null);
                                     messagingService.sendMessageAsync(messageDto);
                                 }, () -> {
                                     throw new AnswerableDuneBotException(NO_SETTING_FOUND_MESSAGE, commandMessage);
@@ -50,13 +58,6 @@ public class HostCommandProcessor extends CommandProcessor {
                 )
         );
         log.debug("{}: HOST ended", logId());
-    }
-
-    private ExternalMessage getServerMessage(Player player, Match match, String server) {
-        return new ExternalMessage()
-                .append("Игрок ").append(player.getFriendlyName()).append(" предлагает свой сервер для ")
-                .startBold().append("матча ").append(match.getId()).endBold().append(".")
-                .newLine().append("Сервер: ").appendBold(server);
     }
 
     @Override

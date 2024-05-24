@@ -11,6 +11,7 @@ import ru.trainithard.dunebot.util.MarkdownEscaper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
@@ -103,6 +104,21 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                     .newLine().appendRaw(String.join(", ", blockedChatGuests));
         }
         return startMessage;
+    }
+
+    @Override
+    public ExternalMessage getHostMessage(Player hoster, Match match, String server) {
+        String mentionsRow = match.getMatchPlayers().stream()
+                .map(matchPlayer -> {
+                    Player player = matchPlayer.getPlayer();
+                    return MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+                })
+                .collect(Collectors.joining(", "));
+
+        return new ExternalMessage()
+                .append("Игрок ").append(hoster.getFriendlyName()).append(" предлагает свой сервер для ")
+                .startBold().append("матча ").append(match.getId()).endBold().append(".")
+                .newLine().append("Сервер: ").appendBold(server).newLine().newLine().appendRaw(mentionsRow);
     }
 
     @Override

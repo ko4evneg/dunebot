@@ -28,6 +28,7 @@ public class ConfigCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
+        log.debug("{}: CONFIG started", logId());
         String[] args = commandMessage.getAllArguments().split("\\s");
         String subCommand = args[0];
         Optional<Player> playerOptional = playerRepository.findByExternalId(commandMessage.getUserId());
@@ -37,23 +38,36 @@ public class ConfigCommandProcessor extends CommandProcessor {
 
         Player player = playerOptional.get();
         if (SHOW_SUBCOMMAND.equalsIgnoreCase(subCommand)) {
-            Map<UserSettingKey, String> playerSettingsByKey = userSettingsService.getAllSettings(player.getId()).stream()
-                    .collect(Collectors.toMap(UserSetting::getKey, UserSetting::getValue));
-            ExternalMessage externalMessage = new ExternalMessage("Ваши настройки:").newLine();
-            if (playerSettingsByKey.isEmpty()) {
-                externalMessage.append("настроек нет");
-            } else {
-                playerSettingsByKey.forEach((key, value) -> externalMessage.appendBold(key).append(": ").append(value).newLine());
-                externalMessage.trimTrailingNewLine();
-            }
-            messagingService.sendMessageAsync(new MessageDto(commandMessage, externalMessage, null));
+            processShowSubcommand(commandMessage, player);
         } else {
-            UserSettingKey userSettingKey = UserSettingKey.getByName(subCommand)
-                    .orElseThrow(() -> new AnswerableDuneBotException("Неверный аргумент!", commandMessage));
-            String commandArgument = commandMessage.getAllArguments().substring(subCommand.length()).trim();
-            userSettingsService.saveSetting(player.getId(), userSettingKey, commandArgument);
-            messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage("Настройка сохранена"), null));
+            processHostSubCommand(commandMessage, subCommand, player);
         }
+        log.debug("{}: CONFIG ended", logId());
+    }
+
+    private void processShowSubcommand(CommandMessage commandMessage, Player player) {
+        log.debug("{}: detected show subcommand...", logId());
+        Map<UserSettingKey, String> playerSettingsByKey = userSettingsService.getAllSettings(player.getId()).stream()
+                .collect(Collectors.toMap(UserSetting::getKey, UserSetting::getValue));
+        log.debug("{}: settings found: {}", logId(), playerSettingsByKey.size());
+        ExternalMessage externalMessage = new ExternalMessage("Ваши настройки:").newLine();
+        if (playerSettingsByKey.isEmpty()) {
+            externalMessage.append("настроек нет");
+        } else {
+            playerSettingsByKey.forEach((key, value) -> externalMessage.appendBold(key).append(": ").append(value).newLine());
+            externalMessage.trimTrailingNewLine();
+        }
+        messagingService.sendMessageAsync(new MessageDto(commandMessage, externalMessage, null));
+    }
+
+    private void processHostSubCommand(CommandMessage commandMessage, String subCommand, Player player) {
+        log.debug("{}: detected host subcommand...", logId());
+        UserSettingKey userSettingKey = UserSettingKey.getByName(subCommand)
+                .orElseThrow(() -> new AnswerableDuneBotException("Неверный аргумент!", commandMessage));
+        String commandArgument = commandMessage.getAllArguments().substring(subCommand.length()).trim();
+        userSettingsService.saveSetting(player.getId(), userSettingKey, commandArgument);
+        log.debug("{}: saved host setting {} for player {}", logId(), commandArgument, player.getId());
+        messagingService.sendMessageAsync(new MessageDto(commandMessage, new ExternalMessage("Настройка сохранена"), null));
     }
 
     @Override
