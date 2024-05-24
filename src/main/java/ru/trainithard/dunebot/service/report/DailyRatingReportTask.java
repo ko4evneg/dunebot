@@ -43,13 +43,19 @@ public class DailyRatingReportTask implements Runnable {
         try {
             reportRating(from, to, ModType.CLASSIC, YearMonth.of(2000, 1));
         } catch (Exception exception) {
-            log.error("Failed to execute MonthlyRatingReportTask#run for CLASSIC mod", exception);
+            log.error("Failed to execute DailyRatingReportTask#run for CLASSIC mod", exception);
+        }
+
+        try {
+            reportLeaders(from, to, ModType.CLASSIC, YearMonth.of(2000, 1));
+        } catch (Exception exception) {
+            log.error("Failed to execute DailyRatingReportTask#run for CLASSIC leaders", exception);
         }
 
         try {
             reportRating(from, to, ModType.UPRISING_4, YearMonth.of(2000, 1));
         } catch (Exception exception) {
-            log.error("Failed to execute MonthlyRatingReportTask#run for UPRISING_4 mod", exception);
+            log.error("Failed to execute DailyRatingReportTask#run for UPRISING_4 mod", exception);
         }
         log.info("Successfully executed MonthlyRatingReportTask#run");
 
@@ -58,6 +64,14 @@ public class DailyRatingReportTask implements Runnable {
     private void reportRating(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth)
             throws DocumentException, IOException {
         RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createPlayersReport(from, to, classic, getReportName(previousMonth));
+        byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
+        saveRating(ratingBytes, getPdfFileName(previousMonth, classic));
+        sendTopicNotifications(previousMonth, ratingBytes, classic);
+    }
+
+    private void reportLeaders(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth)
+            throws DocumentException, IOException {
+        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createLeadersReport(from, to, classic, getReportName(previousMonth));
         byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
         saveRating(ratingBytes, getPdfFileName(previousMonth, classic));
         sendTopicNotifications(previousMonth, ratingBytes, classic);
