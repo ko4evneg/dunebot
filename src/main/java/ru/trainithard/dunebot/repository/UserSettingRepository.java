@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserSettingRepository extends JpaRepository<UserSetting, Long> {
-    Optional<UserSetting> findByKey(UserSettingKey key);
+    Optional<UserSetting> findByPlayerIdAndKey(Long id, UserSettingKey key);
 
     List<UserSetting> findAllByPlayerId(long playerId);
 }

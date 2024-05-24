@@ -17,7 +17,7 @@ public class UserSettingsServiceImpl implements UserSettingsService {
 
     @Override
     public Optional<UserSetting> getSetting(long playerId, UserSettingKey key) {
-        return userSettingRepository.findByKey(key);
+        return userSettingRepository.findByPlayerIdAndKey(playerId, key);
     }
 
     @Override
@@ -27,7 +27,7 @@ public class UserSettingsServiceImpl implements UserSettingsService {
 
     @Override
     public void saveSetting(long playerId, UserSettingKey key, String value) {
-        Optional<UserSetting> existingSettingOptional = userSettingRepository.findByKey(key);
+        Optional<UserSetting> existingSettingOptional = userSettingRepository.findByPlayerIdAndKey(playerId, key);
         if (existingSettingOptional.isPresent()) {
             UserSetting existingSetting = existingSettingOptional.get();
             existingSetting.setValue(value);

@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.UserSettingKey;
@@ -19,6 +20,7 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -45,14 +47,14 @@ class HostCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from match_players where match_id in (select id from matches where id between 10000 and 10001)");
         jdbcTemplate.execute("delete from matches where id between 10000 and 10001");
-        jdbcTemplate.execute("delete from user_settings where id = 10000");
-        jdbcTemplate.execute("delete from players where id = 10000");
+        jdbcTemplate.execute("delete from user_settings where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from players where id between 10000 and 10001");
         jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
     }
 
     @Test
     void shouldSendMessageOnCommandWhenAllDataPresented() {
-        processor.process(getCommandMessage());
+        processor.process(getCommandMessage(12345L));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -66,13 +68,23 @@ class HostCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldThrowWhenHostWasNotConfiguredBeforeUse() {
+        jdbcTemplate.execute("delete from user_settings where id between 10000 and 10001");
+        CommandMessage commandMessage = getCommandMessage(12345L);
+
+        assertThatThrownBy(() -> processor.process(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Для использования команды необходимо сохранить ваши данные. Ознакомьтесь с разделом 'Хосты' в полной справке");
+    }
+
+    @Test
     void shouldSelectLatestMatchForHosting() {
         jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, positive_answers_count, created_at) " +
                              "values (10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-11') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10001, 10001, 10000, '2010-10-11')");
 
-        processor.process(getCommandMessage());
+        processor.process(getCommandMessage(12345L));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -92,13 +104,13 @@ class HostCommandProcessorTest extends TestContextMock {
         assertThat(actualCommand).isEqualTo(Command.HOST);
     }
 
-    private CommandMessage getCommandMessage() {
+    private CommandMessage getCommandMessage(long userId) {
         Chat chat = new Chat();
         chat.setId(9000L);
         chat.setType(ChatType.PRIVATE.getValue());
 
         User user = new User();
-        user.setId(12345L);
+        user.setId(userId);
 
         Message message = new Message();
         message.setMessageId(10000);
