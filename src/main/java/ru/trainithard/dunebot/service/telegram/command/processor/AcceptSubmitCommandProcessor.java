@@ -80,10 +80,25 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 .findFirst().orElseThrow();
     }
 
+    private void deleteOldSubmitMessage(MatchPlayer submittingPlayer) {
+        if (submittingPlayer.hasSubmitMessage()) {
+            messagingService.deleteMessageAsync(submittingPlayer.getSubmitMessageId());
+        }
+    }
+
+    private boolean isConflictSubmit(List<MatchPlayer> matchPlayers, int candidatePlace) {
+        return candidatePlace != 0 && matchPlayers.stream()
+                .filter(matchPlayer -> {
+                    Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
+                    return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
+                })
+                .peek(matchPlayer -> log.debug("{}: conflict found. matchPlayer {} has same candidatePlace ", logId(), matchPlayer.getId()))
+                .findFirst().isPresent();
+    }
+
     private void processConflictResubmit(List<MatchPlayer> matchPlayers, MatchPlayer submittingPlayer, int candidatePlace, Match match) {
         log.debug("{}: conflict detected - resubmit...", logId());
-        ExternalMessage conflictMessage = messageFactory.getConflictSubmitMessage(matchPlayers, submittingPlayer, candidatePlace);
-        sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
+        sendConflictSubmitMessagesToMatchPlayers(matchPlayers, submittingPlayer, candidatePlace);
         resubmitProcessor.process(match);
     }
 
@@ -103,36 +118,27 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         });
         log.debug("{}: match {} player {} (submits: {}) submit accepted",
                 logId(), match.getId(), savedMatch == null ? "null" : savedMatch.getSubmitsCount(), submittingPlayer.getPlayer().getId());
-        long chatId = submittingPlayer.getPlayer().getExternalChatId();
-        List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
-                ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
-        ExternalMessage submitMessage = messageFactory.getNonClonflictSubmitMessage(match.getId(), candidatePlace);
-        messagingService.sendMessageAsync(new MessageDto(chatId, submitMessage, null, leadersKeyboard));
+        sendLeadersMessageToSubmittingPlayer(submittingPlayer, match, candidatePlace);
         if (match.canBePreliminaryFinished()) {
             matchFinishingService.finishSubmittedMatch(match.getId());
         }
         log.debug("{}: player's submit successfully processed", logId());
     }
 
-    private void deleteOldSubmitMessage(MatchPlayer submittingPlayer) {
-        if (submittingPlayer.hasSubmitMessage()) {
-            messagingService.deleteMessageAsync(submittingPlayer.getSubmitMessageId());
-        }
+    private void sendLeadersMessageToSubmittingPlayer(MatchPlayer submittingPlayer, Match match, int candidatePlace) {
+        long chatId = submittingPlayer.getPlayer().getExternalChatId();
+        List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
+                ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
+        ExternalMessage submitMessage = messageFactory.getNonClonflictSubmitMessage(match.getId(), candidatePlace);
+        messagingService.sendMessageAsync(new MessageDto(chatId, submitMessage, null, leadersKeyboard));
     }
 
-    private boolean isConflictSubmit(List<MatchPlayer> matchPlayers, int candidatePlace) {
-        return candidatePlace != 0 && matchPlayers.stream()
-                .filter(matchPlayer -> {
-                    Integer comparedCandidatePlace = matchPlayer.getCandidatePlace();
-                    return comparedCandidatePlace != null && comparedCandidatePlace == candidatePlace;
-                })
-                .peek(matchPlayer -> log.debug("{}: conflict found. matchPlayer {} has same candidatePlace ", logId(), matchPlayer.getId()))
-                .findFirst().isPresent();
-    }
-
-    private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, ExternalMessage message) {
+    private void sendConflictSubmitMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers,
+                                                          MatchPlayer submittingPlayer, int candidatePlace) {
+        ExternalMessage conflictMessage = messageFactory.getConflictSubmitMessage(matchPlayers, submittingPlayer, candidatePlace);
         for (MatchPlayer matchPlayer : matchPlayers) {
-            messagingService.sendMessageAsync(new MessageDto(matchPlayer.getPlayer().getExternalChatId(), message, null, null));
+            long playerExternalChatId = matchPlayer.getPlayer().getExternalChatId();
+            messagingService.sendMessageAsync(new MessageDto(playerExternalChatId, conflictMessage, null, null));
         }
     }
 
