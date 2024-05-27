@@ -17,12 +17,12 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Accepts player's reply to match submit message (place selection), validates consistency of specific match selected
@@ -37,6 +37,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
     private final MatchFinishingService matchFinishingService;
     private final ResubmitCommandProcessor resubmitProcessor;
     private final AppSettingsService appSettingsService;
+    private final ExternalMessageFactory messageFactory;
     private final KeyboardsFactory keyboardsFactory;
 
     @Override
@@ -81,7 +82,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
     private void processConflictResubmit(List<MatchPlayer> matchPlayers, MatchPlayer submittingPlayer, int candidatePlace, Match match) {
         log.debug("{}: conflict detected - resubmit...", logId());
-        ExternalMessage conflictMessage = getConflictMessage(matchPlayers, submittingPlayer, candidatePlace);
+        ExternalMessage conflictMessage = messageFactory.getConflictSubmitMessage(matchPlayers, submittingPlayer, candidatePlace);
         sendMessagesToMatchPlayers(matchPlayers, conflictMessage);
         resubmitProcessor.process(match);
     }
@@ -105,7 +106,8 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         long chatId = submittingPlayer.getPlayer().getExternalChatId();
         List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
-        messagingService.sendMessageAsync(new MessageDto(chatId, getSubmitText(match.getId(), candidatePlace), null, leadersKeyboard));
+        ExternalMessage submitMessage = messageFactory.getNonClonflictSubmitMessage(match.getId(), candidatePlace);
+        messagingService.sendMessageAsync(new MessageDto(chatId, submitMessage, null, leadersKeyboard));
         if (match.canBePreliminaryFinished()) {
             matchFinishingService.finishSubmittedMatch(match.getId());
         }
@@ -126,55 +128,6 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
                 })
                 .peek(matchPlayer -> log.debug("{}: conflict found. matchPlayer {} has same candidatePlace ", logId(), matchPlayer.getId()))
                 .findFirst().isPresent();
-    }
-
-    private ExternalMessage getConflictMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {
-        Map<Integer, List<MatchPlayer>> playersByPlace = matchPlayers.stream()
-                .filter(matchPlayer -> matchPlayer.getCandidatePlace() != null && !matchPlayer.getId().equals(candidate.getId()))
-                .collect(Collectors.groupingBy(MatchPlayer::getCandidatePlace));
-        List<MatchPlayer> candidatePlaceMatchPlayers = playersByPlace.computeIfAbsent(candidatePlace, key -> new ArrayList<>());
-        candidatePlaceMatchPlayers.add(candidate);
-        ExternalMessage conflictMessage = new ExternalMessage("Некоторые игроки не смогли поделить ").startBold();
-        for (Map.Entry<Integer, List<MatchPlayer>> entry : playersByPlace.entrySet()) {
-            List<MatchPlayer> conflictMatchPlayers = entry.getValue();
-            if (conflictMatchPlayers.size() > 1) {
-                conflictMessage.append(entry.getKey()).append(" место").endBold().append(":").newLine();
-                conflictMatchPlayers.stream()
-                        .map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName())
-                        .forEach(playerFriendlyName -> conflictMessage.append(playerFriendlyName).newLine());
-            }
-        }
-        conflictMessage.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
-
-        return conflictMessage;
-    }
-
-    private ExternalMessage getSubmitText(long matchId, int candidatePlace) {
-        return switch (candidatePlace) {
-            case 0 -> getAcceptedSubmitMessageTemplateForNonParticipant(matchId);
-            case 1 -> getAcceptedFirstPlaceSubmitMessageTemplate(matchId, candidatePlace);
-            default -> getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
-        };
-    }
-
-    private ExternalMessage getAcceptedFirstPlaceSubmitMessageTemplate(long matchId, int candidatePlace) {
-        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
-                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
-                .appendBold("Теперь загрузите в этот чат скриншот победы.");
-    }
-
-    private ExternalMessage getAcceptedSubmitMessageTemplateForParticipant(long matchId, int candidatePlace) {
-        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
-                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
-                .appendBold("Теперь выберите лидера").append(" которым играли.");
-    }
-
-    private ExternalMessage getAcceptedSubmitMessageTemplateForNonParticipant(long matchId) {
-        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксирован статус: ")
-                .appendBold("не участвует").append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
     }
 
     private void sendMessagesToMatchPlayers(Collection<MatchPlayer> matchPlayers, ExternalMessage message) {

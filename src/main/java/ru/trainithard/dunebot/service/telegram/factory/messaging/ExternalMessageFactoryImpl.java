@@ -8,10 +8,10 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
@@ -119,6 +119,57 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .append("Игрок ").append(hoster.getFriendlyName()).append(" предлагает свой сервер для ")
                 .startBold().append("матча ").append(match.getId()).endBold().append(".")
                 .newLine().append("Сервер: ").appendBold(server).newLine().newLine().appendRaw(mentionsRow);
+    }
+
+    @Override
+    public ExternalMessage getNonClonflictSubmitMessage(long matchId, int candidatePlace) {
+        return switch (candidatePlace) {
+            case 0 -> getAcceptedSubmitMessageTemplateForNonParticipant(matchId);
+            case 1 -> getAcceptedFirstPlaceSubmitMessageTemplate(matchId, candidatePlace);
+            default -> getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
+        };
+    }
+
+    private ExternalMessage getAcceptedSubmitMessageTemplateForNonParticipant(long matchId) {
+        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксирован статус: ")
+                .appendBold("не участвует").append(".").newLine()
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
+    }
+
+    private ExternalMessage getAcceptedFirstPlaceSubmitMessageTemplate(long matchId, int candidatePlace) {
+        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
+                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
+                .appendBold("Теперь загрузите в этот чат скриншот победы.");
+    }
+
+    private ExternalMessage getAcceptedSubmitMessageTemplateForParticipant(long matchId, int candidatePlace) {
+        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
+                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
+                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
+                .appendBold("Теперь выберите лидера").append(" которым играли.");
+    }
+
+    @Override
+    public ExternalMessage getConflictSubmitMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {
+        Map<Integer, List<MatchPlayer>> playersByPlace = matchPlayers.stream()
+                .filter(matchPlayer -> matchPlayer.getCandidatePlace() != null && !matchPlayer.getId().equals(candidate.getId()))
+                .collect(Collectors.groupingBy(MatchPlayer::getCandidatePlace));
+        List<MatchPlayer> candidatePlaceMatchPlayers = playersByPlace.computeIfAbsent(candidatePlace, key -> new ArrayList<>());
+        candidatePlaceMatchPlayers.add(candidate);
+        ExternalMessage conflictMessage = new ExternalMessage("Некоторые игроки не смогли поделить ").startBold();
+        for (Map.Entry<Integer, List<MatchPlayer>> entry : playersByPlace.entrySet()) {
+            List<MatchPlayer> conflictMatchPlayers = entry.getValue();
+            if (conflictMatchPlayers.size() > 1) {
+                conflictMessage.append(entry.getKey()).append(" место").endBold().append(":").newLine();
+                conflictMatchPlayers.stream()
+                        .map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName())
+                        .forEach(playerFriendlyName -> conflictMessage.append(playerFriendlyName).newLine());
+            }
+        }
+        conflictMessage.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
+
+        return conflictMessage;
     }
 
     @Override
