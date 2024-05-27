@@ -22,5 +22,7 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getConflictSubmitMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace);
 
+    ExternalMessage getMatchSuccessfulFinishMessage(Match match);
+
     ExternalMessage getHelpMessage();
 }

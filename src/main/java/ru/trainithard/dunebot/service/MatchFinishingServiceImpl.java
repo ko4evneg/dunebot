@@ -7,7 +7,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MatchState;
-import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -17,10 +16,9 @@ import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessage
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.*;
-
-import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
-import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -31,7 +29,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     private final TransactionTemplate transactionTemplate;
     private final MessagingService messagingService;
     private final Clock clock;
-    private final ExternalMessageFactory externalMessageFactory;
+    private final ExternalMessageFactory messageFactory;
 
     @Override
     @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
@@ -51,7 +49,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
             if (match.hasAllPlacesSubmitted() && match.hasSubmitPhoto()) {
                 finishSuccessfullyAndSave(match);
             } else {
-                ExternalMessage finishReasonMessage = externalMessageFactory.getFinishReasonMessage(match, isFailedByResubmitsLimit);
+                ExternalMessage finishReasonMessage = messageFactory.getFinishReasonMessage(match, isFailedByResubmitsLimit);
                 failMatch(match);
                 transactionTemplate.executeWithoutResult(status -> {
                     matchRepository.save(match);
@@ -112,36 +110,7 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
             matchPlayerRepository.saveAll(match.getMatchPlayers());
             log.debug("{}: transaction succeed", LogId.get());
         });
-        messagingService.sendMessageAsync(getMatchFinishMessage(match));
-    }
-
-    private MessageDto getMatchFinishMessage(Match match) {
-        ExternalMessage message = new ExternalMessage();
-        message.startBold().append("Матч ").append(match.getId()).endBold().append(" завершился:")
-                .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
-
-        Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
-        match.getMatchPlayers().stream()
-                .filter(matchPlayer -> matchPlayer.getPlace() != null &&
-                                       matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
-                .sorted(Comparator.comparing(MatchPlayer::getPlace))
-                .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
-        playerNamesByPlace.forEach((place, name) ->
-                message.append(getPlaceEmoji(place)).append(" ").append(name).append(EXTERNAL_LINE_SEPARATOR));
-
-        ExternalPollId externalPollId = match.getExternalPollId();
-        return new MessageDto(externalPollId, message);
-    }
-
-    private String getPlaceEmoji(Integer place) {
-        return switch (place) {
-            case 1 -> "1️⃣";
-            case 2 -> "2️⃣";
-            case 3 -> "3️⃣";
-            case 4 -> "4️⃣";
-            case 5 -> "5️⃣";
-            case 6 -> "6️⃣";
-            default -> throw new IllegalArgumentException("Can't determine place number emoji");
-        };
+        ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
+        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
     }
 }

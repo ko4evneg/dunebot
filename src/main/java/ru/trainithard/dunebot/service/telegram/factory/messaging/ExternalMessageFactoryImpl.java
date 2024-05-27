@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
+import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
@@ -170,6 +171,35 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         conflictMessage.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
 
         return conflictMessage;
+    }
+
+    @Override
+    public ExternalMessage getMatchSuccessfulFinishMessage(Match match) {
+        ExternalMessage message = new ExternalMessage();
+        message.startBold().append("Матч ").append(match.getId()).endBold().append(" завершился:")
+                .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
+
+        Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
+        match.getMatchPlayers().stream()
+                .filter(matchPlayer -> matchPlayer.getPlace() != null &&
+                                       matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
+                .sorted(Comparator.comparing(MatchPlayer::getPlace))
+                .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
+        playerNamesByPlace.forEach((place, name) ->
+                message.append(getPlaceEmoji(place)).append(" ").append(name).append(EXTERNAL_LINE_SEPARATOR));
+        return message;
+    }
+
+    private String getPlaceEmoji(Integer place) {
+        return switch (place) {
+            case 1 -> "1️⃣";
+            case 2 -> "2️⃣";
+            case 3 -> "3️⃣";
+            case 4 -> "4️⃣";
+            case 5 -> "5️⃣";
+            case 6 -> "6️⃣";
+            default -> throw new IllegalArgumentException("Can't determine place number emoji");
+        };
     }
 
     @Override
