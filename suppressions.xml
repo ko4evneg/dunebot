@@ -4,7 +4,7 @@
         "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
-    <suppress checks="FileLengthCheck" files=".*Test\.java"/>
+    <suppress checks="FileLengthCheck" files=".*Test\.java|ExternalMessageFactoryImpl.*\.java"/>
     <suppress checks="LineLength" files=".*Test\.java"/>
     <suppress checks="MethodLength" files=".*Test\.java|ExternalMessageFactory.*\.java"/>
     <suppress checks="SingleSpaceSeparator" files="ExternalMessageFactory.*\.java"/>

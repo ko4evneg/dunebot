@@ -185,8 +185,15 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                                        matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
-        playerNamesByPlace.forEach((place, name) ->
-                message.append(getPlaceEmoji(place)).append(" ").append(name).append(EXTERNAL_LINE_SEPARATOR));
+        playerNamesByPlace.forEach((place, name) -> {
+            if (place.equals(1)) {
+                message.append("🥳🍾🎉 ").append(name).append(" 🎉🍾🥳");
+            } else {
+                message.append(getPlaceEmoji(place)).append(" ").append(name);
+            }
+            message.append(EXTERNAL_LINE_SEPARATOR);
+        });
+        message.trimTrailingNewLine();
         return message;
     }
 

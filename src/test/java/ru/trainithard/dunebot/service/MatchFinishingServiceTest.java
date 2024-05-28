@@ -188,7 +188,7 @@ class MatchFinishingServiceTest extends TestContextMock {
                         """
                                 *Матч 15000* завершился:
                                                 
-                                1️⃣ f4 \\(st\\_pl4\\) l4
+                                🥳🍾🎉 f4 \\(st\\_pl4\\) l4 🎉🍾🥳
                                 2️⃣ f2 \\(st\\_pl2\\) l2
                                 3️⃣ f3 \\(st\\_pl3\\) l3
                                 4️⃣ f5 \\(st\\_pl5\\) l5""");
@@ -257,7 +257,7 @@ class MatchFinishingServiceTest extends TestContextMock {
                         """
                                 *Матч 15000* завершился:
                                                 
-                                1️⃣ f4 \\(st\\_pl4\\) l4
+                                🥳🍾🎉 f4 \\(st\\_pl4\\) l4 🎉🍾🥳
                                 2️⃣ f2 \\(st\\_pl2\\) l2
                                 3️⃣ f3 \\(st\\_pl3\\) l3
                                 4️⃣ f1 \\(st\\_pl1\\) l1""");
