@@ -186,10 +186,11 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
         playerNamesByPlace.forEach((place, name) -> {
+            message.append(getPlaceEmoji(place)).append(" ");
             if (place.equals(1)) {
                 message.append("🥳🍾🎉 ").append(name).append(" 🎉🍾🥳");
             } else {
-                message.append(getPlaceEmoji(place)).append(" ").append(name);
+                message.append(name);
             }
             message.append(EXTERNAL_LINE_SEPARATOR);
         });
