@@ -285,7 +285,6 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         jdbcTemplate.execute("delete from app_settings where id = 10000");
         message.setDocument(new Document());
         message.getChat().setType(chatType.getValue());
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
@@ -298,7 +297,6 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
         message.getChat().setType(chatType.getValue());
         message.setDocument(new Document());
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
@@ -320,15 +318,15 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldReturnTrueForNonAdminCommandInBotTopic_Text(ChatType chatType) {
-        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
+    void shouldThrowForNonAdminCommandInBotTopic_Text(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setMessageThreadId(9000);
         message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
-        boolean actualIsProcessingRequired = validator.validate(commandMessage);
-        assertThat(actualIsProcessingRequired).isFalse();
+        assertThatThrownBy(() -> validator.validate(commandMessage))
+                .isInstanceOf(AnswerableDuneBotException.class)
+                .hasMessage("Команда запрещена в групповых чатах - напишите боту напрямую.");
     }
 
     @ParameterizedTest
@@ -338,7 +336,6 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         message.getChat().setType(chatType.getValue());
         message.setDocument(new Document());
         message.setMessageThreadId(93124);
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
@@ -347,12 +344,10 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldReturnTrueForNonAdminCommandInBotTopic_Document(ChatType chatType) {
-        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
+    void shouldReturnFalseForNonAdminCommandInBotTopic_Document(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setDocument(new Document());
         message.setMessageThreadId(9000);
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
@@ -366,7 +361,6 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
         message.getChat().setType(chatType.getValue());
         message.setPhoto(List.of(new PhotoSize()));
         message.setMessageThreadId(93124);
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
@@ -375,12 +369,10 @@ class CommonCommandMessageValidatorTest extends TestContextMock {
 
     @ParameterizedTest
     @EnumSource(value = ChatType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PRIVATE"})
-    void shouldReturnTrueForNonAdminCommandInBotTopic_Photo(ChatType chatType) {
-        jdbcTemplate.execute("delete from app_settings where id between 10001 and 10002");
+    void shouldReturnFalseForNonAdminCommandInBotTopic_Photo(ChatType chatType) {
         message.getChat().setType(chatType.getValue());
         message.setPhoto(List.of(new PhotoSize()));
         message.setMessageThreadId(9000);
-        message.setText("/" + Command.REGISTER.name().toLowerCase() + " steam_name");
         CommandMessage commandMessage = CommandMessage.getMessageInstance(message);
 
         boolean actualIsProcessingRequired = validator.validate(commandMessage);
