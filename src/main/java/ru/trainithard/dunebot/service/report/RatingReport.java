@@ -27,20 +27,18 @@ abstract class RatingReport {
     abstract int calculateMatchesCount(List<MatchPlayer> monthMatchPlayers);
 
     void fillEntityRatings(List<MatchPlayer> monthMatchPlayers) {
-        getRateableMatchPlayers(monthMatchPlayers).entrySet().stream()
-                .forEach(entry -> {
-                    Map<Integer, Long> orderedPlaceCountByPlaceNames =
-                            getOrderedPlaceCountByPlaceNames(entry.getValue());
-                    long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
-                    long leaderMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
-                    double winRate = RatingCalculator.calculateWinRate(firstPlacesCount, leaderMatchesCount);
-                    double efficiency = RatingCalculator.calculateEfficiency(orderedPlaceCountByPlaceNames, leaderMatchesCount);
+        getRateableMatchPlayers(monthMatchPlayers).forEach((rateable, matchPlayers) -> {
+            Map<Integer, Long> orderedPlaceCountByPlaceNames = getOrderedPlaceCountByPlaceNames(matchPlayers);
+            long firstPlacesCount = orderedPlaceCountByPlaceNames.getOrDefault(1, 0L);
+            long leaderMatchesCount = orderedPlaceCountByPlaceNames.values().stream().mapToLong(Long::longValue).sum();
+            double winRate = RatingCalculator.calculateWinRate(firstPlacesCount, leaderMatchesCount);
+            double efficiency = RatingCalculator.calculateEfficiency(orderedPlaceCountByPlaceNames, leaderMatchesCount);
 
-                    String friendlyName = entry.getKey().getRatingName();
-                    EntityRating entityRating =
-                            new EntityRating(friendlyName, orderedPlaceCountByPlaceNames, leaderMatchesCount, efficiency, winRate);
-                    playerEntityRatings.add(entityRating);
-                });
+            String friendlyName = rateable.getRatingName();
+            EntityRating entityRating =
+                    new EntityRating(friendlyName, orderedPlaceCountByPlaceNames, leaderMatchesCount, efficiency, winRate);
+            playerEntityRatings.add(entityRating);
+        });
     }
 
     abstract Map<Rateable, List<MatchPlayer>> getRateableMatchPlayers(List<MatchPlayer> monthMatchPlayers);
