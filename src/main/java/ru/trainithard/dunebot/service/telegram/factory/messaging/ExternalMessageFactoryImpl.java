@@ -211,6 +211,12 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
+    public ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId) {
+        return new ExternalMessage().startBold().append("Матч ").append(matchId).endBold()
+                .append(" уже завершен. Регистрация вашего голоса невозможна.");
+    }
+
+    @Override
     public ExternalMessage getHelpMessage() {
         return new ExternalMessage()
                 .startBold().append("Dunebot v").append(version).endBold().newLine()
