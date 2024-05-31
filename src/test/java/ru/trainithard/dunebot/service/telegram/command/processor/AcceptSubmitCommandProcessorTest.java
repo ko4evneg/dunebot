@@ -118,15 +118,31 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED"})
-    void shouldDoNothingWhenCallbackReplyForEndedMatchReceived(MatchState matchState) {
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED", "EXPIRED"})
+    void shouldNotInvokeActionsWhenCallbackReplyForEndedMatchReceived(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
 
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
 
         verifyNoInteractions(matchFinishingService);
-        verifyNoInteractions(messagingService);
         verifyNoInteractions(resubmitCommandProcessor);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FAILED", "FINISHED", "EXPIRED"})
+    void shouldSendMessageWhenCallbackReplyForEndedMatchReceived(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
+
+        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__" + 1));
+
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService).sendMessageAsync(messageCaptor.capture());
+        MessageDto actualMessage = messageCaptor.getValue();
+
+        // chatId expected to be equals userId, because CommandMessageFactory takes chatId from different source for callbacks
+        assertThat(actualMessage)
+                .extracting(MessageDto::getChatId, MessageDto::getText)
+                .containsExactly("11000", "*Матч 15000* уже завершен\\. Регистрация вашего голоса невозможна\\.");
     }
 
     @Test

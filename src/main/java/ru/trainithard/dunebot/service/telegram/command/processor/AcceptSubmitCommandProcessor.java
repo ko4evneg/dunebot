@@ -49,6 +49,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         if (MatchState.getEndedMatchStates().contains(match.getState())) {
             log.debug("{}: submit received for match in {} state. Nothing done.", logId(), match.getState());
             log.debug("{}: ACCEPT_SUBMIT ended", logId());
+            sendRejectMessage(commandMessage, match);
             return;
         }
         List<MatchPlayer> matchPlayers = match.getMatchPlayers();
@@ -72,6 +73,12 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
         }
 
         log.debug("{}: ACCEPT_SUBMIT ended", logId());
+    }
+
+    private void sendRejectMessage(CommandMessage commandMessage, Match match) {
+        ExternalMessage externalMessage = messageFactory.getAcceptSubmitRejectedDueToMatchFinishMessage(match.getId());
+        MessageDto messageDto = new MessageDto(commandMessage, externalMessage, null);
+        messagingService.sendMessageAsync(messageDto);
     }
 
     private MatchPlayer getSubmittingPlayer(long externalUserId, List<MatchPlayer> matchPlayers) {
