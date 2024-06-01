@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.trainithard.dunebot.service.StartupService;
+import ru.trainithard.dunebot.service.report.WeeklyRatingReportTask;
 import ru.trainithard.dunebot.service.telegram.TelegramBot;
 
 @Configuration
@@ -15,11 +16,14 @@ import ru.trainithard.dunebot.service.telegram.TelegramBot;
 public class TelegramBotInitializer implements CommandLineRunner {
     private final TelegramBot telegramBot;
     private final StartupService startupService;
+    private final WeeklyRatingReportTask task;
 
     @Override
     public void run(String... args) throws Exception {
         startupService.startUp();
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(telegramBot);
+
+        task.run();
     }
 }
