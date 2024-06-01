@@ -16,14 +16,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 
 //TODO delete after tests
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DailyRatingReportTask implements Runnable {
+public class WeeklyRatingReportTask implements Runnable {
     private final RatingReportPdfService ratingReportPdfService;
     private final AppSettingsService appSettingsService;
     private final MessagingService messagingService;
@@ -35,46 +38,47 @@ public class DailyRatingReportTask implements Runnable {
     @Override
     public void run() {
         log.info("Start execution DailyRatingReportTask#run...");
-
         LocalDate today = LocalDate.now(clock);
-        LocalDate from = today.minusDays(1);
-        LocalDate to = from;
+        int lastDayOfMonth = today.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
 
-        try {
-            reportRating(from, to, ModType.CLASSIC, YearMonth.of(2000, 1));
-        } catch (Exception exception) {
-            log.error("Failed to execute DailyRatingReportTask#run for CLASSIC mod", exception);
-        }
+        if (today.getDayOfWeek() == DayOfWeek.SUNDAY || today.getDayOfMonth() == lastDayOfMonth) {
+            LocalDate from = today.withDayOfMonth(1);
 
-        try {
-            reportLeaders(from, to, ModType.CLASSIC, YearMonth.of(2000, 1));
-        } catch (Exception exception) {
-            log.error("Failed to execute DailyRatingReportTask#run for CLASSIC leaders", exception);
-        }
+            try {
+                reportRating(from, today, ModType.CLASSIC, YearMonth.of(2000, 1));
+            } catch (Exception exception) {
+                log.error("Failed to execute DailyRatingReportTask#run for CLASSIC mod", exception);
+            }
 
-        try {
-            reportRating(from, to, ModType.UPRISING_4, YearMonth.of(2000, 1));
-        } catch (Exception exception) {
-            log.error("Failed to execute DailyRatingReportTask#run for UPRISING_4 mod", exception);
+            try {
+                reportLeaders(from, today, ModType.CLASSIC, YearMonth.of(2000, 1));
+            } catch (Exception exception) {
+                log.error("Failed to execute DailyRatingReportTask#run for CLASSIC leaders", exception);
+            }
+
+//        try {
+//            reportRating(from, to, ModType.UPRISING_4, YearMonth.of(2000, 1));
+//        } catch (Exception exception) {
+//            log.error("Failed to execute DailyRatingReportTask#run for UPRISING_4 mod", exception);
+//        }
         }
         log.info("Successfully executed MonthlyRatingReportTask#run");
-
     }
 
     private void reportRating(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth)
             throws DocumentException, IOException {
-        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createPlayersReport(from, to, classic, getReportName(previousMonth));
+        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createPlayersReport(from, to, classic, getReportName(from, to, true));
         byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
         saveRating(ratingBytes, getPdfFileName(previousMonth, classic));
-        sendTopicNotifications(previousMonth, ratingBytes, classic);
+        sendTopicNotifications(getReportName(from, to, true), ratingBytes, classic);
     }
 
     private void reportLeaders(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth)
             throws DocumentException, IOException {
-        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createLeadersReport(from, to, classic, getReportName(previousMonth));
+        RatingReportPdf monthlyRatingPdf = ratingReportPdfService.createLeadersReport(from, to, classic, getReportName(from, to, false));
         byte[] ratingBytes = monthlyRatingPdf.getPdfBytes();
         saveRating(ratingBytes, getPdfFileName(previousMonth, classic));
-        sendTopicNotifications(previousMonth, ratingBytes, classic);
+        sendTopicNotifications(getReportName(from, to, false), ratingBytes, classic);
     }
 
     private void saveRating(byte[] ratingPdfBytes, String fileName) throws IOException {
@@ -83,20 +87,19 @@ public class DailyRatingReportTask implements Runnable {
         Files.write(savingPath.resolve(fileName), ratingPdfBytes);
     }
 
-    private String getReportName(YearMonth month) {
-        return "РЕЙТИНГ " + getDateString(month);
-    }
-
-    private String getDateString(YearMonth month) {
-        return month.getMonth().getValue() + "." + month.getYear();
+    private String getReportName(LocalDate from, LocalDate to, boolean isPlayers) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yy");
+        String fromText = from.format(dateTimeFormatter);
+        String toText = to.format(dateTimeFormatter);
+        String ratingType = isPlayers ? "ИГРОКОВ" : "ЛИДЕРОВ";
+        return String.format("РЕЙТИНГ %s %s - %s", ratingType, fromText, toText);
     }
 
     private String getPdfFileName(YearMonth month, ModType modType) {
         return String.format("%s_%s_%s.pdf", modType.getAlias(), month.getYear(), month.getMonth());
     }
 
-    private void sendTopicNotifications(YearMonth month, byte[] pdfFile, ModType modType) {
-        String ratingName = "Рейтинг за " + getDateString(month);
+    private void sendTopicNotifications(String ratingName, byte[] pdfFile, ModType modType) {
         String chatId = appSettingsService.getStringSetting(AppSettingKey.CHAT_ID);
         FileMessageDto fileMessageDto =
                 new FileMessageDto(chatId, new ExternalMessage(ratingName).append(":"), getTopicId(modType), pdfFile, ratingName + ".pdf");
