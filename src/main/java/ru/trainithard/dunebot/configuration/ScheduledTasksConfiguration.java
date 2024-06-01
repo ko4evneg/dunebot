@@ -27,8 +27,8 @@ public class ScheduledTasksConfiguration {
     void createScheduledTasks() {
         Instant now = Instant.now(clock);
         LocalDateTime localNow = LocalDateTime.ofInstant(now, ZoneId.systemDefault());
-        LocalDateTime localMonthlyReportStartTime = localNow.plusDays(1).withHour(1).withMinute(0).withSecond(0).withNano(0);
-        Instant monthlyReportStartTime = localMonthlyReportStartTime.toInstant(OffsetDateTime.now().getOffset());
+        LocalDateTime firstReportTime = localNow.withHour(23).withMinute(59).withMinute(0).withSecond(0).withNano(0);
+        Instant monthlyReportStartTime = firstReportTime.toInstant(OffsetDateTime.now().getOffset());
 
         dunebotTaskScheduler.scheduleWithFixedDelay(updateProcessor::process, Duration.ofMillis(5));
         log.info("Scheduled TelegramUpdateProcessor#process for execution every 5 ms");
