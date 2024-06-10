@@ -21,6 +21,9 @@ class RatingReportPdfTest {
                 List.of("6", "ПОПЫТ", "75", "1", "20", "45", "8", "0.34", "97%")
         ));
 
+//      Line for changing reference test file when pdf layout changed
+//      Files.write(Path.of("/var/report.pdf"), monthlyRatingPdf.getPdfBytes());
+
         PdfReader reader = new PdfReader(monthlyRatingPdf.getPdfBytes());
         PdfReader referenceReader = new PdfReader("src/test/resources/pdf/monthly_rate_example_1.pdf");
         byte[] actualBytes = reader.getPageContent(1);
