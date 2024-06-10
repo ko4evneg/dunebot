@@ -77,6 +77,7 @@ public class RatingReportPdf {
         for (List<String> row : tableRows) {
             for (String cellValue : row) {
                 PdfPCell cell = new PdfPCell(new Phrase(cellValue, TABLE_CELL_FONT));
+                cell.setMinimumHeight(26f);
                 if (cellIndex % COLUMN_WIDTHS.length == 2) {
                     alignLeft(cell);
                 } else {
