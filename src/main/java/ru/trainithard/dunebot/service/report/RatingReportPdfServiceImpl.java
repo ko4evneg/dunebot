@@ -8,6 +8,7 @@ import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.service.AppSettingsService;
+import ru.trainithard.dunebot.util.DoubleToStringUtil;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -46,17 +47,12 @@ public class RatingReportPdfServiceImpl implements RatingReportPdfService {
             columnValues.add(Long.toString(playerEntityRating.getMatchesCount()));
             playerEntityRating.getOrderedPlaceCountByPlaceNames()
                     .forEach((place, count) -> columnValues.add(count.toString()));
-            columnValues.add(getStrippedZeroesString(playerEntityRating.getEfficiency()));
-            columnValues.add(getStrippedZeroesString(playerEntityRating.getWinRate()) + "%");
+            columnValues.add(DoubleToStringUtil.getStrippedZeroesString(playerEntityRating.getEfficiency()));
+            columnValues.add(DoubleToStringUtil.getStrippedZeroesString(playerEntityRating.getWinRate()) + "%");
 
             rows.add(columnValues);
             ratingPlace++;
         }
         return rows;
-    }
-
-    private String getStrippedZeroesString(double number) {
-        String numberString = Double.toString(number);
-        return numberString.replace(".00", "").replace(".0", "");
     }
 }
