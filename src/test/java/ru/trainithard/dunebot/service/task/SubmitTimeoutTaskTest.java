@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.task;
+package ru.trainithard.dunebot.service.task;
 
 import org.junit.jupiter.api.Test;
 import ru.trainithard.dunebot.service.MatchFinishingService;

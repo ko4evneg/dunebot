@@ -8,8 +8,8 @@ import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
-import ru.trainithard.dunebot.service.telegram.command.task.StartMatchTask;
-import ru.trainithard.dunebot.service.telegram.command.task.SubmitTimeoutTask;
+import ru.trainithard.dunebot.service.task.StartMatchTask;
+import ru.trainithard.dunebot.service.task.SubmitTimeoutTask;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
 import java.time.Clock;

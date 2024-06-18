@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.task;
+package ru.trainithard.dunebot.service.task;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.trainithard.dunebot.model.Match;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class StartMatchTask implements Runnable {
+public class StartMatchTask implements DunebotRunnable {
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final MessagingService messagingService;
