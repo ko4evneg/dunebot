@@ -1,19 +1,22 @@
 package ru.trainithard.dunebot.configuration.scheduler;
 
+import jakarta.persistence.Embeddable;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Embeddable
+@NoArgsConstructor
 public final class DuneTaskId {
-    private final DuneTaskType taskType;
-    private final long callerId;
+    private DuneTaskType taskType;
+    private Long entityId;
 
-    public DuneTaskId(DuneTaskType taskType, Long callerId) {
+    public DuneTaskId(DuneTaskType taskType, Long entityId) {
         this.taskType = taskType;
-        this.callerId = callerId;
+        this.entityId = entityId;
     }
 
     public DuneTaskId(DuneTaskType taskType) {
         this.taskType = taskType;
-        this.callerId = -1;
     }
 }
