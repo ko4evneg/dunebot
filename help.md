@@ -6,7 +6,6 @@
 [Список всех команд](#commands)\
 [Регистрация игрока](#register)\
 [Изменение данных игрока](#refresh-profile)\
-[Изменение данных игрока](#refresh-profile)\
 [Создание опроса](#create-poll)\
 [Удаление опроса](#delete-poll)\
 [Регистрация результатов](#result-submit)\
@@ -152,7 +151,7 @@ _<pre>В реализации: 15 числа месяца, в чат будет 
 
 ### Создание матча
 
-![alt text](help/new_request.jpg)\
+![alt text](help/new_request.jpg)
 
 Сообщение о сборе в соответствующем чате (классика или uprising):\
 ![alt text](help/new_reply.jpg)\

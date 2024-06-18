@@ -219,9 +219,10 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     @Override
     public ExternalMessage getHelpMessage() {
         return new ExternalMessage()
-                .startBold().append("Dunebot v").append(version).endBold().newLine()
-                .appendLink("Подробная инструкция к боту", "https://github.com/ko4evneg/dunebot/blob/master/help.md")
-                .newLine().newLine()
+                .startBold().append("Dunebot v").append(version).endBold().newLine().newLine()
+                .append("================================").newLine()
+                .appendBoldLink("Подробная инструкция к боту", "https://github.com/ko4evneg/dunebot/blob/master/help.md")
+                .append("================================").newLine().newLine()
                 .appendBold("Краткая инструкция").newLine().newLine()
                 .appendBold("‼️Все команды пишем напрямую в чат бота ").appendBold("@tabledune_bot").newLine().newLine()
                 .appendBold("1️⃣  Регистрация").newLine()

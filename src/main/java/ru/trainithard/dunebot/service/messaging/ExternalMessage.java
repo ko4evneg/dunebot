@@ -60,6 +60,12 @@ public class ExternalMessage {
         return this;
     }
 
+    public ExternalMessage appendBoldLink(Object name, String link) {
+        //TODO: escape in (...)
+        stringBuilder.append("[*").append(name).append("*]").append("(").append(link).append(")");
+        return this;
+    }
+
     public ExternalMessage newLine() {
         stringBuilder.append(SettingConstants.EXTERNAL_LINE_SEPARATOR);
         return this;
