@@ -221,7 +221,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         return new ExternalMessage()
                 .startBold().append("Dunebot v").append(version).endBold().newLine().newLine()
                 .append("================================").newLine()
-                .appendBoldLink("Подробная инструкция к боту", "https://github.com/ko4evneg/dunebot/blob/master/help.md")
+                .appendBoldLink("Подробная инструкция к боту", "https://github.com/ko4evneg/dunebot/blob/master/help.md").newLine()
                 .append("================================").newLine().newLine()
                 .appendBold("Краткая инструкция").newLine().newLine()
                 .appendBold("‼️Все команды пишем напрямую в чат бота ").appendBold("@tabledune_bot").newLine().newLine()

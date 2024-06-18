@@ -68,7 +68,10 @@ class HelpCommandProcessorTest extends TestContextMock {
     private String getExpectedHelpText() {
         return """
                 *Dunebot v1\\.3*
-                [Подробная инструкция к боту](https://github.com/ko4evneg/dunebot/blob/master/help.md)
+                                
+                \\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=
+                [*Подробная инструкция к боту*](https://github.com/ko4evneg/dunebot/blob/master/help.md)
+                \\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=\\=
                               
                 *Краткая инструкция*
                               
