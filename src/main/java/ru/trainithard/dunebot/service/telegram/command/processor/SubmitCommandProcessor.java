@@ -4,8 +4,8 @@ import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
@@ -102,14 +102,14 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private void rescheduleForcedFailFinish(long matchId) {
         int finishMatchTimeout = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
-        DuneTaskId submitTimeoutTaskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
+        DuneBotTaskId submitTimeoutTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
         ScheduledFuture<?> oldFailFinishTask = taskScheduler.get(submitTimeoutTaskId);
         if (oldFailFinishTask != null) {
             long delay = oldFailFinishTask.getDelay(TimeUnit.SECONDS);
             forcedFinishTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
         }
         DunebotRunnable submitTimeoutTask = taskFactory.createInstance(submitTimeoutTaskId);
-        taskScheduler.reschedule(submitTimeoutTask, submitTimeoutTaskId, forcedFinishTime);
+        taskScheduler.rescheduleSingleRunTask(submitTimeoutTask, submitTimeoutTaskId, forcedFinishTime);
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {

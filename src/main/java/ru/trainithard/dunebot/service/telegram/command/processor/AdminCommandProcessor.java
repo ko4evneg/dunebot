@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
@@ -179,16 +179,16 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private void shutdown(CommandMessage commandMessage) {
         String delayArg = commandMessage.getArgument(2);
-        DuneTaskId shutdownTaskId = new DuneTaskId(DuneTaskType.SHUTDOWN);
+        DuneBotTaskId shutdownTaskId = new DuneBotTaskId(DuneTaskType.SHUTDOWN);
         if ("cancel".equalsIgnoreCase(delayArg)) {
-            taskScheduler.cancel(shutdownTaskId);
+            taskScheduler.cancelSingleRunTask(shutdownTaskId);
             sendTopicsMessages("❎ Перезагрузка бота отменена.");
             return;
         }
 
         try {
             int delay = Integer.parseInt(delayArg.trim());
-            taskScheduler.reschedule(shutdownTask, shutdownTaskId, Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
+            taskScheduler.rescheduleSingleRunTask(shutdownTask, shutdownTaskId, Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
             sendTopicsMessages("⚠️ Бот будет перезагружен через " + delay + " минут.\n" +
                                "‼️ Все незавершенные матчи будут принудительно завершены без зачета в рейтинг.");
         } catch (NumberFormatException e) {
