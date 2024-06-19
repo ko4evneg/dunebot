@@ -20,8 +20,8 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollAnswer;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
@@ -279,8 +279,8 @@ class VoteCommandProcessorTest extends TestContextMock {
 
         processor.process(getPollAnswerCommandMessage(1, USER_2_ID));
 
-        DuneTaskId duneTaskId = new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L);
-        verify(dunebotTaskScheduler).cancel(duneTaskId);
+        DuneBotTaskId duneBotTaskId = new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L);
+        verify(dunebotTaskScheduler).cancelSingleRunTask(duneBotTaskId);
     }
 
     @Test
@@ -368,8 +368,8 @@ class VoteCommandProcessorTest extends TestContextMock {
         processor.process(getPollAnswerCommandMessage(TestConstants.POSITIVE_POLL_OPTION_ID, USER_2_ID));
 
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
-        DuneTaskId expectedTaskId = new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L);
-        verify(dunebotTaskScheduler, times(1)).reschedule(any(), eq(expectedTaskId), instantCaptor.capture());
+        DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L);
+        verify(dunebotTaskScheduler, times(1)).rescheduleSingleRunTask(any(), eq(expectedTaskId), instantCaptor.capture());
         Instant actualInstant = instantCaptor.getValue();
 
         assertThat(actualInstant).isEqualTo(NOW.plusSeconds(60));

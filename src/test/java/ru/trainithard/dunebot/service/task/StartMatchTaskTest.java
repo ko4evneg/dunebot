@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.trainithard.dunebot.TestConstants;
 import ru.trainithard.dunebot.TestContextMock;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
@@ -101,7 +101,7 @@ class StartMatchTaskTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id = 10000");
         jdbcTemplate.execute("delete from matches where id = 10000");
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
         
         verifyNoInteractions(messagingService);
@@ -109,7 +109,7 @@ class StartMatchTaskTest extends TestContextMock {
 
     @Test
     void shouldSendStartMessageToMatchTopic() {
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -128,7 +128,7 @@ class StartMatchTaskTest extends TestContextMock {
     void shouldSendStartMessageWithWarningToMatchTopicWhenGuestPlayersPresented() {
         jdbcTemplate.execute("update players set is_guest = true where id in (10000, 10001)");
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -151,7 +151,7 @@ class StartMatchTaskTest extends TestContextMock {
     void shouldSendStartMessageWithWarningToMatchTopicWhenChatBlockedPlayersPresented() {
         jdbcTemplate.execute("update players set is_chat_blocked = true where id in (10001, 10002)");
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -175,7 +175,7 @@ class StartMatchTaskTest extends TestContextMock {
         jdbcTemplate.execute("update players set is_guest = true where id = 10000");
         jdbcTemplate.execute("update players set is_chat_blocked = true where id in (10001, 10002)");
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
@@ -204,7 +204,7 @@ class StartMatchTaskTest extends TestContextMock {
                              "values (10001, 'ExternalMessageId', 9000, " + CHAT_ID + ", " + TOPIC_ID + ", '2020-10-10')");
         jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = 10001 where id = 10000");
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         verify(messagingService).deleteMessageAsync(argThat(messageDto ->
@@ -218,7 +218,7 @@ class StartMatchTaskTest extends TestContextMock {
         jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = 10001 where id = 10000");
         doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         ExternalMessageDto actualMessage = jdbcTemplate
@@ -234,7 +234,7 @@ class StartMatchTaskTest extends TestContextMock {
         jdbcTemplate.execute("update matches set positive_answers_count = 5, external_start_id = null where id = 10000");
         doReturn(CompletableFuture.completedFuture(getSubmitExternalMessage())).when(messagingService).sendMessageAsync(any(MessageDto.class));
 
-        DunebotRunnable task = taskFactory.createInstance(new DuneTaskId(DuneTaskType.START_MESSAGE, 10000L));
+        DunebotRunnable task = taskFactory.createInstance(new DuneBotTaskId(DuneTaskType.START_MESSAGE, 10000L));
         task.run();
 
         ExternalMessageDto actualMessage = jdbcTemplate
