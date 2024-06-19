@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.model.BaseEntity;
 
 import java.time.Instant;
@@ -15,15 +15,15 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-public class DunebotTask extends BaseEntity {
+public class DuneBotTask extends BaseEntity {
     @Embedded
-    protected DuneTaskId duneTaskId;
+    protected DuneBotTaskId duneBotTaskId;
     protected Instant startTime;
     @Enumerated(EnumType.STRING)
     protected TaskStatus status;
 
-    public DunebotTask(DuneTaskId duneTaskId, Instant startTime) {
-        this.duneTaskId = duneTaskId;
+    public DuneBotTask(DuneBotTaskId duneBotTaskId, Instant startTime) {
+        this.duneBotTaskId = duneBotTaskId;
         this.startTime = startTime;
         this.status = TaskStatus.SCHEDULED;
     }
