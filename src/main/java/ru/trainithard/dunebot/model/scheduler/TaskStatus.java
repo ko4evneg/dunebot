@@ -1,5 +1,5 @@
 package ru.trainithard.dunebot.model.scheduler;
 
 public enum TaskStatus {
-    SCHEDULED, FINISHED, CANCELLED
+    SCHEDULED, RUN, FAILED, FINISHED, CANCELLED
 }

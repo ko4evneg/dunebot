@@ -18,4 +18,7 @@
     <changeSet id="005-user-settings" author="ko4evneg">
         <sqlFile path="migrations/05_user_settings.sql"/>
     </changeSet>
+    <changeSet id="006-dune-tasks" author="ko4evneg">
+        <sqlFile path="migrations/06_dune_tasks.sql"/>
+    </changeSet>
 </databaseChangeLog>

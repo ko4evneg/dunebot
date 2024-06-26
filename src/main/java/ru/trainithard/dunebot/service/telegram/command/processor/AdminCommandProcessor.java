@@ -190,7 +190,7 @@ public class AdminCommandProcessor extends CommandProcessor {
             int delay = Integer.parseInt(delayArg.trim());
             taskScheduler.rescheduleSingleRunTask(shutdownTask, shutdownTaskId, Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
             sendTopicsMessages("⚠️ Бот будет перезагружен через " + delay + " минут.\n" +
-                               "‼️ Все незавершенные матчи будут принудительно завершены без зачета в рейтинг.");
+                               "⚠️ В это время возможны задержки в выполнении команд.");
         } catch (NumberFormatException e) {
             throw new AnswerableDuneBotException("Неверный аргумент", commandMessage);
         }
