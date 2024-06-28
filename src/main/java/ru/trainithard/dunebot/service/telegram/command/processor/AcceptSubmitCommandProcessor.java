@@ -134,7 +134,7 @@ public class AcceptSubmitCommandProcessor extends CommandProcessor {
 
     private void sendLeadersMessageToSubmittingPlayer(MatchPlayer submittingPlayer, Match match, int candidatePlace) {
         long chatId = submittingPlayer.getPlayer().getExternalChatId();
-        List<List<ButtonDto>> leadersKeyboard = Set.of(2, 3, 4, 5, 6).contains(candidatePlace)
+        List<List<ButtonDto>> leadersKeyboard = Set.of(1, 2, 3, 4, 5, 6).contains(candidatePlace)
                 ? keyboardsFactory.getLeadersKeyboard(submittingPlayer) : null;
         ExternalMessage submitMessage = messageFactory.getNonClonflictSubmitMessage(match.getId(), candidatePlace);
         messagingService.sendMessageAsync(new MessageDto(chatId, submitMessage, null, leadersKeyboard));

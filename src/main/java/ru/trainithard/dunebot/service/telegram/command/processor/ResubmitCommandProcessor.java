@@ -3,7 +3,6 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.trainithard.dunebot.exception.ScreenshotFileIOException;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
@@ -16,9 +15,6 @@ import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,22 +76,13 @@ public class ResubmitCommandProcessor extends CommandProcessor {
     }
 
     private void resetMatchData(Match match) {
-        try {
-            String screenshotPath = match.getScreenshotPath();
-            if (screenshotPath != null) {
-                Files.deleteIfExists(Path.of(screenshotPath));
-                match.setScreenshotPath(null);
-            }
-            match.prepareForResubmit();
-            match.getMatchPlayers().forEach(matchPlayer -> {
-                matchPlayer.setCandidatePlace(null);
-                deleteOldSubmitMessage(matchPlayer.getSubmitMessageId());
-                matchPlayer.setSubmitMessageId(null);
-                matchPlayer.setLeader(null);
-            });
-        } catch (IOException e) {
-            throw new ScreenshotFileIOException("Can not remove old screenshot file");
-        }
+        match.prepareForResubmit();
+        match.getMatchPlayers().forEach(matchPlayer -> {
+            matchPlayer.setCandidatePlace(null);
+            deleteOldSubmitMessage(matchPlayer.getSubmitMessageId());
+            matchPlayer.setSubmitMessageId(null);
+            matchPlayer.setLeader(null);
+        });
     }
 
     private void deleteOldSubmitMessage(ExternalMessageId submitMessageExternalId) {

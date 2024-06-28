@@ -28,7 +28,6 @@ import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -181,43 +180,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         Integer actualResubmits = jdbcTemplate.queryForObject("select submits_count from matches where id = 15000", Integer.class);
 
         assertThat(actualResubmits).isZero();
-    }
-
-    @Test
-    void shouldResetMatchStateOnResubmitWhenScreenshotWasUploaded() {
-        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg', state = '" + MatchState.ON_SUBMIT_SCREENSHOTTED + "' where id = 15000");
-
-        processor.process(resubmitCommandMessage);
-
-        MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
-
-        assertThat(actualMatchState).isSameAs(MatchState.ON_SUBMIT);
-    }
-
-    @Test
-    void shouldResetMatchScreenshotPathOnResubmit() {
-        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
-
-        processor.process(resubmitCommandMessage);
-
-        Boolean isScreenshotResetted = jdbcTemplate.queryForObject(
-                "select exists (select 1 from matches where id = 15000 and screenshot_path is null)", Boolean.class);
-
-        assertThat(isScreenshotResetted).isNotNull().isTrue();
-    }
-
-    @Test
-    void shouldDeleteScreenshotFileOnResubmit() throws IOException {
-        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
-        byte[] screenshotBytes = "abc".getBytes();
-        Files.createDirectories(Path.of("photos"));
-        Files.write(Path.of("photos/1.jpg"), screenshotBytes);
-
-        processor.process(resubmitCommandMessage);
-
-        boolean doesFileExist = Files.exists(Path.of("photos/1.jpg"));
-
-        assertThat(doesFileExist).isFalse();
     }
 
     @Test

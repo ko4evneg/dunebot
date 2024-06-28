@@ -43,10 +43,10 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
             log.debug("{}: Match {} has been ended already. Finishing is not required. Exiting...", logId, matchId);
             return;
         }
-        log.debug("{}: match {} found (photo: {}, state: {})", logId, match.getId(), match.hasSubmitPhoto(), match.getState());
+        log.debug("{}: match {} found (state: {})", logId, match.getId(), match.getState());
         if (!MatchState.getEndedMatchStates().contains(match.getState())) {
             assignMissingPlace(match);
-            if (match.hasAllPlacesSubmitted() && match.hasSubmitPhoto()) {
+            if (match.hasAllPlacesSubmitted()) {
                 finishSuccessfullyAndSave(match);
             } else {
                 ExternalMessage finishReasonMessage = messageFactory.getFinishReasonMessage(match, isFailedByResubmitsLimit);

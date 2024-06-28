@@ -13,7 +13,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
  */
 @Slf4j
 @Service
-@Deprecated(since = "0.1.20")
+@Deprecated(since = "0.1.20", forRemoval = true)
 @RequiredArgsConstructor
 public class RefreshProfileCommandProcessor extends CommandProcessor {
     @Override

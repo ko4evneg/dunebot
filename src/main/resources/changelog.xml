@@ -21,4 +21,7 @@
     <changeSet id="006-dune-tasks" author="ko4evneg">
         <sqlFile path="migrations/06_dune_tasks.sql"/>
     </changeSet>
+    <changeSet id="007-screenshot-step-removal" author="ko4evneg">
+        <sqlFile path="migrations/07_screenshot_step_removal.sql"/>
+    </changeSet>
 </databaseChangeLog>

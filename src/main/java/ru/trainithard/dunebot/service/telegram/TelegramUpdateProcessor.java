@@ -39,18 +39,17 @@ public class TelegramUpdateProcessor {
             try {
                 CommandMessage commandMessage = commandMessageFactory.getInstance(update);
                 if (commandMessage != null) {
+                    //TODO delete after fixing:
+                    if (commandMessage.getCommand() == null) {
+                        log.debug("{}: NULL command from Update {}", logId, update);
+                    }
                     log.debug("{}: received {} command from {}", logId, commandMessage.getCommand(), commandMessage.getUserId());
 
                     boolean isProcessingRequired = commonCommandMessageValidator.validate(commandMessage);
                     log.debug("{}: common validation: pass, process: {}", logId, isProcessingRequired);
                     if (isProcessingRequired) {
-                        ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
-                        validator.validate(commandMessage);
-                        log.debug("{}: specific validation: pass", logId);
-
-                        CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
-                        processor.process(commandMessage);
-                        log.debug("{}: successfully processed", logId);
+                        validateCommand(commandMessage, logId);
+                        processCommand(commandMessage, logId);
                     }
                 }
             } catch (AnswerableDuneBotException answerableException) {
@@ -62,6 +61,18 @@ public class TelegramUpdateProcessor {
                 update = telegramBot.poll();
             }
         }
+    }
+
+    private void processCommand(CommandMessage commandMessage, int logId) {
+        CommandProcessor processor = commandProcessorFactory.getProcessor(commandMessage.getCommand());
+        processor.process(commandMessage);
+        log.debug("{}: successfully processed", logId);
+    }
+
+    private void validateCommand(CommandMessage commandMessage, int logId) {
+        ValidationStrategy validator = validationStrategyFactory.getValidator(commandMessage.getCommand().getCommandType());
+        validator.validate(commandMessage);
+        log.debug("{}: specific validation: pass", logId);
     }
 
     private void sendAnswerableExceptionMessage(AnswerableDuneBotException answerableException, int logId) {

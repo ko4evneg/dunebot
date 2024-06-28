@@ -38,48 +38,7 @@ class MatchTest {
     }
 
     @Test
-    void shouldReturnHasSubmitPhotoTrueWhenPhotoPathPresented() {
-        match.setScreenshotPath("/var/log/1.jpg");
-
-        boolean actualHasSubmitPhoto = match.hasSubmitPhoto();
-
-        assertThat(actualHasSubmitPhoto).isTrue();
-    }
-
-    @Test
-    void shouldReturnHasSubmitPhotoFalseWhenPhotoPathMissing() {
-        match.setScreenshotPath(null);
-
-        boolean actualHasSubmitPhoto = match.hasSubmitPhoto();
-
-        assertThat(actualHasSubmitPhoto).isFalse();
-    }
-
-    @Test
-    void shouldReturnCanBePreliminaryFinishedTrueWhenPhotoPathPresented() {
-        match.setScreenshotPath("/var/log/1.jpg");
-        match.setMatchPlayers(createMatchPlayers(1, 2, 3, 4, 5, 6));
-        match.setSubmitsCount(6);
-
-        boolean actualCanBePreliminaryFinished = match.canBePreliminaryFinished();
-
-        assertThat(actualCanBePreliminaryFinished).isTrue();
-    }
-
-    @Test
-    void shouldReturnCanBePreliminaryFinishedFalseWhenPhotoMissing() {
-        match.setScreenshotPath(null);
-        match.setMatchPlayers(createMatchPlayers(1, 2, 3, 4, 5, 6));
-        match.setSubmitsCount(6);
-
-        boolean actualCanBePreliminaryFinished = match.canBePreliminaryFinished();
-
-        assertThat(actualCanBePreliminaryFinished).isFalse();
-    }
-
-    @Test
     void shouldReturnCanBePreliminaryFinishedFalseWhenSubmitMissing() {
-        match.setScreenshotPath("/var/log/1.jpg");
         match.setMatchPlayers(createMatchPlayers(1, 2, 3, 4, 5, 6));
         match.setSubmitsCount(5);
 
