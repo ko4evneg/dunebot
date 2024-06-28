@@ -156,19 +156,6 @@ class MatchFinishingServiceTest extends TestContextMock {
         assertThat(playersPlaces).containsExactly(null, null, null, null);
     }
 
-    @Test
-    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissingAndNoPhotoSubmitted() {
-        jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = null where id = 15000");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
-
-        finishingService.finishNotSubmittedMatch(15000L, false);
-
-        Boolean wasAnyPlaceSaved = jdbcTemplate.queryForObject("select exists(select 1 from match_players where match_id = 15000 and place is not null)", Boolean.class);
-
-        assertThat(wasAnyPlaceSaved).isNotNull().isFalse();
-    }
-
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
@@ -278,23 +265,6 @@ class MatchFinishingServiceTest extends TestContextMock {
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
                         "*Матч 15000* завершен без результата\\!\n" +
                         "Игроки [@e1](tg://user?id=11000), [@e2](tg://user?id=11001) не ответили на запрос места\\.");
-    }
-
-    @Test
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWhenAllSubmitsDoneAndPhotoIsMissing() {
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
-        jdbcTemplate.execute("update matches set screenshot_path = null where id = 15000");
-
-        finishingService.finishNotSubmittedMatch(15000L, false);
-
-        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
-
-        assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
-                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        "*Матч 15000* завершен без результата, так как игрок [@e4](tg://user?id=11003) не загрузил скриншот матча\\.");
     }
 
     @Test

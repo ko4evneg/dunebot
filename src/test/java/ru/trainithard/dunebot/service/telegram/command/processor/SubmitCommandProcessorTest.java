@@ -303,7 +303,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @CsvSource({"ON_SUBMIT, 1", "ON_SUBMIT, 2", "ON_SUBMIT, 3", "ON_SUBMIT_SCREENSHOTTED, 1", "ON_SUBMIT_SCREENSHOTTED, 2", "ON_SUBMIT_SCREENSHOTTED, 3"})
+    @CsvSource({"ON_SUBMIT, 1", "ON_SUBMIT, 2", "ON_SUBMIT, 3"})
     void shouldNotRescheduleUnsuccessfullySubmittedMatchFinishTaskOnNotFirstSubmit(MatchState state, int submitsCount) {
         jdbcTemplate.execute("update matches set state = '" + state + "', submits_count = " + submitsCount + " where id = 15000");
 

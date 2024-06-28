@@ -165,15 +165,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldNotInvokeMatchFinishOnLastCallbackReplyWhenMatchHasNoPhoto() {
-        jdbcTemplate.execute("update matches set submits_count = 3, screenshot_path = null where id = 15000");
-
-        processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
-
-        verify(matchFinishingService, never()).finishSubmittedMatch(eq(15000L));
-    }
-
-    @Test
     void shouldNotInvokeMatchFinishOnNotLastCallbackReply() {
         processor.process(getCommandMessage(USER_1_ID, 10002, 11002, "15000__2"));
 
@@ -332,7 +323,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                 .containsExactly(null, "12001", null,
                         "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
                         "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                        "*Теперь загрузите в этот чат скриншот победы\\.*");
+                        "*Теперь выберите лидера* которым играли\\.");
     }
 
     @Test

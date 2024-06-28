@@ -69,10 +69,6 @@ public class Match extends BaseEntity {
      */
     private int submitsRetryCount;
     /**
-     * Path of the screenshot for the match
-     */
-    private String screenshotPath;
-    /**
      * Finish match date.
      */
     private LocalDate finishDate;
@@ -86,10 +82,6 @@ public class Match extends BaseEntity {
         return submitsRetryCount < resubmitsLimit;
     }
 
-    public boolean hasSubmitPhoto() {
-        return screenshotPath != null;
-    }
-
     public boolean isReadyToStart() {
         return modType.getPlayersCount() == positiveAnswersCount;
     }
@@ -100,7 +92,7 @@ public class Match extends BaseEntity {
 
     // As players without places submits counts, we need exact match to start preliminary finishing
     public boolean canBePreliminaryFinished() {
-        return submitsCount == matchPlayers.size() && screenshotPath != null;
+        return submitsCount == matchPlayers.size();
     }
 
     public boolean hasAllPlacesSubmitted() {

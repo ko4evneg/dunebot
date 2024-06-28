@@ -47,14 +47,6 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         if (!match.hasAllPlacesSubmitted()) {
             return getFailByMissingSubmitsMessage(match, failMessage);
         }
-        if (!match.hasSubmitPhoto()) {
-            Player winnerPlayer = match.getMatchPlayers().stream()
-                    .filter(matchPlayer -> Objects.requireNonNullElse(matchPlayer.getCandidatePlace(), -1) == 1)
-                    .findFirst().orElseThrow().getPlayer();
-            return failMessage.append(" завершен без результата, так как игрок ")
-                    .appendRaw(MarkdownEscaper.getEscapedMention(winnerPlayer.getMentionTag(), winnerPlayer.getExternalId()))
-                    .append(" не загрузил скриншот матча.");
-        }
         return failMessage.append(" завершен без результата по неизвестной причине - вероятно это баг.");
     }
 
@@ -126,7 +118,6 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     public ExternalMessage getNonClonflictSubmitMessage(long matchId, int candidatePlace) {
         return switch (candidatePlace) {
             case 0 -> getAcceptedSubmitMessageTemplateForNonParticipant(matchId);
-            case 1 -> getAcceptedFirstPlaceSubmitMessageTemplate(matchId, candidatePlace);
             default -> getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
         };
     }
@@ -135,13 +126,6 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксирован статус: ")
                 .appendBold("не участвует").append(".").newLine()
                 .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
-    }
-
-    private ExternalMessage getAcceptedFirstPlaceSubmitMessageTemplate(long matchId, int candidatePlace) {
-        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
-                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
-                .appendBold("Теперь загрузите в этот чат скриншот победы.");
     }
 
     private ExternalMessage getAcceptedSubmitMessageTemplateForParticipant(long matchId, int candidatePlace) {

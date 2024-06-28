@@ -15,10 +15,6 @@ public enum MatchState {
      */
     ON_SUBMIT,
     /**
-     * Submit command was executed for the match, screenshot uploaded
-     */
-    ON_SUBMIT_SCREENSHOTTED,
-    /**
      * Match is successfully finished.
      */
     FINISHED,
@@ -40,6 +36,6 @@ public enum MatchState {
     }
 
     public static List<MatchState> getSubmitStates() {
-        return List.of(ON_SUBMIT, ON_SUBMIT_SCREENSHOTTED);
+        return List.of(ON_SUBMIT);
     }
 }
