@@ -281,7 +281,7 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {2, 3, 4})
+    @ValueSource(ints = {1, 2, 3, 4})
     void shouldAttachLeaderKeyboardToMessageAboutCallbackAcceptOnCallbackReplyWneNotFirstPlaceSelected(int place) {
         processor.process(getCommandMessage(USER_2_ID, 10002, 11002, "15000__" + place));
 
@@ -297,33 +297,6 @@ class AcceptSubmitCommandProcessorTest extends TestContextMock {
                         tuple("lead2", "10001_L_10001"),
                         tuple("lead3", "10001_L_10002")
                 );
-    }
-
-    @Test
-    void shouldNotAttachLeaderKeyboardToMessageAboutCallbackAcceptOnCallbackReplyWneFirstPlaceSelected() {
-        processor.process(getCommandMessage(USER_2_ID, 10002, 11002, "15000__1"));
-
-        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessages = messageCaptor.getValue();
-
-        assertThat(actualMessages.getKeyboard()).isNull();
-    }
-
-    @Test
-    void shouldSendMessageAboutCallbackAcceptOnCallbackReplyWhenFirstPlaceSelected() {
-        processor.process(getCommandMessage(USER_2_ID, 10002, 12001, "15000__" + 1));
-
-        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageCaptor.capture());
-        MessageDto actualMessages = messageCaptor.getValue();
-
-        assertThat(actualMessages)
-                .extracting(MessageDto::getTopicId, MessageDto::getChatId, MessageDto::getKeyboard, MessageDto::getText)
-                .containsExactly(null, "12001", null,
-                        "В матче 15000 за вами зафиксировано *1 место*\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                        "При ошибке используйте команду '/resubmit 15000'\\." + TestConstants.EXTERNAL_LINE_SEPARATOR +
-                        "*Теперь выберите лидера* которым играли\\.");
     }
 
     @Test
