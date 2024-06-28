@@ -6,9 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.test.context.ContextConfiguration;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.scheduler.DuneBotTask;
 import ru.trainithard.dunebot.model.scheduler.TaskStatus;
@@ -24,16 +26,17 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 @SpringBootTest
+@ContextConfiguration(name = "mockSchedulerContext")
 class DuneBotTaskSchedulerTest extends TestContextMock {
     private static final Instant NOW = LocalDate.of(2010, 10, 20).atStartOfDay().toInstant(ZoneOffset.UTC);
     private static final Instant SOON = LocalDate.of(2010, 10, 21).atStartOfDay().toInstant(ZoneOffset.UTC);
     private static final Runnable TASK = () -> {
     };
-    private final Clock clock = mock(Clock.class);
-    @Autowired
+    @MockBean
+    private Clock clock;
+    @SpyBean
     private DuneBotTaskScheduler duneBotTaskScheduler;
 
     @BeforeEach
