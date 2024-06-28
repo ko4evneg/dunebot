@@ -66,7 +66,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
-        doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
+        doReturn(scheduledFuture).when(taskScheduler).rescheduleSingleRunTask(any(), any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
@@ -209,7 +209,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldDeleteScreenshotFileOnResubmit() throws IOException {
         jdbcTemplate.execute("update matches set submits_count = 4, screenshot_path = 'photos/1.jpg' where id = 15000");
-        byte[] screenshotBytes = "abc" .getBytes();
+        byte[] screenshotBytes = "abc".getBytes();
         Files.createDirectories(Path.of("photos"));
         Files.write(Path.of("photos/1.jpg"), screenshotBytes);
 

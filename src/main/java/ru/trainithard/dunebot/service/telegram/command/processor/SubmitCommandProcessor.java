@@ -4,8 +4,8 @@ import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
@@ -20,9 +20,10 @@ import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.task.DuneScheduledTaskFactory;
+import ru.trainithard.dunebot.service.task.DunebotRunnable;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.service.telegram.command.task.SubmitTimeoutTask;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
@@ -52,7 +52,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
     private final AppSettingsService appSettingsService;
     private final Clock clock;
-    private final Function<Long, SubmitTimeoutTask> submitTimeoutTaskFactory;
+    private final DuneScheduledTaskFactory taskFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -102,14 +102,14 @@ public class SubmitCommandProcessor extends CommandProcessor {
     private void rescheduleForcedFailFinish(long matchId) {
         int finishMatchTimeout = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
-        DuneTaskId submitTimeoutTaskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
+        DuneBotTaskId submitTimeoutTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
         ScheduledFuture<?> oldFailFinishTask = taskScheduler.get(submitTimeoutTaskId);
         if (oldFailFinishTask != null) {
             long delay = oldFailFinishTask.getDelay(TimeUnit.SECONDS);
             forcedFinishTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
         }
-        SubmitTimeoutTask submitTimeoutTask = submitTimeoutTaskFactory.apply(matchId);
-        taskScheduler.reschedule(submitTimeoutTask, submitTimeoutTaskId, forcedFinishTime);
+        DunebotRunnable submitTimeoutTask = taskFactory.createInstance(submitTimeoutTaskId);
+        taskScheduler.rescheduleSingleRunTask(submitTimeoutTask, submitTimeoutTaskId, forcedFinishTime);
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {

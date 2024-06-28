@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
@@ -16,9 +16,10 @@ import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.task.DuneScheduledTaskFactory;
+import ru.trainithard.dunebot.service.task.DunebotRunnable;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
-import ru.trainithard.dunebot.service.telegram.command.task.StartMatchTask;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
 import java.time.Clock;
@@ -43,7 +44,7 @@ public class VoteCommandProcessor extends CommandProcessor {
     private final AppSettingsService appSettingsService;
     private final ExternalMessageFactory externalMessageFactory;
     private final Clock clock;
-    private final Function<Long, StartMatchTask> startMatchTaskFactory;
+    private final DuneScheduledTaskFactory taskFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -125,8 +126,9 @@ public class VoteCommandProcessor extends CommandProcessor {
     private void rescheduleNewMatchStart(long matchId) {
         int matchStartDelay = appSettingsService.getIntSetting(AppSettingKey.MATCH_START_DELAY);
         Instant matchStartInstant = Instant.now(clock).plusSeconds(matchStartDelay);
-        StartMatchTask startMatchTask = startMatchTaskFactory.apply(matchId);
-        taskScheduler.reschedule(startMatchTask, new DuneTaskId(DuneTaskType.START_MESSAGE, matchId), matchStartInstant);
+        DuneBotTaskId duneBotTaskId = new DuneBotTaskId(DuneTaskType.START_MESSAGE, matchId);
+        DunebotRunnable startMatchTask = taskFactory.createInstance(duneBotTaskId);
+        taskScheduler.rescheduleSingleRunTask(startMatchTask, duneBotTaskId, matchStartInstant);
     }
 
     private void unregisterMatchPlayerVote(CommandMessage commandMessage) {
@@ -149,7 +151,7 @@ public class VoteCommandProcessor extends CommandProcessor {
                                         savedMatch == null ? "null" : savedMatch.getPositiveAnswersCount());
 
                                 if (match.hasMissingPlayers()) {
-                                    taskScheduler.cancel(new DuneTaskId(DuneTaskType.START_MESSAGE, match.getId()));
+                                    taskScheduler.cancelSingleRunTask(new DuneBotTaskId(DuneTaskType.START_MESSAGE, match.getId()));
                                     ExternalMessageId externalStartId = match.getExternalStartId();
                                     if (externalStartId != null) {
                                         messagingService.deleteMessageAsync(externalStartId);

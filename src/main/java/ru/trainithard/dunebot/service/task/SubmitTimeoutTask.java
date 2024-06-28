@@ -1,10 +1,10 @@
-package ru.trainithard.dunebot.service.telegram.command.task;
+package ru.trainithard.dunebot.service.task;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 
 @Slf4j
-public class SubmitTimeoutTask implements Runnable {
+public class SubmitTimeoutTask implements DunebotRunnable {
     private final MatchFinishingService matchFinishingService;
     private final long matchId;
 

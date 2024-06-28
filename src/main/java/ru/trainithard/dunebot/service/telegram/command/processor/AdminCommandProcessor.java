@@ -3,11 +3,9 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
@@ -19,6 +17,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.report.RatingReportPdf;
 import ru.trainithard.dunebot.service.report.RatingReportPdfService;
+import ru.trainithard.dunebot.service.task.ShutdownTask;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -56,8 +55,8 @@ public class AdminCommandProcessor extends CommandProcessor {
     private final AppSettingsService appSettingsService;
     private final RatingReportPdfService reportService;
     private final DuneBotTaskScheduler taskScheduler;
+    private final ShutdownTask shutdownTask;
     private final Clock clock;
-    private final ApplicationContext applicationContext;
 
     @Value("${bot.admin-pdf-directory}")
     private String adminPdfPath;
@@ -180,22 +179,17 @@ public class AdminCommandProcessor extends CommandProcessor {
 
     private void shutdown(CommandMessage commandMessage) {
         String delayArg = commandMessage.getArgument(2);
-        DuneTaskId shutdownTaskId = new DuneTaskId(DuneTaskType.SHUTDOWN);
+        DuneBotTaskId shutdownTaskId = new DuneBotTaskId(DuneTaskType.SHUTDOWN);
         if ("cancel".equalsIgnoreCase(delayArg)) {
-            taskScheduler.cancel(shutdownTaskId);
+            taskScheduler.cancelSingleRunTask(shutdownTaskId);
             sendTopicsMessages("❎ Перезагрузка бота отменена.");
             return;
         }
 
         try {
             int delay = Integer.parseInt(delayArg.trim());
-            taskScheduler.reschedule(() -> {
-                        sendTopicsMessages("ℹ️ Бот перезагружается.");
-                        SpringApplication.exit(applicationContext, () -> 0);
-                    },
-                    shutdownTaskId, Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
-            sendTopicsMessages("⚠️ Бот будет перезагружен через " + delay + " минут.\n" +
-                               "‼️ Все незавершенные матчи будут принудительно завершены без зачета в рейтинг.");
+            taskScheduler.rescheduleSingleRunTask(shutdownTask, shutdownTaskId, Instant.now(clock).plus(delay, ChronoUnit.MINUTES));
+            sendTopicsMessages("⚠️ Бот будет перезагружен через " + delay + " минут. В это время возможны задержки в выполнении команд.");
         } catch (NumberFormatException e) {
             throw new AnswerableDuneBotException("Неверный аргумент", commandMessage);
         }

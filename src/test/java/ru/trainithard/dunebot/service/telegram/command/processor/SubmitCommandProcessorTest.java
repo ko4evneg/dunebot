@@ -17,8 +17,8 @@ import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
-import ru.trainithard.dunebot.configuration.scheduler.DuneTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
@@ -70,7 +70,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
-        doReturn(scheduledFuture).when(taskScheduler).schedule(any(), any(Instant.class));
+        doReturn(scheduledFuture).when(taskScheduler).rescheduleSingleRunTask(any(), any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
@@ -297,9 +297,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
         processor.process(getCommandMessage(USER_ID));
 
-        DuneTaskId expectedTaskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+        DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
         Instant expectedInstant = NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
-        verify(taskScheduler).reschedule(any(), eq(expectedTaskId), eq(expectedInstant));
+        verify(taskScheduler).rescheduleSingleRunTask(any(), eq(expectedTaskId), eq(expectedInstant));
     }
 
     @ParameterizedTest
@@ -317,7 +317,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() {
-        DuneTaskId taskId = new DuneTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
         doReturn(future).when(taskScheduler).get(taskId);
         doReturn(208L).when(future).getDelay(any());
@@ -325,7 +325,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         processor.process(submitCommandMessage);
 
         Instant expectedInstant = NOW.plus(208 + 420, ChronoUnit.SECONDS);
-        verify(taskScheduler).reschedule(any(), eq(taskId), eq(expectedInstant));
+        verify(taskScheduler).rescheduleSingleRunTask(any(), eq(taskId), eq(expectedInstant));
     }
 
     @Test
