@@ -29,7 +29,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class StartupServiceImpl implements StartupService {
     private static final String MATCH_FAIL_MESSAGE_TEMPLATE =
-            "Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота.";
+            "⚠️ Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота.";
 
     private final DuneBotTaskScheduler taskScheduler;
     private final DunebotTaskRepository taskRepository;

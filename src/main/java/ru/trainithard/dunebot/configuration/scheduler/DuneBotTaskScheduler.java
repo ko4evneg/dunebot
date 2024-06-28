@@ -1,7 +1,6 @@
 package ru.trainithard.dunebot.configuration.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import ru.trainithard.dunebot.model.scheduler.DuneBotTask;
@@ -17,7 +16,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.function.BiFunction;
 
 @Slf4j
-@Profile(value = {"prod", "dev"})
 @Component
 public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
     private static final int THREAD_POOL_SIZE = 2;

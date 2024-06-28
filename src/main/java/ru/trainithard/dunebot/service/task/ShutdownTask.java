@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
-import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
@@ -19,11 +18,10 @@ public class ShutdownTask implements DunebotRunnable {
     private final ConfigurableApplicationContext applicationContext;
     private final MessagingService messagingService;
     private final AppSettingsService appSettingsService;
-    private final DuneBotTaskScheduler taskScheduler;
 
     @Override
     public void run() {
-        sendTopicsMessages("ℹ️ Бот перезагружается.");
+        sendTopicsMessages("⚠️ Бот перезагружается.");
         log.info("Bot shutdown...");
         SpringApplication.exit(applicationContext, () -> 0);
     }

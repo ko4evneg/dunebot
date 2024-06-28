@@ -138,8 +138,8 @@ class StartupServiceImplTest extends TestContextMock {
         assertThat(actualMessage)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactlyInAnyOrder(
-                        Tuple.tuple("100500", 10001, "Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\."),
-                        Tuple.tuple("100500", 10002, "Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\.")
+                        Tuple.tuple("100500", 10001, "⚠️ Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\."),
+                        Tuple.tuple("100500", 10002, "⚠️ Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\.")
                 );
     }
 
@@ -156,7 +156,7 @@ class StartupServiceImplTest extends TestContextMock {
         assertThat(actualMessage)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(
-                        Tuple.tuple("100500", 10001, "Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\.")
+                        Tuple.tuple("100500", 10001, "⚠️ Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\.")
                 );
     }
 
@@ -173,7 +173,7 @@ class StartupServiceImplTest extends TestContextMock {
         assertThat(actualMessage)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(
-                        Tuple.tuple("100500", 10002, "Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\.")
+                        Tuple.tuple("100500", 10002, "⚠️ Бот был перезапущен, возможны задержки до двух минут в обработке команд или отправке сообщений бота\\.")
                 );
     }
 
