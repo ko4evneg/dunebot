@@ -42,10 +42,10 @@ class MatchExpirationServiceTest extends TestContextMock {
                              "values (10000, 'ExternalPollId', 10000, 12345, '10000', 9000, '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, reply_id, created_at) " +
                              "values (10001, 'ExternalPollId', 10001, 12345, '10000', 9000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, screenshot_path, created_at) " +
-                             "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, 'photos/1.jpg', '2010-10-10') ");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, screenshot_path, created_at) " +
-                             "values (10001, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, 'photos/1.jpg', '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                             "values (10000, 10000, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                             "values (10001, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 1, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
                              "values (10000, 10000, 10000, null, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, candidate_place, created_at) " +
@@ -68,6 +68,17 @@ class MatchExpirationServiceTest extends TestContextMock {
                 .queryForList("select state from matches where id between 10000 and 10001", MatchState.class);
 
         assertThat(actualStates).containsExactly(MatchState.EXPIRED, MatchState.EXPIRED);
+    }
+
+    @Test
+    void shoulSetNotSubmittedForNewMatchesWhenTimeoutReachedAndRequiredPlayersPresented() {
+        jdbcTemplate.execute("update matches set positive_answers_count = 4 where id between 10000 and 10001");
+        expirationService.expireUnusedMatches();
+
+        List<MatchState> actualStates = jdbcTemplate
+                .queryForList("select state from matches where id between 10000 and 10001", MatchState.class);
+
+        assertThat(actualStates).containsExactly(MatchState.NOT_SUBMITTED, MatchState.NOT_SUBMITTED);
     }
 
     @Test
