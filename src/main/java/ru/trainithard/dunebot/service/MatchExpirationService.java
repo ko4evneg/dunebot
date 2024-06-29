@@ -31,9 +31,14 @@ public class MatchExpirationService {
         newMatches.forEach(match -> {
             Instant expirationInstant = match.getCreatedAt().plus(EXPIRATION_TIMEOUT, ChronoUnit.MINUTES);
             LocalDateTime expirationTime = expirationInstant.atZone(ZoneId.systemDefault()).toLocalDateTime();
-            if (now.isAfter(expirationTime) && match.hasMissingPlayers()) {
-                match.setState(MatchState.EXPIRED);
-                log.debug("0: expiring match {}", match.getId());
+            if (now.isAfter(expirationTime)) {
+                if (match.hasMissingPlayers()) {
+                    match.setState(MatchState.EXPIRED);
+                    log.debug("0: expiring match {}", match.getId());
+                } else {
+                    match.setState(MatchState.NOT_SUBMITTED);
+                    log.debug("0: set not_submitted for match {}", match.getId());
+                }
             }
         });
         matchRepository.saveAll(newMatches);
