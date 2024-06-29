@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -17,13 +18,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             order by m.createdAt desc limit 1
             """)
     Optional<Match> findLatestOwnedMatchWithMatchPlayersBy(long playerId);
-
-    @Query("""
-            select m from Match m
-            left join fetch m.matchPlayers mp
-            where mp.player.externalId = :externalPlayerId and m.state in :matchStates
-            """)
-    List<Match> findPlayerMatches(long externalPlayerId, Collection<MatchState> matchStates);
 
     @Query("""
             select m1 from Match m1
@@ -45,7 +39,16 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             """)
     Optional<Match> findWithMatchPlayersBy(long matchId);
 
-    List<Match> findAllByStateNotIn(Collection<MatchState> states);
-
     List<Match> findAllByStateIn(Collection<MatchState> states);
+
+    @Query("""
+            select m from Match m
+            left join fetch m.matchPlayers mp
+            left join fetch mp.leader l
+            left join fetch mp.player p
+            where
+            (m.finishDate >= :from and m.finishDate <= :to or
+            m.finishDate is null and m.createdAt >= :from and m.createdAt <= :to)
+            and m.state in :states""")
+    List<Match> findMatchesInPeriod(LocalDate from, LocalDate to, Collection<MatchState> states);
 }
