@@ -27,4 +27,6 @@ public interface ExternalMessageFactory {
     ExternalMessage getHelpMessage();
 
     ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId);
+
+    ExternalMessage getSubmitMessage(long matchId);
 }

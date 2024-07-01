@@ -116,10 +116,9 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
 
     @Override
     public ExternalMessage getNonClonflictSubmitMessage(long matchId, int candidatePlace) {
-        return switch (candidatePlace) {
-            case 0 -> getAcceptedSubmitMessageTemplateForNonParticipant(matchId);
-            default -> getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
-        };
+        return candidatePlace == 0
+                ? getAcceptedSubmitMessageTemplateForNonParticipant(matchId)
+                : getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
     }
 
     private ExternalMessage getAcceptedSubmitMessageTemplateForNonParticipant(long matchId) {
@@ -198,6 +197,14 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     public ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId) {
         return new ExternalMessage().startBold().append("Матч ").append(matchId).endBold()
                 .append(" уже завершен. Регистрация вашего голоса невозможна.");
+    }
+
+    @Override
+    public ExternalMessage getSubmitMessage(long matchId) {
+        return new ExternalMessage("Регистрация результатов для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(". Нажмите по очереди кнопки с именами участвовавших игроков, " +
+                        "начиная от победителя и заканчивая последним местом.");
     }
 
     @Override
