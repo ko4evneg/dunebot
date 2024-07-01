@@ -13,11 +13,12 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import java.util.Collection;
 import java.util.List;
 
+import static ru.trainithard.dunebot.service.telegram.command.CallbackCommandDetector.LEADER_CALLBACK_SYMBOL;
+import static ru.trainithard.dunebot.service.telegram.command.CallbackCommandDetector.SUBMIT_PLAYERS_CALLBACK_SYMBOL;
+
 @Service
 @RequiredArgsConstructor
 public class KeyboardsFactoryImpl implements KeyboardsFactory {
-    private static final String LEADER_CALLBACK_SYMBOL = "_L_";
-    private static final String SUBMIT_PLAYERS_CALLBACK_SYMBOL = "_SP_";
     private final LeaderRepository leaderRepository;
 
     @Override

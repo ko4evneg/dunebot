@@ -58,6 +58,10 @@ public enum Command {
      */
     SUBMIT(TEXT, false, false, 1),
     /**
+     * Accepts a submitted player results.
+     */
+    PLAYER_ACCEPT(CALLBACK, false, false, 0),
+    /**
      * Resets current results and initiates match results requests.
      */
     RESUBMIT(TEXT, false, false, 1),
