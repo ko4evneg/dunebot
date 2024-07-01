@@ -47,7 +47,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class SubmitCommandProcessorTest extends TestContextMock {
-    private static final long CHAT_ID = 12000L;
+    private static final Long CHAT_ID = 12000L;
     private static final long USER_ID = 11000L;
     private static final int FINISH_MATCH_TIMEOUT = 120;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
@@ -148,16 +148,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendMessagesToEveryMatchPlayer() {
+    void shouldSendMessageToSubmitInitiator() {
         processor.process(submitCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
-        List<MessageDto> actualSendMessages = messageDtoCaptor.getAllValues();
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
-        assertThat(actualSendMessages)
-                .flatExtracting(MessageDto::getChatId)
-                .containsExactlyInAnyOrder("12000", "12001", "12002", "12003");
+        assertThat(actualMessageDto.getChatId()).isEqualTo(CHAT_ID.toString());
     }
 
     @Test
@@ -165,20 +163,22 @@ class SubmitCommandProcessorTest extends TestContextMock {
         processor.process(submitCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getValue();
         List<List<ButtonDto>> linedButtons = actualMessageDto.getKeyboard();
 
-        assertThat(actualMessageDto.getText()).isEqualTo("Выберите место, которое вы заняли в матче 15000:");
+        assertThat(actualMessageDto.getText()).isEqualTo("""
+                Регистрация результатов для *матча 15000*\\. \
+                Нажмите по очереди кнопки с именами участвовавших игроков, \
+                начиная от победителя и заканчивая последним местом\\.""");
         assertThat(linedButtons)
                 .flatExtracting(buttonDtos -> buttonDtos)
                 .extracting(ButtonDto::getText, ButtonDto::getCallback)
-                .containsExactly(
-                        tuple("1", "15000__1"),
-                        tuple("2", "15000__2"),
-                        tuple("3", "15000__3"),
-                        tuple("4", "15000__4"),
-                        tuple("не участвовал(а)", "15000__0")
+                .containsExactlyInAnyOrder(
+                        tuple("name1 (st_pl1) l1", "15000_SP_10000"),
+                        tuple("name2 (st_pl2) l2", "15000_SP_10001"),
+                        tuple("name3 (st_pl3) l3", "15000_SP_10002"),
+                        tuple("name4 (st_pl4) l4", "15000_SP_10003")
                 );
     }
 
@@ -192,42 +192,24 @@ class SubmitCommandProcessorTest extends TestContextMock {
         processor.process(submitCommandMessage);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(5)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto actualMessageDto = messageDtoCaptor.getAllValues().get(0);
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto actualMessageDto = messageDtoCaptor.getValue();
         List<List<ButtonDto>> linedButtons = actualMessageDto.getKeyboard();
 
-        assertThat(actualMessageDto.getText()).isEqualTo("Выберите место, которое вы заняли в матче 15000:");
+        assertThat(actualMessageDto.getText()).isEqualTo("""
+                Регистрация результатов для *матча 15000*\\. \
+                Нажмите по очереди кнопки с именами участвовавших игроков, \
+                начиная от победителя и заканчивая последним местом\\.""");
         assertThat(linedButtons)
                 .flatExtracting(buttonDtos -> buttonDtos)
                 .extracting(ButtonDto::getText, ButtonDto::getCallback)
-                .containsExactly(
-                        tuple("1", "15000__1"),
-                        tuple("2", "15000__2"),
-                        tuple("3", "15000__3"),
-                        tuple("4", "15000__4"),
-                        tuple("не участвовал(а)", "15000__0")
+                .containsExactlyInAnyOrder(
+                        tuple("name1 (st_pl1) l1", "15000_SP_10000"),
+                        tuple("name2 (st_pl2) l2", "15000_SP_10001"),
+                        tuple("name3 (st_pl3) l3", "15000_SP_10002"),
+                        tuple("name4 (st_pl4) l4", "15000_SP_10003"),
+                        tuple("name5 (st_pl5) l5", "15000_SP_10004")
                 );
-    }
-
-    @Test
-    void shouldSaveSubmitMessageIdsToMatchPlayers() {
-        Message replyMessage = new Message();
-        replyMessage.setMessageId(111001);
-        Chat chat = new Chat();
-        chat.setId(CHAT_ID);
-        Message message = new Message();
-        message.setMessageId(111000);
-        message.setReplyToMessage(replyMessage);
-        message.setChat(chat);
-
-        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
-        processor.process(submitCommandMessage);
-
-        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
-                                                                  "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id = 111001)", Long.class);
-
-        assertThat(assignedIdsPlayerCount).isEqualTo(4);
     }
 
     @Test
@@ -248,47 +230,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
         assertThat(actualState).isNotNull().isEqualTo(MatchState.ON_SUBMIT);
-    }
-
-    @Test
-    void shouldNotSaveSubmitMessageReplyIdToMatchPlayerFromPrivateChatSubmit() {
-        Chat chat = new Chat();
-        chat.setId(CHAT_ID);
-        Message message = new Message();
-        message.setMessageId(111000);
-        message.setChat(chat);
-
-        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
-        processor.process(submitCommandMessage);
-
-        Long assignedIdsPlayerCount = jdbcTemplate.queryForObject("select count(*) from match_players where external_submit_id in " +
-                                                                  "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
-
-        assertThat(assignedIdsPlayerCount).isEqualTo(4);
-    }
-
-    @Test
-    void shouldNotSaveSubmitMessageIdsForOtherMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
-                             "values (10004, 15000, 10004, '2010-10-10')");
-
-        Chat chat = new Chat();
-        chat.setId(CHAT_ID);
-        Message message = new Message();
-        message.setMessageId(111000);
-        message.setChat(chat);
-
-        doReturn(CompletableFuture.completedFuture(new ExternalMessageDto(message))).when(messagingService).sendMessageAsync(any(MessageDto.class));
-
-        processor.process(submitCommandMessage);
-
-        List<Long> assignedIdsPlayers = jdbcTemplate.queryForList("select id from match_players where external_submit_id in " +
-                                                                  "(select id from external_messages where chat_id = " + CHAT_ID + " and message_id = 111000 and reply_id is null)", Long.class);
-
-        assertThat(assignedIdsPlayers).isNotEmpty().doesNotContain(11004L);
     }
 
     @Test
