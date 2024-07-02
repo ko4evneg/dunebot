@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -24,7 +25,6 @@ import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
-import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -59,8 +59,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
     private Clock clock;
     @MockBean
     private DuneBotTaskScheduler taskScheduler;
-    @MockBean
-    private MatchFinishingService finishingService;
 
     @BeforeEach
     void beforeEach() {
@@ -95,11 +93,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
                              "values (10003, 15000, 10003, '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10001, '" + AppSettingKey.FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT + "', 9, '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from app_settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
@@ -212,7 +212,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchOnSubmitState() {
+    void shouldSetSubmitMatchState() {
         Message replyMessage = new Message();
         replyMessage.setMessageId(111001);
         Chat chat = new Chat();
@@ -235,16 +235,18 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnFirstSubmit() {
         jdbcTemplate.execute("update matches set submits_count = 0 where id = 15000");
 
-        processor.process(getCommandMessage(USER_ID));
+        processor.process(submitCommandMessage);
 
         DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
         Instant expectedInstant = NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
         verify(taskScheduler).rescheduleSingleRunTask(any(), eq(expectedTaskId), eq(expectedInstant));
     }
 
-    @Test
-    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() {
-        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+    @ParameterizedTest
+    @EnumSource(value = DuneTaskType.class, mode = EnumSource.Mode.INCLUDE, names = {"SUBMIT_TIMEOUT", "SUBMIT_TIMEOUT_NOTIFICATION"})
+    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit(DuneTaskType taskType) {
+        jdbcTemplate.execute("update matches set submits_retry_count = 2 where id = 15000");
+        DuneBotTaskId taskId = new DuneBotTaskId(taskType, 15000L);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
         doReturn(future).when(taskScheduler).get(taskId);
         doReturn(208L).when(future).getDelay(any());
