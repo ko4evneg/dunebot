@@ -27,8 +27,10 @@ public class SubmitTimeoutNotificationTask implements DunebotRunnable {
         log.debug("PRE_TIMEOUT_NOTIFICATION match {} finishing started", matchId);
         matchRepository.findWithMatchPlayersBy(matchId).ifPresent(match -> {
             ExternalMessage externalMessage = messageFactory.getPreSubmitTimeoutNotificationMessage(match);
-            MessageDto message = new MessageDto(match.getExternalPollId(), externalMessage);
-            messagingService.sendMessageAsync(message);
+            if (!externalMessage.getText().isBlank()) {
+                MessageDto message = new MessageDto(match.getExternalPollId(), externalMessage);
+                messagingService.sendMessageAsync(message);
+            }
         });
     }
 }
