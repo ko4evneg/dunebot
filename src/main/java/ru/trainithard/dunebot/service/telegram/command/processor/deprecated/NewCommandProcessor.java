@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.processor;
+package ru.trainithard.dunebot.service.telegram.command.processor.deprecated;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -6,6 +6,7 @@ import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 
 /**
  * Deprecated - stub message
