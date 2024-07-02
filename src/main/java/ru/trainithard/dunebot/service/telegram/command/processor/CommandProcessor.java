@@ -12,15 +12,15 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
  */
 public abstract class CommandProcessor {
     @Autowired
-    TransactionTemplate transactionTemplate;
+    protected TransactionTemplate transactionTemplate;
     @Autowired
-    MessagingService messagingService;
+    protected MessagingService messagingService;
 
     public abstract void process(CommandMessage commandMessage);
 
     public abstract Command getCommand();
 
-    int logId() {
+    protected int logId() {
         return LogId.get();
     }
 }

@@ -24,4 +24,7 @@
     <changeSet id="007-screenshot-step-removal" author="ko4evneg">
         <sqlFile path="migrations/07_screenshot_step_removal.sql"/>
     </changeSet>
+    <changeSet id="08-pre-timeout-message" author="ko4evneg">
+        <sqlFile path="migrations/08_pre_timeout_message.sql"/>
+    </changeSet>
 </databaseChangeLog>

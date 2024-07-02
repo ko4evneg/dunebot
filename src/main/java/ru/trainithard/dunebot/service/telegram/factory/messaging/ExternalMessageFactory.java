@@ -24,6 +24,8 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getMatchSuccessfulFinishMessage(Match match);
 
+    ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match);
+
     ExternalMessage getHelpMessage();
 
     ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId);
