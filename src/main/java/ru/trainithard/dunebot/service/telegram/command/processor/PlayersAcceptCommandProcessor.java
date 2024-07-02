@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -25,10 +24,9 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 
 @Service
 @RequiredArgsConstructor
-public class PlayersAcceptCommandProcessor extends CommandProcessor {
+public class PlayersAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
     private static final String ALREADY_ACCEPTED_SUBMIT_MESSAGE_TEMPLATE =
             "Вы уже назначили игроку %s место %d. Выберите другого игрока, или используйте команду '/resubmit %d', чтобы начать заново.";
-    private static final String FINISHED_MATCH_SUBMIT_MESSAGE_TEMPLATE = "Матч %d уже завершен. Регистрация результат более невозможна.";
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final ExternalMessageFactory externalMessageFactory;
@@ -48,7 +46,7 @@ public class PlayersAcceptCommandProcessor extends CommandProcessor {
             Integer place = matchPlayer.getPlace();
             if (matchPlayer.getId().equals(matchPlayerId)) {
                 submittedPlayer = matchPlayer;
-                validatePlayerWasNotSubmittedBefore(commandMessage, matchPlayer, place, match);
+                validatePlayerIsNotSubmitted(commandMessage, matchPlayer, place, matchId);
             }
             if (place != null && place != NOT_PARTICIPATED_MATCH_PLACE) {
                 maxSubmittedPlace = Math.max(place, maxSubmittedPlace);
@@ -66,17 +64,10 @@ public class PlayersAcceptCommandProcessor extends CommandProcessor {
         }
     }
 
-    private void validatePlayerWasNotSubmittedBefore(CommandMessage commandMessage, MatchPlayer matchPlayer, Integer place, Match match) {
+    private void validatePlayerIsNotSubmitted(CommandMessage commandMessage, MatchPlayer matchPlayer, Integer place, long matchId) {
         if (place != null) {
             String playerName = matchPlayer.getPlayer().getFriendlyName();
-            String message = String.format(ALREADY_ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, playerName, place, match.getId());
-            throw new AnswerableDuneBotException(message, commandMessage);
-        }
-    }
-
-    private void validateMatchIsNotFinished(CommandMessage commandMessage, Match match) {
-        if (MatchState.getEndedMatchStates().contains(match.getState())) {
-            String message = String.format(FINISHED_MATCH_SUBMIT_MESSAGE_TEMPLATE, match.getId());
+            String message = String.format(ALREADY_ACCEPTED_SUBMIT_MESSAGE_TEMPLATE, playerName, place, matchId);
             throw new AnswerableDuneBotException(message, commandMessage);
         }
     }
@@ -85,7 +76,7 @@ public class PlayersAcceptCommandProcessor extends CommandProcessor {
         ExternalMessage playerSubmitFinishMessage = externalMessageFactory.getFinishedPlayersSubmitMessage(match.getMatchPlayers());
         messagingService.sendMessageAsync(new MessageDto(commandMessage, playerSubmitFinishMessage, null));
         ExternalMessage leadersSubmitMessage = externalMessageFactory.getLeadersSubmitMessage(match.getId());
-        List<List<ButtonDto>> leadersKeyboard = keyboardsFactory.getLeadersKeyboard(match);
+        List<List<ButtonDto>> leadersKeyboard = keyboardsFactory.getSubmitLeadersKeyboard(match);
         messagingService.sendMessageAsync(new MessageDto(commandMessage, leadersSubmitMessage, leadersKeyboard));
     }
 

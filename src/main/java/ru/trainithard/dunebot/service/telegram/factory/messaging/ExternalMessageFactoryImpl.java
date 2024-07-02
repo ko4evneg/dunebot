@@ -219,11 +219,31 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
-    public ExternalMessage getSubmitMessage(long matchId) {
+    public ExternalMessage getPlayersSubmitMessage(long matchId) {
         return new ExternalMessage("Регистрация результатов для ")
                 .startBold().append("матча ").append(matchId).endBold()
                 .append(". Нажмите по очереди кнопки с именами участвовавших игроков, " +
                         "начиная от победителя и заканчивая последним местом.");
+    }
+
+    @Override
+    public ExternalMessage getLeadersSubmitMessage(long matchId) {
+        return new ExternalMessage("Теперь выберите лидеров для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(". Нажмите по очереди кнопки с именами лидеров, " +
+                        "начиная от лидера победителя и заканчивая лидером, занявшим последнее место.");
+    }
+
+    @Override
+    public ExternalMessage getFinishedPlayersSubmitMessage(Collection<MatchPlayer> matchPlayers) {
+        Long matchId = matchPlayers.stream().findFirst().orElseThrow().getMatch().getId();
+        String orderedParticipants = matchPlayers.stream()
+                .sorted(Comparator.comparing(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace())))
+                .map(matchPlayer -> matchPlayer.getPlace() + ": " + matchPlayer.getPlayer().getFriendlyName())
+                .collect(Collectors.joining(EXTERNAL_LINE_SEPARATOR));
+        return new ExternalMessage("Следующие результаты зарегистрированы для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(":").newLine().append(orderedParticipants);
     }
 
     @Override

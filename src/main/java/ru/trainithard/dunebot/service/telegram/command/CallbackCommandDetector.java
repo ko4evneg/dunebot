@@ -5,6 +5,7 @@ import java.util.Map;
 public class CallbackCommandDetector {
     public static final String LEADER_CALLBACK_SYMBOL = "_L_";
     public static final String SUBMIT_PLAYERS_CALLBACK_SYMBOL = "_SP_";
+    public static final String SUBMIT_LEADERS_CALLBACK_SYMBOL = "_SL_";
     private static final Map<String, Command> commandByCallbackText = Map.of(
             LEADER_CALLBACK_SYMBOL, Command.LEADER,
             SUBMIT_PLAYERS_CALLBACK_SYMBOL, Command.PLAYER_ACCEPT

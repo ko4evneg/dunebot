@@ -26,9 +26,13 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match);
 
+    ExternalMessage getLeadersSubmitMessage(long matchId);
+
+    ExternalMessage getFinishedPlayersSubmitMessage(Collection<MatchPlayer> matchPlayers);
+
     ExternalMessage getHelpMessage();
 
     ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId);
 
-    ExternalMessage getSubmitMessage(long matchId);
+    ExternalMessage getPlayersSubmitMessage(long matchId);
 }

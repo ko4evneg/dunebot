@@ -85,7 +85,7 @@ class PlayersAcceptCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetThirdPlaceWhenNoPlacesSelectedYet() {
+    void shouldSetThirdPlaceWhenTwoPlacesSelected() {
         jdbcTemplate.execute("update match_players set place = 1 where id = 10101");
         jdbcTemplate.execute("update match_players set place = 2 where id = 10102");
 
@@ -161,7 +161,7 @@ class PlayersAcceptCommandProcessorTest extends TestContextMock {
 
         assertThatThrownBy(() -> processor.process(callbackMessage))
                 .isInstanceOf(AnswerableDuneBotException.class)
-                .hasMessage("Матч 15000 уже завершен. Регистрация результат более невозможна.");
+                .hasMessage("Матч 15000 уже завершен. Регистрация результата более невозможна.");
     }
 
     @Test
