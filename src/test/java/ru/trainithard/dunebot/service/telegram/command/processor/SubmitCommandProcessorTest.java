@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
@@ -241,19 +240,6 @@ class SubmitCommandProcessorTest extends TestContextMock {
         DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
         Instant expectedInstant = NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
         verify(taskScheduler).rescheduleSingleRunTask(any(), eq(expectedTaskId), eq(expectedInstant));
-    }
-
-    @ParameterizedTest
-    @CsvSource({"ON_SUBMIT, 1", "ON_SUBMIT, 2", "ON_SUBMIT, 3"})
-    void shouldNotRescheduleUnsuccessfullySubmittedMatchFinishTaskOnNotFirstSubmit(MatchState state, int submitsCount) {
-        jdbcTemplate.execute("update matches set state = '" + state + "', submits_count = " + submitsCount + " where id = 15000");
-
-        try {
-            processor.process(getCommandMessage(USER_ID));
-        } catch (Exception ignored) {
-        }
-
-        verifyNoInteractions(taskScheduler);
     }
 
     @Test

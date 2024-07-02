@@ -65,7 +65,7 @@ public class SubmitCommandProcessor extends CommandProcessor {
             log.debug("{}: match {} saved state ON_SUBMIT", logId, match.getId());
         }
 
-        ExternalMessage submitMessage = messageFactory.getSubmitMessage(match.getId());
+        ExternalMessage submitMessage = messageFactory.getPlayersSubmitMessage(match.getId());
         List<List<ButtonDto>> submitPlayersKeyboard = keyboardsFactory.getSubmitPlayersKeyboard(match.getMatchPlayers());
         MessageDto submitPlayersMessage = new MessageDto(chatId, submitMessage, null, submitPlayersKeyboard);
         messagingService.sendMessageAsync(submitPlayersMessage);
