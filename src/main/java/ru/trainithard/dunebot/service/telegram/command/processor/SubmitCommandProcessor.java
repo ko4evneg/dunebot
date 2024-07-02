@@ -94,22 +94,32 @@ public class SubmitCommandProcessor extends CommandProcessor {
             });
         }
 
-        rescheduleForcedFailFinish(match.getId());
+        rescheduleTimeoutJobs(match.getId());
 
         log.debug("{}: SUBMIT(internal) ended", logId);
     }
 
-    private void rescheduleForcedFailFinish(long matchId) {
+    private void rescheduleTimeoutJobs(long matchId) {
         int finishMatchTimeout = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         DuneBotTaskId submitTimeoutTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
-        ScheduledFuture<?> oldFailFinishTask = taskScheduler.get(submitTimeoutTaskId);
-        if (oldFailFinishTask != null) {
-            long delay = oldFailFinishTask.getDelay(TimeUnit.SECONDS);
-            forcedFinishTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
+        reschedule(submitTimeoutTaskId, forcedFinishTime);
+
+        int forcedFinishNotificationTimeout = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT);
+        Instant forcedFinishNotificationTime = forcedFinishTime.minus(forcedFinishNotificationTimeout, ChronoUnit.MINUTES);
+        DuneBotTaskId submitTimeoutNotificationTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, matchId);
+        reschedule(submitTimeoutNotificationTaskId, forcedFinishNotificationTime);
+    }
+
+    private void reschedule(DuneBotTaskId taskId, Instant scheduledTime) {
+        ScheduledFuture<?> oldFailFinishNotificationTask = taskScheduler.get(taskId);
+        Instant rescheduledTime = scheduledTime;
+        if (oldFailFinishNotificationTask != null) {
+            long delay = oldFailFinishNotificationTask.getDelay(TimeUnit.SECONDS);
+            rescheduledTime = Instant.now(clock).plus(RESUBMIT_TIME_LIMIT_STEP + delay, ChronoUnit.SECONDS);
         }
-        DunebotRunnable submitTimeoutTask = taskFactory.createInstance(submitTimeoutTaskId);
-        taskScheduler.rescheduleSingleRunTask(submitTimeoutTask, submitTimeoutTaskId, forcedFinishTime);
+        DunebotRunnable task = taskFactory.createInstance(taskId);
+        taskScheduler.rescheduleSingleRunTask(task, taskId, rescheduledTime);
     }
 
     private MessageDto getSubmitCallbackMessage(MatchPlayer matchPlayer, Match match) {
