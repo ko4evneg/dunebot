@@ -11,6 +11,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.task.StartMatchTask;
+import ru.trainithard.dunebot.service.task.SubmitTimeoutNotificationTask;
 import ru.trainithard.dunebot.service.task.SubmitTimeoutTask;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
@@ -54,6 +55,17 @@ public class TasksConfiguration {
     @Bean
     public BiFunction<Runnable, DuneBotTaskId, StateRunnable> stateTaskFactory() {
         return this::stateTask;
+    }
+
+    @Bean
+    public Function<Long, SubmitTimeoutNotificationTask> submitTimeoutNotificationTaskFactory() {
+        return this::submitTimeoutNotificationTask;
+    }
+
+    @Bean
+    @Scope("prototype")
+    public SubmitTimeoutNotificationTask submitTimeoutNotificationTask(long matchId) {
+        return new SubmitTimeoutNotificationTask(matchRepository, messagingService, messageFactory, matchId);
     }
 
     @Bean

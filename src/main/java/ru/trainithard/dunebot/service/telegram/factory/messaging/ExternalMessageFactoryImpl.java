@@ -201,6 +201,20 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
+    public ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match) {
+        String playerTags = match.getMatchPlayers().stream()
+                .map(matchPlayer -> {
+                    Player player = matchPlayer.getPlayer();
+                    return MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+                })
+                .collect(Collectors.joining(", "));
+        return new ExternalMessage().appendBold("⚠️ Внимание: ").append("осталось 10 минут на публикацию результатов ")
+                .startBold().append("матча ").append(match.getId()).endBold().append("!").newLine()
+                .append("Результат еще не зарегистрировали игроки:").newLine()
+                .appendRaw(playerTags);
+    }
+
+    @Override
     public ExternalMessage getHelpMessage() {
         return new ExternalMessage()
                 .startBold().append("Dunebot v").append(version).endBold().newLine().newLine()
