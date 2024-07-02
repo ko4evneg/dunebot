@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
@@ -198,6 +199,24 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     public ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId) {
         return new ExternalMessage().startBold().append("Матч ").append(matchId).endBold()
                 .append(" уже завершен. Регистрация вашего голоса невозможна.");
+    }
+
+    @Override
+    public ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match) {
+        if (MatchState.getEndedMatchStates().contains(match.getState())) {
+            return null;
+        }
+        String playerTags = match.getMatchPlayers().stream()
+                .filter(matchPlayer -> matchPlayer.getCandidatePlace() == null)
+                .map(matchPlayer -> {
+                    Player player = matchPlayer.getPlayer();
+                    return MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+                })
+                .collect(Collectors.joining(", "));
+        return new ExternalMessage().appendBold("⚠️ Внимание: ").append("осталось 10 минут на публикацию результатов ")
+                .startBold().append("матча ").append(match.getId()).endBold().append("!").newLine()
+                .append("Результат еще не зарегистрировали игроки:").newLine()
+                .appendRaw(playerTags);
     }
 
     @Override

@@ -96,11 +96,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
                              "values (10003, 15000, 10003, '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
+        jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
+                             "values (10001, '" + AppSettingKey.FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT + "', 9, '2010-10-10')");
     }
 
     @AfterEach
     void afterEach() {
-        jdbcTemplate.execute("delete from app_settings where id = 10000");
+        jdbcTemplate.execute("delete from app_settings where id in (10000, 10001)");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
@@ -302,9 +304,20 @@ class SubmitCommandProcessorTest extends TestContextMock {
         verify(taskScheduler).rescheduleSingleRunTask(any(), eq(expectedTaskId), eq(expectedInstant));
     }
 
+    @Test
+    void shouldScheduleMatchFinishNotificationOnFirstSubmit() {
+        jdbcTemplate.execute("update matches set submits_count = 0 where id = 15000");
+
+        processor.process(getCommandMessage(USER_ID));
+
+        DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, 15000L);
+        Instant expectedInstant = NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES).minusSeconds(60 * 9);
+        verify(taskScheduler).rescheduleSingleRunTask(any(), eq(expectedTaskId), eq(expectedInstant));
+    }
+
     @ParameterizedTest
     @CsvSource({"ON_SUBMIT, 1", "ON_SUBMIT, 2", "ON_SUBMIT, 3"})
-    void shouldNotRescheduleUnsuccessfullySubmittedMatchFinishTaskOnNotFirstSubmit(MatchState state, int submitsCount) {
+    void shouldNotRescheduleAnyTaskOnNotFirstSubmit(MatchState state, int submitsCount) {
         jdbcTemplate.execute("update matches set state = '" + state + "', submits_count = " + submitsCount + " where id = 15000");
 
         try {
@@ -318,6 +331,19 @@ class SubmitCommandProcessorTest extends TestContextMock {
     @Test
     void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit() {
         DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+        ScheduledFuture<?> future = mock(ScheduledFuture.class);
+        doReturn(future).when(taskScheduler).get(taskId);
+        doReturn(208L).when(future).getDelay(any());
+
+        processor.process(submitCommandMessage);
+
+        Instant expectedInstant = NOW.plus(208 + 420, ChronoUnit.SECONDS);
+        verify(taskScheduler).rescheduleSingleRunTask(any(), eq(taskId), eq(expectedInstant));
+    }
+
+    @Test
+    void shouldRescheduleMatchFinishNotificationTaskOnResubmit() {
+        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, 15000L);
         ScheduledFuture<?> future = mock(ScheduledFuture.class);
         doReturn(future).when(taskScheduler).get(taskId);
         doReturn(208L).when(future).getDelay(any());
