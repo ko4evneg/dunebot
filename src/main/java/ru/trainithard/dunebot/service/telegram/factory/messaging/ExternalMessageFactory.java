@@ -30,6 +30,8 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getFinishedPlayersSubmitMessage(Collection<MatchPlayer> matchPlayers);
 
+    ExternalMessage getFinishedLeadersSubmitMessage(Collection<MatchPlayer> matchPlayers);
+
     ExternalMessage getHelpMessage();
 
     ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId);

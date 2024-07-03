@@ -247,6 +247,24 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
+    public ExternalMessage getFinishedLeadersSubmitMessage(Collection<MatchPlayer> matchPlayers) {
+        Long matchId = matchPlayers.stream().findFirst().orElseThrow().getMatch().getId();
+        String orderedParticipants = matchPlayers.stream()
+                .sorted(Comparator.comparing(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace())))
+                .map(matchPlayer -> {
+                    int place = matchPlayer.getPlace();
+                    String playerName = matchPlayer.getPlayer().getFriendlyName();
+                    String leaderName = matchPlayer.getLeader().getName();
+                    return String.format("%d: %s  -  %s", place, playerName, leaderName);
+                })
+                .collect(Collectors.joining(EXTERNAL_LINE_SEPARATOR));
+        return new ExternalMessage("Следующие результаты зарегистрированы для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(":").newLine().append(orderedParticipants).newLine().newLine()
+                .append("В случае ошибки используйте команду '/resubmit 15000'");
+    }
+
+    @Override
     public ExternalMessage getHelpMessage() {
         return new ExternalMessage()
                 .startBold().append("Dunebot v").append(version).endBold().newLine().newLine()
