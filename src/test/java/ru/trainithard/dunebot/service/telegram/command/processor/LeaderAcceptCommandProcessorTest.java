@@ -9,30 +9,53 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.task.SubmitAcceptTimeoutTask;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 class LeaderAcceptCommandProcessorTest extends TestContextMock {
+    private static final Instant NOW = LocalDate.of(2010, 10, 20).atTime(5, 0).toInstant(ZoneOffset.UTC);
     private static final Long CHAT_ID = 12000L;
     private static final Long USER_ID = 11000L;
 
     @Autowired
     private LeaderAcceptCommandProcessor processor;
+    @MockBean
+    private DuneBotTaskScheduler taskScheduler;
+    @MockBean
+    private Clock clock;
 
     @BeforeEach
     void beforeEach() {
+        Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
+
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + USER_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
@@ -64,7 +87,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
                              "(10203, 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
-                             "values (10000, '" + AppSettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
+                             "values (10000, '" + AppSettingKey.ACCEPT_SUBMIT_TIMEOUT + "', 13, '2010-10-10')");
     }
 
     @AfterEach
@@ -144,6 +167,19 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
                 .isInstanceOf(AnswerableDuneBotException.class)
                 .hasMessage("Вы уже назначили лидера la leader 2 игроку name2 (st_pl2) l2. " +
                             "Выберите другого лидера, или используйте команду '/resubmit 15000', чтобы начать заново.");
+    }
+
+    @Test
+    void shouldScheduleFinishMatchTaskOnLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
+        jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10200"));
+
+        Instant expectedStartTime = NOW.plus(13, ChronoUnit.MINUTES);
+        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_ACCEPT_TIMEOUT, 15000L);
+        verify(taskScheduler).rescheduleSingleRunTask(isA(SubmitAcceptTimeoutTask.class), eq(taskId), eq(expectedStartTime));
     }
 
     @Test

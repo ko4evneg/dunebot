@@ -31,6 +31,10 @@ public enum AppSettingKey {
      */
     FINISH_MATCH_TIMEOUT,
     /**
+     * Timeout in minutes for started match - ends match if no submit was done before this timeout
+     */
+    ACCEPT_SUBMIT_TIMEOUT,
+    /**
      * Time in minutes before the FINISH_MATCH_TIMEOUT, in which notification will be send about upcoming match finish.
      */
     FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT,

@@ -2,22 +2,27 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
+import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
+import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
-import ru.trainithard.dunebot.model.Leader;
-import ru.trainithard.dunebot.model.Match;
-import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.LeaderRepository;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.task.DuneScheduledTaskFactory;
+import ru.trainithard.dunebot.service.task.DunebotRunnable;
 import ru.trainithard.dunebot.service.telegram.command.CallbackCommandDetector;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
-import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactory;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -27,12 +32,14 @@ import java.util.Objects;
 public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
     private static final String ALREADY_ACCEPTED_SUBMIT_MESSAGE_TEMPLATE =
             "Вы уже назначили лидера %s игроку %s. Выберите другого лидера, или используйте команду '/resubmit %d', чтобы начать заново.";
-    private static final String FINISHED_MATCH_SUBMIT_MESSAGE_TEMPLATE = "Матч %d уже завершен. Регистрация результат более невозможна.";
     private final MatchRepository matchRepository;
     private final MatchPlayerRepository matchPlayerRepository;
     private final LeaderRepository leaderRepository;
     private final ExternalMessageFactory externalMessageFactory;
-    private final KeyboardsFactory keyboardsFactory;
+    private final DuneBotTaskScheduler taskScheduler;
+    private final DuneScheduledTaskFactory taskFactory;
+    private final Clock clock;
+    private final AppSettingsService appSettingsService;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -64,8 +71,17 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         });
 
         if (nextLeaderPlace == match.getModType().getPlayersCount()) {
+            rescheduleAcceptSubmitTimeoutTask(matchId);
             sendPlayersSubmitCompletedMessages(commandMessage, match);
         }
+    }
+
+    private void rescheduleAcceptSubmitTimeoutTask(long matchId) {
+        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_ACCEPT_TIMEOUT, matchId);
+        DunebotRunnable submitAcceptTimeoutTask = taskFactory.createInstance(taskId);
+        int acceptSubmitTimeout = appSettingsService.getIntSetting(AppSettingKey.ACCEPT_SUBMIT_TIMEOUT);
+        Instant startTime = Instant.now(clock).plus(acceptSubmitTimeout, ChronoUnit.MINUTES);
+        taskScheduler.rescheduleSingleRunTask(submitAcceptTimeoutTask, taskId, startTime);
     }
 
     private void validateLeaderIsNotSubmitted(CommandMessage commandMessage, MatchPlayer matchPlayer, Leader leader, long matchId) {
