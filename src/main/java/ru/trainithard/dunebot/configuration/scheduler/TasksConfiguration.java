@@ -11,6 +11,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.task.StartMatchTask;
+import ru.trainithard.dunebot.service.task.SubmitAcceptTimeoutTask;
 import ru.trainithard.dunebot.service.task.SubmitTimeoutNotificationTask;
 import ru.trainithard.dunebot.service.task.SubmitTimeoutTask;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
@@ -66,6 +67,17 @@ public class TasksConfiguration {
     @Scope("prototype")
     public SubmitTimeoutNotificationTask submitTimeoutNotificationTask(long matchId) {
         return new SubmitTimeoutNotificationTask(matchRepository, messagingService, messageFactory, matchId);
+    }
+
+    @Bean
+    public Function<Long, SubmitAcceptTimeoutTask> submitAcceptTimeoutTaskFactory() {
+        return this::submitAcceptTimeoutTask;
+    }
+
+    @Bean
+    @Scope("prototype")
+    public SubmitAcceptTimeoutTask submitAcceptTimeoutTask(long matchId) {
+        return new SubmitAcceptTimeoutTask(matchFinishingService, matchId);
     }
 
     @Bean
