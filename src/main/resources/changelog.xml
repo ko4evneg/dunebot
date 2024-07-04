@@ -27,7 +27,7 @@
     <changeSet id="08-pre-timeout-message" author="ko4evneg">
         <sqlFile path="migrations/08_pre_timeout_message.sql"/>
     </changeSet>
-    <changeSet id="09-accept-timeout-task" author="ko4evneg">
-        <sqlFile path="migrations/09_accept_timeout_task.sql"/>
+    <changeSet id="09-single-player-submit" author="ko4evneg">
+        <sqlFile path="migrations/09_single_player_submit.sql"/>
     </changeSet>
 </databaseChangeLog>
