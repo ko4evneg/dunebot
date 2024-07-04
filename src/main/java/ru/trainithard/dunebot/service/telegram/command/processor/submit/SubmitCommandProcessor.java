@@ -9,6 +9,7 @@ import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
     private static final int RESUBMIT_TIME_LIMIT_STEP = 60 * 7;
-
+    private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
     private final DuneBotTaskScheduler taskScheduler;
     private final SubmitValidatedMatchRetriever validatedMatchRetriever;
@@ -57,13 +58,14 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     void process(Match match, Long chatId) {
-        int logId = logId();
-        log.debug("{}: SUBMIT(internal) started", logId);
+        log.debug("{}: SUBMIT(internal) started", logId());
 
         if (match.getState() == MatchState.NEW) {
             match.setState(MatchState.ON_SUBMIT);
             matchRepository.save(match);
-            log.debug("{}: match {} saved state ON_SUBMIT", logId, match.getId());
+            log.debug("{}: match {} saved state ON_SUBMIT", logId(), match.getId());
+        } else if (match.getState() == MatchState.SUBMITTED) {
+            resetMatchAndPlayersSubmitState(match);
         }
 
         ExternalMessage submitMessage = messageFactory.getPlayersSubmitMessage(match.getId());
@@ -72,7 +74,20 @@ public class SubmitCommandProcessor extends CommandProcessor {
         messagingService.sendMessageAsync(submitPlayersMessage);
         rescheduleFinishTasks(match.getId());
 
-        log.debug("{}: SUBMIT(internal) ended", logId);
+        log.debug("{}: SUBMIT(internal) ended", logId());
+    }
+
+    private void resetMatchAndPlayersSubmitState(Match match) {
+        match.prepareForResubmit();
+        match.getMatchPlayers().forEach(matchPlayer -> {
+            matchPlayer.setPlace(null);
+            matchPlayer.setLeader(null);
+        });
+        transactionTemplate.executeWithoutResult(status -> {
+            matchRepository.save(match);
+            matchPlayerRepository.saveAll(match.getMatchPlayers());
+        });
+        log.debug("{}: match {} and its players prepared for resubmit and receive ON_SUBMIT state", logId(), match.getId());
     }
 
     private void rescheduleFinishTasks(long matchId) {

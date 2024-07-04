@@ -13,6 +13,7 @@ import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -22,9 +23,11 @@ import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
+import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -37,6 +40,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Stream;
@@ -47,14 +51,17 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class SubmitCommandProcessorTest extends TestContextMock {
     private static final Long CHAT_ID = 12000L;
-    private static final long USER_ID = 11000L;
+    private static final long USER_ID_1 = 11000L;
+    private static final long USER_ID_2 = 11001L;
     private static final int FINISH_MATCH_TIMEOUT = 120;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
             .toInstant(ZoneOffset.UTC);
-    private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID);
+    private final CommandMessage submitCommandMessage = getCommandMessage(USER_ID_1);
 
     @Autowired
     private SubmitCommandProcessor processor;
+    @Autowired
+    private MatchRepository matchRepository;
     @MockBean
     private Clock clock;
     @MockBean
@@ -70,9 +77,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
         doReturn(scheduledFuture).when(taskScheduler).rescheduleSingleRunTask(any(), any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10000, " + USER_ID + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + USER_ID_1 + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10001, 11001, 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, " + USER_ID_2 + ", 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
@@ -81,8 +88,8 @@ class SubmitCommandProcessorTest extends TestContextMock {
                              "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                              "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
-                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, '2010-10-10') ");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, submits_retry_count, created_at) " +
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.NEW + "', 4, 0, '2010-10-10') ");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10000, 15000, 10000, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
@@ -91,6 +98,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
                              "values (10002, 15000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 15000, 10003, '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10200, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10201, 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10202, 'la leader 3', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
+                             "(10203, 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.SUBMIT_TIMEOUT + "', 120, '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
@@ -101,6 +116,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
     void afterEach() {
         jdbcTemplate.execute("delete from app_settings where id between 10000 and 10001");
         jdbcTemplate.execute("delete from match_players where match_id in (15000, 15001)");
+        jdbcTemplate.execute("delete from leaders where id between 10200 and 10203");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
         jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006");
@@ -233,9 +249,56 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnFirstSubmit() {
-        jdbcTemplate.execute("update matches set submits_count = 0 where id = 15000");
+    void shouldResetMatchSubmitDataOnResubmit() {
+        jdbcTemplate.execute("update matches set state ='" + MatchState.SUBMITTED + "' where id = 15000");
+        Match match = matchRepository.findWithMatchPlayersBy(15000L).orElseThrow();
 
+        processor.process(match, USER_ID_2);
+
+        Match actualMatch = jdbcTemplate.queryForObject("select submits_retry_count, state from matches where id = 15000",
+                new BeanPropertyRowMapper<>(Match.class));
+
+        assertThat(actualMatch)
+                .extracting(Match::getState, Match::getSubmitsRetryCount)
+                .containsExactly(MatchState.ON_SUBMIT, 1);
+    }
+
+    @Test
+    void shouldResetMatchPlayersPlacesOnResubmit() {
+        jdbcTemplate.execute("update matches set state ='" + MatchState.SUBMITTED + "' where id = 15000");
+        jdbcTemplate.execute("update match_players set place = 1, leader = 10200 where id = 10000");
+        jdbcTemplate.execute("update match_players set place = 2, leader = 10201 where id = 10001");
+        jdbcTemplate.execute("update match_players set place = 3, leader = 10202 where id = 10002");
+        jdbcTemplate.execute("update match_players set place = 4, leader = 10203 where id = 10003");
+        Match match = matchRepository.findWithMatchPlayersBy(15000L).orElseThrow();
+
+        processor.process(match, USER_ID_2);
+
+        List<Integer> actualPlaces = jdbcTemplate
+                .queryForList("select place from match_players where id between 10000 and 10003 order by id", Integer.class);
+
+        assertThat(actualPlaces).isNotEmpty().allMatch(Objects::isNull);
+    }
+
+    @Test
+    void shouldResetMatchLeadersPlacesOnResubmit() {
+        jdbcTemplate.execute("update matches set state ='" + MatchState.SUBMITTED + "' where id = 15000");
+        jdbcTemplate.execute("update match_players set place = 1, leader = 10200 where id = 10000");
+        jdbcTemplate.execute("update match_players set place = 2, leader = 10201 where id = 10001");
+        jdbcTemplate.execute("update match_players set place = 3, leader = 10202 where id = 10002");
+        jdbcTemplate.execute("update match_players set place = 4, leader = 10203 where id = 10003");
+        Match match = matchRepository.findWithMatchPlayersBy(15000L).orElseThrow();
+
+        processor.process(match, USER_ID_2);
+
+        List<Integer> actualLeaders = jdbcTemplate
+                .queryForList("select leader from match_players where id between 10000 and 10003 order by id", Integer.class);
+
+        assertThat(actualLeaders).isNotEmpty().allMatch(Objects::isNull);
+    }
+
+    @Test
+    void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnFirstSubmit() {
         processor.process(submitCommandMessage);
 
         DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
