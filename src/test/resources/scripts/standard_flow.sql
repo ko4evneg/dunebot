@@ -15,7 +15,7 @@ update matches
 set positive_answers_count = 5
 where id = 36;
 
--- ADD POSITIVE VOTES TO THE LAST CREATEDMATCH
+-- ADD POSITIVE VOTES TO THE LAST CREATED MATCH
 DO
 $$
     DECLARE

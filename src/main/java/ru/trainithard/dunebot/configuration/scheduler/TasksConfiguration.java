@@ -59,6 +59,12 @@ public class TasksConfiguration {
     }
 
     @Bean
+    @Scope("prototype")
+    public StateRunnable stateTask(Runnable runnable, DuneBotTaskId taksId) {
+        return new StateRunnable(taskRepository, taksId, runnable);
+    }
+
+    @Bean
     public Function<Long, SubmitTimeoutNotificationTask> submitTimeoutNotificationTaskFactory() {
         return this::submitTimeoutNotificationTask;
     }
@@ -78,11 +84,5 @@ public class TasksConfiguration {
     @Scope("prototype")
     public SubmitAcceptTimeoutTask submitAcceptTimeoutTask(long matchId) {
         return new SubmitAcceptTimeoutTask(matchFinishingService, matchId);
-    }
-
-    @Bean
-    @Scope("prototype")
-    public StateRunnable stateTask(Runnable runnable, DuneBotTaskId taksId) {
-        return new StateRunnable(taskRepository, taksId, runnable);
     }
 }
