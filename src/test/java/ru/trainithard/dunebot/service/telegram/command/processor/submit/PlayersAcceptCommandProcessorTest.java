@@ -61,7 +61,7 @@ class PlayersAcceptCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
                              "(10201, 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
-                             "values (10000, '" + AppSettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
+                             "values (10000, '" + AppSettingKey.SUBMIT_TIMEOUT + "', 120, '2010-10-10')");
     }
 
     @AfterEach

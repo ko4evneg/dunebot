@@ -86,7 +86,7 @@ class AdminCommandProcessorTest extends TestContextMock {
     void shouldInvokeSaveFinishMatchTimeoutSettingOnTopicInitSubcommand() {
         processor.process(getCommandMessage("set finish_match_timeout 30", 10000));
 
-        verify(appSettingsService, times(1)).saveSetting(AppSettingKey.FINISH_MATCH_TIMEOUT, "30");
+        verify(appSettingsService, times(1)).saveSetting(AppSettingKey.SUBMIT_TIMEOUT, "30");
     }
 
     @Test

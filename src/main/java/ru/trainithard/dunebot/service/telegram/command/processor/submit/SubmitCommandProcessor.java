@@ -76,15 +76,15 @@ public class SubmitCommandProcessor extends CommandProcessor {
     }
 
     private void rescheduleFinishTasks(long matchId) {
-        int finishMatchTimeout = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_TIMEOUT);
+        int finishMatchTimeout = appSettingsService.getIntSetting(AppSettingKey.SUBMIT_TIMEOUT);
         Instant forcedFinishTime = Instant.now(clock).plus(finishMatchTimeout, ChronoUnit.MINUTES);
         DuneBotTaskId submitTimeoutTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId);
         rescheduleForcedFailFinish(submitTimeoutTaskId, forcedFinishTime);
 
-        int finishMatchNotificationTimeOffset = appSettingsService.getIntSetting(AppSettingKey.FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT);
-        Instant finishTimeoutMatchNotificationTime = forcedFinishTime.minus(finishMatchNotificationTimeOffset, ChronoUnit.MINUTES);
-        DuneBotTaskId finishTimeoutMatchNotificationTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, matchId);
-        rescheduleForcedFailFinish(finishTimeoutMatchNotificationTaskId, finishTimeoutMatchNotificationTime);
+        int submitMatchNotificationTimeOffset = appSettingsService.getIntSetting(AppSettingKey.SUBMIT_TIMEOUT_WARNING_NOTIFICATION);
+        Instant submitTimeoutMatchNotificationTime = forcedFinishTime.minus(submitMatchNotificationTimeOffset, ChronoUnit.MINUTES);
+        DuneBotTaskId submitTimeoutMatchNotificationTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, matchId);
+        rescheduleForcedFailFinish(submitTimeoutMatchNotificationTaskId, submitTimeoutMatchNotificationTime);
     }
 
     private void rescheduleForcedFailFinish(DuneBotTaskId submitTimeoutTaskId, Instant forcedFinishTime) {

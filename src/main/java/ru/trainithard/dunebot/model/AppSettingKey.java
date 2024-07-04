@@ -29,15 +29,15 @@ public enum AppSettingKey {
     /**
      * Timeout in minutes for started match - ends match if no submit was done before this timeout
      */
-    FINISH_MATCH_TIMEOUT,
+    SUBMIT_TIMEOUT,
     /**
      * Time in minutes to wait after submit is completed until match is FINISHED.
      */
     ACCEPT_SUBMIT_TIMEOUT,
     /**
-     * Time in minutes before the FINISH_MATCH_TIMEOUT, in which notification will be send about upcoming match finish.
+     * Time in minutes before the SUBMIT_TIMEOUT, in which notification will be sent about upcoming match finish.
      */
-    FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT,
+    SUBMIT_TIMEOUT_WARNING_NOTIFICATION,
     /**
      * Limit of resubmit match attempts
      */

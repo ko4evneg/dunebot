@@ -92,9 +92,9 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 15000, 10003, '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
-                             "values (10000, '" + AppSettingKey.FINISH_MATCH_TIMEOUT + "', 120, '2010-10-10')");
+                             "values (10000, '" + AppSettingKey.SUBMIT_TIMEOUT + "', 120, '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
-                             "values (10001, '" + AppSettingKey.FINISH_MATCH_NOTIFICATION_AHEAD_TIMEOUT + "', 9, '2010-10-10')");
+                             "values (10001, '" + AppSettingKey.SUBMIT_TIMEOUT_WARNING_NOTIFICATION + "', 9, '2010-10-10')");
     }
 
     @AfterEach
