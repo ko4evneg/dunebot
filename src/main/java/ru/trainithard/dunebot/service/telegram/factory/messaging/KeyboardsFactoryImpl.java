@@ -14,7 +14,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import java.util.Collection;
 import java.util.List;
 
-import static ru.trainithard.dunebot.service.telegram.command.CallbackCommandDetector.*;
+import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +23,7 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
 
     @Override
     public List<List<ButtonDto>> getLeadersKeyboard(MatchPlayer submittingPlayer) {
-        String callbackPrefix = submittingPlayer.getId() + LEADER_CALLBACK_SYMBOL;
+        String callbackPrefix = submittingPlayer.getId() + LEADER_CALLBACK_SYMBOL.getSymbol();
         List<Leader> leaders = leaderRepository
                 .findAllByModType(submittingPlayer.getMatch().getModType(), Sort.sort(Leader.class).by(Leader::getName));
         List<ButtonDto> leadersButtons = leaders.stream()
@@ -37,7 +37,7 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
         List<Leader> leaders = leaderRepository
                 .findAllByModType(match.getModType(), Sort.sort(Leader.class).by(Leader::getName));
         List<ButtonDto> leadersButtons = leaders.stream()
-                .map(leader -> new ButtonDto(leader.getName(), match.getId() + SUBMIT_LEADERS_CALLBACK_SYMBOL + leader.getId()))
+                .map(leader -> new ButtonDto(leader.getName(), match.getId() + SUBMIT_LEADERS_CALLBACK_SYMBOL.getSymbol() + leader.getId()))
                 .toList();
         return Lists.partition(leadersButtons, 2);
     }
@@ -48,7 +48,7 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
         List<ButtonDto> matchPlayersButtons = matchPlayers.stream()
                 .map(matchPlayer -> {
                     Player player = matchPlayer.getPlayer();
-                    String callbackText = matchId + SUBMIT_PLAYERS_CALLBACK_SYMBOL + matchPlayer.getId();
+                    String callbackText = matchId + SUBMIT_PLAYERS_CALLBACK_SYMBOL.getSymbol() + matchPlayer.getId();
                     return new ButtonDto(player.getFriendlyName(), callbackText);
                 })
                 .toList();

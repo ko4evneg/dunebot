@@ -15,7 +15,7 @@ import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.task.DuneScheduledTaskFactory;
 import ru.trainithard.dunebot.service.task.DunebotRunnable;
-import ru.trainithard.dunebot.service.telegram.command.CallbackCommandDetector;
+import ru.trainithard.dunebot.service.telegram.command.CallbackSymbol;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
@@ -43,7 +43,7 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        String[] callbackData = commandMessage.getCallback().split(CallbackCommandDetector.SUBMIT_LEADERS_CALLBACK_SYMBOL);
+        String[] callbackData = commandMessage.getCallback().split(CallbackSymbol.SUBMIT_LEADERS_CALLBACK_SYMBOL.getSymbol());
         long matchId = Long.parseLong(callbackData[0]);
         long leaderId = Long.parseLong(callbackData[1]);
 

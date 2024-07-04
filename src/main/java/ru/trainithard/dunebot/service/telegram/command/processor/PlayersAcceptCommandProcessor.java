@@ -11,7 +11,7 @@ import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
-import ru.trainithard.dunebot.service.telegram.command.CallbackCommandDetector;
+import ru.trainithard.dunebot.service.telegram.command.CallbackSymbol;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
@@ -34,7 +34,7 @@ public class PlayersAcceptCommandProcessor extends AcceptSubmitCommandProcessor 
 
     @Override
     public void process(CommandMessage commandMessage) {
-        String[] callbackData = commandMessage.getCallback().split(CallbackCommandDetector.SUBMIT_PLAYERS_CALLBACK_SYMBOL);
+        String[] callbackData = commandMessage.getCallback().split(CallbackSymbol.SUBMIT_PLAYERS_CALLBACK_SYMBOL.getSymbol());
         long matchId = Long.parseLong(callbackData[0]);
         long matchPlayerId = Long.parseLong(callbackData[1]);
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
