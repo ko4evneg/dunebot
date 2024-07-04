@@ -21,6 +21,8 @@ public class SubmitValidatedMatchRetriever {
     private static final String NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE =
             "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос";
     private static final String ALREADY_SUBMITTED_EXCEPTION_MESSAGE = "Запрос на публикацию этого матча уже сделан";
+    private static final String FINISHED_SUBMIT_EXCEPTION_MESSAGE_TEMPLATE =
+            "Результаты матча уже зарегистрированы. При ошибке в результатах, используйте команду '/resubmit %d'";
     private static final String MATCH_NOT_EXISTS_EXCEPTION = "Матча с таким ID не существует!";
 
     private final MatchRepository matchRepository;
@@ -54,7 +56,8 @@ public class SubmitValidatedMatchRetriever {
     }
 
     private void validateMatch(CommandMessage commandMessage, Match match, boolean isResubmit) {
-        log.debug("{}: match {} validation...", LogId.get(), match.getId());
+        Long matchId = match.getId();
+        log.debug("{}: match {} validation...", LogId.get(), matchId);
         long telegramChatId = commandMessage.getChatId();
         MatchState matchState = match.getState();
         if (MatchState.getEndedMatchStates().contains(matchState)) {
@@ -62,16 +65,19 @@ public class SubmitValidatedMatchRetriever {
         }
         if (match.hasMissingPlayers()) {
             getMatchPlayersList(match);
-            log.debug("{}: match {} has not enough players to end: {}", LogId.get(), match.getId(), getMatchPlayersList(match));
+            log.debug("{}: match {} has not enough players to end: {}", LogId.get(), matchId, getMatchPlayersList(match));
             throw new AnswerableDuneBotException(NOT_ENOUGH_PLAYERS_EXCEPTION_MESSAGE, telegramChatId);
         }
-        if (!isResubmit && MatchState.getSubmitStates().contains(matchState)) {
+        if (!isResubmit && MatchState.ON_SUBMIT == matchState) {
             throw new AnswerableDuneBotException(ALREADY_SUBMITTED_EXCEPTION_MESSAGE, telegramChatId);
+        }
+        if (!isResubmit && MatchState.SUBMITTED == matchState) {
+            throw new AnswerableDuneBotException(String.format(FINISHED_SUBMIT_EXCEPTION_MESSAGE_TEMPLATE, matchId), telegramChatId);
         }
         if (!isSubmitAllowed(commandMessage, match)) {
             throw new AnswerableDuneBotException(SUBMIT_NOT_ALLOWED_EXCEPTION_MESSAGE, telegramChatId);
         }
-        log.debug("{}: match {} successfully validated", LogId.get(), match.getId());
+        log.debug("{}: match {} successfully validated", LogId.get(), matchId);
     }
 
     private String getMatchPlayersList(Match match) {

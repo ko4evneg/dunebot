@@ -121,6 +121,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
                 Arguments.of("update matches set state = '" + MatchState.FAILED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
                 Arguments.of("update matches set state = '" + MatchState.FINISHED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
                 Arguments.of("update matches set state = '" + MatchState.ON_SUBMIT + "' where id = 15000", "Запрос на публикацию этого матча уже сделан"),
+                Arguments.of("update matches set state = '" + MatchState.SUBMITTED + "' where id = 15000", "Результаты матча уже зарегистрированы. При ошибке в результатах, используйте команду '/resubmit 15000'"),
                 Arguments.of("update matches set positive_answers_count = 3 where id = 15000", "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос")
         );
     }
