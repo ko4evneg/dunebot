@@ -37,8 +37,7 @@ public class LogId {
                         String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
                 .collect(Collectors.joining("; "));
         StringBuilder stringBuilder = new StringBuilder(playerPlaces).append("; ");
-        stringBuilder.append("state: ").append(match.getState()).append(", submits: ").append(match.getSubmitsCount())
-                .append(", votes: ").append(match.getPositiveAnswersCount());
+        stringBuilder.append("state: ").append(match.getState()).append(", votes: ").append(match.getPositiveAnswersCount());
         return stringBuilder.toString();
     }
 }

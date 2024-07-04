@@ -61,10 +61,6 @@ public class Match extends BaseEntity {
      */
     private int positiveAnswersCount;
     /**
-     * Count of accepted submit answers for the match (answer registration for place request).
-     */
-    private int submitsCount;
-    /**
      * Count of <b>retries</b> to submit this match (does not include initial submit).
      */
     private int submitsRetryCount;
@@ -90,11 +86,6 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
-    // As players without places submits counts, we need exact match to start preliminary finishing
-    public boolean canBePreliminaryFinished() {
-        return submitsCount == matchPlayers.size();
-    }
-
     public boolean hasAllPlacesSubmitted() {
         Set<Integer> missingCandidatePlaces = getMissingCandidatePlaces();
         return missingCandidatePlaces.isEmpty();
@@ -109,7 +100,6 @@ public class Match extends BaseEntity {
 
     public void prepareForResubmit() {
         submitsRetryCount++;
-        submitsCount = 0;
         state = MatchState.ON_SUBMIT;
     }
 }
