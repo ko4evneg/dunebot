@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.processor;
+package ru.trainithard.dunebot.service.telegram.command.processor.submit;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

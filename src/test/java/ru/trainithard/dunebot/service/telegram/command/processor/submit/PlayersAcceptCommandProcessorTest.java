@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.processor;
+package ru.trainithard.dunebot.service.telegram.command.processor.submit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-package ru.trainithard.dunebot.service.telegram.command.processor;
+package ru.trainithard.dunebot.service.telegram.command.processor.submit;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +19,7 @@ import ru.trainithard.dunebot.service.task.DuneScheduledTaskFactory;
 import ru.trainithard.dunebot.service.task.DunebotRunnable;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactory;
 
