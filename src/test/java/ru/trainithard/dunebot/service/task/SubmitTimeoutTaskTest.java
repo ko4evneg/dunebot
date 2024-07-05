@@ -14,6 +14,6 @@ class SubmitTimeoutTaskTest {
     void shouldCallNotSubmittedMatchFinishWhenRun() {
         submitTimeoutTask.run();
 
-        verify(matchFinishingService).finishNotSubmittedMatch(10000L, false);
+        verify(matchFinishingService).finishPartiallySubmittedMatch(10000L, false);
     }
 }
