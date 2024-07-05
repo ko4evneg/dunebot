@@ -18,7 +18,6 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
             select mp from MatchPlayer mp
             join fetch mp.player p
             join fetch mp.match m
-            left join fetch mp.submitMessageId
             left join fetch mp.leader
             left join fetch m.externalPollId
             left join fetch m.externalStartId
@@ -28,6 +27,4 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
     List<MatchPlayer> findByMatchDates(LocalDate from, LocalDate to, MatchState matchState, ModType modType);
 
     List<MatchPlayer> findByMatch(Match match);
-
-    List<MatchPlayer> findByPlayerExternalIdAndMatchState(long externalId, MatchState matchState);
 }

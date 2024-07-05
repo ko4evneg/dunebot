@@ -34,6 +34,12 @@ public class Match extends BaseEntity {
     @JoinColumn(name = "OWNER_ID")
     private Player owner;
     /**
+     * Player who initiated the latest submit.
+     */
+    @OneToOne
+    @JoinColumn(name = "SUBMITTER_ID")
+    private Player submitter;
+    /**
      * External ID of the poll created for this match.
      */
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -98,8 +104,9 @@ public class Match extends BaseEntity {
         return possibleMatchPlaces;
     }
 
-    public void prepareForResubmit() {
+    public void prepareForResubmit(Player player) {
         submitsRetryCount++;
+        submitter = player;
         state = MatchState.ON_SUBMIT;
     }
 }
