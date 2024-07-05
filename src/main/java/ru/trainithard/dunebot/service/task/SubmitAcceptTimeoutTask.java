@@ -1,7 +1,6 @@
 package ru.trainithard.dunebot.service.task;
 
 import lombok.extern.slf4j.Slf4j;
-import ru.trainithard.dunebot.service.LogId;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 
 @Slf4j
@@ -16,9 +15,6 @@ public class SubmitAcceptTimeoutTask implements DunebotRunnable {
 
     @Override
     public void run() {
-        int logId = LogId.get();
-        log.debug("{}: ACCEPT_TIMEOUT match {} finishing started", logId, matchId);
-        matchFinishingService.finishSubmittedMatch(matchId);
-        log.debug("{}: ACCEPT_TIMEOUT match {} finishing ended", logId, matchId);
+        matchFinishingService.finishCompletelySubmittedMatch(matchId);
     }
 }

@@ -8,6 +8,7 @@ import ru.trainithard.dunebot.model.scheduler.StateRunnable;
 import ru.trainithard.dunebot.repository.DunebotTaskRepository;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.MessagingService;
 import ru.trainithard.dunebot.service.task.StartMatchTask;
@@ -29,6 +30,7 @@ public class TasksConfiguration {
     private final MatchFinishingService matchFinishingService;
     private final ExternalMessageFactory messageFactory;
     private final DunebotTaskRepository taskRepository;
+    private final AppSettingsService appSettingsService;
     private final Clock clock;
 
     @Bean
@@ -72,7 +74,7 @@ public class TasksConfiguration {
     @Bean
     @Scope("prototype")
     public SubmitTimeoutNotificationTask submitTimeoutNotificationTask(long matchId) {
-        return new SubmitTimeoutNotificationTask(matchRepository, messagingService, messageFactory, matchId);
+        return new SubmitTimeoutNotificationTask(matchRepository, messagingService, messageFactory, appSettingsService, matchId);
     }
 
     @Bean
