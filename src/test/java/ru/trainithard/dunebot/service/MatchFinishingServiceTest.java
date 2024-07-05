@@ -22,10 +22,8 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -63,26 +61,16 @@ class MatchFinishingServiceTest extends TestContextMock {
                              "values (10000, 'ExternalPollId', 10000, " + MATCH_CHAT_ID + ", '10000', " + MATCH_TOPIC_REPLY_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                              "values (10001, 'ExternalMessageId', 10001, 10000, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, screenshot_path, created_at) " +
-                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 3, 'photos/1.jpg', '2010-10-10') ");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10002, 'ExternalMessageId', 10002, 11002, '2020-10-10')");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10003, 'ExternalMessageId', 10003, 11003, '2020-10-10')");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10004, 'ExternalMessageId', 10004, 11004, '2020-10-10')");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10005, 'ExternalMessageId', 10005, 11005, '2020-10-10')");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
-                             "values (10006, 'ExternalMessageId', 10006, 11006, '2020-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10000, 15000, 10000, 10002, null, '2010-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10001, 15000, 10001, 10003, 2, '2010-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10002, 15000, 10002, 10004, 3, '2010-10-10')");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10003, 15000, 10003, 10005, 1, '2010-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, created_at) " +
+                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.ON_SUBMIT + "', 3, '2010-10-10') ");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
+                             "values (10000, 15000, 10000, 4, '2010-10-10')");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
+                             "values (10001, 15000, 10001, 2, '2010-10-10')");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
+                             "values (10002, 15000, 10002, 3, '2010-10-10')");
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
+                             "values (10003, 15000, 10003, 1, '2010-10-10')");
     }
 
     @AfterEach
@@ -90,103 +78,14 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id in (15000)");
         jdbcTemplate.execute("delete from matches where id in (15000)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
-        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10006");
+        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10001");
     }
 
     @Test
-    void shouldPersistCandidatePlacesOnMatchFinish() {
-        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+    void shouldSetMatchFinishedStateOnSubmittedMatchFinish() {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.SUBMITTED + "' where id = 15000");
 
-        finishingService.finishSubmittedMatch(15000L);
-
-        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
-
-        assertThat(playersPlaces).containsExactly(4, 2, 3, 1);
-    }
-
-    @Test
-    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
-        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
-
-        finishingService.finishNotSubmittedMatch(15000L, false);
-
-        List<Integer> actualPersistedPlacesCount = jdbcTemplate
-                .queryForList("select id from match_players where match_id = 15000 and place is not null", Integer.class);
-
-        assertThat(actualPersistedPlacesCount).isEmpty();
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOnlyNonParticipantSubmitsAreMissing(boolean isResubmitLimitExceeded) {
-        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
-
-        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
-
-        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
-
-        assertThat(playersPlaces).containsExactly(null, 2, 3, 1, 4);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOneNotFirstCandidatePlaceIsMissing(boolean isResubmitLimitExceeded) {
-        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
-
-        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
-
-        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
-
-        assertThat(playersPlaces).containsExactly(4, 2, 3, 1);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldNotPersistCandidatePlacesOnUnsuccessfullySubmittedMatchWhenOneFirstCandidatePlaceIsMissing(boolean isResubmitLimitExceeded) {
-        jdbcTemplate.execute("update matches set submits_count = 3 where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10003");
-
-        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
-
-        List<Integer> playersPlaces = jdbcTemplate.queryForList("select place from match_players where match_id = 15000 order by id", Integer.class);
-
-        assertThat(playersPlaces).containsExactly(null, null, null, null);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
-        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, candidate_place, created_at) " +
-                             "values (10004, 15000, 10004, 10006, 4, '2010-10-10')");
-
-        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
-
-        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
-
-        assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
-                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        """
-                                *Матч 15000* завершился:
-                                                
-                                1️⃣ 🥳🍾🎉 f4 \\(st\\_pl4\\) l4 🎉🍾🥳
-                                2️⃣ f2 \\(st\\_pl2\\) l2
-                                3️⃣ f3 \\(st\\_pl3\\) l3
-                                4️⃣ f5 \\(st\\_pl5\\) l5""");
-    }
-
-    @Test
-    void shouldSetMatchFinishedStateOnMatchFinish() {
-        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
-
-        finishingService.finishSubmittedMatch(15000L);
+        finishingService.finishCompletelySubmittedMatch(15000L);
 
         MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
 
@@ -194,11 +93,10 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @Test
-    void shouldSetMatchFinishDateOnMatchFinish() {
-        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+    void shouldSetMatchFinishDateOnSubmittedMatchFinish() {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.SUBMITTED + "' where id = 15000");
 
-        finishingService.finishSubmittedMatch(15000L);
+        finishingService.finishCompletelySubmittedMatch(15000L);
 
         LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
 
@@ -206,33 +104,22 @@ class MatchFinishingServiceTest extends TestContextMock {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldSetMatchFailedStateOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
-        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"SUBMITTED"})
+    void shouldDoNothingOnWrongStateMatchCompletedSubmitFinish(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "', submitter_id = 10002 where id = 15000");
 
-        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
+        finishingService.finishCompletelySubmittedMatch(15000L);
 
-        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
-
-        assertThat(actualState).isNotNull().isEqualTo(MatchState.FAILED);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void shouldSetMatchFinishDateOnUnsuccessfullySubmittedMatchFinish(boolean isResubmitLimitExceeded) {
-        finishingService.finishNotSubmittedMatch(15000L, isResubmitLimitExceeded);
-
-        LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
-
-        assertThat(actualDate).isNotNull().isEqualTo(FINISH_DATE);
+        verifyNoInteractions(matchPlayerRepository);
+        verifyNoInteractions(transactionTemplate);
+        verifyNoInteractions(messagingService);
     }
 
     @Test
-    void shouldSendNotificationOnMatchFinish() {
-        jdbcTemplate.execute("update matches set submits_count = 4 where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+    void shouldSendNotificationOnSubmittedMatchFinish() {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.SUBMITTED + "' where id = 15000");
 
-        finishingService.finishSubmittedMatch(15000L);
+        finishingService.finishCompletelySubmittedMatch(15000L);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
@@ -250,61 +137,97 @@ class MatchFinishingServiceTest extends TestContextMock {
                                 4️⃣ f1 \\(st\\_pl1\\) l1""");
     }
 
-    @Test
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWhenSubmitsAreMissing() {
-        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldResetMatchPlayersDataOnPartiallySubmitFinish(boolean isFailedByResubmitLimit) {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.ON_SUBMIT + "', submitter_id = 10002 where id = 15000");
 
-        finishingService.finishNotSubmittedMatch(15000L, false);
+        finishingService.finishPartiallySubmittedMatch(15000, isFailedByResubmitLimit);
+
+        Boolean hasSubmitData = jdbcTemplate
+                .queryForObject("select exists(select 1 from match_players where id between 10000 and 10003 and " +
+                                "(leader is not null or place is not null))", Boolean.class);
+
+        assertThat(hasSubmitData).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldSetMatchFinishDateOnPartiallySubmitFinish(boolean isFailedByResubmitLimit) {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.ON_SUBMIT + "', submitter_id = 10002 where id = 15000");
+
+        finishingService.finishPartiallySubmittedMatch(15000L, isFailedByResubmitLimit);
+
+        LocalDate actualDate = jdbcTemplate.queryForObject("select finish_date from matches where id = 15000", LocalDate.class);
+
+        assertThat(actualDate).isNotNull().isEqualTo(FINISH_DATE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void shouldSetMatchFailedStateOnPartiallySubmitFinish(boolean isFailedByResubmitLimit) {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.ON_SUBMIT + "', submitter_id = 10002 where id = 15000");
+
+        finishingService.finishPartiallySubmittedMatch(15000L, isFailedByResubmitLimit);
+
+        MatchState actualState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
+
+        assertThat(actualState).isEqualTo(MatchState.FAILED);
+    }
+
+    @Test
+    void shouldSendNotificationWhenResubmitLimitExceededOnPartiallySubmitFinish() {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.ON_SUBMIT + "', submitter_id = 10002 where id = 15000");
+
+        finishingService.finishPartiallySubmittedMatch(15000L, true);
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto messageDto = messageDtoCaptor.getValue();
 
         assertThat(messageDto)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
                 .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        "*Матч 15000* завершен без результата\\!\n" +
-                        "Игроки [@e1](tg://user?id=11000), [@e2](tg://user?id=11001) не ответили на запрос места\\.");
-    }
-
-    @Test
-    void shouldSendNotificationOnUnsuccessfullySubmittedMatchFinishWithoutResultsWhenResubmitsLimitReached() {
-        jdbcTemplate.execute("update match_players set candidate_place = null where id = 10001");
-
-        finishingService.finishNotSubmittedMatch(15000L, true);
-
-        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(1)).sendMessageAsync(messageDtoCaptor.capture());
-        MessageDto messageDto = messageDtoCaptor.getValue();
-
-        assertThat(messageDto)
-                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
-                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации мест /resubmit\\. " +
-                        "Это может быть вызвано командой или конфликтом мест последнего /resubmit\\.");
+                        "*Матч 15000* завершен без результата, так как превышено максимальное количество попыток регистрации результатов\\.");
     }
 
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED"})
-    void shouldThrowOnUnsuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
-        jdbcTemplate.execute("update matches set submits_count = 4, state = '" + matchState + "' where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"ON_SUBMIT"})
+    void shouldDoNothingOnWrongStateMatchPartiallySubmitFinish(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "', submitter_id = 10002 where id = 15000");
 
-        assertThatCode(() -> finishingService.finishSubmittedMatch(15000L))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Can't accept submit for match 15000 due to its ended state");
-    }
+        finishingService.finishPartiallySubmittedMatch(15000L, false);
 
-    @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.INCLUDE, names = {"FINISHED", "FAILED"})
-    void shouldDoNothingOnSuccessfullySubmittedMatchWhenItIsEnded(MatchState matchState) {
-        jdbcTemplate.execute("update matches set submits_count = 4, state = '" + matchState + "' where id = 15000");
-        jdbcTemplate.execute("update match_players set candidate_place = 4 where id = 10000");
-
-        finishingService.finishNotSubmittedMatch(15000L, true);
-
-        verifyNoInteractions(messagingService);
-        verifyNoInteractions(transactionTemplate);
         verifyNoInteractions(matchPlayerRepository);
+        verifyNoInteractions(transactionTemplate);
+        verifyNoInteractions(messagingService);
+    }
+
+    @Test
+    void shouldSendNotificationWhenSubmitTimeoutOnPartiallySubmitFinish() {
+        jdbcTemplate.execute("update matches set state = '" + MatchState.ON_SUBMIT + "', submitter_id = 10002 where id = 15000");
+
+        finishingService.finishPartiallySubmittedMatch(15000L, false);
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
+        MessageDto messageDto = messageDtoCaptor.getValue();
+
+        assertThat(messageDto)
+                .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
+                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
+                        "*Матч 15000* завершен без результата, так как игрок [@e3](tg://user?id=11002) не закончил регистрацию результата\\.");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"ON_SUBMIT"})
+    void shouldDoNothingOnWrongStateWhenSubmitTimeoutOnPartiallySubmitFinish(MatchState matchState) {
+        jdbcTemplate.execute("update matches set state = '" + matchState + "', submitter_id = 10002 where id = 15000");
+
+        finishingService.finishPartiallySubmittedMatch(15000L, true);
+
+        verifyNoInteractions(matchPlayerRepository);
+        verifyNoInteractions(transactionTemplate);
+        verifyNoInteractions(messagingService);
     }
 }
