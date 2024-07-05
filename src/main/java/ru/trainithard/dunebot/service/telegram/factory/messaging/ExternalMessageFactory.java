@@ -11,20 +11,16 @@ import java.util.List;
 public interface ExternalMessageFactory {
     ExternalMessage getGuestMessageDto(Player player);
 
-    ExternalMessage getFinishReasonMessage(Match match, boolean isFailedByResubmitsLimit);
+    ExternalMessage getPartialSubmittedMatchFinishMessage(Match match);
 
     ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
                                     List<String> guestPlayerMentions, List<String> blockedChatGuests);
 
     ExternalMessage getHostMessage(Player hoster, Match match, String server);
 
-    ExternalMessage getNonClonflictSubmitMessage(long matchId, int candidatePlace);
-
-    ExternalMessage getConflictSubmitMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace);
-
     ExternalMessage getMatchSuccessfulFinishMessage(Match match);
 
-    ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match);
+    ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match, int timeout);
 
     ExternalMessage getLeadersSubmitMessage(long matchId);
 
@@ -34,7 +30,7 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getHelpMessage();
 
-    ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId);
-
     ExternalMessage getPlayersSubmitMessage(long matchId);
+
+    ExternalMessage getFailByResubmitLimitExceededMessage(long matchId);
 }
