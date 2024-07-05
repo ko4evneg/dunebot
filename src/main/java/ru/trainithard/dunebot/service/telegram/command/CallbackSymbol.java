@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public enum CallbackSymbol {
-    LEADER_CALLBACK_SYMBOL("_L_", Command.LEADER),
     SUBMIT_PLAYERS_CALLBACK_SYMBOL("_SP_", Command.PLAYER_ACCEPT),
     SUBMIT_LEADERS_CALLBACK_SYMBOL("_SL_", Command.LEADER_ACCEPT);
 

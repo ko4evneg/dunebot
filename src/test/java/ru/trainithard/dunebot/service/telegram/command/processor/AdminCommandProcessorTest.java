@@ -28,10 +28,6 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AdminCommandProcessorTest extends TestContextMock {
-    private static final String HELP_COMMAND_DESCRIPTION = "Как пользоваться ботом";
-    private static final String COMMANDS_LIST_DESCRIPTION = "Показать список доступных команд";
-    private static final String HELP_COMMAND_TEXT = "/help";
-    private static final String COMMANDS_LIST_COMMAND_TEXT = "/commands";
     private static final String WRONG_COMMAND_EXCEPTION_MESSAGE = "Неверная команда\\!";
     private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
@@ -84,7 +80,7 @@ class AdminCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldInvokeSaveFinishMatchTimeoutSettingOnTopicInitSubcommand() {
-        processor.process(getCommandMessage("set finish_match_timeout 30", 10000));
+        processor.process(getCommandMessage("set submit_timeout 30", 10000));
 
         verify(appSettingsService, times(1)).saveSetting(AppSettingKey.SUBMIT_TIMEOUT, "30");
     }

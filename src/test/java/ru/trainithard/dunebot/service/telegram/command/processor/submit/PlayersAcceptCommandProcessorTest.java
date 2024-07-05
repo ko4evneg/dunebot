@@ -153,8 +153,9 @@ class PlayersAcceptCommandProcessorTest extends TestContextMock {
                             "Выберите другого игрока, или используйте команду '/resubmit 15000', чтобы начать заново.");
     }
 
+    //SUBMITTED and NEW states is here because user can't get into this command from any state except ON_SUBMIT by business logic
     @ParameterizedTest
-    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"NEW", "ON_SUBMIT"})
+    @EnumSource(value = MatchState.class, mode = EnumSource.Mode.EXCLUDE, names = {"NEW", "ON_SUBMIT", "SUBMITTED"})
     void shouldThrowWhenMatchInWrongState(MatchState matchState) {
         jdbcTemplate.execute("update matches set state = '" + matchState + "' where id = 15000");
         CommandMessage callbackMessage = getCallbackMessage("15000_SP_" + 10101);

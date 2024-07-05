@@ -17,6 +17,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.PHOTO_ALLOWE
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Deprecated(since = "v0.4.60")
 public class ScreenshotServiceImpl implements ScreenshotService {
     private static final String SCREENSHOT_ALREADY_UPLOADED_EXCEPTION_MESSAGE = "Ошибка: скриншот уже загружен";
     private static final String WRONG_PHOTO_EXTENSION_EXCEPTION_MESSAGE =

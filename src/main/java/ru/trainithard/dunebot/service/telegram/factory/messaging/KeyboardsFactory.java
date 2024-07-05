@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 
 public interface KeyboardsFactory {
-    List<List<ButtonDto>> getLeadersKeyboard(MatchPlayer submittingPlayer);
 
     List<List<ButtonDto>> getSubmitLeadersKeyboard(Match match);
 

@@ -14,23 +14,13 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import java.util.Collection;
 import java.util.List;
 
-import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.*;
+import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.SUBMIT_LEADERS_CALLBACK_SYMBOL;
+import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.SUBMIT_PLAYERS_CALLBACK_SYMBOL;
 
 @Service
 @RequiredArgsConstructor
 public class KeyboardsFactoryImpl implements KeyboardsFactory {
     private final LeaderRepository leaderRepository;
-
-    @Override
-    public List<List<ButtonDto>> getLeadersKeyboard(MatchPlayer submittingPlayer) {
-        String callbackPrefix = submittingPlayer.getId() + LEADER_CALLBACK_SYMBOL.getSymbol();
-        List<Leader> leaders = leaderRepository
-                .findAllByModType(submittingPlayer.getMatch().getModType(), Sort.sort(Leader.class).by(Leader::getName));
-        List<ButtonDto> leadersButtons = leaders.stream()
-                .map(leader -> new ButtonDto(leader.getName(), callbackPrefix + leader.getId()))
-                .toList();
-        return Lists.partition(leadersButtons, 2);
-    }
 
     @Override
     public List<List<ButtonDto>> getSubmitLeadersKeyboard(Match match) {
