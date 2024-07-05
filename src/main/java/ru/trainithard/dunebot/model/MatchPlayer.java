@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
-import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 
 /**
  * Entity for relation between specific <code>Match</code> and positively voted <code>Player</code>.
@@ -29,12 +28,6 @@ public class MatchPlayer extends BaseEntity {
     @JoinColumn(name = "PLAYER_ID")
     private Player player;
     /**
-     * External ID of a message sent to a player for selection of his <code>candidatePlace</code>.
-     */
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
-    private ExternalMessageId submitMessageId;
-    /**
      * Leader selected by Player in this Match
      */
     @OneToOne
@@ -51,6 +44,7 @@ public class MatchPlayer extends BaseEntity {
      * conflicting places. May have value of integer between 1 and max number of match participants, or <code>null</code> if not set.
      */
     @Nullable
+    //TODO deprecate
     private Integer candidatePlace;
 
     public MatchPlayer(Match match, Player player) {
@@ -58,15 +52,12 @@ public class MatchPlayer extends BaseEntity {
         this.player = player;
     }
 
-    public boolean hasCandidateVote() {
-        return candidatePlace != null;
-    }
-
-    public boolean hasSubmitMessage() {
-        return submitMessageId != null;
-    }
-
     public boolean hasRateablePlace() {
         return place != null && place != 0;
+    }
+
+    public void resetSubmitData() {
+        place = null;
+        leader = null;
     }
 }

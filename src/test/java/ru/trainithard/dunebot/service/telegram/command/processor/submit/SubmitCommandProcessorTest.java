@@ -50,8 +50,8 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class SubmitCommandProcessorTest extends TestContextMock {
-    private static final Long CHAT_ID = 12000L;
-    private static final long USER_ID_1 = 11000L;
+    private static final long CHAT_ID = 12000L;
+    private static final Long USER_ID_1 = 11000L;
     private static final long USER_ID_2 = 11001L;
     private static final int FINISH_MATCH_TIMEOUT = 120;
     private static final Instant NOW = LocalDate.of(2010, 10, 10).atTime(15, 0, 0)
@@ -77,13 +77,13 @@ class SubmitCommandProcessorTest extends TestContextMock {
         doReturn(scheduledFuture).when(taskScheduler).rescheduleSingleRunTask(any(), any(), any(Instant.class));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10000, " + USER_ID_1 + ", " + CHAT_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
+                             "values (10000, " + USER_ID_1 + ", " + USER_ID_1 + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10001, " + USER_ID_2 + ", 12001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
+                             "values (10001, " + USER_ID_2 + ", 10001, 'st_pl2', 'name2', 'l2', 'e2', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10002, 11002, 12002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
+                             "values (10002, 11002, 10002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10003, 11003, 12003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
+                             "values (10003, 11003, 10003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
                              "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -171,7 +171,16 @@ class SubmitCommandProcessorTest extends TestContextMock {
         verify(messagingService).sendMessageAsync(messageDtoCaptor.capture());
         MessageDto actualMessageDto = messageDtoCaptor.getValue();
 
-        assertThat(actualMessageDto.getChatId()).isEqualTo(CHAT_ID.toString());
+        assertThat(actualMessageDto.getChatId()).isEqualTo(USER_ID_1.toString());
+    }
+
+    @Test
+    void shouldSetMatchSubmitterOnSubmit() {
+        processor.process(submitCommandMessage);
+
+        Long actualSubmittedId = jdbcTemplate.queryForObject("select submitter_id from matches where id = 15000", Long.class);
+
+        assertThat(actualSubmittedId).isEqualTo(10000);
     }
 
     @Test
@@ -332,7 +341,7 @@ class SubmitCommandProcessorTest extends TestContextMock {
         User user = new User();
         user.setId(userId);
         Chat chat = new Chat();
-        chat.setId(CHAT_ID);
+        chat.setId(userId);
         chat.setType(ChatType.PRIVATE.getValue());
         Message message = new Message();
         message.setMessageId(10000);

@@ -94,7 +94,6 @@ public class Player extends BaseEntity implements Rateable {
     }
 
     public String getFriendlyName() {
-
         return String.format("%s (%s) %s", firstName, steamName, lastName);
     }
 

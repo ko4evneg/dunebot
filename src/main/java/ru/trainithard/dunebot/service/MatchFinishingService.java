@@ -8,5 +8,5 @@ public interface MatchFinishingService {
      */
     void finishCompletelySubmittedMatch(long matchId);
 
-    void finishPartiallySubmittedMatch(long matchId, boolean isFailedByResubmitsLimit);
+    void finishPartialSubmitMatch(long matchId, boolean isFailedByResubmitsLimit);
 }

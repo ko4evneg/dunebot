@@ -42,8 +42,4 @@ public enum MatchState {
     public static List<MatchState> getEndedMatchStates() {
         return List.of(FINISHED, FAILED, CANCELLED, EXPIRED, NOT_SUBMITTED);
     }
-
-    public static List<MatchState> getSubmitStates() {
-        return List.of(ON_SUBMIT, SUBMITTED);
-    }
 }
