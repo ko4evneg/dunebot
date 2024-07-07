@@ -26,7 +26,7 @@ import java.time.temporal.TemporalAdjusters;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class WeeklyRatingReportTask implements Runnable {
+public class RatingReportTask implements Runnable {
     private final RatingReportPdfService ratingReportPdfService;
     private final AppSettingsService appSettingsService;
     private final MessagingService messagingService;
@@ -39,9 +39,8 @@ public class WeeklyRatingReportTask implements Runnable {
     public void run() {
         log.info("Start execution DailyRatingReportTask#run...");
         LocalDate today = LocalDate.now(clock);
-        int lastDayOfMonth = today.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
 
-        if (today.getDayOfWeek() == DayOfWeek.SUNDAY || today.getDayOfMonth() == lastDayOfMonth) {
+        if (isReportDay(today)) {
             LocalDate from = today.withDayOfMonth(1);
 
             try {
@@ -63,6 +62,13 @@ public class WeeklyRatingReportTask implements Runnable {
 //        }
         }
         log.info("Successfully executed MonthlyRatingReportTask#run");
+    }
+
+    private boolean isReportDay(LocalDate today) {
+        int lastDayOfMonth = today.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth();
+        int lastWeekOfMonthStartDay = lastDayOfMonth - 6;
+        return today.getDayOfWeek() == DayOfWeek.SUNDAY || today.getDayOfMonth() == lastDayOfMonth
+               || today.getDayOfMonth() >= lastWeekOfMonthStartDay && today.getDayOfWeek() == DayOfWeek.WEDNESDAY;
     }
 
     private void reportRating(LocalDate from, LocalDate to, ModType classic, YearMonth previousMonth)

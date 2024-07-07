@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 import ru.trainithard.dunebot.service.MatchExpirationService;
-import ru.trainithard.dunebot.service.report.WeeklyRatingReportTask;
+import ru.trainithard.dunebot.service.report.RatingReportTask;
 import ru.trainithard.dunebot.service.telegram.TelegramUpdateProcessor;
 
 import java.time.*;
@@ -16,10 +16,10 @@ import java.time.*;
 @Profile(value = "!test")
 @Component
 @RequiredArgsConstructor
-public class ScheduledTasksConfiguration {
+public class TasksSchedule {
     private final TaskScheduler dunebotTaskScheduler;
     private final TelegramUpdateProcessor updateProcessor;
-    private final WeeklyRatingReportTask weeklyRatingReportTask;
+    private final RatingReportTask weeklyRatingReportTask;
     private final MatchExpirationService expirationService;
     private final Clock clock;
 
