@@ -12,4 +12,6 @@ public interface KeyboardsFactory {
     List<List<ButtonDto>> getSubmitLeadersKeyboard(Match match);
 
     List<List<ButtonDto>> getSubmitPlayersKeyboard(Collection<MatchPlayer> matchPlayers);
+
+    List<List<ButtonDto>> getResubmitKeyboard(Long matchId, Long userId, long submitterId);
 }

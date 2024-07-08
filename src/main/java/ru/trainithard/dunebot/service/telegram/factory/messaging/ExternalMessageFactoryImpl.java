@@ -52,6 +52,12 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
+    public ExternalMessage getResubmitMessage() {
+        return new ExternalMessage("Если вы знаете все места и лидеров, вы можете выполнить перерегистрацию результата самостоятельно, " +
+                                   "иначе - запрос будет отправлен игроку, выполнившему предыдущую регистрацию результатов.");
+    }
+
+    @Override
     public ExternalMessage getStartMessage(Match match, List<String> regularPlayerMentions,
                                            List<String> guestPlayerMentions, List<String> blockedChatGuests) {
         ExternalMessage startMessage = new ExternalMessage()

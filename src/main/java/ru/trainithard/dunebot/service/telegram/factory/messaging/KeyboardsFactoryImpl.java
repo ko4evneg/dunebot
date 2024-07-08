@@ -14,8 +14,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import java.util.Collection;
 import java.util.List;
 
-import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.SUBMIT_LEADERS_CALLBACK_SYMBOL;
-import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.SUBMIT_PLAYERS_CALLBACK_SYMBOL;
+import static ru.trainithard.dunebot.service.telegram.command.CallbackSymbol.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,5 +42,12 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
                 })
                 .toList();
         return Lists.partition(matchPlayersButtons, 2);
+    }
+
+    @Override
+    public List<List<ButtonDto>> getResubmitKeyboard(Long matchId, Long userId, long submitterId) {
+        ButtonDto selfButton = new ButtonDto("Хочу сам", matchId.toString() + RESUBMIT_CALLBACK_SYMBOL + userId);
+        ButtonDto otherPlayerButton = new ButtonDto("Передам прошлому", matchId.toString() + RESUBMIT_CALLBACK_SYMBOL + submitterId);
+        return List.of(List.of(selfButton, otherPlayerButton));
     }
 }

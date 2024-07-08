@@ -33,4 +33,6 @@ public interface ExternalMessageFactory {
     ExternalMessage getPlayersSubmitMessage(long matchId);
 
     ExternalMessage getFailByResubmitLimitExceededMessage(long matchId);
+
+    ExternalMessage getResubmitMessage();
 }
