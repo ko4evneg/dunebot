@@ -89,9 +89,9 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
-    public void prepareForResubmit(Player player) {
+    public void prepareForResubmit(Player submittingPlayer) {
         submitsRetryCount++;
-        submitter = player;
+        submitter = submittingPlayer;
         state = MatchState.ON_SUBMIT;
     }
 }

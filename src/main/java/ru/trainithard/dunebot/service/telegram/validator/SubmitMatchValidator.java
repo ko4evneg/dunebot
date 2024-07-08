@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.LogId;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
@@ -25,6 +27,10 @@ public class SubmitMatchValidator {
     private static final String ALREADY_SUBMITTED_EXCEPTION_MESSAGE = "Запрос на публикацию этого матча уже сделан";
     private static final String FINISHED_SUBMIT_EXCEPTION_MESSAGE_TEMPLATE =
             "Результаты матча уже зарегистрированы. При ошибке в результатах, используйте команду '/resubmit %d'";
+    private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE_TEMPLATE =
+            "Превышено максимальное количество попыток регистрации результата матча (%d)";
+
+    private final AppSettingsService appSettingsService;
 
     public void validateSubmitMatch(CommandMessage commandMessage, Match match) {
         Long matchId = match.getId();
@@ -47,6 +53,11 @@ public class SubmitMatchValidator {
         commonValidation(commandMessage, match);
         if (MatchState.ON_SUBMIT == match.getState() || MatchState.NEW == match.getState()) {
             throw new AnswerableDuneBotException(RESUBMIT_NOT_ALLOWED_BEFORE_SUBMIT, commandMessage.getChatId());
+        }
+        Integer resubmitsLimit = appSettingsService.getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
+        if (match.getSubmitsRetryCount() >= resubmitsLimit) {
+            String resubmitsLimitMessage = String.format(RESUBMIT_LIMIT_EXCEEDED_MESSAGE_TEMPLATE, resubmitsLimit);
+            throw new AnswerableDuneBotException(resubmitsLimitMessage, commandMessage.getChatId());
         }
         log.debug("{}: match {} successfully validated", LogId.get(), matchId);
     }
