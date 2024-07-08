@@ -45,9 +45,9 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
     }
 
     @Override
-    public List<List<ButtonDto>> getResubmitKeyboard(Long matchId, Long userId, long submitterId) {
-        ButtonDto selfButton = new ButtonDto("Хочу сам", matchId.toString() + RESUBMIT_CALLBACK_SYMBOL + userId);
-        ButtonDto otherPlayerButton = new ButtonDto("Передам прошлому", matchId.toString() + RESUBMIT_CALLBACK_SYMBOL + submitterId);
+    public List<List<ButtonDto>> getResubmitKeyboard(long matchId, long userId, long submitterId) {
+        ButtonDto selfButton = new ButtonDto("Хочу сам", matchId + RESUBMIT_CALLBACK_SYMBOL.getSymbol() + userId);
+        ButtonDto otherPlayerButton = new ButtonDto("Передам прошлому", matchId + RESUBMIT_CALLBACK_SYMBOL.getSymbol() + submitterId);
         return List.of(List.of(selfButton, otherPlayerButton));
     }
 }
