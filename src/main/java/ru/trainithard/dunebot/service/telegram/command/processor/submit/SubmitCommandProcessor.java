@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static ru.trainithard.dunebot.exception.MatchNotExistsException.MATCH_NOT_EXISTS_EXCEPTION;
+
 /**
  * Initiates first match results requests.
  */
@@ -41,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
-    private static final String MATCH_NOT_EXISTS_EXCEPTION = "Матча с таким ID не существует!";
     private static final int RESUBMIT_TIME_LIMIT_STEP = 60 * 7;
     private final MatchRepository matchRepository;
     private final PlayerRepository playerRepository;
@@ -60,22 +61,19 @@ public class SubmitCommandProcessor extends CommandProcessor {
             long matchId = Long.parseLong(commandMessage.getArgument(1));
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
             submitMatchValidator.validateSubmitMatch(commandMessage, match);
-            Long chatId = commandMessage.getChatId();
-            log.debug("{}: SUBMIT(internal) started", logId());
+            long chatId = commandMessage.getChatId();
 
             Player submitter = playerRepository.findByExternalId(chatId).orElseThrow();
             match.setState(MatchState.ON_SUBMIT);
             match.setSubmitter(submitter);
             matchRepository.save(match);
-            log.debug("{}: match {} saved state ON_SUBMIT", logId(), match.getId());
+            log.debug("{}: match {} saved state: ON_SUBMIT, submitter: {}", logId(), match.getId(), submitter.getId());
 
             ExternalMessage submitMessage = messageFactory.getPlayersSubmitMessage(match.getId());
             List<List<ButtonDto>> submitPlayersKeyboard = keyboardsFactory.getSubmitPlayersKeyboard(match.getMatchPlayers());
             MessageDto submitPlayersMessage = new MessageDto(chatId, submitMessage, null, submitPlayersKeyboard);
             messagingService.sendMessageAsync(submitPlayersMessage);
             rescheduleSubmitTasks(match.getId());
-
-            log.debug("{}: SUBMIT(internal) ended", logId());
         } catch (NumberFormatException | MatchNotExistsException exception) {
             throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, exception, commandMessage.getChatId());
         }

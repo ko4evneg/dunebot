@@ -51,6 +51,7 @@ public class DuneBotTaskScheduler extends ThreadPoolTaskScheduler {
         task.setStatus(TaskStatus.SCHEDULED);
         task.setStartTime(startTime);
         taskRepository.save(task);
+        log.debug("0: saved task of type {}", taskId);
     }
 
     public void cancelSingleRunTask(DuneBotTaskId taskId) {
