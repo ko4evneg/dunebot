@@ -24,6 +24,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -72,8 +73,13 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
 
         if (nextLeaderPlace == match.getModType().getPlayersCount()) {
             rescheduleAcceptSubmitTimeoutTask(matchId);
-            sendPlayersSubmitCompletedMessages(commandMessage, match);
+            sendMessagesForParticipants(commandMessage, match);
         }
+    }
+
+    private void sendMessagesForParticipants(CommandMessage commandMessage, Match match) {
+        sendSubmitterSubmitCompletedMessages(commandMessage, match.getMatchPlayers());
+        sendPlayersSubmitCompletedMessages(match);
     }
 
     private void rescheduleAcceptSubmitTimeoutTask(long matchId) {
@@ -92,9 +98,24 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         }
     }
 
-    private void sendPlayersSubmitCompletedMessages(CommandMessage commandMessage, Match match) {
-        ExternalMessage playerSubmitFinishMessage = externalMessageFactory.getFinishedLeadersSubmitMessage(match.getMatchPlayers());
-        messagingService.sendMessageAsync(new MessageDto(commandMessage, playerSubmitFinishMessage, null));
+    private void sendSubmitterSubmitCompletedMessages(CommandMessage commandMessage, List<MatchPlayer> matchPlayers) {
+        ExternalMessage message = externalMessageFactory.getFinishedLeadersSubmitMessage(matchPlayers);
+        messagingService.sendMessageAsync(new MessageDto(commandMessage, message, null));
+    }
+
+    private void sendPlayersSubmitCompletedMessages(Match match) {
+        Long submitterId = match.getSubmitter().getId();
+        String pollId = match.getExternalPollId().getPollId();
+        Integer acceptSubmitTimeout = appSettingsService.getIntSetting(AppSettingKey.ACCEPT_SUBMIT_TIMEOUT);
+        ExternalMessage message = externalMessageFactory.getFinishedSubmitParticipantMessage(match.getId(), acceptSubmitTimeout);
+        match.getMatchPlayers().stream()
+                .map(MatchPlayer::getPlayer)
+                .filter(player -> !player.getId().equals(submitterId))
+                .map(player -> Long.toString(player.getExternalChatId()))
+                .forEach(chatId -> {
+                    MessageDto messageDto = new MessageDto(chatId, message, null, Integer.parseInt(pollId), null);
+                    messagingService.sendMessageAsync(messageDto);
+                });
     }
 
     @Override
