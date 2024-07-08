@@ -3,17 +3,14 @@ package ru.trainithard.dunebot.service.telegram.command.processor.submit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
@@ -23,7 +20,6 @@ import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
-import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.model.messaging.ChatType;
@@ -33,6 +29,7 @@ import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.validator.SubmitMatchValidator;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -40,10 +37,8 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -60,12 +55,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
 
     @Autowired
     private SubmitCommandProcessor processor;
-    @Autowired
-    private MatchRepository matchRepository;
     @MockBean
     private Clock clock;
     @MockBean
     private DuneBotTaskScheduler taskScheduler;
+    @MockBean
+    private SubmitMatchValidator validator;
+    @SpyBean
+    private MatchRepository matchRepository;
 
     @BeforeEach
     void beforeEach() {
@@ -122,35 +119,20 @@ class SubmitCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006");
     }
 
-    @ParameterizedTest
-    @MethodSource("exceptionsSource")
-    void shouldThrowOnUnsuitableMatchSubmit(String query, String expectedException) {
-        jdbcTemplate.execute(query);
+    @Test
+    void shouldInvokeMatchValidation() {
+        processor.process(submitCommandMessage);
 
-        assertThatThrownBy(() -> processor.process(submitCommandMessage))
-                .isInstanceOf(AnswerableDuneBotException.class)
-                .hasMessage(expectedException);
-    }
-
-    private static Stream<Arguments> exceptionsSource() {
-        return Stream.of(
-                Arguments.of("update matches set state = '" + MatchState.FAILED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
-                Arguments.of("update matches set state = '" + MatchState.FINISHED + "' where id = 15000", "Запрещено регистрировать результаты завершенных матчей"),
-                Arguments.of("update matches set state = '" + MatchState.ON_SUBMIT + "' where id = 15000", "Запрос на публикацию этого матча уже сделан"),
-                Arguments.of("update matches set state = '" + MatchState.SUBMITTED + "' where id = 15000", "Результаты матча уже зарегистрированы. При ошибке в результатах, используйте команду '/resubmit 15000'"),
-                Arguments.of("update matches set positive_answers_count = 3 where id = 15000", "В опросе участвует меньше игроков чем нужно для матча. Все игроки должны войти в опрос")
-        );
+        verify(validator).validateSubmitMatch(eq(submitCommandMessage), argThat(match -> 15000L == match.getId()));
     }
 
     @Test
-    void shouldThrowOnAlienMatchSubmit() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                             "values (10004, 11004, 12004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
-        CommandMessage commandMessage = getCommandMessage(11004L);
+    void shouldInvokeMatchValidationBeforeMatchSave() {
+        processor.process(submitCommandMessage);
 
-        assertThatThrownBy(() -> processor.process(commandMessage))
-                .isInstanceOf(AnswerableDuneBotException.class)
-                .hasMessage("Вы не можете инициировать публикацию этого матча");
+        InOrder inOrder = inOrder(validator, matchRepository);
+        inOrder.verify(validator).validateSubmitMatch(any(), argThat(match -> 15000L == match.getId()));
+        inOrder.verify(matchRepository).save(argThat(match -> 15000L == match.getId()));
     }
 
     @Test
@@ -258,76 +240,12 @@ class SubmitCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldResetMatchSubmitDataOnResubmit() {
-        jdbcTemplate.execute("update matches set state ='" + MatchState.SUBMITTED + "' where id = 15000");
-        Match match = matchRepository.findWithMatchPlayersBy(15000L).orElseThrow();
-
-        processor.process(match, USER_ID_2);
-
-        Match actualMatch = jdbcTemplate.queryForObject("select submits_retry_count, state from matches where id = 15000",
-                new BeanPropertyRowMapper<>(Match.class));
-
-        assertThat(actualMatch)
-                .extracting(Match::getState, Match::getSubmitsRetryCount)
-                .containsExactly(MatchState.ON_SUBMIT, 1);
-    }
-
-    @Test
-    void shouldResetMatchPlayersPlacesOnResubmit() {
-        jdbcTemplate.execute("update matches set state ='" + MatchState.SUBMITTED + "' where id = 15000");
-        jdbcTemplate.execute("update match_players set place = 1, leader = 10200 where id = 10000");
-        jdbcTemplate.execute("update match_players set place = 2, leader = 10201 where id = 10001");
-        jdbcTemplate.execute("update match_players set place = 3, leader = 10202 where id = 10002");
-        jdbcTemplate.execute("update match_players set place = 4, leader = 10203 where id = 10003");
-        Match match = matchRepository.findWithMatchPlayersBy(15000L).orElseThrow();
-
-        processor.process(match, USER_ID_2);
-
-        List<Integer> actualPlaces = jdbcTemplate
-                .queryForList("select place from match_players where id between 10000 and 10003 order by id", Integer.class);
-
-        assertThat(actualPlaces).isNotEmpty().allMatch(Objects::isNull);
-    }
-
-    @Test
-    void shouldResetMatchLeadersPlacesOnResubmit() {
-        jdbcTemplate.execute("update matches set state ='" + MatchState.SUBMITTED + "' where id = 15000");
-        jdbcTemplate.execute("update match_players set place = 1, leader = 10200 where id = 10000");
-        jdbcTemplate.execute("update match_players set place = 2, leader = 10201 where id = 10001");
-        jdbcTemplate.execute("update match_players set place = 3, leader = 10202 where id = 10002");
-        jdbcTemplate.execute("update match_players set place = 4, leader = 10203 where id = 10003");
-        Match match = matchRepository.findWithMatchPlayersBy(15000L).orElseThrow();
-
-        processor.process(match, USER_ID_2);
-
-        List<Integer> actualLeaders = jdbcTemplate
-                .queryForList("select leader from match_players where id between 10000 and 10003 order by id", Integer.class);
-
-        assertThat(actualLeaders).isNotEmpty().allMatch(Objects::isNull);
-    }
-
-    @Test
     void shouldScheduleUnsuccessfullySubmittedMatchFinishTaskOnFirstSubmit() {
         processor.process(submitCommandMessage);
 
         DuneBotTaskId expectedTaskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
         Instant expectedInstant = NOW.plus(FINISH_MATCH_TIMEOUT, ChronoUnit.MINUTES);
         verify(taskScheduler).rescheduleSingleRunTask(any(), eq(expectedTaskId), eq(expectedInstant));
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = DuneTaskType.class, mode = EnumSource.Mode.INCLUDE, names = {"SUBMIT_TIMEOUT", "SUBMIT_TIMEOUT_NOTIFICATION"})
-    void shouldRescheduleUnsuccessfullySubmittedMatchFinishTaskOnResubmit(DuneTaskType taskType) {
-        jdbcTemplate.execute("update matches set submits_retry_count = 2 where id = 15000");
-        DuneBotTaskId taskId = new DuneBotTaskId(taskType, 15000L);
-        ScheduledFuture<?> future = mock(ScheduledFuture.class);
-        doReturn(future).when(taskScheduler).get(taskId);
-        doReturn(208L).when(future).getDelay(any());
-
-        processor.process(submitCommandMessage);
-
-        Instant expectedInstant = NOW.plus(208 + 420, ChronoUnit.SECONDS);
-        verify(taskScheduler).rescheduleSingleRunTask(any(), eq(taskId), eq(expectedInstant));
     }
 
     @Test

@@ -6,12 +6,15 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
-import ru.trainithard.dunebot.model.*;
-import ru.trainithard.dunebot.repository.MatchPlayerRepository;
+import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
+import ru.trainithard.dunebot.exception.MatchNotExistsException;
+import ru.trainithard.dunebot.model.AppSettingKey;
+import ru.trainithard.dunebot.model.Match;
+import ru.trainithard.dunebot.model.MatchState;
+import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRepository;
 import ru.trainithard.dunebot.service.AppSettingsService;
-import ru.trainithard.dunebot.service.SubmitValidatedMatchRetriever;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -22,6 +25,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 import ru.trainithard.dunebot.service.telegram.command.processor.CommandProcessor;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 import ru.trainithard.dunebot.service.telegram.factory.messaging.KeyboardsFactory;
+import ru.trainithard.dunebot.service.telegram.validator.SubmitMatchValidator;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -37,12 +41,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class SubmitCommandProcessor extends CommandProcessor {
+    private static final String MATCH_NOT_EXISTS_EXCEPTION = "Матча с таким ID не существует!";
     private static final int RESUBMIT_TIME_LIMIT_STEP = 60 * 7;
-    private final MatchPlayerRepository matchPlayerRepository;
     private final MatchRepository matchRepository;
     private final PlayerRepository playerRepository;
     private final DuneBotTaskScheduler taskScheduler;
-    private final SubmitValidatedMatchRetriever validatedMatchRetriever;
+    private final SubmitMatchValidator submitMatchValidator;
     private final AppSettingsService appSettingsService;
     private final Clock clock;
     private final DuneScheduledTaskFactory taskFactory;
@@ -52,41 +56,30 @@ public class SubmitCommandProcessor extends CommandProcessor {
     @Override
     public void process(CommandMessage commandMessage) {
         log.debug("{}: SUBMIT started", logId());
-        Match validatedMatch = validatedMatchRetriever.getValidatedSubmitMatch(commandMessage);
-        process(validatedMatch, commandMessage.getChatId());
-        log.debug("{}: SUBMIT ended", logId());
-    }
+        try {
+            long matchId = Long.parseLong(commandMessage.getArgument(1));
+            Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
+            submitMatchValidator.validateSubmitMatch(commandMessage, match);
+            Long chatId = commandMessage.getChatId();
+            log.debug("{}: SUBMIT(internal) started", logId());
 
-    void process(Match match, Long chatId) {
-        log.debug("{}: SUBMIT(internal) started", logId());
-
-        Player submitter = playerRepository.findByExternalId(chatId).orElseThrow();
-        if (match.getState() == MatchState.NEW) {
+            Player submitter = playerRepository.findByExternalId(chatId).orElseThrow();
             match.setState(MatchState.ON_SUBMIT);
             match.setSubmitter(submitter);
             matchRepository.save(match);
             log.debug("{}: match {} saved state ON_SUBMIT", logId(), match.getId());
-        } else if (match.getState() == MatchState.SUBMITTED) {
-            resetMatchAndPlayersSubmitState(match, submitter);
+
+            ExternalMessage submitMessage = messageFactory.getPlayersSubmitMessage(match.getId());
+            List<List<ButtonDto>> submitPlayersKeyboard = keyboardsFactory.getSubmitPlayersKeyboard(match.getMatchPlayers());
+            MessageDto submitPlayersMessage = new MessageDto(chatId, submitMessage, null, submitPlayersKeyboard);
+            messagingService.sendMessageAsync(submitPlayersMessage);
+            rescheduleSubmitTasks(match.getId());
+
+            log.debug("{}: SUBMIT(internal) ended", logId());
+        } catch (NumberFormatException | MatchNotExistsException exception) {
+            throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, exception, commandMessage.getChatId());
         }
-
-        ExternalMessage submitMessage = messageFactory.getPlayersSubmitMessage(match.getId());
-        List<List<ButtonDto>> submitPlayersKeyboard = keyboardsFactory.getSubmitPlayersKeyboard(match.getMatchPlayers());
-        MessageDto submitPlayersMessage = new MessageDto(chatId, submitMessage, null, submitPlayersKeyboard);
-        messagingService.sendMessageAsync(submitPlayersMessage);
-        rescheduleSubmitTasks(match.getId());
-
-        log.debug("{}: SUBMIT(internal) ended", logId());
-    }
-
-    private void resetMatchAndPlayersSubmitState(Match match, Player submitter) {
-        match.prepareForResubmit(submitter);
-        match.getMatchPlayers().forEach(MatchPlayer::resetSubmitData);
-        transactionTemplate.executeWithoutResult(status -> {
-            matchRepository.save(match);
-            matchPlayerRepository.saveAll(match.getMatchPlayers());
-        });
-        log.debug("{}: match {} and its players prepared for resubmit and receive ON_SUBMIT state", logId(), match.getId());
+        log.debug("{}: SUBMIT ended", logId());
     }
 
     private void rescheduleSubmitTasks(long matchId) {
