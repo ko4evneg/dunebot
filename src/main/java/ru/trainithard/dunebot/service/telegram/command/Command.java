@@ -66,9 +66,13 @@ public enum Command {
      */
     LEADER_ACCEPT(CALLBACK, false, false, 0),
     /**
-     * Resets current results and initiates match results requests.
+     * Sends resubmit request to identify resubmitting player
      */
     RESUBMIT(TEXT, false, false, 1),
+    /**
+     * Accepts resubmit request callback and perform resubmit for required player
+     */
+    RESUBMIT_CALLBACK(CALLBACK, false, false, 0),
     /**
      * Accepts photo upload with match results.
      */
