@@ -105,7 +105,7 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
 
     private void sendPlayersSubmitCompletedMessages(Match match) {
         Long submitterId = match.getSubmitter().getId();
-        String pollId = match.getExternalPollId().getPollId();
+        Integer pollMessageId = match.getExternalPollId().getMessageId();
         Integer acceptSubmitTimeout = appSettingsService.getIntSetting(AppSettingKey.ACCEPT_SUBMIT_TIMEOUT);
         ExternalMessage message = externalMessageFactory.getFinishedSubmitParticipantMessage(match.getId(), acceptSubmitTimeout);
         match.getMatchPlayers().stream()
@@ -113,7 +113,7 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
                 .filter(player -> !player.getId().equals(submitterId))
                 .map(player -> Long.toString(player.getExternalChatId()))
                 .forEach(chatId -> {
-                    MessageDto messageDto = new MessageDto(chatId, message, null, Integer.parseInt(pollId), null);
+                    MessageDto messageDto = new MessageDto(chatId, message, null, pollMessageId, null);
                     messagingService.sendMessageAsync(messageDto);
                 });
     }

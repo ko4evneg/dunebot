@@ -192,7 +192,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         return new ExternalMessage().startBold()
                 .append("Матч ").append(matchId).endBold().append(" завершен!").newLine()
                 .append("Ознакомьтесь с результатами - у вас есть ").append(acceptSubmitTimeout)
-                .append(" минут чтобы проверить их. В случае ошибки, используйте команду '/resubmit ")
+                .append(" минута чтобы проверить их. В случае ошибки, используйте команду '/resubmit ")
                 .append(matchId).append("'");
     }
 

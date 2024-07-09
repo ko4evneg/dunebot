@@ -166,7 +166,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
                 .filteredOn(messageDto -> !messageDto.getChatId().equals("11000"))
                 .extracting(MessageDto::getText)
                 .allMatch(message -> message.equals("*Матч 15000* завершен\\!\n" +
-                                                    "Ознакомьтесь с результатами \\- у вас есть 13 минут чтобы проверить их\\." +
+                                                    "Ознакомьтесь с результатами \\- у вас есть 13 минута чтобы проверить их\\." +
                                                     " В случае ошибки, используйте команду '/resubmit 15000'"));
     }
 
