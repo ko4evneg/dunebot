@@ -65,16 +65,17 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         int nextLeaderPlace = submittedLeaderMaxPlace + 1;
         MatchPlayer submittedPlayer = playerByPlaces.get(nextLeaderPlace);
         submittedPlayer.setLeader(submittedLeader);
-        match.setState(MatchState.SUBMITTED);
+
+        if (nextLeaderPlace == match.getModType().getPlayersCount()) {
+            match.setState(MatchState.SUBMITTED);
+            rescheduleAcceptSubmitTimeoutTask(matchId);
+            sendMessagesForParticipants(commandMessage, match);
+        }
+
         transactionTemplate.executeWithoutResult(status -> {
             matchPlayerRepository.save(submittedPlayer);
             matchRepository.save(match);
         });
-
-        if (nextLeaderPlace == match.getModType().getPlayersCount()) {
-            rescheduleAcceptSubmitTimeoutTask(matchId);
-            sendMessagesForParticipants(commandMessage, match);
-        }
     }
 
     private void sendMessagesForParticipants(CommandMessage commandMessage, Match match) {

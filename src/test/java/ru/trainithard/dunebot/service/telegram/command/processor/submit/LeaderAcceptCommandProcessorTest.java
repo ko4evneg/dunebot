@@ -184,6 +184,18 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
     }
 
     @Test
+    void shouldNotChangeStateOnNotLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10200 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10202"));
+
+        MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where id = 15000", MatchState.class);
+
+        assertThat(actualMatchState).isEqualTo(MatchState.ON_SUBMIT);
+    }
+
+    @Test
     void shouldThrowWhenLeaderIsSubmittedTwice() {
         jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
         CommandMessage callbackMessage = getCallbackMessage("15000_SL_10201");

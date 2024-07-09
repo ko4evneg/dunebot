@@ -30,8 +30,10 @@ public class SubmitTimeoutNotificationTask implements DunebotRunnable {
     @Override
     public void run() {
         matchRepository.findWithMatchPlayersBy(matchId).ifPresent(match -> {
+            log.debug("0: match {} found in state {}", matchId, match.getState());
             if (match.getState() == MatchState.ON_SUBMIT) {
                 int timeout = appSettingsService.getIntSetting(AppSettingKey.SUBMIT_TIMEOUT_WARNING_NOTIFICATION);
+                log.debug("0: submit notification timeout received: {} minutes", timeout);
                 ExternalMessage externalMessage = messageFactory.getPreSubmitTimeoutNotificationMessage(match, timeout);
                 MessageDto message = new MessageDto(match.getExternalPollId(), externalMessage);
                 messagingService.sendMessageAsync(message);
