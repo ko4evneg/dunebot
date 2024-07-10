@@ -207,7 +207,18 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldScheduleFinishMatchTaskOnLastLeaderSubmit() {
+    void shouldNotChangeSchedulingOnNotLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10200 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10202"));
+
+        verify(taskScheduler, never()).cancelSingleRunTask(any());
+        verify(taskScheduler, never()).rescheduleSingleRunTask(any(), any(), any());
+    }
+
+    @Test
+    void shouldScheduleSubmitAcceptTimeoutTaskOnLastLeaderSubmit() {
         jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
         jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
         jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
@@ -217,6 +228,30 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
         Instant expectedStartTime = NOW.plus(13, ChronoUnit.MINUTES);
         DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_ACCEPT_TIMEOUT, 15000L);
         verify(taskScheduler).rescheduleSingleRunTask(isA(SubmitAcceptTimeoutTask.class), eq(taskId), eq(expectedStartTime));
+    }
+
+    @Test
+    void shouldCancelSubmitTimeoutTaskOnLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
+        jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10200"));
+
+        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, 15000L);
+        verify(taskScheduler).cancelSingleRunTask(taskId);
+    }
+
+    @Test
+    void shouldCancelSubmitTimeoutNotificationTaskOnLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
+        jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10200"));
+
+        DuneBotTaskId taskId = new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, 15000L);
+        verify(taskScheduler).cancelSingleRunTask(taskId);
     }
 
     @Test

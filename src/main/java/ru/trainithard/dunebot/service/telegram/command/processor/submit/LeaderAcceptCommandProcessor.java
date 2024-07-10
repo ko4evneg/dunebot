@@ -89,6 +89,8 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         int acceptSubmitTimeout = appSettingsService.getIntSetting(AppSettingKey.ACCEPT_SUBMIT_TIMEOUT);
         Instant startTime = Instant.now(clock).plus(acceptSubmitTimeout, ChronoUnit.MINUTES);
         taskScheduler.rescheduleSingleRunTask(submitAcceptTimeoutTask, taskId, startTime);
+        taskScheduler.cancelSingleRunTask(new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT_NOTIFICATION, matchId));
+        taskScheduler.cancelSingleRunTask(new DuneBotTaskId(DuneTaskType.SUBMIT_TIMEOUT, matchId));
     }
 
     private void validateLeaderIsNotSubmitted(CommandMessage commandMessage, MatchPlayer matchPlayer, Leader leader, long matchId) {

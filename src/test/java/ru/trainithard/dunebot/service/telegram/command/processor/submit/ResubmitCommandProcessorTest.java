@@ -75,8 +75,8 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                 .flatExtracting(buttonDtos -> buttonDtos)
                 .extracting(ButtonDto::getText, ButtonDto::getCallback)
                 .containsExactlyInAnyOrder(
-                        tuple("Хочу сам", "15000_RES_" + USER_ID),
-                        tuple("Передам прошлому", "15000_RES_12345")
+                        tuple("Хочу сам", "15000_RSC_" + USER_ID),
+                        tuple("Передам прошлому", "15000_RSC_12345")
                 );
 
     }

@@ -197,7 +197,7 @@ class ResubmitCallbackProcessorTest extends TestContextMock {
         user.setId(userId);
         CallbackQuery callbackQuery = new CallbackQuery();
         callbackQuery.setFrom(user);
-        callbackQuery.setData("15000_RES_" + userId);
+        callbackQuery.setData("15000_RSC_" + userId);
         return CommandMessage.getCallbackInstance(callbackQuery);
     }
 }
