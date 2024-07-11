@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.exception.MatchNotExistsException;
+import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.repository.MatchRepository;
+import ru.trainithard.dunebot.service.AppSettingsService;
+import ru.trainithard.dunebot.service.MatchFinishingService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.ButtonDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
@@ -28,10 +31,15 @@ import static ru.trainithard.dunebot.exception.MatchNotExistsException.MATCH_NOT
 @Service
 @RequiredArgsConstructor
 public class ResubmitCommandProcessor extends CommandProcessor {
+    private static final String RESUBMIT_LIMIT_EXCEEDED_MESSAGE_TEMPLATE =
+            "Превышено максимальное количество попыток регистрации результата матча (%d)";
+
     private final MatchRepository matchRepository;
     private final SubmitMatchValidator submitMatchValidator;
+    private final MatchFinishingService matchFinishingService;
     private final KeyboardsFactory keyboardsFactory;
     private final ExternalMessageFactory messageFactory;
+    private final AppSettingsService appSettingsService;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -41,11 +49,20 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);
             submitMatchValidator.validateReSubmitMatch(commandMessage, match);
 
-            ExternalMessage resubmitMessage = messageFactory.getResubmitMessage();
-            long submitterId = match.getSubmitter().getExternalId();
-            List<List<ButtonDto>> resubmitKeyboard = keyboardsFactory.getResubmitKeyboard(matchId, commandMessage.getUserId(), submitterId);
-            MessageDto messageDto = new MessageDto(commandMessage, resubmitMessage, resubmitKeyboard);
-            messagingService.sendMessageAsync(messageDto);
+            Integer resubmitsLimit = appSettingsService.getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
+            if (match.getSubmitsRetryCount() >= resubmitsLimit) {
+                matchFinishingService.finishPartiallySubmittedMatch(matchId, true);
+                String resubmitsLimitMessage = String.format(RESUBMIT_LIMIT_EXCEEDED_MESSAGE_TEMPLATE, resubmitsLimit);
+                MessageDto resubmitLimitMessage = new MessageDto(commandMessage, new ExternalMessage(resubmitsLimitMessage), null);
+                messagingService.sendMessageAsync(resubmitLimitMessage);
+            } else {
+                ExternalMessage resubmitMessage = messageFactory.getResubmitMessage();
+                long submitterId = match.getSubmitter().getExternalId();
+                List<List<ButtonDto>> resubmitKeyboard = keyboardsFactory
+                        .getResubmitKeyboard(matchId, commandMessage.getUserId(), submitterId);
+                MessageDto messageDto = new MessageDto(commandMessage, resubmitMessage, resubmitKeyboard);
+                messagingService.sendMessageAsync(messageDto);
+            }
         } catch (NumberFormatException | MatchNotExistsException exception) {
             throw new AnswerableDuneBotException(MATCH_NOT_EXISTS_EXCEPTION, exception, commandMessage.getChatId());
         }

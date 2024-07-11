@@ -11,7 +11,6 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.model.messaging.ChatType;
-import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
 
 import java.util.List;
@@ -19,12 +18,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
 class SubmitMatchValidatorTest {
-    private final AppSettingsService appSettingsService = mock(AppSettingsService.class);
-    private final SubmitMatchValidator validator = new SubmitMatchValidator(appSettingsService);
+    private final SubmitMatchValidator validator = new SubmitMatchValidator();
     private final Match match = new Match();
     private final Message message = new Message();
     private CommandMessage commandMessage;
@@ -63,8 +59,6 @@ class SubmitMatchValidatorTest {
         match.setId(15000L);
         match.setModType(ModType.CLASSIC);
         match.setState(MatchState.NEW);
-
-        doReturn(3).when(appSettingsService).getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
     }
 
     @ParameterizedTest
@@ -148,16 +142,6 @@ class SubmitMatchValidatorTest {
         assertThatThrownBy(() -> validator.validateReSubmitMatch(commandMessage, match))
                 .isInstanceOf(AnswerableDuneBotException.class)
                 .hasMessage("Вы не можете инициировать публикацию этого матча");
-    }
-
-    @Test
-    void shouldThrowWhenResubmitLimitExceeded() {
-        match.setSubmitsRetryCount(3);
-        match.setState(MatchState.SUBMITTED);
-
-        assertThatThrownBy(() -> validator.validateReSubmitMatch(commandMessage, match))
-                .isInstanceOf(AnswerableDuneBotException.class)
-                .hasMessage("Превышено максимальное количество попыток регистрации результата матча (3)");
     }
 
     @Test
