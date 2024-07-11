@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-class NewMacthCommandProcessorTest extends TestContextMock {
+class NewMatchCommandProcessorTest extends TestContextMock {
     private static final long USER_ID = 12345;
     private static final String POLL_ID = "12345";
     private static final int REPLY_ID = 23456;
@@ -86,7 +86,7 @@ class NewMacthCommandProcessorTest extends TestContextMock {
         Long actualMessageId = jdbcTemplate.queryForObject("select id from external_messages where chat_id = " +
                                                            CHAT_ID + " and poll_id = '" + POLL_ID + "' and message_id = " + MESSAGE_ID + " and reply_id = " + REPLY_ID, Long.class);
         MatchState actualMatchState = jdbcTemplate.queryForObject("select state from matches where external_poll_id = " + actualMessageId +
-                                                                  " and owner_id = 10000 and positive_answers_count = 0 and submits_count = 0 and submits_retry_count = 0", MatchState.class);
+                                                                  " and owner_id = 10000 and positive_answers_count = 0 and submits_retry_count = 0", MatchState.class);
 
         assertThat(actualMatchState).isNotNull().isEqualTo(MatchState.NEW);
     }

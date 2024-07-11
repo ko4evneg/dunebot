@@ -11,7 +11,7 @@ import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
  * Creates new poll in external messaging system for new match gathering.
  */
 @Slf4j
-public abstract class NewMacthCommandProcessor extends CommandProcessor {
+public abstract class NewMatchCommandProcessor extends CommandProcessor {
     @Autowired
     MatchCreationService matchCreationService;
 

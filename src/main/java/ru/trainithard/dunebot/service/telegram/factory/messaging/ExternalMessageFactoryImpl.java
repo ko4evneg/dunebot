@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
-import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
@@ -37,46 +36,25 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
-    public ExternalMessage getFinishReasonMessage(Match match, boolean isFailedByResubmitsLimit) {
-        Long matchId = match.getId();
-        ExternalMessage failMessage = new ExternalMessage()
-                .startBold().append("Матч ").append(matchId).endBold();
-        if (isFailedByResubmitsLimit) {
-            return failMessage.append(" завершен без результата, так как превышено максимальное количество попыток регистрации мест " +
-                                      "/resubmit. Это может быть вызвано командой или конфликтом мест последнего /resubmit.");
-        }
-        if (!match.hasAllPlacesSubmitted()) {
-            return getFailByMissingSubmitsMessage(match, failMessage);
-        }
-        return failMessage.append(" завершен без результата по неизвестной причине - вероятно это баг.");
+    public ExternalMessage getPartialSubmittedMatchFinishMessage(Match match) {
+        Player submitter = match.getSubmitter();
+        String submitterMention = MarkdownEscaper.getEscapedMention(submitter.getMentionTag(), submitter.getExternalId());
+        return new ExternalMessage().startBold().append("Матч ").append(match.getId()).endBold()
+                .append(" завершен без результата, так как игрок ").appendRaw(submitterMention)
+                .append(" не закончил регистрацию результата.");
     }
 
-    private ExternalMessage getFailByMissingSubmitsMessage(Match match, ExternalMessage failMessage) {
-        List<Player> playersWithoutCandidatePlace = match.getMatchPlayers().stream()
-                .filter(matchPlayer -> !matchPlayer.hasCandidateVote())
-                .map(MatchPlayer::getPlayer)
-                .toList();
-        List<String> notAnsweredPlayersMentions = new ArrayList<>();
-        List<String> chatBlockedPlayersMentions = new ArrayList<>();
-        for (Player player : playersWithoutCandidatePlace) {
-            String playerMention = MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
-            if (player.isChatBlocked()) {
-                chatBlockedPlayersMentions.add(playerMention);
-            } else {
-                notAnsweredPlayersMentions.add(playerMention);
-            }
-        }
-        failMessage.append(" завершен без результата!");
-        if (!notAnsweredPlayersMentions.isEmpty()) {
-            failMessage.newLine().append("Игроки ").appendRaw(String.join(", ", notAnsweredPlayersMentions))
-                    .append(" не ответили на запрос места.");
-        }
-        if (!chatBlockedPlayersMentions.isEmpty()) {
-            failMessage.newLine().append("Игроки ").appendRaw(String.join(", ", chatBlockedPlayersMentions))
-                    .append(" имеют приватный телеграм профиль и не могут получать сообщения без добавления бота в контакты.");
-        }
+    @Override
+    public ExternalMessage getFailByResubmitLimitExceededMessage(long matchId) {
+        return new ExternalMessage()
+                .startBold().append("Матч ").append(matchId).endBold()
+                .append(" завершен без результата, так как превышено максимальное количество попыток регистрации результатов.");
+    }
 
-        return failMessage;
+    @Override
+    public ExternalMessage getResubmitMessage() {
+        return new ExternalMessage("Если вы знаете все места и лидеров, вы можете выполнить перерегистрацию результата самостоятельно, " +
+                                   "иначе - запрос будет отправлен игроку, выполнившему предыдущую регистрацию результатов.");
     }
 
     @Override
@@ -113,49 +91,6 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .append("Игрок ").append(hoster.getFriendlyName()).append(" предлагает свой сервер для ")
                 .startBold().append("матча ").append(match.getId()).endBold().append(".")
                 .newLine().append("Сервер: ").appendBold(server).newLine().newLine().appendRaw(mentionsRow);
-    }
-
-    @Override
-    public ExternalMessage getNonClonflictSubmitMessage(long matchId, int candidatePlace) {
-        return switch (candidatePlace) {
-            case 0 -> getAcceptedSubmitMessageTemplateForNonParticipant(matchId);
-            default -> getAcceptedSubmitMessageTemplateForParticipant(matchId, candidatePlace);
-        };
-    }
-
-    private ExternalMessage getAcceptedSubmitMessageTemplateForNonParticipant(long matchId) {
-        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксирован статус: ")
-                .appendBold("не участвует").append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.");
-    }
-
-    private ExternalMessage getAcceptedSubmitMessageTemplateForParticipant(long matchId, int candidatePlace) {
-        return new ExternalMessage("В матче ").append(matchId).append(" за вами зафиксировано ")
-                .startBold().append(candidatePlace).append(" место").endBold().append(".").newLine()
-                .append("При ошибке используйте команду '/resubmit ").append(matchId).append("'.").newLine()
-                .appendBold("Теперь выберите лидера").append(" которым играли.");
-    }
-
-    @Override
-    public ExternalMessage getConflictSubmitMessage(Collection<MatchPlayer> matchPlayers, MatchPlayer candidate, int candidatePlace) {
-        Map<Integer, List<MatchPlayer>> playersByPlace = matchPlayers.stream()
-                .filter(matchPlayer -> matchPlayer.getCandidatePlace() != null && !matchPlayer.getId().equals(candidate.getId()))
-                .collect(Collectors.groupingBy(MatchPlayer::getCandidatePlace));
-        List<MatchPlayer> candidatePlaceMatchPlayers = playersByPlace.computeIfAbsent(candidatePlace, key -> new ArrayList<>());
-        candidatePlaceMatchPlayers.add(candidate);
-        ExternalMessage conflictMessage = new ExternalMessage("Некоторые игроки не смогли поделить ").startBold();
-        for (Map.Entry<Integer, List<MatchPlayer>> entry : playersByPlace.entrySet()) {
-            List<MatchPlayer> conflictMatchPlayers = entry.getValue();
-            if (conflictMatchPlayers.size() > 1) {
-                conflictMessage.append(entry.getKey()).append(" место").endBold().append(":").newLine();
-                conflictMatchPlayers.stream()
-                        .map(matchPlayer -> matchPlayer.getPlayer().getFriendlyName())
-                        .forEach(playerFriendlyName -> conflictMessage.append(playerFriendlyName).newLine());
-            }
-        }
-        conflictMessage.append(EXTERNAL_LINE_SEPARATOR).append("Повторный опрос результата...");
-
-        return conflictMessage;
     }
 
     @Override
@@ -196,27 +131,74 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
-    public ExternalMessage getAcceptSubmitRejectedDueToMatchFinishMessage(long matchId) {
-        return new ExternalMessage().startBold().append("Матч ").append(matchId).endBold()
-                .append(" уже завершен. Регистрация вашего голоса невозможна.");
+    public ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match, int timeout) {
+        ExternalMessage message = new ExternalMessage()
+                .appendBold("⚠️ Внимание: ").append("осталось ").append(timeout).append(" минут на публикацию результатов ")
+                .startBold().append("матча ").append(match.getId()).endBold().append("!").newLine();
+        Player submitter = match.getSubmitter();
+        String submitterMention = MarkdownEscaper.getEscapedMention(submitter.getMentionTag(), submitter.getExternalId());
+        message.append("Игрок ").appendRaw(submitterMention).append(" начал процесс регистрации, но еще не закончил его.");
+        return message;
     }
 
     @Override
-    public ExternalMessage getPreSubmitTimeoutNotificationMessage(Match match) {
-        if (MatchState.getEndedMatchStates().contains(match.getState())) {
-            return null;
-        }
-        String playerTags = match.getMatchPlayers().stream()
-                .filter(matchPlayer -> matchPlayer.getCandidatePlace() == null)
+    public ExternalMessage getPlayersSubmitMessage(long matchId) {
+        return new ExternalMessage("Регистрация результатов для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(". Нажмите по очереди кнопки с именами участвовавших игроков, " +
+                        "начиная от победителя и заканчивая последним местом.");
+    }
+
+    @Override
+    public ExternalMessage getLeadersSubmitMessage(long matchId) {
+        return new ExternalMessage("Теперь выберите лидеров для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(". Нажмите по очереди кнопки с именами лидеров, " +
+                        "начиная от лидера победителя и заканчивая лидером, занявшим последнее место.");
+    }
+
+    @Override
+    public ExternalMessage getFinishedPlayersSubmitMessage(Collection<MatchPlayer> matchPlayers) {
+        Long matchId = matchPlayers.stream().findFirst().orElseThrow().getMatch().getId();
+        String orderedParticipants = matchPlayers.stream()
+                .sorted(Comparator.comparing(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace())))
+                .map(matchPlayer -> matchPlayer.getPlace() + ": " + matchPlayer.getPlayer().getFriendlyName())
+                .collect(Collectors.joining(EXTERNAL_LINE_SEPARATOR));
+        return new ExternalMessage("Следующие результаты зарегистрированы для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(":").newLine().append(orderedParticipants);
+    }
+
+    @Override
+    public ExternalMessage getFinishedLeadersSubmitMessage(Collection<MatchPlayer> matchPlayers) {
+        Long matchId = matchPlayers.stream().findFirst().orElseThrow().getMatch().getId();
+        String orderedParticipants = matchPlayers.stream()
+                .sorted(Comparator.comparing(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace())))
                 .map(matchPlayer -> {
-                    Player player = matchPlayer.getPlayer();
-                    return MarkdownEscaper.getEscapedMention(player.getMentionTag(), player.getExternalId());
+                    int place = matchPlayer.getPlace();
+                    String playerName = matchPlayer.getPlayer().getFriendlyName();
+                    String leaderName = matchPlayer.getLeader().getName();
+                    return String.format("%d: %s - %s", place, playerName, leaderName);
                 })
-                .collect(Collectors.joining(", "));
-        return new ExternalMessage().appendBold("⚠️ Внимание: ").append("осталось 10 минут на публикацию результатов ")
-                .startBold().append("матча ").append(match.getId()).endBold().append("!").newLine()
-                .append("Результат еще не зарегистрировали игроки:").newLine()
-                .appendRaw(playerTags);
+                .collect(Collectors.joining(EXTERNAL_LINE_SEPARATOR));
+        return new ExternalMessage("Следующие результаты зарегистрированы для ")
+                .startBold().append("матча ").append(matchId).endBold()
+                .append(":").newLine().append(orderedParticipants).newLine().newLine()
+                .append("В случае ошибки используйте команду '/resubmit 15000'");
+    }
+
+    @Override
+    public ExternalMessage getFinishedSubmitParticipantMessage(MatchPlayer matchPlayer, String submitter, int acceptSubmitTimeout) {
+        Integer place = matchPlayer.getPlace();
+        String leader = matchPlayer.getLeader().getName();
+        Long matchId = matchPlayer.getMatch().getId();
+        return new ExternalMessage().append("Игрок ").appendBold(submitter).append(" завершил регистрацию результатов ").startBold()
+                .append("матча ").append(matchId).endBold().newLine()
+                .append("Ознакомьтесь с результатами - у вас есть ").append(acceptSubmitTimeout)
+                .append(" минута чтобы проверить их. В случае ошибки, используйте команду '/resubmit ")
+                .append(matchId).append("'.").newLine().newLine()
+                .append("За вами зарегистрированы ").startBold().append(place).append(" место").endBold()
+                .append(" и лидер ").appendBold(leader).append(".");
     }
 
     @Override
@@ -248,15 +230,18 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .appendBold("4️⃣  Завершение матча").newLine()
                 .append("Любой игрок выполняет команду ").appendInline("/submit X")
                 .append(", где X - ID матча из пункта 3. ")
-                .append("Каждому игроку придет сообщение с кнопками для выбора занятого места и лидера. ")
-                .append("Победителю также придет запрос на загрузку скриншота. Скриншот можно просто перетащить в чат.")
+                .append("Этому игроку придут запросы со списком участников игры и лидеров матча. ")
+                .append("В каждом запросе необходимо будет нажать кнопки игроков или лидеров в порядке очередности их мест, ")
+                .append("начиная с первого места, и заканчивая последним.")
                 .newLine().newLine()
-                .appendBold("5️⃣  Результаты").newLine()
+                .appendBold("5️⃣  Подтверждение результатов").newLine()
+                .append("Каждый участник получит сообщения с назначенным ему местом и лидером. ")
+                .append("В течение небольшого времени, после завершения матча, у всех игроков есть возможность исправить " +
+                        "неверные результаты, перезапустив их регистрацию командой ").appendInline("/resubmit X")
+                .newLine().newLine()
+                .appendBold("6️⃣  Результаты").newLine()
                 .append("В канал матчей бота придет результат матча с занятыми местами ")
                 .append("- это значит, что все хорошо и матч зачтен в рейтинг. ")
-                .append("Иначе придет уведомление, что матч завершен без результата, а также причина ошибки.")
-                .newLine().newLine()
-                .append("❗  На этапе пилота важно отслеживать все ошибки. " +
-                        "Если видите, что бот работает как-то не так, пишите в канал фидбека бота.");
+                .append("Иначе придет уведомление, что матч завершен без результата, а также причина ошибки.");
     }
 }

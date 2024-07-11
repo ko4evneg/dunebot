@@ -9,9 +9,6 @@ import ru.trainithard.dunebot.model.messaging.ExternalPollId;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Entity describing specific game match.c
@@ -33,6 +30,12 @@ public class Match extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "OWNER_ID")
     private Player owner;
+    /**
+     * Player who initiated the latest submit.
+     */
+    @OneToOne
+    @JoinColumn(name = "SUBMITTER_ID")
+    private Player submitter;
     /**
      * External ID of the poll created for this match.
      */
@@ -61,10 +64,6 @@ public class Match extends BaseEntity {
      */
     private int positiveAnswersCount;
     /**
-     * Count of accepted submit answers for the match (answer registration for place request).
-     */
-    private int submitsCount;
-    /**
      * Count of <b>retries</b> to submit this match (does not include initial submit).
      */
     private int submitsRetryCount;
@@ -90,26 +89,9 @@ public class Match extends BaseEntity {
         return modType.getPlayersCount() > positiveAnswersCount;
     }
 
-    // As players without places submits counts, we need exact match to start preliminary finishing
-    public boolean canBePreliminaryFinished() {
-        return submitsCount == matchPlayers.size();
-    }
-
-    public boolean hasAllPlacesSubmitted() {
-        Set<Integer> missingCandidatePlaces = getMissingCandidatePlaces();
-        return missingCandidatePlaces.isEmpty();
-    }
-
-    public Set<Integer> getMissingCandidatePlaces() {
-        int requiredPlaceSubmits = modType.getPlayersCount();
-        Set<Integer> possibleMatchPlaces = IntStream.range(1, requiredPlaceSubmits + 1).boxed().collect(Collectors.toSet());
-        matchPlayers.forEach(matchPlayer -> possibleMatchPlaces.remove(matchPlayer.getCandidatePlace()));
-        return possibleMatchPlaces;
-    }
-
-    public void prepareForResubmit() {
+    public void prepareForResubmit(Player submittingPlayer) {
         submitsRetryCount++;
-        submitsCount = 0;
+        submitter = submittingPlayer;
         state = MatchState.ON_SUBMIT;
     }
 }

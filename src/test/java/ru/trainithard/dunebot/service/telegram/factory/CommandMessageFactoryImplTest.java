@@ -18,7 +18,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 class CommandMessageFactoryImplTest {
     private static final long USER_ID = 100L;
@@ -26,7 +25,8 @@ class CommandMessageFactoryImplTest {
     private static final int REPLY_ID = 300;
     private static final int MESSAGE_ID = 400;
     private static final String POLL_ID = "100001";
-    private static final String ACCEPT_SUBMIT_CALLBACK_DATA = "10000__" + NOT_PARTICIPATED_MATCH_PLACE;
+    private static final String PLAYER_ACCEPT_CALLBACK_DATA = "10000_SP_10000";
+    private static final String LEADER_ACCEPT_CALLBACK_DATA = "10000_SL_10000";
     private static final String LEADER_CALLBACK_DATA = "10000_L_2";
     private final MatchRepository matchRepository = mock(MatchRepository.class);
     private final CommandMessageFactoryImpl factory = new CommandMessageFactoryImpl(matchRepository);
@@ -170,30 +170,30 @@ class CommandMessageFactoryImplTest {
     }
 
     @Test
-    void shouldCreateCommandMessageForSubmitCallbackCommandUpdate() {
-        Update callbackReplyUpdate = getCallbackQueryUpdate(ACCEPT_SUBMIT_CALLBACK_DATA);
+    void shouldCreateCommandMessageForPlayerAcceptCallbackCommandUpdate() {
+        Update callbackReplyUpdate = getCallbackQueryUpdate(PLAYER_ACCEPT_CALLBACK_DATA);
 
         CommandMessage commandMessage = factory.getInstance(callbackReplyUpdate);
 
         assertThat(commandMessage).isNotNull()
                 .extracting(CommandMessage::getUserId, CommandMessage::getCommand, CommandMessage::getCallback)
-                .containsExactly(USER_ID, Command.ACCEPT_SUBMIT, ACCEPT_SUBMIT_CALLBACK_DATA);
+                .containsExactly(USER_ID, Command.PLAYER_ACCEPT, PLAYER_ACCEPT_CALLBACK_DATA);
     }
 
     @Test
-    void shouldCreateCommandMessageForLeaderCallbackCommandUpdate() {
-        Update callbackReplyUpdate = getCallbackQueryUpdate(LEADER_CALLBACK_DATA);
+    void shouldCreateCommandMessageForLeaderAcceptCallbackCommandUpdate() {
+        Update callbackReplyUpdate = getCallbackQueryUpdate(LEADER_ACCEPT_CALLBACK_DATA);
 
         CommandMessage commandMessage = factory.getInstance(callbackReplyUpdate);
 
         assertThat(commandMessage).isNotNull()
                 .extracting(CommandMessage::getUserId, CommandMessage::getCommand, CommandMessage::getCallback)
-                .containsExactly(USER_ID, Command.LEADER, LEADER_CALLBACK_DATA);
+                .containsExactly(USER_ID, Command.LEADER_ACCEPT, LEADER_ACCEPT_CALLBACK_DATA);
     }
 
     @Test
     void shouldCreateNullCommandMessageForNullCallbackCommandUpdate() {
-        Update pollAnswerUpdate = getCallbackQueryUpdate(ACCEPT_SUBMIT_CALLBACK_DATA);
+        Update pollAnswerUpdate = getCallbackQueryUpdate(PLAYER_ACCEPT_CALLBACK_DATA);
         pollAnswerUpdate.getCallbackQuery().setData(null);
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);
@@ -203,7 +203,7 @@ class CommandMessageFactoryImplTest {
 
     @Test
     void shouldCreateNullCommandMessageForEmptyCallbackCommandUpdate() {
-        Update pollAnswerUpdate = getCallbackQueryUpdate(ACCEPT_SUBMIT_CALLBACK_DATA);
+        Update pollAnswerUpdate = getCallbackQueryUpdate(PLAYER_ACCEPT_CALLBACK_DATA);
         pollAnswerUpdate.getCallbackQuery().setData("");
 
         CommandMessage commandMessage = factory.getInstance(pollAnswerUpdate);

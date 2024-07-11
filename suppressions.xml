@@ -11,5 +11,5 @@
     <suppress checks="EmptyCatchBlock" files=".*Test\.java"/>
     <suppress checks="HideUtilityClassConstructor" files="DunebotApplication\.java|LogId\.java"/>
     <suppress checks="ParameterNumber" files="TelegramMessagingService\.java"/>
-    <suppress checks="MethodCount" files="ExternalMessage\.java"/>
+    <suppress checks="MethodCount" files="(ExternalMessage|ExternalMessageFactory.*)\.java"/>
 </suppressions>

@@ -85,7 +85,7 @@ public class CommandMessage {
         this.userId = externalUserId;
         this.chatId = externalUserId;
         this.callback = callbackQuery.getData();
-        this.command = this.callback.contains("_L_") ? Command.LEADER : Command.ACCEPT_SUBMIT;
+        this.command = CallbackSymbol.getCommandBy(callback);
     }
 
     private CommandMessage(Message message) {

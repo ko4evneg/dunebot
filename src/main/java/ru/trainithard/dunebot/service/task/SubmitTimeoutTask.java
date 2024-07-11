@@ -15,7 +15,6 @@ public class SubmitTimeoutTask implements DunebotRunnable {
 
     @Override
     public void run() {
-        log.debug("TIMEOUT match {} finishing started", matchId);
-        matchFinishingService.finishNotSubmittedMatch(matchId, false);
+        matchFinishingService.finishPartiallySubmittedMatch(matchId, false);
     }
 }

@@ -16,9 +16,6 @@ import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessage
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -32,85 +29,57 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
     private final ExternalMessageFactory messageFactory;
 
     @Override
-    @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
-    public void finishNotSubmittedMatch(long matchId, boolean isFailedByResubmitsLimit) {
+    public void finishCompletelySubmittedMatch(long matchId) {
+        int logId = LogId.get();
+        log.debug("{}: finishing submitted match started", logId);
+
+        Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
+        log.debug("{}: match {} state: {}", logId, matchId, LogId.getMatchLogInfo(match));
+        if (match.getState() != MatchState.SUBMITTED) {
+            log.error("{}: Match {} has wrong state for completed submit: {}. Ending...", logId, matchId, match.getState());
+            return;
+        }
+
+        match.setState(MatchState.FINISHED);
+        match.setFinishDate(LocalDate.now(clock));
+        matchRepository.save(match);
+
+        ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
+        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
+
+        log.debug("{}: finishing submitted match ended", logId);
+    }
+
+    @Override
+    public void finishPartiallySubmittedMatch(long matchId, boolean isFailedByResubmitsLimit) {
         int logId = LogId.get();
         log.debug("{}: match {} (not_submitted) finishing...", logId, matchId);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
-        log.debug("{}: match {} state: {}", logId, matchId, LogId.getMatchLogInfo(match));
-        if (MatchState.getEndedMatchStates().contains(match.getState())) {
-            log.debug("{}: Match {} has been ended already. Finishing is not required. Exiting...", logId, matchId);
+        log.debug("{}: match {} found (state: {})", logId, match.getId(), match.getState());
+        if (match.getState() != MatchState.ON_SUBMIT) {
+            log.error("{}: Match {} has wrong state for partial submit: {}. Ending...", logId, matchId, match.getState());
             return;
         }
-        log.debug("{}: match {} found (state: {})", logId, match.getId(), match.getState());
-        if (!MatchState.getEndedMatchStates().contains(match.getState())) {
-            assignMissingPlace(match);
-            if (match.hasAllPlacesSubmitted()) {
-                finishSuccessfullyAndSave(match);
-            } else {
-                ExternalMessage finishReasonMessage = messageFactory.getFinishReasonMessage(match, isFailedByResubmitsLimit);
-                failMatch(match);
-                transactionTemplate.executeWithoutResult(status -> {
-                    matchRepository.save(match);
-                    matchPlayerRepository.saveAll(match.getMatchPlayers());
-                    log.debug("{}: transaction succeed", logId);
-                });
 
-                messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), finishReasonMessage));
-            }
-        }
-        log.debug("{}: finishing not submitted match ended", logId);
-    }
-
-    private void assignMissingPlace(Match match) {
-        List<MatchPlayer> missingCandidatePlacePlayers = match.getMatchPlayers().stream()
-                .filter(matchPlayer -> Objects.isNull(matchPlayer.getCandidatePlace()))
-                .toList();
-        int logId = LogId.get();
-        log.debug("{}: found {} matchPlayers without a place", logId, missingCandidatePlacePlayers.size());
-        Set<Integer> missingCandidatePlaces = match.getMissingCandidatePlaces();
-        if (missingCandidatePlacePlayers.size() == 1 && missingCandidatePlaces.size() == 1) {
-            int missingCandidatePlace = missingCandidatePlaces.iterator().next();
-            if (missingCandidatePlace != 1) {
-                MatchPlayer missingPlaceMatchPlayer = missingCandidatePlacePlayers.get(0);
-                missingPlaceMatchPlayer.setCandidatePlace(missingCandidatePlace);
-                matchPlayerRepository.save(missingPlaceMatchPlayer);
-                log.debug("{}: match {} player {} auto-assigned with {} candidatePlace", logId,
-                        match.getId(), missingPlaceMatchPlayer.getPlayer().getId(), missingCandidatePlace);
-            }
-        }
-    }
-
-    private void failMatch(Match match) {
-        match.setState(MatchState.FAILED);
-        match.setFinishDate(LocalDate.now(clock));
-        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setCandidatePlace(null));
-    }
-
-    @Override
-    public void finishSubmittedMatch(long matchId) {
-        log.debug("{}: finishing submitted match started", LogId.get());
-        Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
-        if (MatchState.getEndedMatchStates().contains(match.getState())) {
-            throw new IllegalStateException("Can't accept submit for match " + match.getId() + " due to its ended state");
-        }
-        log.debug("{}: match {} state: {}", LogId.get(), matchId, LogId.getMatchLogInfo(match));
-        finishSuccessfullyAndSave(match);
-        log.debug("{}: finishing submitted match ended", LogId.get());
-    }
-
-    private void finishSuccessfullyAndSave(Match match) {
-        log.debug("{}: processing successful finish", LogId.get());
-        match.setState(MatchState.FINISHED);
-        match.setFinishDate(LocalDate.now(clock));
-        match.getMatchPlayers().forEach(matchPlayer -> matchPlayer.setPlace(matchPlayer.getCandidatePlace()));
+        failMatchAndPlayers(match);
         transactionTemplate.executeWithoutResult(status -> {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(match.getMatchPlayers());
-            log.debug("{}: transaction succeed", LogId.get());
+            log.debug("{}: match {} and its player has been saved", logId, matchId);
         });
-        ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
-        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
+
+        ExternalMessage finishReasonMessage = isFailedByResubmitsLimit
+                ? messageFactory.getFailByResubmitLimitExceededMessage(matchId)
+                : messageFactory.getPartialSubmittedMatchFinishMessage(match);
+        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), finishReasonMessage));
+
+        log.debug("{}: finishing not submitted match ended", logId);
+    }
+
+    private void failMatchAndPlayers(Match match) {
+        match.setState(MatchState.FAILED);
+        match.setFinishDate(LocalDate.now(clock));
+        match.getMatchPlayers().forEach(MatchPlayer::resetSubmitData);
     }
 }

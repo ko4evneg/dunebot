@@ -19,13 +19,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findLatestOwnedMatchWithMatchPlayersBy(long playerId);
 
     @Query("""
-            select m from Match m
-            left join fetch m.matchPlayers mp
-            where mp.player.externalId = :externalPlayerId and m.state in :matchStates
-            """)
-    List<Match> findPlayerMatches(long externalPlayerId, Collection<MatchState> matchStates);
-
-    @Query("""
             select m1 from Match m1
             left join fetch m1.matchPlayers mp1
             where m1.id =

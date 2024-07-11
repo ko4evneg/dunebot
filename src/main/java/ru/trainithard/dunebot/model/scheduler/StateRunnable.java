@@ -22,7 +22,9 @@ public class StateRunnable implements Runnable {
         taskRepository.save(task);
 
         try {
+            log.info("Task {} of type {} execution...", task.getId(), taskId.getTaskType());
             originalRunnable.run();
+            log.info("Task {} has been successfully finished", task.getId());
         } catch (Exception e) {
             log.error("Task " + task.getId() + " failed due to an exception.", e);
             task.setStatus(TaskStatus.FAILED);

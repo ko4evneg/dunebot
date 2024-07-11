@@ -157,14 +157,15 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         updateProcessor.process();
 
-        verify(validationStrategyFactory, times(1)).getValidator(expectedCommandType);
+        verify(validationStrategyFactory).getValidator(expectedCommandType);
     }
 
     private static Stream<Arguments> validatorsSource() {
         return Stream.of(
                 Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/new_dune"), CommandType.TEXT),
                 Arguments.of(getPollAnswerUpdate(), CommandType.POLL_VOTE),
-                Arguments.of(getCallbackQueryUpdate(), CommandType.CALLBACK),
+                Arguments.of(getCallbackQueryUpdate("10000_SP_10000"), CommandType.CALLBACK),
+                Arguments.of(getCallbackQueryUpdate("10000_SL_10000"), CommandType.CALLBACK),
                 Arguments.of(getFileUploadUpdate(), CommandType.FILE_UPLOAD)
         );
     }
@@ -187,7 +188,7 @@ class TelegramUpdateProcessorTest extends TestContextMock {
                 Arguments.of(textUpdate, CommandMessage.getMessageInstance(textUpdate.getMessage())),
                 Arguments.of(getFileUploadUpdate(), CommandMessage.getMessageInstance(getFileUploadUpdate().getMessage())),
                 Arguments.of(getPollAnswerUpdate(), CommandMessage.getPollAnswerInstance(getPollAnswerUpdate().getPollAnswer())),
-                Arguments.of(getCallbackQueryUpdate(), CommandMessage.getCallbackInstance(getCallbackQueryUpdate().getCallbackQuery()))
+                Arguments.of(getCallbackQueryUpdate("10000__-1"), CommandMessage.getCallbackInstance(getCallbackQueryUpdate("10000__-1").getCallbackQuery()))
         );
     }
 
@@ -200,14 +201,15 @@ class TelegramUpdateProcessorTest extends TestContextMock {
 
         updateProcessor.process();
 
-        verify(commandProcessorFactory, times(1)).getProcessor(expectedCommand);
+        verify(commandProcessorFactory).getProcessor(expectedCommand);
     }
 
     private static Stream<Arguments> processorsSource() {
         return Stream.of(
                 Arguments.of(getTextUpdate(TELEGRAM_USER_ID_1, TELEGRAM_CHAT_ID_1, null, "/profile"), Command.PROFILE),
                 Arguments.of(getPollAnswerUpdate(), Command.VOTE),
-                Arguments.of(getCallbackQueryUpdate(), Command.ACCEPT_SUBMIT),
+                Arguments.of(getCallbackQueryUpdate("10000_SP_10000"), Command.PLAYER_ACCEPT),
+                Arguments.of(getCallbackQueryUpdate("10000_SL_10000"), Command.LEADER_ACCEPT),
                 Arguments.of(getFileUploadUpdate(), Command.UPLOAD_PHOTO)
         );
     }
@@ -253,13 +255,13 @@ class TelegramUpdateProcessorTest extends TestContextMock {
         return update;
     }
 
-    private static Update getCallbackQueryUpdate() {
+    private static Update getCallbackQueryUpdate(String callbackText) {
         Message message = new Message();
         message.setMessageId(TELEGRAM_REPLY_ID);
         message.setFrom(getUser());
         CallbackQuery callbackQuery = new CallbackQuery();
         callbackQuery.setMessage(message);
-        callbackQuery.setData("10000__-1");
+        callbackQuery.setData(callbackText);
         callbackQuery.setFrom(getUser());
         Update update = new Update();
         update.setCallbackQuery(callbackQuery);

@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ru.trainithard.dunebot.model.messaging.ExternalPollId;
-import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,8 +21,6 @@ class CascadingExternalIdTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private MatchRepository matchRepository;
-    @Autowired
-    private MatchPlayerRepository matchPlayerRepository;
 
     @AfterEach
     void afterEach() {
@@ -110,86 +107,5 @@ class CascadingExternalIdTest {
         Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where chat_id = 12345", Integer.class);
 
         assertThat(actualMessagesCount).isEqualTo(2);
-    }
-
-    @Test
-    void shouldSaveExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
-        Match match = new Match();
-        match.setExternalPollId(new ExternalPollId(10001, 10001L, "10001", 10001));
-        match.setExternalStartId(new ExternalPollId(10002, 10002L, "10002", 10002));
-        match.setModType(ModType.CLASSIC);
-        match.setState(MatchState.NEW);
-        matchRepository.save(match);
-        Player player = new Player();
-        player.setId(10000L);
-        MatchPlayer matchPlayer = new MatchPlayer(match, player);
-        matchPlayer.setSubmitMessageId(new ExternalPollId(10010, 10011L, "10012", 10013));
-        matchPlayerRepository.save(matchPlayer);
-
-        Boolean isSubmitIdExist = jdbcTemplate.queryForObject("select exists(select 1 from external_messages where " +
-                "message_id = 10010 and chat_id = 10011 and poll_id = '10012' and reply_id = 10013)", Boolean.class);
-
-        assertThat(isSubmitIdExist).isNotNull().isTrue();
-    }
-
-    @Test
-    void shouldDeleteExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, created_at) " +
-                "values (10000,10000, '" + ModType.CLASSIC + "',  '" + MatchState.NEW + "', '2010-10-10') ");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10000, 10000, 10000, 10000, '2010-10-10')");
-
-        matchPlayerRepository.deleteById(10000L);
-
-        Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where message_id = 10000", Integer.class);
-
-        assertThat(actualMessagesCount).isZero();
-    }
-
-    @Test
-    void shouldDeleteDetachedExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, created_at) " +
-                "values (10000,10000, '" + ModType.CLASSIC + "',  '" + MatchState.NEW + "', '2010-10-10') ");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10000, 10000, 10000, 10000, '2010-10-10')");
-
-        MatchPlayer matchPlayer = matchPlayerRepository.findById(10000L).orElseThrow();
-        matchPlayer.getSubmitMessageId().setChatId(12345L);
-        matchPlayerRepository.save(matchPlayer);
-
-        Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where chat_id = 12345", Integer.class);
-
-        assertThat(actualMessagesCount).isEqualTo(1);
-    }
-
-    @Test
-    void shouldUpdateExternalIdWithMatchPlayer() {
-        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
-                "values (10000, 10001, 10002 , 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
-        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, reply_id, poll_id, created_at) " +
-                "values (10000, 'ExternalPollId', 10000, 10001, 10002, 10003, '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, owner_id, mod_type, state, created_at) " +
-                "values (10000,10000, '" + ModType.CLASSIC + "',  '" + MatchState.NEW + "', '2010-10-10') ");
-        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, external_submit_id, created_at) " +
-                "values (10000, 10000, 10000, 10000, '2010-10-10')");
-
-        MatchPlayer matchPlayer = matchPlayerRepository.findById(10000L).orElseThrow();
-        matchPlayer.setSubmitMessageId(null);
-        matchPlayerRepository.save(matchPlayer);
-        matchPlayerRepository.deleteById(10000L);
-
-        Integer actualMessagesCount = jdbcTemplate.queryForObject("select count(*) from external_messages where message_id = 10000", Integer.class);
-
-        assertThat(actualMessagesCount).isZero();
     }
 }

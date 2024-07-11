@@ -12,6 +12,7 @@ public class DuneScheduledTaskFactory {
     private final Function<Long, StartMatchTask> startMatchTaskFactory;
     private final Function<Long, SubmitTimeoutTask> submitTimeoutTaskFactory;
     private final Function<Long, SubmitTimeoutNotificationTask> submitTimeoutNotificationTaskFactory;
+    private final Function<Long, SubmitAcceptTimeoutTask> submitAcceptTimeoutTaskFactory;
     private final ShutdownTask shutdownTask;
 
     public DunebotRunnable createInstance(DuneBotTaskId duneBotTaskId) {
@@ -20,6 +21,7 @@ public class DuneScheduledTaskFactory {
             case START_MESSAGE -> startMatchTaskFactory.apply(entityId);
             case SUBMIT_TIMEOUT -> submitTimeoutTaskFactory.apply(entityId);
             case SUBMIT_TIMEOUT_NOTIFICATION -> submitTimeoutNotificationTaskFactory.apply(entityId);
+            case SUBMIT_ACCEPT_TIMEOUT -> submitAcceptTimeoutTaskFactory.apply(entityId);
             case SHUTDOWN -> shutdownTask;
         };
     }

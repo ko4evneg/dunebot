@@ -14,6 +14,9 @@ public class LogId {
     private static final Random random = new Random();
     private static final Map<Long, Integer> loggingIdByThreadId = new ConcurrentHashMap<>();
 
+    private LogId() {
+    }
+
     public static void init() {
         loggingIdByThreadId.put(getThreadId(), random.nextInt(0, 1_000_000));
     }
@@ -34,11 +37,10 @@ public class LogId {
     public static String getMatchLogInfo(Match match) {
         String playerPlaces = match.getMatchPlayers().stream()
                 .map(matchPlayer ->
-                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getCandidatePlace()))
+                        String.format("player %d, candidate: %d", matchPlayer.getPlayer().getId(), matchPlayer.getPlace()))
                 .collect(Collectors.joining("; "));
         StringBuilder stringBuilder = new StringBuilder(playerPlaces).append("; ");
-        stringBuilder.append("state: ").append(match.getState()).append(", submits: ").append(match.getSubmitsCount())
-                .append(", votes: ").append(match.getPositiveAnswersCount());
+        stringBuilder.append("state: ").append(match.getState()).append(", votes: ").append(match.getPositiveAnswersCount());
         return stringBuilder.toString();
     }
 }
