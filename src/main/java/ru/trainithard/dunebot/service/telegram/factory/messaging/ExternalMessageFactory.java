@@ -28,7 +28,7 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getFinishedLeadersSubmitMessage(Collection<MatchPlayer> matchPlayers);
 
-    ExternalMessage getFinishedSubmitParticipantMessage(long matchId, int acceptSubmitTimeout);
+    ExternalMessage getFinishedSubmitParticipantMessage(MatchPlayer matchPlayer, String submitter, int acceptSubmitTimeout);
 
     ExternalMessage getHelpMessage();
 

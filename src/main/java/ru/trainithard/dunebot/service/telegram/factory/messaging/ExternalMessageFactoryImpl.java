@@ -188,12 +188,17 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
-    public ExternalMessage getFinishedSubmitParticipantMessage(long matchId, int acceptSubmitTimeout) {
-        return new ExternalMessage().startBold()
-                .append("Матч ").append(matchId).endBold().append(" завершен!").newLine()
+    public ExternalMessage getFinishedSubmitParticipantMessage(MatchPlayer matchPlayer, String submitter, int acceptSubmitTimeout) {
+        Integer place = matchPlayer.getPlace();
+        String leader = matchPlayer.getLeader().getName();
+        Long matchId = matchPlayer.getMatch().getId();
+        return new ExternalMessage().append("Игрок ").appendBold(submitter).append(" завершил регистрацию результатов ").startBold()
+                .append("матча ").append(matchId).endBold().newLine()
                 .append("Ознакомьтесь с результатами - у вас есть ").append(acceptSubmitTimeout)
                 .append(" минута чтобы проверить их. В случае ошибки, используйте команду '/resubmit ")
-                .append(matchId).append("'");
+                .append(matchId).append("'.").newLine().newLine()
+                .append("За вами зарегистрированы ").startBold().append(place).append(" место").endBold()
+                .append(" и лидер ").appendBold(leader).append(".");
     }
 
     @Override

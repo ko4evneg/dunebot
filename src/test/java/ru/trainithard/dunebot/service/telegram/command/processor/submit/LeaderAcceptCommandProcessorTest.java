@@ -163,11 +163,13 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
                 .extracting(MessageDto::getChatId)
                 .containsExactly("11000", "11001", "11002", "11003");
         assertThat(actualMessageDtos)
-                .filteredOn(messageDto -> !messageDto.getChatId().equals("11000"))
+                .filteredOn(messageDto -> messageDto.getChatId().equals("11001"))
                 .extracting(MessageDto::getText)
-                .allMatch(message -> message.equals("*Матч 15000* завершен\\!\n" +
-                                                    "Ознакомьтесь с результатами \\- у вас есть 13 минута чтобы проверить их\\." +
-                                                    " В случае ошибки, используйте команду '/resubmit 15000'"));
+                .allMatch(message -> message.equals("""
+                        Игрок *name1 \\(st\\_pl1\\) l1* завершил регистрацию результатов *матча 15000*
+                        Ознакомьтесь с результатами \\- у вас есть 13 минута чтобы проверить их\\. В случае ошибки, используйте команду '/resubmit 15000'\\.
+                                               
+                        За вами зарегистрированы *3 место* и лидер *la leader 2*\\."""));
     }
 
     @Test
