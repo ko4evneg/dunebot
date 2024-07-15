@@ -45,6 +45,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
     private static final Instant NOW = LocalDate.of(2010, 10, 20).atTime(5, 0).toInstant(ZoneOffset.UTC);
     private static final Long CHAT_ID = 12000L;
     private static final Long USER_ID = 11000L;
+    private final ExternalMessage finishMessage = new ExternalMessage("finishtext");
 
     @Autowired
     private LeaderAcceptCommandProcessor processor;
@@ -54,7 +55,6 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
     private Clock clock;
     @SpyBean
     private ExternalMessageFactory messageFactory;
-    private ExternalMessage finishMessage = new ExternalMessage("finishtext");
 
     @BeforeEach
     void beforeEach() {
@@ -187,7 +187,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
 
         assertThat(actualMessageDtos)
                 .extracting(MessageDto::getChatId)
-                .containsExactly("11000", "11001", "11002", "11003");
+                .containsExactly("11000", "11001", "11002", "11003", "12000");
         assertThat(actualMessageDtos)
                 .filteredOn(messageDto -> messageDto.getChatId().equals("11001"))
                 .extracting(MessageDto::getText)
