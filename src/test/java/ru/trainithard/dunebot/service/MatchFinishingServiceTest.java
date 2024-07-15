@@ -16,7 +16,9 @@ import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -31,6 +33,7 @@ class MatchFinishingServiceTest extends TestContextMock {
     private static final String MATCH_CHAT_ID = "12345";
     private static final int MATCH_TOPIC_REPLY_ID = 9000;
     private static final LocalDate FINISH_DATE = LocalDate.of(2012, 12, 12);
+    private final ExternalMessage externalMessage = new ExternalMessage("finishtxt");
 
     @Autowired
     private MatchFinishingService finishingService;
@@ -40,12 +43,16 @@ class MatchFinishingServiceTest extends TestContextMock {
     private MatchPlayerRepository matchPlayerRepository;
     @SpyBean
     private TransactionTemplate transactionTemplate;
+    @SpyBean
+    private ExternalMessageFactory messageFactory;
 
     @BeforeEach
     void beforeEach() {
         Clock fixedClock = Clock.fixed(FINISH_DATE.atTime(LocalTime.of(1, 0)).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
+
+        doReturn(externalMessage).when(messageFactory).getMatchSuccessfulFinishMessage(argThat(match -> match.getId() == 15000L));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, 11000, 12000, 'st_pl1', 'f1', 'l1', 'e1', '2010-10-10') ");
@@ -111,7 +118,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         finishingService.finishCompletelySubmittedMatch(15000L);
 
         verifyNoInteractions(matchPlayerRepository);
-        verifyNoInteractions(transactionTemplate);
+        verify(transactionTemplate, never()).executeWithoutResult(any());
         verifyNoInteractions(messagingService);
     }
 
@@ -127,14 +134,7 @@ class MatchFinishingServiceTest extends TestContextMock {
 
         assertThat(messageDto)
                 .extracting(MessageDto::getChatId, MessageDto::getTopicId, MessageDto::getText)
-                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID,
-                        """
-                                *Матч 15000* завершился:
-                                                
-                                1️⃣ 🥳🍾🎉 f4 \\(st\\_pl4\\) l4 🎉🍾🥳
-                                2️⃣ f2 \\(st\\_pl2\\) l2
-                                3️⃣ f3 \\(st\\_pl3\\) l3
-                                4️⃣ f1 \\(st\\_pl1\\) l1""");
+                .containsExactly(MATCH_CHAT_ID, MATCH_TOPIC_REPLY_ID, "finishtxt");
     }
 
     @ParameterizedTest

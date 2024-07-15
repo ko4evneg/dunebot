@@ -8,7 +8,10 @@ import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
@@ -16,6 +19,7 @@ import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIP
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
+    private static final String LEADER_EMOJI = "⭐️";
     @Value("${bot.version}")
     private String version;
 
@@ -99,21 +103,19 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
         message.startBold().append("Матч ").append(match.getId()).endBold().append(" завершился:")
                 .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
 
-        Map<Integer, String> playerNamesByPlace = new LinkedHashMap<>();
         match.getMatchPlayers().stream()
                 .filter(matchPlayer -> matchPlayer.getPlace() != null &&
                                        matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
-                .forEach(matchPlayer -> playerNamesByPlace.put(matchPlayer.getPlace(), matchPlayer.getPlayer().getFriendlyName()));
-        playerNamesByPlace.forEach((place, name) -> {
-            message.append(getPlaceEmoji(place)).append(" ");
-            if (place.equals(1)) {
-                message.append("🥳🍾🎉 ").append(name).append(" 🎉🍾🥳");
-            } else {
-                message.append(name);
-            }
-            message.append(EXTERNAL_LINE_SEPARATOR);
-        });
+                .forEach(matchPlayer -> {
+                    String friendlyName = matchPlayer.getPlayer().getFriendlyName();
+                    String leaderName = matchPlayer.getLeader().getName();
+                    Integer place = matchPlayer.getPlace();
+                    String playerNameRaw = place == 1 ? "🥳🍾🎉 " + friendlyName + " 🎉🍾🥳" : friendlyName;
+                    String placeEmoji = getPlaceEmoji(place);
+                    message.append(placeEmoji).space().append(playerNameRaw).newLine()
+                            .append(LEADER_EMOJI).space().append(leaderName).newLine().newLine();
+                });
         message.trimTrailingNewLine();
         return message;
     }

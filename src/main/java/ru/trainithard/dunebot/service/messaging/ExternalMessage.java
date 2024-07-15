@@ -71,9 +71,14 @@ public class ExternalMessage {
         return this;
     }
 
+    public ExternalMessage space() {
+        stringBuilder.append(" ");
+        return this;
+    }
+
     public String getText() {
         int index = stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR);
-        if (index == stringBuilder.length() - 1) {
+        if (stringBuilder.length() > 0 && index == stringBuilder.length() - 1) {
             stringBuilder.deleteCharAt(index);
         }
         return stringBuilder.toString();
