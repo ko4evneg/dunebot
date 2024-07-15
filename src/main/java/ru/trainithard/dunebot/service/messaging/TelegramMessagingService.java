@@ -1,5 +1,7 @@
 package ru.trainithard.dunebot.service.messaging;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,8 @@ public class TelegramMessagingService implements MessagingService {
     private static final String MARKDOWN2_PARSE_MODE = "MarkdownV2";
     private static final int MAX_RETRY = 3;
     private static final Random random = new Random();
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<Integer, Long> retryDelayByTryNumber = Map.of(
             1, 1000L,
             2, 2000L,
@@ -175,20 +179,28 @@ public class TelegramMessagingService implements MessagingService {
                 }
             });
         } catch (TelegramApiException e) {
+            log.debug("{}: pre-exception object: {}", logId, getFailedObject(method));
             rescheduleIfNeeded(method, requestFuture, factory, retry, logId, e, retryDelay);
+        }
+    }
+
+    private <Method extends BotApiMethod<? extends Serializable>> String getFailedObject(Method method) {
+        try {
+            return objectMapper.writeValueAsString(method);
+        } catch (JsonProcessingException e) {
+            return "failed serialization";
         }
     }
 
     private <R, T extends Serializable, Method extends BotApiMethod<T>> void rescheduleIfNeeded(
             Method method, CompletableFuture<R> requestFuture, Function<T, R> factory,
             int retry, long logId, Throwable exception, Long retryDelay) {
+        log.error(logId + ": " + ASYNC_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         if (retry > MAX_RETRY) {
             requestFuture.completeExceptionally(exception);
-            log.error(logId + ": " + ASYNC_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         } else {
             executorService.schedule(() -> executeRetryAsync(method, requestFuture, factory, retry + 1, logId),
                     retryDelay, TimeUnit.MILLISECONDS);
-            log.error(logId + ": " + ASYNC_MESSAGE_CALLBACK_EXCEPTION_MESSAGE, exception);
         }
     }
 }
