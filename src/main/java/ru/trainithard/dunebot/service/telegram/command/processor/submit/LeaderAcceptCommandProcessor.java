@@ -41,6 +41,7 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
     private final DuneScheduledTaskFactory taskFactory;
     private final Clock clock;
     private final AppSettingsService appSettingsService;
+    private final ExternalMessageFactory messageFactory;
 
     @Override
     public void process(CommandMessage commandMessage) {
@@ -81,6 +82,8 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
     private void sendMessagesForParticipants(CommandMessage commandMessage, Match match) {
         sendSubmitterSubmitCompletedMessages(commandMessage, match.getMatchPlayers());
         sendPlayersSubmitCompletedMessages(match);
+        ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
+        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
     }
 
     private void rescheduleAcceptSubmitTimeoutTask(long matchId) {

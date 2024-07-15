@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.telegram.telegrambots.meta.api.objects.*;
 import ru.trainithard.dunebot.TestContextMock;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
@@ -19,10 +20,12 @@ import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
+import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.task.SubmitAcceptTimeoutTask;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
+import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessageFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -49,12 +52,17 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
     private DuneBotTaskScheduler taskScheduler;
     @MockBean
     private Clock clock;
+    @SpyBean
+    private ExternalMessageFactory messageFactory;
+    private ExternalMessage finishMessage = new ExternalMessage("finishtext");
 
     @BeforeEach
     void beforeEach() {
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
+
+        doReturn(finishMessage).when(messageFactory).getMatchSuccessfulFinishMessage(argThat(match -> match.getId() == 15000L));
 
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10000, " + USER_ID + ", " + USER_ID + ", 'st_pl1', 'name1', 'l1', 'e1', '2010-10-10') ");
@@ -131,7 +139,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
         processor.process(getCallbackMessage("15000_SL_10200"));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
+        verify(messagingService, times(5)).sendMessageAsync(messageDtoCaptor.capture());
         List<MessageDto> actualMessageDtos = messageDtoCaptor.getAllValues();
 
         assertThat(actualMessageDtos)
@@ -148,7 +156,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
     }
 
     @Test
-    void shouldSendSubmittedMatchMessageOnLastLeaderSubmit() {
+    void shouldSendChannelMatchFinishMessageOnLastLeaderSubmit() {
         jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
         jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
         jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
@@ -156,7 +164,25 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
         processor.process(getCallbackMessage("15000_SL_10200"));
 
         ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
-        verify(messagingService, times(4)).sendMessageAsync(messageDtoCaptor.capture());
+        verify(messagingService, times(5)).sendMessageAsync(messageDtoCaptor.capture());
+        List<MessageDto> actualMessageDtos = messageDtoCaptor.getAllValues();
+
+        assertThat(actualMessageDtos)
+                .filteredOn(messageDto -> messageDto.getChatId().equals("12000"))
+                .map(MessageDto::getText)
+                .containsExactly("finishtext");
+    }
+
+    @Test
+    void shouldSendSubmittedMatchPlayerMessageOnLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
+        jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10200"));
+
+        ArgumentCaptor<MessageDto> messageDtoCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(messagingService, times(5)).sendMessageAsync(messageDtoCaptor.capture());
         List<MessageDto> actualMessageDtos = messageDtoCaptor.getAllValues();
 
         assertThat(actualMessageDtos)
