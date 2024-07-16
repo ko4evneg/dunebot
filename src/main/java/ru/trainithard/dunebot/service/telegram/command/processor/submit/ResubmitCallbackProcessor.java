@@ -25,18 +25,22 @@ public class ResubmitCallbackProcessor extends AbstractSubmitCommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
+        log.debug("{}: RESUBMIT_CALLBACK started", logId());
+
         String[] callbackData = commandMessage.getCallback().split(CallbackSymbol.RESUBMIT_CALLBACK_SYMBOL.getSymbol());
         long matchId = Long.parseLong(callbackData[0]);
         long externalResubmitterId = Long.parseLong(callbackData[1]);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         submitMatchValidator.validateReSubmitMatch(commandMessage, match);
+        log.debug("{}: match {} found and validated", logId(), matchId);
 
         Player resubmitter = playerRepository.findByExternalId(externalResubmitterId).orElseThrow();
         prepareAndSaveMatchAndPlayersForResubmit(match, resubmitter);
 
         sendSubmitMessages(match, externalResubmitterId);
         rescheduleSubmitTasks(match.getId());
+        log.debug("{}: RESUBMIT_CALLBACK ended", logId());
     }
 
     private void prepareAndSaveMatchAndPlayersForResubmit(Match match, Player submitter) {
@@ -46,7 +50,7 @@ public class ResubmitCallbackProcessor extends AbstractSubmitCommandProcessor {
             matchRepository.save(match);
             matchPlayerRepository.saveAll(match.getMatchPlayers());
         });
-        log.debug("{}: match {} and its players prepared for resubmit and receive ON_SUBMIT state", logId(), match.getId());
+        log.debug("{}: match {} and its players prepared for resubmit and receive ON_SUBMIT state and saved", logId(), match.getId());
     }
 
     @Override

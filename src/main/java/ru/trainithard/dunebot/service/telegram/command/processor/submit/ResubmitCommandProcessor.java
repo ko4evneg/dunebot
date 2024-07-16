@@ -50,12 +50,15 @@ public class ResubmitCommandProcessor extends CommandProcessor {
             submitMatchValidator.validateReSubmitMatch(commandMessage, match);
 
             Integer resubmitsLimit = appSettingsService.getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
+            log.debug("{}: match {}, resubmits_limit {}", logId(), matchId, resubmitsLimit);
             if (match.getSubmitsRetryCount() >= resubmitsLimit) {
+                log.debug("{}: match {}, resubmits_limit exceeded", logId(), matchId);
                 matchFinishingService.finishPartiallySubmittedMatch(matchId, true);
                 String resubmitsLimitMessage = String.format(RESUBMIT_LIMIT_EXCEEDED_MESSAGE_TEMPLATE, resubmitsLimit);
                 MessageDto resubmitLimitMessage = new MessageDto(commandMessage, new ExternalMessage(resubmitsLimitMessage), null);
                 messagingService.sendMessageAsync(resubmitLimitMessage);
             } else {
+                log.debug("{}: match {}, resubmits processing...", logId(), matchId);
                 ExternalMessage resubmitMessage = messageFactory.getResubmitMessage();
                 long submitterId = match.getSubmitter().getExternalId();
                 List<List<ButtonDto>> resubmitKeyboard = keyboardsFactory

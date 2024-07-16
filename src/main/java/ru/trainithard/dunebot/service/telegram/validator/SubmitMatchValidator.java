@@ -28,7 +28,7 @@ public class SubmitMatchValidator {
 
     public void validateSubmitMatch(CommandMessage commandMessage, Match match) {
         Long matchId = match.getId();
-        log.debug("{}: match {} validation...", LogId.get(), matchId);
+        log.debug("{}: match {} submit validation...", LogId.get(), matchId);
         long telegramChatId = commandMessage.getChatId();
         MatchState matchState = match.getState();
         commonValidation(commandMessage, match);
@@ -43,7 +43,7 @@ public class SubmitMatchValidator {
 
     public void validateReSubmitMatch(CommandMessage commandMessage, Match match) {
         Long matchId = match.getId();
-        log.debug("{}: match {} validation...", LogId.get(), matchId);
+        log.debug("{}: match {} resubmit validation...", LogId.get(), matchId);
         commonValidation(commandMessage, match);
         if (MatchState.ON_SUBMIT == match.getState() || MatchState.NEW == match.getState()) {
             throw new AnswerableDuneBotException(RESUBMIT_NOT_ALLOWED_BEFORE_SUBMIT, commandMessage.getChatId());
