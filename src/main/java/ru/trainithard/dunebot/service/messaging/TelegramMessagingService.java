@@ -175,6 +175,7 @@ public class TelegramMessagingService implements MessagingService {
                     requestFuture.complete(factory.apply(message));
                     log.debug("{}: successful callback received", logId);
                 } else {
+                    log.debug("{}: pre-exception object: {}", logId, getFailedObject(method));
                     rescheduleIfNeeded(method, requestFuture, factory, retry, logId, throwable, retryDelay);
                 }
             });
