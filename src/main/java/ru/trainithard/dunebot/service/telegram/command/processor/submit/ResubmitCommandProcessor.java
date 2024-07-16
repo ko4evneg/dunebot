@@ -43,7 +43,6 @@ public class ResubmitCommandProcessor extends CommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
-        log.debug("{}: RESUBMIT started", logId());
         try {
             long matchId = Long.parseLong(commandMessage.getArgument(1));
             Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow(MatchNotExistsException::new);

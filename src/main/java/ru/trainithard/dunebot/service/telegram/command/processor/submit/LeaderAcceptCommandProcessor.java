@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor.submit;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskId;
 import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
@@ -45,14 +47,38 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
 
     @Override
     public void process(CommandMessage commandMessage) {
+        log.debug("{}: LEADER_ACCEPT started", logId());
         String[] callbackData = commandMessage.getCallback().split(CallbackSymbol.SUBMIT_LEADERS_CALLBACK_SYMBOL.getSymbol());
         long matchId = Long.parseLong(callbackData[0]);
         long leaderId = Long.parseLong(callbackData[1]);
 
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         validateMatchIsNotFinished(commandMessage, match);
+        log.debug("{}: match {} found and validated", logId(), matchId);
 
         Leader submittedLeader = leaderRepository.findById(leaderId).orElseThrow();
+        log.debug("{}: leader {} found", logId(), submittedLeader.getId());
+
+        MatchLeaderSubmit matchLeaderSubmit = getMatchLeaderSubmit(commandMessage, match, submittedLeader, matchId);
+        MatchPlayer submittedPlayer = matchLeaderSubmit.submittedPlayer();
+        submittedPlayer.setLeader(submittedLeader);
+
+        if (matchLeaderSubmit.nextLeaderPlace() == match.getModType().getPlayersCount()) {
+            log.debug("{}: received last leader, match {} received SUBMITTED state", logId(), matchId);
+            match.setState(MatchState.SUBMITTED);
+            rescheduleAcceptSubmitTimeoutTask(matchId);
+            sendMessagesForParticipants(commandMessage, match);
+        }
+
+        transactionTemplate.executeWithoutResult(status -> {
+            matchPlayerRepository.save(submittedPlayer);
+            matchRepository.save(match);
+        });
+        log.debug("{}: match {}, match_player {} saved", logId(), matchId, submittedLeader.getId());
+        log.debug("{}: LEADER_ACCEPT ended", logId());
+    }
+
+    private MatchLeaderSubmit getMatchLeaderSubmit(CommandMessage commandMessage, Match match, Leader submittedLeader, long matchId) {
         Map<Integer, MatchPlayer> playerByPlaces = new HashMap<>();
         int submittedLeaderMaxPlace = 0;
         for (MatchPlayer matchPlayer : match.getMatchPlayers()) {
@@ -65,18 +91,9 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         }
         int nextLeaderPlace = submittedLeaderMaxPlace + 1;
         MatchPlayer submittedPlayer = playerByPlaces.get(nextLeaderPlace);
-        submittedPlayer.setLeader(submittedLeader);
 
-        if (nextLeaderPlace == match.getModType().getPlayersCount()) {
-            match.setState(MatchState.SUBMITTED);
-            rescheduleAcceptSubmitTimeoutTask(matchId);
-            sendMessagesForParticipants(commandMessage, match);
-        }
-
-        transactionTemplate.executeWithoutResult(status -> {
-            matchPlayerRepository.save(submittedPlayer);
-            matchRepository.save(match);
-        });
+        log.debug("{}: submit for leader {}, max place {}", logId(), submittedLeader.getId(), submittedLeaderMaxPlace);
+        return new MatchLeaderSubmit(nextLeaderPlace, submittedPlayer);
     }
 
     private void sendMessagesForParticipants(CommandMessage commandMessage, Match match) {
@@ -127,5 +144,8 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
     @Override
     public Command getCommand() {
         return Command.LEADER_ACCEPT;
+    }
+
+    private record MatchLeaderSubmit(int nextLeaderPlace, MatchPlayer submittedPlayer) {
     }
 }

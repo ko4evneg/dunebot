@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.telegram.command.processor.submit;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.Match;
@@ -22,6 +23,7 @@ import java.util.Objects;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlayersAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
@@ -34,12 +36,32 @@ public class PlayersAcceptCommandProcessor extends AcceptSubmitCommandProcessor 
 
     @Override
     public void process(CommandMessage commandMessage) {
+        log.debug("{}: PLAYER_ACCEPT started", logId());
         String[] callbackData = commandMessage.getCallback().split(CallbackSymbol.SUBMIT_PLAYERS_CALLBACK_SYMBOL.getSymbol());
         long matchId = Long.parseLong(callbackData[0]);
         long matchPlayerId = Long.parseLong(callbackData[1]);
         Match match = matchRepository.findWithMatchPlayersBy(matchId).orElseThrow();
         validateMatchIsNotFinished(commandMessage, match);
+        log.debug("{}: match {} found and validated", logId(), matchId);
 
+        MatchPlayerSubmit matchPlayerSubmit = getMatchPlayerSubmit(commandMessage, match, matchPlayerId, matchId);
+        MatchPlayer submittedPlayer = matchPlayerSubmit.submittedPlayer();
+
+        Objects.requireNonNull(submittedPlayer);
+        int nextCandidatePlace = matchPlayerSubmit.maxSubmittedPlace() + 1;
+        submittedPlayer.setPlace(nextCandidatePlace);
+        matchPlayerRepository.save(submittedPlayer);
+        log.debug("{}: saved player {} with place {}", logId(), submittedPlayer.getPlayer().getId(), nextCandidatePlace);
+
+        ModType modType = match.getModType();
+        if (nextCandidatePlace == modType.getPlayersCount()) {
+            log.debug("{}: received last player, going to leaders submit flow...", logId());
+            sendPlayersSubmitCompletedMessages(commandMessage, match);
+        }
+        log.debug("{}: PLAYER_ACCEPT ended", logId());
+    }
+
+    private MatchPlayerSubmit getMatchPlayerSubmit(CommandMessage commandMessage, Match match, long matchPlayerId, long matchId) {
         int maxSubmittedPlace = 0;
         MatchPlayer submittedPlayer = null;
         for (MatchPlayer matchPlayer : match.getMatchPlayers()) {
@@ -54,14 +76,8 @@ public class PlayersAcceptCommandProcessor extends AcceptSubmitCommandProcessor 
         }
 
         Objects.requireNonNull(submittedPlayer);
-        int nextCandidatePlace = maxSubmittedPlace + 1;
-        submittedPlayer.setPlace(nextCandidatePlace);
-        matchPlayerRepository.save(submittedPlayer);
-
-        ModType modType = match.getModType();
-        if (nextCandidatePlace == modType.getPlayersCount()) {
-            sendPlayersSubmitCompletedMessages(commandMessage, match);
-        }
+        log.debug("{}: submit for player {}, max place {}", logId(), submittedPlayer.getPlayer().getId(), maxSubmittedPlace);
+        return new MatchPlayerSubmit(maxSubmittedPlace, submittedPlayer);
     }
 
     private void validatePlayerIsNotSubmitted(CommandMessage commandMessage, MatchPlayer matchPlayer, Integer place, long matchId) {
@@ -83,5 +99,8 @@ public class PlayersAcceptCommandProcessor extends AcceptSubmitCommandProcessor 
     @Override
     public Command getCommand() {
         return Command.PLAYER_ACCEPT;
+    }
+
+    private record MatchPlayerSubmit(int maxSubmittedPlace, MatchPlayer submittedPlayer) {
     }
 }
