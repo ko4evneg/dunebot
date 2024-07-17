@@ -30,4 +30,7 @@
     <changeSet id="009-single-player-submit" author="ko4evneg">
         <sqlFile path="migrations/09_single_player_submit.sql"/>
     </changeSet>
+    <changeSet id="010-duplicated-match-finish" author="ko4evneg">
+        <sqlFile path="migrations/10_duplicated_match_finish.sql"/>
+    </changeSet>
 </databaseChangeLog>

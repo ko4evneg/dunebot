@@ -49,6 +49,12 @@ public class Match extends BaseEntity {
     @JoinColumn(name = "EXTERNAL_START_ID")
     private ExternalMessageId externalStartId;
     /**
+     * External ID of the message sent, when match has been submitted.
+     */
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "EXTERNAL_SUBMIT_ID")
+    private ExternalMessageId externalSubmitId;
+    /**
      * Game mode of the match.
      */
     @Enumerated(EnumType.STRING)

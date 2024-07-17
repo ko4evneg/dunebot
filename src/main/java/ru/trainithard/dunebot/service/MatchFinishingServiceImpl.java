@@ -16,6 +16,7 @@ import ru.trainithard.dunebot.service.telegram.factory.messaging.ExternalMessage
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -44,8 +45,10 @@ public class MatchFinishingServiceImpl implements MatchFinishingService {
         match.setFinishDate(LocalDate.now(clock));
         matchRepository.save(match);
 
-        ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
-        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
+        if (Objects.isNull(match.getExternalSubmitId())) {
+            ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
+            messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
+        }
 
         log.debug("{}: finishing submitted match ended", logId);
     }

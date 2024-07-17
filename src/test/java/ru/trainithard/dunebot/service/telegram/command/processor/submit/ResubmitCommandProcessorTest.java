@@ -15,6 +15,7 @@ import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.messaging.ChatType;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.MatchFinishingService;
@@ -55,6 +56,7 @@ class ResubmitCommandProcessorTest extends TestContextMock {
         player.setExternalId(12345L);
         match.setId(15000L);
         match.setSubmitter(player);
+        match.setExternalSubmitId(new ExternalMessageId(12345, 10000, null));
 
         doReturn(Optional.of(match)).when(matchRepository).findWithMatchPlayersBy(15000L);
         doReturn(RESUBMITS_LIMIT).when(appSettingsService).getIntSetting(AppSettingKey.RESUBMITS_LIMIT);
@@ -120,6 +122,13 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                         tuple("Хочу сам", "15000_RSC_" + USER_ID),
                         tuple("Передам прошлому", "15000_RSC_12345")
                 );
+    }
+
+    @Test
+    void shouldDeleteOldSubmitMessageOnResubmit() {
+        processor.process(resubmitCommandMessage);
+
+        verify(messagingService).deleteMessageAsync(argThat(messageId -> messageId.getMessageId() == 12345));
     }
 
     private CommandMessage getCommandMessage(long userId) {
