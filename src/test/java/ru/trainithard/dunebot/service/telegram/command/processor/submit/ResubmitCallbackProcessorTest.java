@@ -26,8 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
@@ -59,8 +58,10 @@ class ResubmitCallbackProcessorTest extends TestContextMock {
                              "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
                              "values (10001, 'ExternalMessageId', 10000, " + CHAT_ID + ", '2020-10-10')");
-        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, owner_id, mod_type, state, positive_answers_count, submits_retry_count, submitter_id, created_at) " +
-                             "values (15000, 10000, 10001, 10000, '" + ModType.CLASSIC + "', '" + MatchState.SUBMITTED + "', 4, 1, 10003,'2010-10-10') ");
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
+                             "values (10002, 'ExternalMessageId', 12345, " + CHAT_ID + ", '2020-10-10')");
+        jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, external_submit_id, owner_id, mod_type, state, positive_answers_count, submits_retry_count, submitter_id, created_at) " +
+                             "values (15000, 10000, 10001, 10002, 10000, '" + ModType.CLASSIC + "', '" + MatchState.SUBMITTED + "', 4, 1, 10003,'2010-10-10') ");
         jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
                              "(10200, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
         jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
@@ -159,6 +160,13 @@ class ResubmitCallbackProcessorTest extends TestContextMock {
         Long actualSubmittedId = jdbcTemplate.queryForObject("select submitter_id from matches where id = 15000", Long.class);
 
         assertThat(actualSubmittedId).isEqualTo(10000);
+    }
+
+    @Test
+    void shouldDeleteOldSubmitMessageOnResubmit() {
+        processor.process(resubmitCallback);
+
+        verify(messagingService).deleteMessageAsync(argThat(messageId -> messageId.getMessageId() == 12345));
     }
 
     @Test

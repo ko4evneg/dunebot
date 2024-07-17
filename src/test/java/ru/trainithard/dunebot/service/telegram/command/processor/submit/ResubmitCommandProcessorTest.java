@@ -124,13 +124,6 @@ class ResubmitCommandProcessorTest extends TestContextMock {
                 );
     }
 
-    @Test
-    void shouldDeleteOldSubmitMessageOnResubmit() {
-        processor.process(resubmitCommandMessage);
-
-        verify(messagingService).deleteMessageAsync(argThat(messageId -> messageId.getMessageId() == 12345));
-    }
-
     private CommandMessage getCommandMessage(long userId) {
         User user = new User();
         user.setId(userId);

@@ -59,7 +59,6 @@ public class ResubmitCommandProcessor extends CommandProcessor {
                 messagingService.sendMessageAsync(resubmitLimitMessage);
             } else {
                 log.debug("{}: match {}, resubmits processing...", logId(), matchId);
-                messagingService.deleteMessageAsync(match.getExternalSubmitId());
                 ExternalMessage resubmitMessage = messageFactory.getResubmitMessage();
                 long submitterId = match.getSubmitter().getExternalId();
                 List<List<ButtonDto>> resubmitKeyboard = keyboardsFactory
