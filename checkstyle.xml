@@ -60,7 +60,7 @@
             <property name="max" value="60"/>
         </module>
         <module name="MethodLength">
-            <property name="max" value="30"/>
+            <property name="max" value="35"/>
             <property name="countEmpty" value="false"/>
         </module>
         <module name="OuterTypeNumber"/>

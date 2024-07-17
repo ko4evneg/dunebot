@@ -72,7 +72,10 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
             rescheduleAcceptSubmitTimeoutTask(matchId);
             sendMessages(commandMessage, match).whenComplete((message, throwable) -> {
                 if (throwable == null) {
-                    match.setExternalSubmitId(new ExternalMessageId(message));
+                    matchRepository.findById(matchId).ifPresent(savedMatch -> {
+                        savedMatch.setExternalSubmitId(new ExternalMessageId(message));
+                        matchRepository.save(savedMatch);
+                    });
                 }
             });
         }
