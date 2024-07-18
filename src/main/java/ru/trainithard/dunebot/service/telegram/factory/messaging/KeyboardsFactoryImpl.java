@@ -26,7 +26,10 @@ public class KeyboardsFactoryImpl implements KeyboardsFactory {
         List<Leader> leaders = leaderRepository
                 .findAllByModType(match.getModType(), Sort.sort(Leader.class).by(Leader::getName));
         List<ButtonDto> leadersButtons = leaders.stream()
-                .map(leader -> new ButtonDto(leader.getName(), match.getId() + SUBMIT_LEADERS_CALLBACK_SYMBOL.getSymbol() + leader.getId()))
+                .map(leader -> {
+                    String callbackText = match.getId() + SUBMIT_LEADERS_CALLBACK_SYMBOL.getSymbol() + leader.getId();
+                    return new ButtonDto(leader.getShortName(), callbackText);
+                })
                 .toList();
         return Lists.partition(leadersButtons, 2);
     }
