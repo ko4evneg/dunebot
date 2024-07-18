@@ -37,6 +37,7 @@ public class ResubmitCallbackProcessor extends AbstractSubmitCommandProcessor {
 
         Player resubmitter = playerRepository.findByExternalId(externalResubmitterId).orElseThrow();
         prepareAndSaveMatchAndPlayersForResubmit(match, resubmitter);
+        messagingService.deleteMessageAsync(match.getExternalSubmitId());
 
         sendSubmitMessages(match, externalResubmitterId);
         rescheduleSubmitTasks(match.getId());

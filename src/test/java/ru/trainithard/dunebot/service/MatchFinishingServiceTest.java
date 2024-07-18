@@ -85,7 +85,7 @@ class MatchFinishingServiceTest extends TestContextMock {
         jdbcTemplate.execute("delete from match_players where match_id in (15000)");
         jdbcTemplate.execute("delete from matches where id in (15000)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
-        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10001");
+        jdbcTemplate.execute("delete from external_messages where id between 10000 and 10002 or message_id = 12345");
     }
 
     @Test
@@ -119,6 +119,17 @@ class MatchFinishingServiceTest extends TestContextMock {
 
         verifyNoInteractions(matchPlayerRepository);
         verify(transactionTemplate, never()).executeWithoutResult(any());
+        verifyNoInteractions(messagingService);
+    }
+
+    @Test
+    void shouldNotSendMessageOnSubmittedStateWhenSubmitMessageAlreadyExistsMatchCompletedSubmitFinish() {
+        jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
+                             "values (10002, 'ExternalMessageId', 12345, 10000, '2020-10-10')");
+        jdbcTemplate.execute("update matches set state = '" + MatchState.SUBMITTED + "', external_submit_id = 10002 where id = 15000");
+
+        finishingService.finishCompletelySubmittedMatch(15000L);
+
         verifyNoInteractions(messagingService);
     }
 

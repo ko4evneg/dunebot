@@ -8,11 +8,13 @@ import ru.trainithard.dunebot.configuration.scheduler.DuneBotTaskScheduler;
 import ru.trainithard.dunebot.configuration.scheduler.DuneTaskType;
 import ru.trainithard.dunebot.exception.AnswerableDuneBotException;
 import ru.trainithard.dunebot.model.*;
+import ru.trainithard.dunebot.model.messaging.ExternalMessageId;
 import ru.trainithard.dunebot.repository.LeaderRepository;
 import ru.trainithard.dunebot.repository.MatchPlayerRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.service.AppSettingsService;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.task.DuneScheduledTaskFactory;
 import ru.trainithard.dunebot.service.task.DunebotRunnable;
@@ -28,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -62,18 +65,23 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         MatchLeaderSubmit matchLeaderSubmit = getMatchLeaderSubmit(commandMessage, match, submittedLeader, matchId);
         MatchPlayer submittedPlayer = matchLeaderSubmit.submittedPlayer();
         submittedPlayer.setLeader(submittedLeader);
+        matchPlayerRepository.save(submittedPlayer);
 
         if (matchLeaderSubmit.nextLeaderPlace() == match.getModType().getPlayersCount()) {
             log.debug("{}: received last leader, match {} received SUBMITTED state", logId(), matchId);
-            match.setState(MatchState.SUBMITTED);
             rescheduleAcceptSubmitTimeoutTask(matchId);
-            sendMessagesForParticipants(commandMessage, match);
+            sendMessages(commandMessage, match).whenComplete((message, throwable) -> {
+                if (throwable == null) {
+                    matchRepository.findById(matchId).ifPresent(savedMatch -> {
+                        ExternalMessageId externalSubmitId = new ExternalMessageId(message);
+                        savedMatch.setState(MatchState.SUBMITTED);
+                        savedMatch.setExternalSubmitId(externalSubmitId);
+                        matchRepository.save(savedMatch);
+                    });
+                }
+            });
         }
 
-        transactionTemplate.executeWithoutResult(status -> {
-            matchPlayerRepository.save(submittedPlayer);
-            matchRepository.save(match);
-        });
         log.debug("{}: match {}, match_player {} saved", logId(), matchId, submittedLeader.getId());
         log.debug("{}: LEADER_ACCEPT ended", logId());
     }
@@ -96,11 +104,12 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         return new MatchLeaderSubmit(nextLeaderPlace, submittedPlayer);
     }
 
-    private void sendMessagesForParticipants(CommandMessage commandMessage, Match match) {
+    private CompletableFuture<ExternalMessageDto> sendMessages(CommandMessage commandMessage, Match match) {
         sendSubmitterSubmitCompletedMessages(commandMessage, match.getMatchPlayers());
         sendPlayersSubmitCompletedMessages(match);
         ExternalMessage matchSuccessfulFinishMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
-        messagingService.sendMessageAsync(new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage));
+        MessageDto messageDto = new MessageDto(match.getExternalPollId(), matchSuccessfulFinishMessage);
+        return messagingService.sendMessageAsync(messageDto);
     }
 
     private void rescheduleAcceptSubmitTimeoutTask(long matchId) {

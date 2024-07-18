@@ -21,6 +21,7 @@ import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.MatchState;
 import ru.trainithard.dunebot.model.ModType;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.service.messaging.dto.ExternalMessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.task.SubmitAcceptTimeoutTask;
 import ru.trainithard.dunebot.service.telegram.command.Command;
@@ -33,6 +34,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,6 +63,10 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
         Clock fixedClock = Clock.fixed(NOW, ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
+
+        ExternalMessageDto message = new ExternalMessageDto();
+        message.setMessageId(12345);
+        doReturn(CompletableFuture.completedFuture(message)).when(messagingService).sendMessageAsync(any());
 
         doReturn(finishMessage).when(messageFactory).getMatchSuccessfulFinishMessage(argThat(match -> match.getId() == 15000L));
 
@@ -105,7 +111,7 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
         jdbcTemplate.execute("delete from leaders where id between 10200 and 10203");
         jdbcTemplate.execute("delete from matches where id in (15000, 15001)");
         jdbcTemplate.execute("delete from players where id between 10000 and 10004");
-        jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006");
+        jdbcTemplate.execute("delete from external_messages where chat_id between 12000 and 12006 or message_id = 12345");
     }
 
     @ParameterizedTest
@@ -171,6 +177,21 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
                 .filteredOn(messageDto -> messageDto.getChatId().equals("12000"))
                 .map(MessageDto::getText)
                 .containsExactly("finishtext");
+    }
+
+    @Test
+    void shouldSaveMatchSubmitIdOnOnLastLeaderSubmit() {
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
+        jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
+
+        processor.process(getCallbackMessage("15000_SL_10200"));
+
+        Integer actualSubmitId = jdbcTemplate
+                .queryForObject("select message_id from external_messages where id = " +
+                                "(select external_submit_id from matches where id = 15000)", Integer.class);
+
+        assertThat(actualSubmitId).isNotNull().isEqualTo(12345);
     }
 
     @Test
