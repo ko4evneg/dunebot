@@ -6,6 +6,7 @@ import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
+import ru.trainithard.dunebot.util.EmojiRandomizer;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
 
 import java.util.Collection;
@@ -111,7 +112,9 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                     String friendlyName = matchPlayer.getPlayer().getFriendlyName();
                     String leaderName = matchPlayer.getLeader().getName();
                     Integer place = matchPlayer.getPlace();
-                    String playerNameRaw = place == 1 ? "🥳🍾🎉 " + friendlyName + " 🎉🍾🥳" : friendlyName;
+                    String playerNameRaw = place == 1
+                            ? EmojiRandomizer.getWinnerEmoji() + " " + friendlyName + " " + EmojiRandomizer.getWinnerEmoji()
+                            : friendlyName;
                     String placeEmoji = getPlaceEmoji(place);
                     message.append(placeEmoji).space().append(playerNameRaw).newLine()
                             .append(LEADER_EMOJI).space().append(leaderName).newLine().newLine();

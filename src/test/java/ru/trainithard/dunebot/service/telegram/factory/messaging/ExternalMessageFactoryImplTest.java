@@ -27,20 +27,21 @@ class ExternalMessageFactoryImplTest {
 
         ExternalMessage actualMessage = messageFactory.getMatchSuccessfulFinishMessage(match);
 
-        assertThat(actualMessage.getText()).isEqualTo("""
-                *Матч 12345* завершился:
-                                
-                1️⃣ 🥳🍾🎉 f1 \\(s1\\) l1 🎉🍾🥳
-                ⭐️ l1
-                                
-                2️⃣ f2 \\(s2\\) l2
-                ⭐️ l2
+        assertThat(actualMessage.getText())
+                .startsWith("*Матч 12345* завершился:\n\n")
+                .endsWith("""
+                        ⭐️ l1
+                                        
+                        2️⃣ f2 \\(s2\\) l2
+                        ⭐️ l2
 
-                3️⃣ f3 \\(s3\\) l3
-                ⭐️ l3
-                                
-                4️⃣ f4 \\(s4\\) l4
-                ⭐️ l4""");
+                        3️⃣ f3 \\(s3\\) l3
+                        ⭐️ l3
+                                        
+                        4️⃣ f4 \\(s4\\) l4
+                        ⭐️ l4""");
+        assertThat(actualMessage.getText().split("\n")[2])
+                .startsWith("1️⃣ ").contains("f1 \\(s1\\) l1");
     }
 
     private MatchPlayer getMatchPlayer(int place, String leaderName, String... names) {
