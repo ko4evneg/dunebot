@@ -65,25 +65,23 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         MatchLeaderSubmit matchLeaderSubmit = getMatchLeaderSubmit(commandMessage, match, submittedLeader, matchId);
         MatchPlayer submittedPlayer = matchLeaderSubmit.submittedPlayer();
         submittedPlayer.setLeader(submittedLeader);
+        matchPlayerRepository.save(submittedPlayer);
 
         if (matchLeaderSubmit.nextLeaderPlace() == match.getModType().getPlayersCount()) {
             log.debug("{}: received last leader, match {} received SUBMITTED state", logId(), matchId);
-            match.setState(MatchState.SUBMITTED);
             rescheduleAcceptSubmitTimeoutTask(matchId);
             sendMessages(commandMessage, match).whenComplete((message, throwable) -> {
                 if (throwable == null) {
                     matchRepository.findById(matchId).ifPresent(savedMatch -> {
-                        savedMatch.setExternalSubmitId(new ExternalMessageId(message));
+                        ExternalMessageId externalSubmitId = new ExternalMessageId(message);
+                        savedMatch.setState(MatchState.SUBMITTED);
+                        savedMatch.setExternalSubmitId(externalSubmitId);
                         matchRepository.save(savedMatch);
                     });
                 }
             });
         }
 
-        transactionTemplate.executeWithoutResult(status -> {
-            matchPlayerRepository.save(submittedPlayer);
-            matchRepository.save(match);
-        });
         log.debug("{}: match {}, match_player {} saved", logId(), matchId, submittedLeader.getId());
         log.debug("{}: LEADER_ACCEPT ended", logId());
     }
