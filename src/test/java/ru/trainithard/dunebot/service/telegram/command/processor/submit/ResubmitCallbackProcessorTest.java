@@ -62,14 +62,14 @@ class ResubmitCallbackProcessorTest extends TestContextMock {
                              "values (10002, 'ExternalMessageId', 12345, " + CHAT_ID + ", '2020-10-10')");
         jdbcTemplate.execute("insert into matches (id, external_poll_id, external_start_id, external_submit_id, owner_id, mod_type, state, positive_answers_count, submits_retry_count, submitter_id, created_at) " +
                              "values (15000, 10000, 10001, 10002, 10000, '" + ModType.CLASSIC + "', '" + MatchState.SUBMITTED + "', 4, 1, 10003,'2010-10-10') ");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10200, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10201, 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10202, 'la leader 3', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10203, 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10200, 'la leader 1', 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10201, 'la leader 2', 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10202, 'la leader 3', 'la leader 3', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10203, 'la leader 4', 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, leader, created_at) " +
                              "values (10000, 15000, 10000, 1, 10200, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, leader, created_at) " +

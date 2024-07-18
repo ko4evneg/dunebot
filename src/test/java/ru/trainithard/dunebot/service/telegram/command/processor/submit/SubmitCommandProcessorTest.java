@@ -95,14 +95,14 @@ class SubmitCommandProcessorTest extends TestContextMock {
                              "values (10002, 15000, 10002, '2010-10-10')");
         jdbcTemplate.execute("insert into match_players (id, match_id, player_id, created_at) " +
                              "values (10003, 15000, 10003, '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10200, 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10201, 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10202, 'la leader 3', '" + ModType.CLASSIC + "', '2010-10-10')");
-        jdbcTemplate.execute("insert into leaders (id, name, mod_type, created_at) values " +
-                             "(10203, 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10200, 'la leader 1', 'la leader 1', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10201, 'la leader 2', 'la leader 2', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10202, 'la leader 3', 'la leader 3', '" + ModType.CLASSIC + "', '2010-10-10')");
+        jdbcTemplate.execute("insert into leaders (id, name, short_name, mod_type, created_at) values " +
+                             "(10203, 'la leader 4', 'la leader 4', '" + ModType.CLASSIC + "', '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +
                              "values (10000, '" + AppSettingKey.SUBMIT_TIMEOUT + "', 120, '2010-10-10')");
         jdbcTemplate.execute("insert into app_settings (id, key, value, created_at) " +

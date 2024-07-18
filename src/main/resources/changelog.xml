@@ -33,4 +33,7 @@
     <changeSet id="010-duplicated-match-finish" author="ko4evneg">
         <sqlFile path="migrations/10_duplicated_match_finish.sql"/>
     </changeSet>
+    <changeSet id="011-short-leader-names" author="ko4evneg">
+        <sqlFile path="migrations/11_short_leader_names.sql"/>
+    </changeSet>
 </databaseChangeLog>

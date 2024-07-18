@@ -15,6 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Leader extends BaseEntity implements Rateable {
     private String name;
+    private String shortName;
     @Enumerated(EnumType.STRING)
     private ModType modType;
 
