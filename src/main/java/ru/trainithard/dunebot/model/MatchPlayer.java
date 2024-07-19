@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.lang.Nullable;
 
+import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
+
 /**
  * Entity for relation between specific <code>Match</code> and positively voted <code>Player</code>.
  */
@@ -46,7 +48,7 @@ public class MatchPlayer extends BaseEntity {
     }
 
     public boolean hasRateablePlace() {
-        return place != null && place != 0;
+        return place != null && place != NOT_PARTICIPATED_MATCH_PLACE;
     }
 
     public void resetSubmitData() {
