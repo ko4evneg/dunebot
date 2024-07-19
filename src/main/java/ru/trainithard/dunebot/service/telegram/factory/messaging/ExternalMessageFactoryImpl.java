@@ -16,7 +16,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ru.trainithard.dunebot.configuration.SettingConstants.EXTERNAL_LINE_SEPARATOR;
-import static ru.trainithard.dunebot.configuration.SettingConstants.NOT_PARTICIPATED_MATCH_PLACE;
 
 @Service
 public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
@@ -105,8 +104,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
                 .append(EXTERNAL_LINE_SEPARATOR).append(EXTERNAL_LINE_SEPARATOR);
 
         match.getMatchPlayers().stream()
-                .filter(matchPlayer -> matchPlayer.getPlace() != null &&
-                                       matchPlayer.getPlace() != NOT_PARTICIPATED_MATCH_PLACE)
+                .filter(MatchPlayer::hasRateablePlace)
                 .sorted(Comparator.comparing(MatchPlayer::getPlace))
                 .forEach(matchPlayer -> {
                     String friendlyName = matchPlayer.getPlayer().getFriendlyName();
@@ -166,6 +164,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     public ExternalMessage getFinishedPlayersSubmitMessage(Collection<MatchPlayer> matchPlayers) {
         Long matchId = matchPlayers.stream().findFirst().orElseThrow().getMatch().getId();
         String orderedParticipants = matchPlayers.stream()
+                .filter(MatchPlayer::hasRateablePlace)
                 .sorted(Comparator.comparing(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace())))
                 .map(matchPlayer -> matchPlayer.getPlace() + ": " + matchPlayer.getPlayer().getFriendlyName())
                 .collect(Collectors.joining(EXTERNAL_LINE_SEPARATOR));
@@ -178,6 +177,7 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     public ExternalMessage getFinishedLeadersSubmitMessage(Collection<MatchPlayer> matchPlayers) {
         Long matchId = matchPlayers.stream().findFirst().orElseThrow().getMatch().getId();
         String orderedParticipants = matchPlayers.stream()
+                .filter(MatchPlayer::hasRateablePlace)
                 .sorted(Comparator.comparing(matchPlayer -> Objects.requireNonNull(matchPlayer.getPlace())))
                 .map(matchPlayer -> {
                     int place = matchPlayer.getPlace();
@@ -194,16 +194,22 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
 
     @Override
     public ExternalMessage getFinishedSubmitParticipantMessage(MatchPlayer matchPlayer, String submitter, int acceptSubmitTimeout) {
-        Integer place = matchPlayer.getPlace();
-        String leader = matchPlayer.getLeader().getName();
         Long matchId = matchPlayer.getMatch().getId();
-        return new ExternalMessage().append("Игрок ").appendBold(submitter).append(" завершил регистрацию результатов ").startBold()
+        ExternalMessage message = new ExternalMessage()
+                .append("Игрок ").appendBold(submitter).append(" завершил регистрацию результатов ").startBold()
                 .append("матча ").append(matchId).endBold().newLine()
                 .append("Ознакомьтесь с результатами - у вас есть ").append(acceptSubmitTimeout)
                 .append(" минута чтобы проверить их. В случае ошибки, используйте команду '/resubmit ")
-                .append(matchId).append("'.").newLine().newLine()
-                .append("За вами зарегистрированы ").startBold().append(place).append(" место").endBold()
-                .append(" и лидер ").appendBold(leader).append(".");
+                .append(matchId).append("'.").newLine().newLine();
+        if (matchPlayer.hasRateablePlace()) {
+            Integer place = matchPlayer.getPlace();
+            String leader = matchPlayer.getLeader().getName();
+            message.append("За вами зарегистрированы ").startBold().append(place).append(" место").endBold()
+                    .append(" и лидер ").appendBold(leader).append(".");
+        } else {
+            message.append("За вами зарегистрировано ").appendBold("неучастие").append(" в матче.");
+        }
+        return message;
     }
 
     @Override

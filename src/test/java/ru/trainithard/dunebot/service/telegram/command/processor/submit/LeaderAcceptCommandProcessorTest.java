@@ -36,8 +36,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
@@ -78,6 +77,8 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
                              "values (10002, 11002, 11002, 'st_pl3', 'name3', 'l3', 'e3', '2010-10-10') ");
         jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
                              "values (10003, 11003, 11003, 'st_pl4', 'name4', 'l4', 'e4', '2010-10-10') ");
+        jdbcTemplate.execute("insert into players (id, external_id, external_chat_id, steam_name, first_name, last_name, external_first_name, created_at) " +
+                             "values (10004, 11004, 11004, 'st_pl5', 'name5', 'l5', 'e5', '2010-10-10') ");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, poll_id, created_at) " +
                              "values (10000, 'ExternalPollId', 10000, " + CHAT_ID + ", '10000', '2020-10-10')");
         jdbcTemplate.execute("insert into external_messages (id, dtype, message_id, chat_id, created_at) " +
@@ -192,6 +193,18 @@ class LeaderAcceptCommandProcessorTest extends TestContextMock {
                                 "(select external_submit_id from matches where id = 15000)", Integer.class);
 
         assertThat(actualSubmitId).isNotNull().isEqualTo(12345);
+    }
+
+    @Test
+    void shouldNotThrowWhenFifthPlayerPresentedOnLastLeaderSubmit() {
+        jdbcTemplate.execute("insert into match_players (id, match_id, player_id, place, created_at) " +
+                             "values (10104, 15000, 10004, null, '2010-10-10')");
+        jdbcTemplate.execute("update match_players set leader = 10201 where id = 10101");
+        jdbcTemplate.execute("update match_players set leader = 10202 where id = 10102");
+        jdbcTemplate.execute("update match_players set leader = 10203 where id = 10103");
+
+        assertThatCode(() -> processor.process(getCallbackMessage("15000_SL_10200")))
+                .doesNotThrowAnyException();
     }
 
     @Test

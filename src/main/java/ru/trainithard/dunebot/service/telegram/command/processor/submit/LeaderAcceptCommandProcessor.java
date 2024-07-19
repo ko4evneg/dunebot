@@ -90,6 +90,9 @@ public class LeaderAcceptCommandProcessor extends AcceptSubmitCommandProcessor {
         Map<Integer, MatchPlayer> playerByPlaces = new HashMap<>();
         int submittedLeaderMaxPlace = 0;
         for (MatchPlayer matchPlayer : match.getMatchPlayers()) {
+            if (!matchPlayer.hasRateablePlace()) {
+                continue;
+            }
             validateLeaderIsNotSubmitted(commandMessage, matchPlayer, submittedLeader, matchId);
             Integer place = Objects.requireNonNull(matchPlayer.getPlace());
             playerByPlaces.put(place, matchPlayer);
