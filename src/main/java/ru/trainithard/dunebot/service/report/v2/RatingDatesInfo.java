@@ -14,7 +14,7 @@ public class RatingDatesInfo {
     @Nullable
     private final LocalDate earliestRatingDate;
 
-    public RatingDatesInfo(Collection<AbstractRating> latestRatings) {
+    public RatingDatesInfo(Collection<? extends AbstractRating> latestRatings) {
         LocalDate earliestDate = null;
         for (AbstractRating playerRating : latestRatings) {
             Long entityId = playerRating.getEntityId();
