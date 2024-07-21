@@ -2,7 +2,7 @@ package ru.trainithard.dunebot.service.report.v2;
 
 import lombok.Getter;
 import org.springframework.lang.Nullable;
-import ru.trainithard.dunebot.model.RatingDate;
+import ru.trainithard.dunebot.model.PlayerRating;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -14,15 +14,15 @@ public class RatingDatesInfo {
     @Nullable
     private final LocalDate earliestRatingDate;
 
-    public RatingDatesInfo(Collection<RatingDate> latestRatings) {
+    public RatingDatesInfo(Collection<PlayerRating> latestRatings) {
         LocalDate earliestDate = null;
-        for (RatingDate ratingDate : latestRatings) {
-            Long playerId = ratingDate.getEntityId();
-            LocalDate maxDate = ratingDate.getMaxDate();
-            latestRatingDatesById.merge(playerId, maxDate, (oldVal, initVal) ->
-                    maxDate.isAfter(oldVal) ? maxDate : oldVal);
-            if (earliestDate == null || maxDate.isBefore(earliestDate)) {
-                earliestDate = maxDate;
+        for (PlayerRating playerRating : latestRatings) {
+            Long playerId = playerRating.getPlayer().getId();
+            LocalDate ratingDate = playerRating.getRatingDate();
+            latestRatingDatesById.merge(playerId, ratingDate, (oldDate, initVal) ->
+                    ratingDate.isAfter(oldDate) ? ratingDate : oldDate);
+            if (earliestDate == null || ratingDate.isBefore(earliestDate)) {
+                earliestDate = ratingDate;
             }
         }
         this.earliestRatingDate = earliestDate;
