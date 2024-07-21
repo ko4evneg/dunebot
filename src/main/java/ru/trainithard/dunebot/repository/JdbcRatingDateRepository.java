@@ -20,6 +20,12 @@ public class JdbcRatingDateRepository implements RatingDateRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * Returns RatingDate containing entityId and its latest rating build date
+     *
+     * @param aClass implementation of AbstractRating
+     * @return list of RatingDate
+     */
     @Override
     public List<RatingDate> findLatestRatings(Class<? extends AbstractRating> aClass) {
         String[] names = getNames(aClass);
