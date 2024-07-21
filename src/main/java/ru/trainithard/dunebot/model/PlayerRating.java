@@ -10,7 +10,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "PLAYER_RATINGS")
 @NoArgsConstructor
-public class PlayerRating extends Rating {
+public class PlayerRating extends AbstractRating {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PLAYER_ID")
     private Player player;

@@ -13,7 +13,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "LEADER_RATINGS")
 @NoArgsConstructor
-public class LeaderRating extends Rating {
+public class LeaderRating extends AbstractRating {
     @OneToOne
     @JoinColumn(name = "LEADER_ID")
     private Leader leader;

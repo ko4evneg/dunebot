@@ -9,9 +9,8 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @MappedSuperclass
-public abstract class Rating extends BaseEntity {
-    private LocalDate startDate;
-    private LocalDate endDate;
+public abstract class AbstractRating extends BaseEntity {
+    private LocalDate ratingDate;
     private int matchesCount;
     private double efficiency;
     private double winRate;
