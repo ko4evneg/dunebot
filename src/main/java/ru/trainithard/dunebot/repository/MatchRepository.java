@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchState;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +39,16 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             """)
     Optional<Match> findWithMatchPlayersBy(long matchId);
 
-    List<Match> findAllByStateNotIn(Collection<MatchState> states);
+    @Query("""
+            select m from Match m
+            join fetch m.matchPlayers
+            where m.state in :states
+            and m.finishDate between :from and :to
+            """)
+    List<Match> findAllByDatesAndState(LocalDate from, LocalDate to, Collection<MatchState> states);
 
     List<Match> findAllByStateIn(Collection<MatchState> states);
+
+    @Query("select min(m.finishDate) from Match m")
+    LocalDate findEarliestFinishDate();
 }
