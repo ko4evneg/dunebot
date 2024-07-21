@@ -17,4 +17,9 @@ public class LeaderRating extends AbstractRating {
     @OneToOne
     @JoinColumn(name = "LEADER_ID")
     private Leader leader;
+
+    @Override
+    public Long getEntityId() {
+        return this.getLeader().getId();
+    }
 }

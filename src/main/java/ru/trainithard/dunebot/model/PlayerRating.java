@@ -18,4 +18,9 @@ public class PlayerRating extends AbstractRating {
     @JoinColumn(name = "LAST_STRIKE_MATCH_ID")
     private Match lastStrikeMatch;
     private int strikeLength;
+
+    @Override
+    public Long getEntityId() {
+        return this.getPlayer().getId();
+    }
 }

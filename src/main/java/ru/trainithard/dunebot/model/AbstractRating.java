@@ -18,4 +18,6 @@ public abstract class AbstractRating extends BaseEntity {
     private int secondPlaceCount;
     private int thirdPlaceCount;
     private int fourthPlaceCount;
+
+    public abstract Long getEntityId();
 }

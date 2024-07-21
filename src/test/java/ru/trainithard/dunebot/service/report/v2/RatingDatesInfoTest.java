@@ -1,6 +1,7 @@
 package ru.trainithard.dunebot.service.report.v2;
 
 import org.junit.jupiter.api.Test;
+import ru.trainithard.dunebot.model.AbstractRating;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.PlayerRating;
 
@@ -18,7 +19,7 @@ class RatingDatesInfoTest {
         PlayerRating playerRating3 = createPlayerRating(10000L, LocalDate.of(2010, 2, 10));
         LocalDate earliestDate = LocalDate.of(2010, 1, 30);
         PlayerRating playerRating4 = createPlayerRating(10000L, earliestDate);
-        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
+        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
 
         RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
 
@@ -42,7 +43,7 @@ class RatingDatesInfoTest {
         LocalDate earliestDate = LocalDate.of(2010, 1, 30);
         PlayerRating playerRating4 = createPlayerRating(10001L, earliestDate);
         PlayerRating playerRating5 = createPlayerRating(10002L, LocalDate.of(2010, 4, 10));
-        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
+        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
 
         RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
 
@@ -55,7 +56,7 @@ class RatingDatesInfoTest {
         PlayerRating playerRating1 = createPlayerRating(10000L, earliestDate);
         PlayerRating playerRating2 = createPlayerRating(10001L, earliestDate);
         PlayerRating playerRating3 = createPlayerRating(10002L, earliestDate);
-        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3);
+        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3);
 
         RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
 
@@ -76,7 +77,7 @@ class RatingDatesInfoTest {
         PlayerRating playerRating2 = createPlayerRating(10000L, LocalDate.of(2010, 3, 1));
         PlayerRating playerRating3 = createPlayerRating(10000L, LocalDate.of(2010, 2, 10));
         PlayerRating playerRating4 = createPlayerRating(10000L, LocalDate.of(2010, 1, 30));
-        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
+        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
 
         RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
 
@@ -93,7 +94,7 @@ class RatingDatesInfoTest {
         PlayerRating playerRating4 = createPlayerRating(10001L, LocalDate.of(2010, 1, 30));
         LocalDate latestDate10002 = LocalDate.of(2010, 4, 10);
         PlayerRating playerRating5 = createPlayerRating(10002L, latestDate10002);
-        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
+        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
 
         RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
 
@@ -109,7 +110,7 @@ class RatingDatesInfoTest {
         PlayerRating playerRating2 = createPlayerRating(10001L, latestDate);
         PlayerRating playerRating3 = createPlayerRating(10002L, latestDate);
         PlayerRating playerRating4 = createPlayerRating(10002L, latestDate);
-        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
+        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
 
         RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
 
