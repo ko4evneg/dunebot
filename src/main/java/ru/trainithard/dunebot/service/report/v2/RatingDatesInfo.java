@@ -7,20 +7,22 @@ import ru.trainithard.dunebot.model.AbstractRating;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
-public class RatingDatesInfo {
-    private final HashMap<Long, LocalDate> latestRatingDatesById = new HashMap<>();
+public class RatingDatesInfo<T extends AbstractRating> {
+    private final Map<Long, T> ratingsById = new HashMap<>();
     @Getter
     @Nullable
     private final LocalDate earliestRatingDate;
 
-    public RatingDatesInfo(Collection<? extends AbstractRating> latestRatings) {
+    public RatingDatesInfo(Collection<T> latestRatings) {
         LocalDate earliestDate = null;
-        for (AbstractRating playerRating : latestRatings) {
-            Long entityId = playerRating.getEntityId();
-            LocalDate ratingDate = playerRating.getRatingDate();
-            latestRatingDatesById.merge(entityId, ratingDate, (oldDate, initVal) ->
-                    ratingDate.isAfter(oldDate) ? ratingDate : oldDate);
+        for (T rating : latestRatings) {
+            Long entityId = rating.getEntityId();
+            LocalDate ratingDate = rating.getRatingDate();
+            ratingsById.merge(entityId, rating, (oldRating, init) ->
+                    rating.getRatingDate().isAfter(oldRating.getRatingDate()) ? rating : oldRating);
             if (earliestDate == null || ratingDate.isBefore(earliestDate)) {
                 earliestDate = ratingDate;
             }
@@ -28,7 +30,7 @@ public class RatingDatesInfo {
         this.earliestRatingDate = earliestDate;
     }
 
-    public LocalDate getLatestRatingDate(long id) {
-        return latestRatingDatesById.get(id);
+    public Optional<T> getLatestRatingsById(long rateableId) {
+        return Optional.ofNullable(ratingsById.get(rateableId));
     }
 }

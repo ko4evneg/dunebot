@@ -1,7 +1,6 @@
 package ru.trainithard.dunebot.service.report.v2;
 
 import org.junit.jupiter.api.Test;
-import ru.trainithard.dunebot.model.AbstractRating;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.PlayerRating;
 
@@ -19,9 +18,9 @@ class RatingDatesInfoTest {
         PlayerRating playerRating3 = createPlayerRating(10000L, LocalDate.of(2010, 2, 10));
         LocalDate earliestDate = LocalDate.of(2010, 1, 30);
         PlayerRating playerRating4 = createPlayerRating(10000L, earliestDate);
-        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
+        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
 
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(playerRatings);
 
         assertThat(ratingDatesInfo.getEarliestRatingDate()).isEqualTo(earliestDate);
     }
@@ -43,9 +42,9 @@ class RatingDatesInfoTest {
         LocalDate earliestDate = LocalDate.of(2010, 1, 30);
         PlayerRating playerRating4 = createPlayerRating(10001L, earliestDate);
         PlayerRating playerRating5 = createPlayerRating(10002L, LocalDate.of(2010, 4, 10));
-        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
+        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
 
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(playerRatings);
 
         assertThat(ratingDatesInfo.getEarliestRatingDate()).isEqualTo(earliestDate);
     }
@@ -56,16 +55,16 @@ class RatingDatesInfoTest {
         PlayerRating playerRating1 = createPlayerRating(10000L, earliestDate);
         PlayerRating playerRating2 = createPlayerRating(10001L, earliestDate);
         PlayerRating playerRating3 = createPlayerRating(10002L, earliestDate);
-        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3);
+        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3);
 
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(playerRatings);
 
         assertThat(ratingDatesInfo.getEarliestRatingDate()).isEqualTo(earliestDate);
     }
 
     @Test
     void shouldSetNullEarliestDateWhenEmptyRatingsCollectionProvided() {
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(Collections.emptyList());
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(Collections.emptyList());
 
         assertThat(ratingDatesInfo.getEarliestRatingDate()).isNull();
     }
@@ -77,11 +76,11 @@ class RatingDatesInfoTest {
         PlayerRating playerRating2 = createPlayerRating(10000L, LocalDate.of(2010, 3, 1));
         PlayerRating playerRating3 = createPlayerRating(10000L, LocalDate.of(2010, 2, 10));
         PlayerRating playerRating4 = createPlayerRating(10000L, LocalDate.of(2010, 1, 30));
-        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
+        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
 
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(playerRatings);
 
-        assertThat(ratingDatesInfo.getLatestRatingDate(10000L)).isEqualTo(latestDate);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10000L).orElseThrow().getRatingDate()).isEqualTo(latestDate);
     }
 
     @Test
@@ -94,13 +93,13 @@ class RatingDatesInfoTest {
         PlayerRating playerRating4 = createPlayerRating(10001L, LocalDate.of(2010, 1, 30));
         LocalDate latestDate10002 = LocalDate.of(2010, 4, 10);
         PlayerRating playerRating5 = createPlayerRating(10002L, latestDate10002);
-        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
+        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4, playerRating5);
 
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(playerRatings);
 
-        assertThat(ratingDatesInfo.getLatestRatingDate(10000L)).isEqualTo(latestDate10000);
-        assertThat(ratingDatesInfo.getLatestRatingDate(10001L)).isEqualTo(latestDate10001);
-        assertThat(ratingDatesInfo.getLatestRatingDate(10002L)).isEqualTo(latestDate10002);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10000L).orElseThrow().getRatingDate()).isEqualTo(latestDate10000);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10001L).orElseThrow().getRatingDate()).isEqualTo(latestDate10001);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10002L).orElseThrow().getRatingDate()).isEqualTo(latestDate10002);
     }
 
     @Test
@@ -110,19 +109,19 @@ class RatingDatesInfoTest {
         PlayerRating playerRating2 = createPlayerRating(10001L, latestDate);
         PlayerRating playerRating3 = createPlayerRating(10002L, latestDate);
         PlayerRating playerRating4 = createPlayerRating(10002L, latestDate);
-        List<AbstractRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
+        List<PlayerRating> playerRatings = List.of(playerRating1, playerRating2, playerRating3, playerRating4);
 
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(playerRatings);
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(playerRatings);
 
-        assertThat(ratingDatesInfo.getLatestRatingDate(10000L)).isEqualTo(latestDate);
-        assertThat(ratingDatesInfo.getLatestRatingDate(10001L)).isEqualTo(latestDate);
-        assertThat(ratingDatesInfo.getLatestRatingDate(10002L)).isEqualTo(latestDate);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10000L).orElseThrow().getRatingDate()).isEqualTo(latestDate);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10001L).orElseThrow().getRatingDate()).isEqualTo(latestDate);
+        assertThat(ratingDatesInfo.getLatestRatingsById(10002L).orElseThrow().getRatingDate()).isEqualTo(latestDate);
     }
 
     @Test
     void shouldReturnNullLatestDateWhenEmptyRatingsCollectionProvided() {
-        RatingDatesInfo ratingDatesInfo = new RatingDatesInfo(Collections.emptyList());
+        RatingDatesInfo<PlayerRating> ratingDatesInfo = new RatingDatesInfo<>(Collections.emptyList());
 
-        assertThat(ratingDatesInfo.getLatestRatingDate(10000L)).isNull();
+        assertThat(ratingDatesInfo.getLatestRatingsById(10000L).isEmpty()).isTrue();
     }
 }
