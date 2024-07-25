@@ -38,7 +38,6 @@ public abstract class AbstractRating extends BaseEntity {
     public void consume(Collection<MatchPlayer> matchPlayers) {
         matchPlayers.stream()
                 .filter(matchPlayer -> matchPlayer.getMatch().getState() == MatchState.FINISHED)
-                .filter(MatchPlayer::hasRateablePlace)
                 .filter(this::matchPlayerBelongsThisRatingPeriod)
                 .sorted(ratingComparator)
                 .forEach(this::consume);
@@ -49,13 +48,20 @@ public abstract class AbstractRating extends BaseEntity {
     }
 
     private void consume(MatchPlayer matchPlayer) {
-        initEntity(matchPlayer);
-        int place = Objects.requireNonNull(matchPlayer.getPlace());
-        incrementPlaceCount(place);
-        matchesCount++;
-        efficiency = RatingCalculator.calculateEfficiency(this);
-        winRate = (double) firstPlaceCount / matchesCount;
-        calculateSpecificFields(matchPlayer);
+        if (matchPlayer.hasRateablePlace()) {
+
+            initEntity(matchPlayer);
+            int place = Objects.requireNonNull(matchPlayer.getPlace());
+            incrementPlaceCount(place);
+            matchesCount++;
+            efficiency = RatingCalculator.calculateEfficiency(this);
+            winRate = (double) firstPlaceCount / matchesCount;
+            calculateSpecificFields(matchPlayer);
+        }
+        LocalDate matchDate = matchPlayer.getMatch().getFinishDate();
+        if (matchDate.isAfter(ratingDate)) {
+            ratingDate = matchDate;
+        }
     }
 
     private void incrementPlaceCount(int place) {

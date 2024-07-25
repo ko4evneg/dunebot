@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AbstractRatingTest {
+    private static final LocalDate MATCH_FINISH_DATE = LocalDate.of(2010, 10, 30);
+    private static final LocalDate RATING_DATE = LocalDate.of(2010, 10, 1);
     private final AbstractRating rating = new PlayerRating();
     private final MatchPlayer matchPlayer = new MatchPlayer();
     private final Match match = new Match();
@@ -19,9 +21,43 @@ class AbstractRatingTest {
     @BeforeEach
     void beforeEach() {
         match.setState(MatchState.FINISHED);
-        match.setFinishDate(LocalDate.of(2010, 10, 30));
+        match.setFinishDate(MATCH_FINISH_DATE);
         matchPlayer.setMatch(match);
-        rating.setRatingDate(LocalDate.of(2010, 10, 1));
+        rating.setRatingDate(RATING_DATE);
+    }
+
+    @Test
+    void shouldUpdateRatingDateWhenMatchDateLater() {
+        Player player = new Player();
+        matchPlayer.setPlayer(player);
+        matchPlayer.setPlace(1);
+
+        rating.consume(List.of(matchPlayer));
+
+        assertThat(rating.getRatingDate()).isEqualTo(MATCH_FINISH_DATE);
+    }
+
+    @Test
+    void shouldUpdateRatingDateWhenMatchDateLaterWithNonRateablePlayer() {
+        Player player = new Player();
+        matchPlayer.setPlayer(player);
+
+        rating.consume(List.of(matchPlayer));
+
+        assertThat(rating.getRatingDate()).isEqualTo(MATCH_FINISH_DATE);
+    }
+
+    @Test
+    void shouldNotUpdateRatingDateWhenMatchDateEarlier() {
+        Player player = new Player();
+        matchPlayer.setPlayer(player);
+        matchPlayer.setPlace(1);
+        match.setFinishDate(RATING_DATE);
+        rating.setRatingDate(MATCH_FINISH_DATE);
+
+        rating.consume(List.of(matchPlayer));
+
+        assertThat(rating.getRatingDate()).isEqualTo(MATCH_FINISH_DATE);
     }
 
     @Test
