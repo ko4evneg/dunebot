@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @Entity
@@ -21,5 +23,12 @@ public class LeaderRating extends AbstractRating {
     @Override
     public Long getEntityId() {
         return this.getLeader().getId();
+    }
+
+    @Override
+    void initEntity(MatchPlayer matchPlayer) {
+        if (Objects.isNull(this.leader)) {
+            this.leader = matchPlayer.getLeader();
+        }
     }
 }
