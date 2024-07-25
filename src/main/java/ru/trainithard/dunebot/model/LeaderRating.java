@@ -4,31 +4,30 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Objects;
+import java.time.LocalDate;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "LEADER_RATINGS")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LeaderRating extends AbstractRating {
     @OneToOne
     @JoinColumn(name = "LEADER_ID")
     private Leader leader;
 
-    @Override
-    public Long getEntityId() {
-        return this.getLeader().getId();
+    public LeaderRating(Leader leader, LocalDate ratingDate) {
+        super(ratingDate);
+        this.leader = leader;
     }
 
     @Override
-    void initEntity(MatchPlayer matchPlayer) {
-        if (Objects.isNull(this.leader)) {
-            this.leader = matchPlayer.getLeader();
-        }
+    public Long getEntityId() {
+        return this.getLeader().getId();
     }
 }

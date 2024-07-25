@@ -1,7 +1,9 @@
 package ru.trainithard.dunebot.model;
 
 import jakarta.persistence.MappedSuperclass;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.trainithard.dunebot.service.report.RatingCalculator;
 
@@ -14,23 +16,26 @@ import java.util.Objects;
 @Getter
 @Setter
 @MappedSuperclass
+@NoArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class AbstractRating extends BaseEntity {
     private static Comparator<MatchPlayer> ratingComparator = Comparator
             .comparing((MatchPlayer matchPlayer) -> matchPlayer.getMatch().getFinishDate())
             .thenComparing(MatchPlayer::getId);
 
-    private LocalDate ratingDate;
-    private int matchesCount;
-    private double efficiency;
-    private double winRate;
-    private int firstPlaceCount;
-    private int secondPlaceCount;
-    private int thirdPlaceCount;
-    private int fourthPlaceCount;
+    LocalDate ratingDate;
+    int matchesCount;
+    double efficiency;
+    double winRate;
+    int firstPlaceCount;
+    int secondPlaceCount;
+    int thirdPlaceCount;
+    int fourthPlaceCount;
+
+    AbstractRating(LocalDate ratingDate) {
+        this.ratingDate = ratingDate;
+    }
 
     public abstract Long getEntityId();
-
-    abstract void initEntity(MatchPlayer matchPlayer);
 
     void calculateSpecificFields(MatchPlayer matchPlayer) {
     }
@@ -49,8 +54,6 @@ public abstract class AbstractRating extends BaseEntity {
 
     private void consume(MatchPlayer matchPlayer) {
         if (matchPlayer.hasRateablePlace()) {
-
-            initEntity(matchPlayer);
             int place = Objects.requireNonNull(matchPlayer.getPlace());
             incrementPlaceCount(place);
             matchesCount++;
