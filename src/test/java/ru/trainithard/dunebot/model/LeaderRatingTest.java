@@ -9,7 +9,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LeaderRatingTest {
-    private final LeaderRating leaderRating = new LeaderRating();
+    private final Leader leader = new Leader();
+    private final LeaderRating leaderRating = new LeaderRating(leader, LocalDate.of(2010, 10, 1));
     private final MatchPlayer matchPlayer = new MatchPlayer();
 
     @BeforeEach
@@ -18,12 +19,10 @@ class LeaderRatingTest {
         match.setState(MatchState.FINISHED);
         match.setFinishDate(LocalDate.of(2010, 10, 30));
         matchPlayer.setMatch(match);
-        leaderRating.setRatingDate(LocalDate.of(2010, 10, 1));
     }
 
     @Test
     void shouldNotChangeLeaderWhenItExists() {
-        Leader leader = new Leader();
         leaderRating.setLeader(leader);
         matchPlayer.setLeader(new Leader());
         matchPlayer.setPlace(1);
@@ -35,7 +34,6 @@ class LeaderRatingTest {
 
     @Test
     void shouldSetLeaderWhenItDoesNotExist() {
-        Leader leader = new Leader();
         matchPlayer.setLeader(leader);
         matchPlayer.setPlace(1);
 

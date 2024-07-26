@@ -37,11 +37,11 @@ public class RatingService {
         LocalDate today = LocalDate.now(clock);
         LocalDate selectionStartDate = getSelectionStartDate(latestPlayerRatings, latestLeaderRatings);
         List<Match> matches = matchRepository.findAllByDatesAndState(selectionStartDate, today, List.of(MatchState.FINISHED));
-        log.debug("Found {} match", matches.size());
+        log.debug("Found {} matches", matches.size());
 
         playerRatingMergeService.updateRatings(matches, latestPlayerRatings);
         leaderRatingMergeService.updateRatings(matches, latestLeaderRatings);
-        log.debug("Full rating saved...");
+        log.debug("Full rating calculation finished");
     }
 
     private LocalDate getSelectionStartDate(List<? extends AbstractRating> playerRatings, List<? extends AbstractRating> leaderRatings) {
