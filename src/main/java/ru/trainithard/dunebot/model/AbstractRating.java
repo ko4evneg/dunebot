@@ -18,7 +18,7 @@ import java.util.Objects;
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class AbstractRating extends BaseEntity {
-    private static Comparator<MatchPlayer> ratingComparator = Comparator
+    public static Comparator<MatchPlayer> RATING_COMPARATOR = Comparator
             .comparing((MatchPlayer matchPlayer) -> matchPlayer.getMatch().getFinishDate())
             .thenComparing(MatchPlayer::getId);
 
@@ -44,7 +44,7 @@ public abstract class AbstractRating extends BaseEntity {
         matchPlayers.stream()
                 .filter(matchPlayer -> matchPlayer.getMatch().getState() == MatchState.FINISHED)
                 .filter(this::matchPlayerBelongsThisRatingPeriod)
-                .sorted(ratingComparator)
+                .sorted(RATING_COMPARATOR)
                 .forEach(this::consume);
     }
 
