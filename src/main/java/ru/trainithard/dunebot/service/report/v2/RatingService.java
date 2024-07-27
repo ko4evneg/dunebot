@@ -24,8 +24,8 @@ public class RatingService {
     private final MatchRepository matchRepository;
     private final PlayerRatingRepository playerRatingRepository;
     private final LeaderRatingRepository leaderRatingRepository;
-    private final RatingMergeService<PlayerRating> playerRatingMergeService;
-    private final RatingMergeService<LeaderRating> leaderRatingMergeService;
+    private final RatingUpdateService<PlayerRating> playerRatingUpdateService;
+    private final RatingUpdateService<LeaderRating> leaderRatingUpdateService;
 
     public void buildFullRating() {
         log.debug("Full rating calculation...");
@@ -39,8 +39,8 @@ public class RatingService {
         List<Match> matches = matchRepository.findAllByDatesAndState(selectionStartDate, today, List.of(MatchState.FINISHED));
         log.debug("Found {} matches", matches.size());
 
-        playerRatingMergeService.updateRatings(matches, latestPlayerRatings);
-        leaderRatingMergeService.updateRatings(matches, latestLeaderRatings);
+        playerRatingUpdateService.updateRatings(matches, latestPlayerRatings);
+        //leaderRatingMergeService.updateRatings(matches, latestLeaderRatings);
         log.debug("Full rating calculation finished");
     }
 

@@ -6,6 +6,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.model.AbstractRating;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
+import ru.trainithard.dunebot.model.MetaDataKey;
+import ru.trainithard.dunebot.service.MetaDataService;
 
 import java.time.YearMonth;
 import java.util.*;
@@ -21,6 +23,8 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
 
     @Autowired
     private TransactionTemplate transactionTemplate;
+    @Autowired
+    private MetaDataService metaDataService;
 
     /**
      * Takes matches and ratingDateInfo for the same period and calculate all resulting ratings.
@@ -49,7 +53,10 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
             Map<Long, T> monthRatingsById = latestRatingByEntityIdByMonth.getOrDefault(month, Collections.emptyMap());
             List<T> updatedRatings = getUpdatedRatings(monthMatchPlayersById, monthRatingsById);
             if (!updatedRatings.isEmpty()) {
-                transactionTemplate.executeWithoutResult(status -> saveRatings(updatedRatings));
+                transactionTemplate.executeWithoutResult(status -> {
+                    saveRatings(updatedRatings);
+                    metaDataService.saveOnlyLatestRatingDate(getMetaDataKey(), month.atDay(1));
+                });
             }
         });
     }
@@ -81,4 +88,6 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
     abstract T createNewRating(MatchPlayer matchPlayer);
 
     abstract void saveRatings(Collection<T> ratings);
+
+    abstract MetaDataKey getMetaDataKey();
 }

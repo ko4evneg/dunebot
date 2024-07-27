@@ -8,6 +8,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.PlayerRatingRepository;
+import ru.trainithard.dunebot.service.MetaDataService;
 
 import java.lang.reflect.Field;
 import java.time.LocalDate;
@@ -35,12 +36,16 @@ class RatingUpdateServiceTest {
     private final PlayerRating rating4 = new PlayerRating(player4, date(1, 10));
     private final PlayerRatingRepository playerRatingRepository = mock(PlayerRatingRepository.class);
     private final RatingUpdateService<PlayerRating> ratingUpdateService = new PlayerRatingUpdateService(playerRatingRepository);
+    private final MetaDataService metaDataService = mock(MetaDataService.class);
 
     @BeforeEach
     void beforeEach() throws ReflectiveOperationException {
-        Field field = ratingUpdateService.getClass().getSuperclass().getDeclaredField("transactionTemplate");
-        field.setAccessible(true);
-        field.set(ratingUpdateService, new MockTransactionTemplate());
+        Field field1 = ratingUpdateService.getClass().getSuperclass().getDeclaredField("transactionTemplate");
+        Field field2 = ratingUpdateService.getClass().getSuperclass().getDeclaredField("metaDataService");
+        field1.setAccessible(true);
+        field2.setAccessible(true);
+        field1.set(ratingUpdateService, new MockTransactionTemplate());
+        field2.set(ratingUpdateService, metaDataService);
 
         player1.setId(10000L);
         player2.setId(10001L);
@@ -252,6 +257,17 @@ class RatingUpdateServiceTest {
         assertThat(actualRatings)
                 .extracting(PlayerRating::getEntityId, PlayerRating::getRatingDate, PlayerRating::getMatchesCount)
                 .contains(tuple(10003L, date(1, 5), 2), tuple(10003L, date(2, 10), 1));
+    }
+
+    @Test
+    void shouldSaveMetaDataKeyForRatings() {
+        rating4.setRatingDate(date(1, 1));
+        match3.setFinishDate(date(2, 10));
+
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
+
+        verify(metaDataService).saveOnlyLatestRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(1, 1));
+        verify(metaDataService).saveOnlyLatestRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(2, 1));
     }
 
     private LocalDate date(int month, int day) {
