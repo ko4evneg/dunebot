@@ -18,7 +18,7 @@ import ru.trainithard.dunebot.util.ParsedNames;
 @Entity
 @Table(name = "PLAYERS")
 @NoArgsConstructor
-public class Player extends BaseEntity implements Rateable {
+public class Player extends RateableBaseEntity implements Rateable {
     /**
      * User ID in external messaging system
      */
