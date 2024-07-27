@@ -36,7 +36,7 @@
     <changeSet id="011-short-leader-names" author="ko4evneg">
         <sqlFile path="migrations/11_short_leader_names.sql"/>
     </changeSet>
-    <changeSet id="012-rating-update.sql" author="ko4evneg">
+    <changeSet id="12-rating-update.sql" author="ko4evneg">
         <sqlFile path="migrations/12_rating_update.sql"/>
     </changeSet>
 </databaseChangeLog>
