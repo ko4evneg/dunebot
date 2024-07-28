@@ -7,6 +7,7 @@ import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.LeaderRatingRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRatingRepository;
+import ru.trainithard.dunebot.service.MetaDataService;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -24,10 +25,11 @@ class RatingServiceTest {
     private final MatchRepository matchRepository = mock(MatchRepository.class);
     private final PlayerRatingRepository playerRatingRepository = mock(PlayerRatingRepository.class);
     private final LeaderRatingRepository leaderRatingRepository = mock(LeaderRatingRepository.class);
-    private final RatingMergeService<PlayerRating> playerRatingMergeService = mock(RatingMergeService.class);
-    private final RatingMergeService<LeaderRating> leaderRatingMergeService = mock(RatingMergeService.class);
+    private final RatingUpdateService<PlayerRating> playerRatingUpdateService = mock(RatingUpdateService.class);
+    private final RatingUpdateService<LeaderRating> leaderRatingUpdateService = mock(RatingUpdateService.class);
+    private final MetaDataService metaDataService = mock(MetaDataService.class);
     private final RatingService ratingService = new RatingService(clock, matchRepository, playerRatingRepository,
-            leaderRatingRepository, playerRatingMergeService, leaderRatingMergeService);
+            leaderRatingRepository, playerRatingUpdateService, leaderRatingUpdateService, metaDataService);
     private final Match match1 = new Match();
     private final Match match2 = new Match();
     private final Match match3 = new Match();
@@ -46,34 +48,27 @@ class RatingServiceTest {
         match1.setFinishDate(date(4, 15));
         match2.setFinishDate(date(5, 10));
         match3.setFinishDate(date(6, 17));
+
+        doReturn(date(3, 1)).when(metaDataService).findRatingDate(any());
     }
 
     @Test
-    void shouldSelectFromNextDayOfOfSameRatingsEarliestDate() {
+    void shouldSelectFromNextDayOfMetaDataDate_players() {
         doReturn(List.of(playerRating1, playerRating2)).when(playerRatingRepository).findLatestPlayerRatings();
 
         ratingService.buildFullRating();
 
-        verify(matchRepository).findAllByDatesAndState(eq(date(3, 5)), any(), any());
+        verify(matchRepository).findAllByDatesAndState(eq(date(3, 2)), any(), any());
     }
 
     @Test
-    void shouldSelectFromNextDayOfOfDifferentRatingsEarliestDate() {
+    void shouldSelectFromNextDayOfMetaDataDate_leaders() {
         doReturn(List.of(playerRating1, playerRating2)).when(playerRatingRepository).findLatestPlayerRatings();
         doReturn(List.of(leaderRating1, leaderRating2)).when(leaderRatingRepository).findLatestLeaderRatings();
 
         ratingService.buildFullRating();
 
-        verify(matchRepository).findAllByDatesAndState(eq(date(3, 3)), any(), any());
-    }
-
-    @Test
-    void shouldSelectFromMatchEarliestDateWhenNoRatings() {
-        doReturn(date(7, 8)).when(matchRepository).findEarliestFinishDate();
-
-        ratingService.buildFullRating();
-
-        verify(matchRepository).findAllByDatesAndState(eq(date(7, 8)), any(), any());
+        verify(matchRepository).findAllByDatesAndState(eq(date(3, 2)), any(), any());
     }
 
     @Test
@@ -92,26 +87,26 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldPassAllPlayerRatingsToPLayerUpdateService() {
+    void shouldPassAllPlayerRatingsToPlayerUpdateService() {
         doReturn(List.of(playerRating1, playerRating2)).when(playerRatingRepository).findLatestPlayerRatings();
 
         ratingService.buildFullRating();
 
         ArgumentCaptor<List<PlayerRating>> playerRatingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingMergeService).updateRatings(any(), playerRatingsCaptor.capture());
+        verify(playerRatingUpdateService).updateRatings(any(), playerRatingsCaptor.capture());
         List<PlayerRating> actualRatings = playerRatingsCaptor.getValue();
 
         assertThat(actualRatings).containsExactlyInAnyOrder(playerRating1, playerRating2);
     }
 
     @Test
-    void shouldPassAllLeaderRatingsToPLayerUpdateService() {
+    void shouldPassAllLeaderRatingsToPlayerUpdateService() {
         doReturn(List.of(leaderRating1, leaderRating2)).when(leaderRatingRepository).findLatestLeaderRatings();
 
         ratingService.buildFullRating();
 
         ArgumentCaptor<List<LeaderRating>> leadersRatingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(leaderRatingMergeService).updateRatings(any(), leadersRatingsCaptor.capture());
+        verify(leaderRatingUpdateService).updateRatings(any(), leadersRatingsCaptor.capture());
         List<LeaderRating> actualRatings = leadersRatingsCaptor.getValue();
 
         assertThat(actualRatings).containsExactlyInAnyOrder(leaderRating1, leaderRating2);
@@ -125,13 +120,67 @@ class RatingServiceTest {
 
         ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List<Match>> leaderMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingMergeService).updateRatings(playerMergeMatchesCaptor.capture(), any());
-        verify(leaderRatingMergeService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
+        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
         List<Match> actualPlayerMatches = playerMergeMatchesCaptor.getValue();
         List<Match> actualLeaderMatches = leaderMergeMatchesCaptor.getValue();
 
         assertThat(actualPlayerMatches).containsExactlyInAnyOrder(match1, match2, match3);
         assertThat(actualLeaderMatches).containsExactlyInAnyOrder(match1, match2, match3);
+    }
+
+    @Test
+    void shouldPassOnlyValidMatchesForPlayersWhenPlayerRatingDateIsBeforeLeaderRatingDate() {
+        doReturn(List.of(match1, match2, match3)).when(matchRepository).findAllByDatesAndState(any(), any(), any());
+
+        doReturn(date(4, 1)).when(metaDataService).findRatingDate(MetaDataKey.PLAYER_RATING_DATE);
+        doReturn(date(5, 10)).when(metaDataService).findRatingDate(MetaDataKey.LEADER_RATING_DATE);
+
+        ratingService.buildFullRating();
+
+        ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<Match>> leaderMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
+        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
+        List<Match> actualPlayerMatches = playerMergeMatchesCaptor.getValue();
+        List<Match> actualLeaderMatches = leaderMergeMatchesCaptor.getValue();
+
+        assertThat(actualPlayerMatches)
+                .hasSize(3)
+                .extracting(Match::getFinishDate)
+                .containsExactly(date(4, 15), date(5, 10), date(6, 17));
+
+        assertThat(actualLeaderMatches)
+                .hasSize(1)
+                .extracting(Match::getFinishDate)
+                .containsExactly(date(6, 17));
+    }
+
+    @Test
+    void shouldPassOnlyValidMatchesForLeadersWhenLeaderRatingDateIsBeforePlayerRatingDate() {
+        doReturn(List.of(match1, match2, match3)).when(matchRepository).findAllByDatesAndState(any(), any(), any());
+
+        doReturn(date(4, 1)).when(metaDataService).findRatingDate(MetaDataKey.LEADER_RATING_DATE);
+        doReturn(date(5, 10)).when(metaDataService).findRatingDate(MetaDataKey.PLAYER_RATING_DATE);
+
+        ratingService.buildFullRating();
+
+        ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<Match>> leaderMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
+        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
+        List<Match> actualPlayerMatches = playerMergeMatchesCaptor.getValue();
+        List<Match> actualLeaderMatches = leaderMergeMatchesCaptor.getValue();
+
+        assertThat(actualLeaderMatches)
+                .hasSize(3)
+                .extracting(Match::getFinishDate)
+                .containsExactly(date(4, 15), date(5, 10), date(6, 17));
+
+        assertThat(actualPlayerMatches)
+                .hasSize(1)
+                .extracting(Match::getFinishDate)
+                .containsExactly(date(6, 17));
     }
 
     private LocalDate date(int month, int day) {

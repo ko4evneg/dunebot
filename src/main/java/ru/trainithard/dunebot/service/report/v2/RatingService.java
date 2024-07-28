@@ -7,14 +7,12 @@ import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.LeaderRatingRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
 import ru.trainithard.dunebot.repository.PlayerRatingRepository;
-import ru.trainithard.dunebot.service.LogId;
+import ru.trainithard.dunebot.service.MetaDataService;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -26,36 +24,34 @@ public class RatingService {
     private final LeaderRatingRepository leaderRatingRepository;
     private final RatingUpdateService<PlayerRating> playerRatingUpdateService;
     private final RatingUpdateService<LeaderRating> leaderRatingUpdateService;
+    private final MetaDataService metaDataService;
 
     public void buildFullRating() {
         log.debug("Full rating calculation...");
+        LocalDate playersRatingDate = metaDataService.findRatingDate(MetaDataKey.PLAYER_RATING_DATE).plusDays(1);
+        LocalDate leadersRatingDate = metaDataService.findRatingDate(MetaDataKey.LEADER_RATING_DATE).plusDays(1);
 
         List<PlayerRating> latestPlayerRatings = playerRatingRepository.findLatestPlayerRatings();
         List<LeaderRating> latestLeaderRatings = leaderRatingRepository.findLatestLeaderRatings();
         log.debug("Found {} player_ratings, {} leader ratings", latestPlayerRatings.size(), latestLeaderRatings.size());
 
         LocalDate today = LocalDate.now(clock);
-        LocalDate selectionStartDate = getSelectionStartDate(latestPlayerRatings, latestLeaderRatings);
+        LocalDate selectionStartDate = playersRatingDate.isBefore(leadersRatingDate) ? playersRatingDate : leadersRatingDate;
         List<Match> matches = matchRepository.findAllByDatesAndState(selectionStartDate, today, List.of(MatchState.FINISHED));
         log.debug("Found {} matches", matches.size());
+        List<Match> playerRatingMatches = new ArrayList<>();
+        List<Match> leaderRatingMatches = new ArrayList<>();
+        matches.forEach(match -> {
+            if (match.getFinishDate().isAfter(playersRatingDate)) {
+                playerRatingMatches.add(match);
+            }
+            if (match.getFinishDate().isAfter(leadersRatingDate)) {
+                leaderRatingMatches.add(match);
+            }
+        });
 
-        playerRatingUpdateService.updateRatings(matches, latestPlayerRatings);
-        //leaderRatingMergeService.updateRatings(matches, latestLeaderRatings);
+        playerRatingUpdateService.updateRatings(playerRatingMatches, latestPlayerRatings);
+        leaderRatingUpdateService.updateRatings(leaderRatingMatches, latestLeaderRatings);
         log.debug("Full rating calculation finished");
-    }
-
-    private LocalDate getSelectionStartDate(List<? extends AbstractRating> playerRatings, List<? extends AbstractRating> leaderRatings) {
-        Stream<? extends AbstractRating> latestRatingsStream = playerRatings.stream();
-        Optional<AbstractRating> earliestRatingDate = Stream.concat(latestRatingsStream, leaderRatings.stream())
-                .min(Comparator.comparing(AbstractRating::getRatingDate));
-
-        if (earliestRatingDate.isEmpty()) {
-            LocalDate earliestDate = matchRepository.findEarliestFinishDate();
-            log.debug("{}: no previous ratings detected, earliest date set to {}", LogId.get(), earliestDate);
-            return earliestDate;
-        }
-
-        log.debug("{}: previous ratings found, earliest date set to {}", LogId.get(), earliestRatingDate);
-        return earliestRatingDate.get().getRatingDate().plusDays(1);
     }
 }
