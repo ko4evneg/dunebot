@@ -13,8 +13,8 @@ import java.time.temporal.TemporalAccessor;
 @Service
 @RequiredArgsConstructor
 public class MetaDataService {
-    private static final String BOT_START_DATE = "01.05.24";
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy");
+    private static final String BOT_START_DATE = "01-05-24";
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yy");
 
     private final MetaDataRepository metaDataRepository;
 
@@ -24,13 +24,10 @@ public class MetaDataService {
         return LocalDate.from(parsedDate);
     }
 
-    public void saveOnlyLatestRatingDate(MetaDataKey metaDataKey, LocalDate date) {
+    public void saveRatingDate(MetaDataKey metaDataKey, LocalDate date) {
         String dateString = date.format(DATE_TIME_FORMATTER);
         MetaData curentMetaData = metaDataRepository.findByType(metaDataKey).orElse(new MetaData(metaDataKey, dateString));
-        LocalDate currentSavedDate = LocalDate.from(DATE_TIME_FORMATTER.parse(curentMetaData.getValue()));
-        if (currentSavedDate.isBefore(date)) {
-            curentMetaData.setValue(date.format(DATE_TIME_FORMATTER));
-        }
+        curentMetaData.setValue(dateString);
         metaDataRepository.save(curentMetaData);
     }
 }

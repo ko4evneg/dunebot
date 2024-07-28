@@ -60,7 +60,7 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
                     if (!updatedRatings.isEmpty()) {
                         transactionTemplate.executeWithoutResult(status -> {
                             saveRatings(updatedRatings);
-                            metaDataService.saveOnlyLatestRatingDate(getMetaDataKey(), getLatestRatingDate(updatedRatings));
+                            metaDataService.saveRatingDate(getMetaDataKey(), getLatestRatingDate(updatedRatings));
                         });
                     }
                 });

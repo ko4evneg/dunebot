@@ -267,8 +267,8 @@ class RatingUpdateServiceTest {
 
         ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
 
-        verify(metaDataService).saveOnlyLatestRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(1, 8));
-        verify(metaDataService).saveOnlyLatestRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(2, 10));
+        verify(metaDataService).saveRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(1, 8));
+        verify(metaDataService).saveRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(2, 10));
     }
 
     private LocalDate date(int month, int day) {
