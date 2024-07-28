@@ -9,6 +9,7 @@ import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.MetaDataKey;
 import ru.trainithard.dunebot.service.MetaDataService;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.function.Function;
@@ -49,19 +50,23 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
                                 Collectors.groupingBy(entityIdSupplier)))
                 );
 
-        matchPlayersByEntityIdByMonth.forEach((month, monthMatchPlayersById) -> {
-            Map<Long, T> monthRatingsById = latestRatingByEntityIdByMonth.getOrDefault(month, Collections.emptyMap());
-            List<T> updatedRatings = getUpdatedRatings(monthMatchPlayersById, monthRatingsById);
-            if (!updatedRatings.isEmpty()) {
-                transactionTemplate.executeWithoutResult(status -> {
-                    saveRatings(updatedRatings);
-                    metaDataService.saveOnlyLatestRatingDate(getMetaDataKey(), month.atDay(1));
+        matchPlayersByEntityIdByMonth.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> {
+                    YearMonth month = entry.getKey();
+                    Map<Long, List<MatchPlayer>> monthMatchPlayersById = entry.getValue();
+                    Map<Long, T> monthRatingsById = latestRatingByEntityIdByMonth.getOrDefault(month, Collections.emptyMap());
+                    List<T> updatedRatings = getUpdatedRatings(monthMatchPlayersById, monthRatingsById);
+                    if (!updatedRatings.isEmpty()) {
+                        transactionTemplate.executeWithoutResult(status -> {
+                            saveRatings(updatedRatings);
+                            metaDataService.saveOnlyLatestRatingDate(getMetaDataKey(), getLatestRatingDate(updatedRatings));
+                        });
+                    }
                 });
-            }
-        });
     }
 
-    private List<T> getUpdatedRatings(Map<Long, List<MatchPlayer>> matchPlayersById, Map<Long,T> ratingsById) {
+    private List<T> getUpdatedRatings(Map<Long, List<MatchPlayer>> matchPlayersById, Map<Long, T> ratingsById) {
         List<T> updatedRatings = new ArrayList<>();
         matchPlayersById.forEach((eId, matchPlayers) -> {
             T latestRating = ratingsById.get(eId);
@@ -77,6 +82,13 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
             }
         });
         return updatedRatings;
+    }
+
+    private LocalDate getLatestRatingDate(List<T> updatedRatings) {
+        return updatedRatings.stream()
+                .map(T::getRatingDate)
+                .max(Comparator.naturalOrder())
+                .orElseThrow();
     }
 
     private boolean isRatingDateBeforeMatchDate(MatchPlayer matchPlayer, T latestRating) {
