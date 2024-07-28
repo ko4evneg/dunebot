@@ -183,6 +183,32 @@ class RatingServiceTest {
                 .containsExactly(date(6, 17));
     }
 
+    @Test
+    void shouldSelectMatchesOnNextDayFromLastMetaDataDate() {
+        ratingService.buildFullRating();
+
+        verify(matchRepository).findAllByDatesAndState(eq(date(3, 2)), any(), any());
+    }
+
+    @Test
+    void shouldPassMatchesOnNextDayFromLastMetaDataDate() {
+        doReturn(date(4, 15)).when(metaDataService).findRatingDate(any());
+        doReturn(List.of(match1, match2, match3)).when(matchRepository).findAllByDatesAndState(any(), any(), any());
+
+        ratingService.buildFullRating();
+
+        ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
+        List<LocalDate> actualMatchDates = playerMergeMatchesCaptor.getAllValues().stream()
+                .flatMap(t -> t.stream())
+                .map(Match::getFinishDate)
+                .toList();
+
+        assertThat(actualMatchDates)
+                .hasSize(2)
+                .doesNotContain(date(4, 15));
+    }
+
     private LocalDate date(int month, int day) {
         return LocalDate.of(2010, month, day);
     }
