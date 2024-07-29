@@ -56,8 +56,8 @@ public class RatingService {
         List<LeaderRating> latestLeaderRatings = leaderRatingRepository.findLatestLeaderRatings();
         log.debug("Found {} player_ratings, {} leader ratings", latestPlayerRatings.size(), latestLeaderRatings.size());
 
-        playerRatingUpdateService.updateRatings(playerRatingMatches, latestPlayerRatings);
-        leaderRatingUpdateService.updateRatings(leaderRatingMatches, latestLeaderRatings);
+        playerRatingUpdateService.updateRatings(playerRatingMatches, latestPlayerRatings, today);
+        leaderRatingUpdateService.updateRatings(leaderRatingMatches, latestLeaderRatings, today);
         log.debug("Full rating calculation finished");
     }
 }

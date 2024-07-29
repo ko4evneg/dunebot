@@ -95,7 +95,7 @@ class RatingServiceTest {
         ratingService.buildFullRating();
 
         ArgumentCaptor<List<PlayerRating>> playerRatingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingUpdateService).updateRatings(any(), playerRatingsCaptor.capture());
+        verify(playerRatingUpdateService).updateRatings(any(), playerRatingsCaptor.capture(), any());
         List<PlayerRating> actualRatings = playerRatingsCaptor.getValue();
 
         assertThat(actualRatings).containsExactlyInAnyOrder(playerRating1, playerRating2);
@@ -109,7 +109,7 @@ class RatingServiceTest {
         ratingService.buildFullRating();
 
         ArgumentCaptor<List<LeaderRating>> leadersRatingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(leaderRatingUpdateService).updateRatings(any(), leadersRatingsCaptor.capture());
+        verify(leaderRatingUpdateService).updateRatings(any(), leadersRatingsCaptor.capture(), any());
         List<LeaderRating> actualRatings = leadersRatingsCaptor.getValue();
 
         assertThat(actualRatings).containsExactlyInAnyOrder(leaderRating1, leaderRating2);
@@ -123,8 +123,8 @@ class RatingServiceTest {
 
         ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List<Match>> leaderMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
-        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any(), any());
+        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any(), any());
         List<Match> actualPlayerMatches = playerMergeMatchesCaptor.getValue();
         List<Match> actualLeaderMatches = leaderMergeMatchesCaptor.getValue();
 
@@ -143,8 +143,8 @@ class RatingServiceTest {
 
         ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List<Match>> leaderMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
-        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any(), any());
+        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any(), any());
         List<Match> actualPlayerMatches = playerMergeMatchesCaptor.getValue();
         List<Match> actualLeaderMatches = leaderMergeMatchesCaptor.getValue();
 
@@ -170,8 +170,8 @@ class RatingServiceTest {
 
         ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List<Match>> leaderMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
-        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any());
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any(), any());
+        verify(leaderRatingUpdateService).updateRatings(leaderMergeMatchesCaptor.capture(), any(), any());
         List<Match> actualPlayerMatches = playerMergeMatchesCaptor.getValue();
         List<Match> actualLeaderMatches = leaderMergeMatchesCaptor.getValue();
 
@@ -201,7 +201,7 @@ class RatingServiceTest {
         ratingService.buildFullRating();
 
         ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any());
+        verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any(), any());
         List<LocalDate> actualMatchDates = playerMergeMatchesCaptor.getAllValues().stream()
                 .flatMap(t -> t.stream())
                 .map(Match::getFinishDate)

@@ -34,7 +34,7 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
      * @param matches       matches for specific period (<b>MUST</b> be the same period as for <code>latestRatings</code>)
      * @param latestRatings latest PlayerRating collection specific period (<b>MUST</b> be the same period as for <code>matches</code>)
      */
-    void updateRatings(Collection<Match> matches, Collection<T> latestRatings) {
+    void updateRatings(Collection<Match> matches, Collection<T> latestRatings, LocalDate calculationDate) {
         Map<YearMonth, Map<Long, T>> latestRatingByEntityIdByMonth = latestRatings.stream()
                 .collect(Collectors.groupingBy(
                         rating -> YearMonth.from(rating.getRatingDate()),
@@ -60,7 +60,7 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
                     if (!updatedRatings.isEmpty()) {
                         transactionTemplate.executeWithoutResult(status -> {
                             saveRatings(updatedRatings);
-                            metaDataService.saveRatingDate(getMetaDataKey(), getLatestRatingDate(updatedRatings));
+                            metaDataService.saveRatingDate(getMetaDataKey(), calculationDate);
                         });
                     }
                 });
@@ -82,13 +82,6 @@ public abstract class RatingUpdateService<T extends AbstractRating> {
             }
         });
         return updatedRatings;
-    }
-
-    private LocalDate getLatestRatingDate(List<T> updatedRatings) {
-        return updatedRatings.stream()
-                .map(T::getRatingDate)
-                .max(Comparator.naturalOrder())
-                .orElseThrow();
     }
 
     private boolean isRatingDateBeforeMatchDate(MatchPlayer matchPlayer, T latestRating) {
