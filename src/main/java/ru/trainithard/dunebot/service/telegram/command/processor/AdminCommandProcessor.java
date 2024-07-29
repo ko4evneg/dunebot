@@ -17,6 +17,7 @@ import ru.trainithard.dunebot.service.messaging.dto.MessageDto;
 import ru.trainithard.dunebot.service.messaging.dto.SetCommandsDto;
 import ru.trainithard.dunebot.service.report.RatingReportPdf;
 import ru.trainithard.dunebot.service.report.RatingReportPdfService;
+import ru.trainithard.dunebot.service.report.v2.RatingService;
 import ru.trainithard.dunebot.service.task.ShutdownTask;
 import ru.trainithard.dunebot.service.telegram.command.Command;
 import ru.trainithard.dunebot.service.telegram.command.CommandMessage;
@@ -48,6 +49,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private static final String SET_KEY = "set";
     private static final String MESSAGE_KEY = "message";
     private static final String REPORT_KEY = "report";
+    private static final String RATING_KEY = "rating";
     private static final String WRONG_SETTING_TEXT = "Неверное название настройки!";
     private static final String WRONG_SETTING_VALUE_TEXT = "Значение настройки должно быть числом!";
     private static final DateTimeFormatter DATE_FORAMTTER = DateTimeFormatter.ofPattern("dd.MM.yy");
@@ -56,6 +58,7 @@ public class AdminCommandProcessor extends CommandProcessor {
     private final RatingReportPdfService reportService;
     private final DuneBotTaskScheduler taskScheduler;
     private final ShutdownTask shutdownTask;
+    private final RatingService ratingService;
     private final Clock clock;
 
     @Value("${bot.admin-pdf-directory}")
@@ -84,6 +87,7 @@ public class AdminCommandProcessor extends CommandProcessor {
                 sendTopicsMessages(messageText);
             }
             case REPORT_KEY -> generateReport(commandMessage);
+            case RATING_KEY -> ratingService.buildFullRating();
             case SHUTDOWN_SUBCOMMAND -> shutdown(commandMessage);
             default -> {
                 log.debug("{}: wrong admin subcommand {}", logId(), subCommand);
