@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS PLAYER_RATINGS
     FOURTH_PLACE_COUNT    INT                            NOT NULL,
     CURRENT_STRIKE_LENGTH INT                            NOT NULL,
     MAX_STRIKE_LENGTH     INT                            NOT NULL,
-    IS_PREVIOUSLY_WON     BOOLEAN                        NOT NULL,
+    IS_PREVIOUSLY_WON     BOOLEAN DEFAULT FALSE          NOT NULL,
     CREATED_AT            TIMESTAMP WITH TIME ZONE       NOT NULL,
     UPDATED_AT            TIMESTAMP WITH TIME ZONE
 );

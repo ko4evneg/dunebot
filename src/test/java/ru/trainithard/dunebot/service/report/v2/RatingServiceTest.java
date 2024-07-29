@@ -49,6 +49,7 @@ class RatingServiceTest {
         match2.setFinishDate(date(5, 10));
         match3.setFinishDate(date(6, 17));
 
+        doReturn(List.of(match1)).when(matchRepository).findAllByDatesAndState(any(), any(), any());
         doReturn(date(3, 1)).when(metaDataService).findRatingDate(any());
     }
 
@@ -89,6 +90,7 @@ class RatingServiceTest {
     @Test
     void shouldPassAllPlayerRatingsToPlayerUpdateService() {
         doReturn(List.of(playerRating1, playerRating2)).when(playerRatingRepository).findLatestPlayerRatings();
+        doReturn(List.of(match1)).when(matchRepository).findAllByDatesAndState(any(), any(), any());
 
         ratingService.buildFullRating();
 
@@ -102,6 +104,7 @@ class RatingServiceTest {
     @Test
     void shouldPassAllLeaderRatingsToPlayerUpdateService() {
         doReturn(List.of(leaderRating1, leaderRating2)).when(leaderRatingRepository).findLatestLeaderRatings();
+        doReturn(List.of(match1)).when(matchRepository).findAllByDatesAndState(any(), any(), any());
 
         ratingService.buildFullRating();
 
@@ -210,6 +213,6 @@ class RatingServiceTest {
     }
 
     private LocalDate date(int month, int day) {
-        return LocalDate.of(2010, month, day);
+        return LocalDate.of(2025, month, day);
     }
 }

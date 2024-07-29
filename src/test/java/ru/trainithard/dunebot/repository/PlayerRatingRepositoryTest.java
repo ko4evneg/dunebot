@@ -52,16 +52,16 @@ class PlayerRatingRepositoryTest extends TestContextMock {
     void shouldReturnOnlyLatestPlayerRatingDates() {
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10000, 10000, '2010-10-2',0,0,0,0,0,0,0,0, 10000, '2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10000, 10000, '2010-10-2',0,0,0,0,0,0,0,0,0, '2010-10-10')");
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10001, 10000, '2010-10-3',0,0,0,0,0,0,0,0, 10000, '2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10001, 10000, '2010-10-3',0,0,0,0,0,0,0,0,0, '2010-10-10')");
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10002, 10000, '2010-10-1',0,0,0,0,0,0,0,0, 10000,'2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10002, 10000, '2010-10-1',0,0,0,0,0,0,0,0,0,'2010-10-10')");
 
         List<PlayerRating> latestRatings = playerRatingRepository.findLatestPlayerRatings();
 
@@ -75,20 +75,20 @@ class PlayerRatingRepositoryTest extends TestContextMock {
     void shouldReturnRatingDatesForEveryPlayer() {
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10000, 10000, '2010-10-2',0,0,0,0,0,0,0,0, 10000, '2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10000, 10000, '2010-10-2',0,0,0,0,0,0,0,0, 0, '2010-10-10')");
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10001, 10000, '2010-10-3',0,0,0,0,0,0,0,0, 10000, '2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10001, 10000, '2010-10-3',0,0,0,0,0,0,0,0, 0, '2010-10-10')");
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10002, 10001, '2010-10-1',0,0,0,0,0,0,0,0, 10000,'2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10002, 10001, '2010-10-1',0,0,0,0,0,0,0,0, 0,'2010-10-10')");
         jdbcTemplate.execute("insert into player_ratings (id, player_id, RATING_DATE, MATCHES_COUNT,EFFICIENCY, WIN_RATE, " +
                              "FIRST_PLACE_COUNT, SECOND_PLACE_COUNT, THIRD_PLACE_COUNT, FOURTH_PLACE_COUNT, " +
-                             "STRIKE_LENGTH, LAST_STRIKE_MATCH_ID, created_at) " +
-                             "values (10003, 10001, '2010-10-2',0,0,0,0,0,0,0,0, 10000,'2010-10-10')");
+                             "CURRENT_STRIKE_LENGTH, MAX_STRIKE_LENGTH, created_at) " +
+                             "values (10003, 10001, '2010-10-2',0,0,0,0,0,0,0,0, 0,'2010-10-10')");
 
         List<PlayerRating> latestRatings = playerRatingRepository.findLatestPlayerRatings();
 

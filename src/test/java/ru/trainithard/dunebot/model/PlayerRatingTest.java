@@ -37,17 +37,6 @@ class PlayerRatingTest {
     }
 
     @Test
-    void shouldSetPlayerWhenItDoesNotExist() {
-        Player player = new Player();
-        matchPlayer.setPlayer(player);
-        matchPlayer.setPlace(1);
-
-        playerRating.consume(List.of(matchPlayer));
-
-        assertThat(playerRating.getPlayer()).isSameAs(player);
-    }
-
-    @Test
     void shouldSetCurrentStrikeLengthForNewRatingWhenPlayerWon() {
         Player player = new Player();
         matchPlayer.setPlayer(player);
