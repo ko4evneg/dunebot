@@ -18,7 +18,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class RatingService {
-    private static final LocalDate LEADERS_STAT_START_DATE = LocalDate.of(2024, 7, 13);
+    private static final LocalDate LEADERS_STAT_START_DATE = LocalDate.of(2024, 7, 15);
     private final Clock clock;
     private final MatchRepository matchRepository;
     private final PlayerRatingRepository playerRatingRepository;
