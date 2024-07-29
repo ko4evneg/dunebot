@@ -37,6 +37,7 @@ class RatingUpdateServiceTest {
     private final PlayerRatingRepository playerRatingRepository = mock(PlayerRatingRepository.class);
     private final RatingUpdateService<PlayerRating> ratingUpdateService = new PlayerRatingUpdateService(playerRatingRepository);
     private final MetaDataService metaDataService = mock(MetaDataService.class);
+    private final LocalDate TODAY = date(10, 1);
 
     @BeforeEach
     void beforeEach() throws ReflectiveOperationException {
@@ -55,7 +56,7 @@ class RatingUpdateServiceTest {
 
     @Test
     void shouldSaveNewRatingsForSingleMonthWhenNoRatingsProvided() {
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), Collections.emptyList());
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), Collections.emptyList(), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository).saveAll(ratingsCaptor.capture());
@@ -81,7 +82,7 @@ class RatingUpdateServiceTest {
         match2 = getMatch(febDate, 10001, 10000, 10003, 10002);
         match3 = getMatch(marchDate, 10003, 10002, 10000, 10001);
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), Collections.emptyList());
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), Collections.emptyList(), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository, times(3)).saveAll(ratingsCaptor.capture());
@@ -106,7 +107,7 @@ class RatingUpdateServiceTest {
         match1.getMatchPlayers().stream().filter(matchPlayer -> matchPlayer.getPlayer().getId().equals(10004L))
                 .forEach(matchPlayer -> matchPlayer.setPlace(0));
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), Collections.emptyList());
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), Collections.emptyList(), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository).saveAll(ratingsCaptor.capture());
@@ -124,14 +125,14 @@ class RatingUpdateServiceTest {
 
     @Test
     void shouldNotSaveNewRatingsForSingleWhenNoMatchesProvided() {
-        ratingUpdateService.updateRatings(Collections.emptyList(), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(Collections.emptyList(), List.of(rating1, rating2, rating3, rating4), TODAY);
 
         verifyNoInteractions(playerRatingRepository);
     }
 
     @Test
     void shouldNotSaveNewRatingsForMultipleMonthWhenNoMatchesProvided() {
-        ratingUpdateService.updateRatings(Collections.emptyList(), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(Collections.emptyList(), List.of(rating1, rating2, rating3, rating4), TODAY);
         rating2.setRatingDate(date(2, 3));
         rating3.setRatingDate(date(3, 3));
         rating4.setRatingDate(date(4, 3));
@@ -141,7 +142,7 @@ class RatingUpdateServiceTest {
 
     @Test
     void shouldNotSaveRatingWhenItsDateEarlierOrEqualToMatchDateInSameMonth() {
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository).saveAll(ratingsCaptor.capture());
@@ -162,7 +163,7 @@ class RatingUpdateServiceTest {
         rating4.setRatingDate(date(2, 10));
         PlayerRating rating4jan = new PlayerRating(player4, date(1, 10));
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4, rating3jan, rating4jan));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4, rating3jan, rating4jan), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository).saveAll(ratingsCaptor.capture());
@@ -179,7 +180,7 @@ class RatingUpdateServiceTest {
         rating1.setMatchesCount(3);
         rating2.setMatchesCount(3);
         rating3.setMatchesCount(3);
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository).saveAll(ratingsCaptor.capture());
@@ -203,7 +204,7 @@ class RatingUpdateServiceTest {
         rating4.setRatingDate(date(2, 10));
         PlayerRating rating4jan = new PlayerRating(player4, date(1, 20));
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4, rating4jan));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4, rating4jan), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository, times(2)).saveAll(ratingsCaptor.capture());
@@ -231,7 +232,7 @@ class RatingUpdateServiceTest {
         rating4.setThirdPlaceCount(1);
         rating4.setFourthPlaceCount(1);
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository).saveAll(ratingsCaptor.capture());
@@ -248,7 +249,7 @@ class RatingUpdateServiceTest {
         rating4.setRatingDate(date(1, 1));
         match3.setFinishDate(date(2, 10));
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4), TODAY);
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingRepository, times(2)).saveAll(ratingsCaptor.capture());
@@ -265,10 +266,9 @@ class RatingUpdateServiceTest {
         match2.setFinishDate(date(1, 8));
         match3.setFinishDate(date(2, 10));
 
-        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4));
+        ratingUpdateService.updateRatings(List.of(match1, match2, match3), List.of(rating1, rating2, rating3, rating4), TODAY);
 
-        verify(metaDataService).saveRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(1, 8));
-        verify(metaDataService).saveRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(2, 10));
+        verify(metaDataService, times(2)).saveRatingDate(MetaDataKey.PLAYER_RATING_DATE, date(10, 1));
     }
 
     private LocalDate date(int month, int day) {
