@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.trainithard.dunebot.model.AppSettingKey;
 import ru.trainithard.dunebot.model.Player;
 import ru.trainithard.dunebot.model.PlayerRating;
@@ -35,6 +36,7 @@ public class StatsCommandProcessor extends CommandProcessor {
     private final Clock clock;
 
     @Override
+    @Transactional(readOnly = true)
     public void process(CommandMessage commandMessage) {
         log.debug("{}: STATS started", logId());
 
