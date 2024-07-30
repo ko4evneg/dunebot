@@ -16,10 +16,10 @@ public class RatingCloseEntitiesUtil {
         }
         int sideSize = selectionSize / 2;
         List<T> selectedRatings = new ArrayList<>();
-        if (entityIndex <= sideSize) {
+        if (entityIndex - sideSize < 0) {
             selectedRatings.addAll(allRatings.subList(0, selectionSize));
-        } else if (entityIndex >= allRatings.size() - sideSize - 1) {
-            selectedRatings.addAll(allRatings.subList(allRatings.size() - 1 - selectionSize, allRatings.size() - 1));
+        } else if (entityIndex + sideSize >= allRatings.size()) {
+            selectedRatings.addAll(allRatings.subList(allRatings.size() - selectionSize, allRatings.size()));
         } else {
             selectedRatings.addAll(allRatings.subList(entityIndex - sideSize, entityIndex + sideSize + 1));
         }

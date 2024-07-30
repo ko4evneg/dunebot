@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.PlayerRating;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.util.EmojiRandomizer;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
@@ -210,6 +211,34 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
             message.append("За вами зарегистрировано ").appendBold("неучастие").append(" в матче.");
         }
         return message;
+    }
+
+    @Override
+    public ExternalMessage getNoRatingsMessage() {
+        return new ExternalMessage("Рейтинг за текущий месяц еще не рассчитан, повторите запрос завтра.");
+    }
+
+    @Override
+    public ExternalMessage getNoOwnedRatingsMessage() {
+        return new ExternalMessage("В рейтинге за текущий месяц нет матчей с вашим участием. Перерасчет рейтинга будет выполнен ночью.");
+    }
+
+    @Override
+    public ExternalMessage getRatingStatsMessage(List<PlayerRating> sortedRatings, long requestingPlayerId) {
+        ExternalMessage message = new ExternalMessage("📋 Рейтинг за текущий месяц:").newLine().newLine();
+        for (int i = 0; i < sortedRatings.size(); i++) {
+            PlayerRating currentRating = sortedRatings.get(i);
+            int currentRatingPlace = i + 1;
+            String name = currentRating.getPlayer().getFriendlyName();
+            String efficiency = String.format("%.2f", currentRating.getEfficiency());
+            if (requestingPlayerId == currentRatingPlace) {
+                message.startBold().append(currentRatingPlace).append(". ").append(name).append("  |  ")
+                        .append(efficiency).endBold().newLine();
+            } else {
+                message.append(currentRatingPlace).append(". ").append(name).append("  |  ").append(efficiency).newLine();
+            }
+        }
+        return message.trimTrailingNewLine();
     }
 
     @Override
