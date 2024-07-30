@@ -17,11 +17,11 @@ public class RatingStatsComparator implements Comparator<AbstractRating> {
     public int compare(AbstractRating left, AbstractRating right) {
         int matchesThreshold = appSettingsService.getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
         if (left.getMatchesCount() >= matchesThreshold && right.getMatchesCount() < matchesThreshold) {
-            return 1;
-        } else if (right.getMatchesCount() >= matchesThreshold && left.getMatchesCount() < matchesThreshold) {
             return -1;
+        } else if (right.getMatchesCount() >= matchesThreshold && left.getMatchesCount() < matchesThreshold) {
+            return 1;
         }
 
-        return (int) ((left.getEfficiency() - right.getEfficiency()) * 100);
+        return (int) ((right.getEfficiency() - left.getEfficiency()) * 100);
     }
 }

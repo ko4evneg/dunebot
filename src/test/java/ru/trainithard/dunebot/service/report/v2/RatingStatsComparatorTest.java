@@ -27,6 +27,7 @@ class RatingStatsComparatorTest {
         doReturn(20).when(appSettingsService).getIntSetting(AppSettingKey.MONTHLY_MATCHES_THRESHOLD);
     }
 
+    //TODO REVERSE NAMES LEFT -> RIGHT, TESTS ARE CORRECT
     @Test
     void shouldReturnPositiveWhenLeftExceededThresholdAndRightNotExceeded() {
         leftRating.setMatchesCount(20);
@@ -34,7 +35,7 @@ class RatingStatsComparatorTest {
         rightRating.setMatchesCount(19);
         rightRating.setEfficiency(100.0);
 
-        int actualComparison = ratingStatsComparator.compare(leftRating, rightRating);
+        int actualComparison = ratingStatsComparator.compare(rightRating, leftRating);
 
         assertThat(actualComparison).isPositive();
     }
@@ -46,7 +47,7 @@ class RatingStatsComparatorTest {
         leftRating.setMatchesCount(19);
         leftRating.setEfficiency(100.0);
 
-        int actualComparison = ratingStatsComparator.compare(leftRating, rightRating);
+        int actualComparison = ratingStatsComparator.compare(rightRating, leftRating);
 
         assertThat(actualComparison).isNegative();
     }
@@ -58,7 +59,7 @@ class RatingStatsComparatorTest {
         rightRating.setMatchesCount(20);
         rightRating.setEfficiency(1.0);
 
-        int actualComparison = ratingStatsComparator.compare(leftRating, rightRating);
+        int actualComparison = ratingStatsComparator.compare(rightRating, leftRating);
 
         assertThat(actualComparison).isPositive();
     }
@@ -70,7 +71,7 @@ class RatingStatsComparatorTest {
         rightRating.setMatchesCount(20);
         rightRating.setEfficiency(100.0);
 
-        int actualComparison = ratingStatsComparator.compare(leftRating, rightRating);
+        int actualComparison = ratingStatsComparator.compare(rightRating, leftRating);
 
         assertThat(actualComparison).isNegative();
     }
@@ -82,7 +83,7 @@ class RatingStatsComparatorTest {
         rightRating.setMatchesCount(20);
         rightRating.setEfficiency(5.0);
 
-        int actualComparison = ratingStatsComparator.compare(leftRating, rightRating);
+        int actualComparison = ratingStatsComparator.compare(rightRating, leftRating);
 
         assertThat(actualComparison).isZero();
     }
