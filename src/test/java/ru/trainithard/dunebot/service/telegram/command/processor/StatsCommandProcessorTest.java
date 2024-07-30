@@ -175,12 +175,12 @@ class StatsCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldPassClosestPlayersWhenPlayerIsInMidstOfRating() {
-        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(any(), anyLong());
+        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(1, any(), any());
 
         processor.process(getCommandMessage(10001));
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(messageFactory).getRatingStatsMessage(ratingsCaptor.capture(), anyLong());
+        verify(messageFactory).getRatingStatsMessage(1, ratingsCaptor.capture(), any());
         List<PlayerRating> actualRatings = ratingsCaptor.getValue();
 
         assertThat(actualRatings)
@@ -190,12 +190,12 @@ class StatsCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldPassClosestPlayersWhenPlayerIsInTheEnd() {
-        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(any(), anyLong());
+        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(1, any(), any());
 
         processor.process(getCommandMessage(10002));
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(messageFactory).getRatingStatsMessage(ratingsCaptor.capture(), anyLong());
+        verify(messageFactory).getRatingStatsMessage(1, ratingsCaptor.capture(), any());
         List<PlayerRating> actualRatings = ratingsCaptor.getValue();
 
         assertThat(actualRatings)
@@ -205,12 +205,12 @@ class StatsCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldPassClosestPlayersWhenPlayerIsInTheBeginning() {
-        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(any(), anyLong());
+        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(1, any(), any());
 
         processor.process(getCommandMessage(10006));
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(messageFactory).getRatingStatsMessage(ratingsCaptor.capture(), anyLong());
+        verify(messageFactory).getRatingStatsMessage(1, ratingsCaptor.capture(), any());
         List<PlayerRating> actualRatings = ratingsCaptor.getValue();
 
         assertThat(actualRatings)
@@ -220,13 +220,13 @@ class StatsCommandProcessorTest extends TestContextMock {
 
     @Test
     void shouldReturnAllPlayersWhenRatingsCountLesserThanSelectionSize() {
-        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(any(), anyLong());
+        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(1, any(), any());
         jdbcTemplate.execute("delete from player_ratings where id between 10000 and 10004");
 
         processor.process(getCommandMessage(10006));
 
         ArgumentCaptor<List<PlayerRating>> ratingsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(messageFactory).getRatingStatsMessage(ratingsCaptor.capture(), anyLong());
+        verify(messageFactory).getRatingStatsMessage(1, ratingsCaptor.capture(), any());
         List<PlayerRating> actualRatings = ratingsCaptor.getValue();
 
         assertThat(actualRatings)

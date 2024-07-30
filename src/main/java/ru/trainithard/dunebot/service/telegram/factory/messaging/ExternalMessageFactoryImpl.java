@@ -224,21 +224,26 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
     }
 
     @Override
-    public ExternalMessage getRatingStatsMessage(List<PlayerRating> sortedRatings, long requestingPlayerId) {
-        ExternalMessage message = new ExternalMessage("📋 Рейтинг за текущий месяц:").newLine().newLine();
+    public ExternalMessage getRatingStatsMessage(int startingPlace, List<PlayerRating> sortedRatings, Player requestingPlayer) {
+        ExternalMessage message = new ExternalMessage("📋 Статистика текущего месяца").newLine().newLine();
+        ExternalMessage playersMessage = new ExternalMessage();
+        int currentPlace = startingPlace;
         for (int i = 0; i < sortedRatings.size(); i++) {
             PlayerRating currentRating = sortedRatings.get(i);
-            int currentRatingPlace = i + 1;
             String name = currentRating.getPlayer().getFriendlyName();
             String efficiency = String.format("%.2f", currentRating.getEfficiency());
-            if (requestingPlayerId == currentRatingPlace) {
-                message.startBold().append(currentRatingPlace).append(". ").append(name).append("  |  ")
+            if (requestingPlayer.equals(currentRating.getPlayer())) {
+                message.append("Сыграно матчей: ").append(currentRating.getMatchesCount()).newLine()
+                        .append("Текущий страйк: ").append(currentRating.getCurrentStrikeLength()).newLine()
+                        .append("Максимальный страйк: ").append(currentRating.getMaxStrikeLength()).newLine().newLine();
+                playersMessage.startBold().append(currentPlace).append(". ").append(name).append("  |  ")
                         .append(efficiency).endBold().newLine();
             } else {
-                message.append(currentRatingPlace).append(". ").append(name).append("  |  ").append(efficiency).newLine();
+                playersMessage.append(currentPlace).append(". ").append(name).append("  |  ").append(efficiency).newLine();
             }
+            currentPlace++;
         }
-        return message.trimTrailingNewLine();
+        return message.concat(playersMessage).trimTrailingNewLine();
     }
 
     @Override

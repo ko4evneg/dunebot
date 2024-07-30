@@ -92,5 +92,10 @@ public class ExternalMessage {
         }
         return stringBuilder.toString();
     }
+
+    public ExternalMessage concat(ExternalMessage otherMessage) {
+        stringBuilder.append(otherMessage.getText());
+        return this;
+    }
     //TODO ADD TEST
 }

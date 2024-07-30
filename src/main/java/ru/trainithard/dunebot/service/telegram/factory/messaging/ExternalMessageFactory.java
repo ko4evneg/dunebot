@@ -35,7 +35,7 @@ public interface ExternalMessageFactory {
 
     ExternalMessage getNoOwnedRatingsMessage();
 
-    ExternalMessage getRatingStatsMessage(List<PlayerRating> playerRatings, long requestingPlayerId);
+    ExternalMessage getRatingStatsMessage(int startingPlace, List<PlayerRating> playerRatings, Player requestingPlayer);
 
     ExternalMessage getHelpMessage();
 

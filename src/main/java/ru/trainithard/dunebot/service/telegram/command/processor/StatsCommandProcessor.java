@@ -55,13 +55,13 @@ public class StatsCommandProcessor extends CommandProcessor {
         Player player = playerRepository.findByExternalId(commandMessage.getUserId()).orElseThrow();
         if (playerRatings.size() < rowsCount) {
             log.debug("{}: ratings count lesser then selection count, returning full rating", logId());
-            sendPlayerStats(playerRatings, commandMessage, player.getId());
+            sendPlayerStats(1, playerRatings, commandMessage, player);
         } else {
             getPlayerIndex(playerRatings, player)
                     .ifPresentOrElse(index -> {
                         List<PlayerRating> closestEntitiesList =
                                 RatingCloseEntitiesUtil.getClosestEntitiesList(playerRatings, index, rowsCount);
-                        sendPlayerStats(closestEntitiesList, commandMessage, player.getId());
+                        sendPlayerStats(index + 1 - rowsCount / 2, closestEntitiesList, commandMessage, player);
                     }, () ->
                             sendNoOwnedRatingsMessage(commandMessage));
         }
@@ -81,8 +81,8 @@ public class StatsCommandProcessor extends CommandProcessor {
         messagingService.sendMessageAsync(messageDto);
     }
 
-    private void sendPlayerStats(List<PlayerRating> closestEntitiesList, CommandMessage commandMessage, long requestingPlayerId) {
-        ExternalMessage noRatingsMessage = messageFactory.getRatingStatsMessage(closestEntitiesList, requestingPlayerId);
+    private void sendPlayerStats(int startingPlace, List<PlayerRating> closestEntitiesList, CommandMessage commandMessage, Player player) {
+        ExternalMessage noRatingsMessage = messageFactory.getRatingStatsMessage(startingPlace, closestEntitiesList, player);
         MessageDto messageDto = new MessageDto(commandMessage, noRatingsMessage, null);
         messagingService.sendMessageAsync(messageDto);
     }
