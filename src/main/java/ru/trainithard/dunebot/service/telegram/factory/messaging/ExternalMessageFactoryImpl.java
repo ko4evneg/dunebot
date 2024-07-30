@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.PlayerRating;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 import ru.trainithard.dunebot.util.EmojiRandomizer;
 import ru.trainithard.dunebot.util.MarkdownEscaper;
@@ -210,6 +211,39 @@ public class ExternalMessageFactoryImpl implements ExternalMessageFactory {
             message.append("За вами зарегистрировано ").appendBold("неучастие").append(" в матче.");
         }
         return message;
+    }
+
+    @Override
+    public ExternalMessage getNoRatingsMessage() {
+        return new ExternalMessage("Рейтинг за текущий месяц еще не рассчитан, повторите запрос завтра.");
+    }
+
+    @Override
+    public ExternalMessage getNoOwnedRatingsMessage() {
+        return new ExternalMessage("В рейтинге за текущий месяц нет матчей с вашим участием. Перерасчет рейтинга будет выполнен ночью.");
+    }
+
+    @Override
+    public ExternalMessage getRatingStatsMessage(int startingPlace, List<PlayerRating> sortedRatings, Player requestingPlayer) {
+        ExternalMessage message = new ExternalMessage("📋 Статистика текущего месяца").newLine().newLine();
+        ExternalMessage playersMessage = new ExternalMessage();
+        int currentPlace = startingPlace;
+        for (int i = 0; i < sortedRatings.size(); i++) {
+            PlayerRating currentRating = sortedRatings.get(i);
+            String name = currentRating.getPlayer().getFriendlyName();
+            String efficiency = String.format("%.2f", currentRating.getEfficiency());
+            if (requestingPlayer.equals(currentRating.getPlayer())) {
+                message.append("Сыграно матчей: ").append(currentRating.getMatchesCount()).newLine()
+                        .append("Текущий страйк: ").append(currentRating.getCurrentStrikeLength()).newLine()
+                        .append("Максимальный страйк: ").append(currentRating.getMaxStrikeLength()).newLine().newLine();
+                playersMessage.startBold().append(currentPlace).append(". ").append(name).append("  |  ")
+                        .append(efficiency).endBold().newLine();
+            } else {
+                playersMessage.append(currentPlace).append(". ").append(name).append("  |  ").append(efficiency).newLine();
+            }
+            currentPlace++;
+        }
+        return message.concat(playersMessage).trimTrailingNewLine();
     }
 
     @Override

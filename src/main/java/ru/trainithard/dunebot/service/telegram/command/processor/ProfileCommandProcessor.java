@@ -68,7 +68,7 @@ public class ProfileCommandProcessor extends CommandProcessor {
         playerRepository.save(player);
         messagingService.sendMessageAsync(messageDto);
 
-        log.debug("{}: PROFILE started", logId());
+        log.debug("{}: PROFILE ended", logId());
     }
 
     private void validateGuestUser(CommandMessage commandMessage, Player player) {

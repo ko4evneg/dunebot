@@ -11,6 +11,6 @@ public class CacheConfiguration implements CacheManagerCustomizer<ConcurrentMapC
 
     @Override
     public void customize(ConcurrentMapCacheManager cacheManager) {
-        cacheManager.setCacheNames(List.of("settings"));
+        cacheManager.setCacheNames(List.of("settings", "playerRatings"));
     }
 }

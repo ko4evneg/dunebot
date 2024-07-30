@@ -1,9 +1,11 @@
 package ru.trainithard.dunebot.repository;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.trainithard.dunebot.model.PlayerRating;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface PlayerRatingRepository extends JpaRepository<PlayerRating, Long> {
@@ -16,4 +18,8 @@ public interface PlayerRatingRepository extends JpaRepository<PlayerRating, Long
             from player_ratings pr2, max_dates md
             where pr2.player_id = md.pid and pr2.rating_date = md.max_date""", nativeQuery = true)
     List<PlayerRating> findLatestPlayerRatings();
+
+    @Cacheable(value = "playerRatings", key = "{#from, #to}")
+    @Query("select pr from PlayerRating pr where pr.ratingDate between :from and :to")
+    List<PlayerRating> findAllBy(LocalDate from, LocalDate to);
 }

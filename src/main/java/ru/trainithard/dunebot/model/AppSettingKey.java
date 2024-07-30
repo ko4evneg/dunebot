@@ -49,7 +49,11 @@ public enum AppSettingKey {
     /**
      * Index of next guest player
      */
-    NEXT_GUEST_INDEX;
+    NEXT_GUEST_INDEX,
+    /**
+     * Count of rows to display close players in rating
+     */
+    RATING_STAT_ROWS_COUNT;
 
     public static AppSettingKey getByName(String settingName) {
         if (settingName == null || settingName.isBlank()) {

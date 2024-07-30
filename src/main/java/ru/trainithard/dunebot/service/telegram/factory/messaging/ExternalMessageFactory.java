@@ -3,6 +3,7 @@ package ru.trainithard.dunebot.service.telegram.factory.messaging;
 import ru.trainithard.dunebot.model.Match;
 import ru.trainithard.dunebot.model.MatchPlayer;
 import ru.trainithard.dunebot.model.Player;
+import ru.trainithard.dunebot.model.PlayerRating;
 import ru.trainithard.dunebot.service.messaging.ExternalMessage;
 
 import java.util.Collection;
@@ -29,6 +30,12 @@ public interface ExternalMessageFactory {
     ExternalMessage getFinishedLeadersSubmitMessage(Collection<MatchPlayer> matchPlayers);
 
     ExternalMessage getFinishedSubmitParticipantMessage(MatchPlayer matchPlayer, String submitter, int acceptSubmitTimeout);
+
+    ExternalMessage getNoRatingsMessage();
+
+    ExternalMessage getNoOwnedRatingsMessage();
+
+    ExternalMessage getRatingStatsMessage(int startingPlace, List<PlayerRating> playerRatings, Player requestingPlayer);
 
     ExternalMessage getHelpMessage();
 

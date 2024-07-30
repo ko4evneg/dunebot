@@ -15,7 +15,7 @@ import java.util.Objects;
 @Table(name = "PLAYER_RATINGS")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlayerRating extends AbstractRating {
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "PLAYER_ID")
     private Player player;
     private int currentStrikeLength;

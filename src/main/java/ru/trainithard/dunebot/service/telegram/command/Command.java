@@ -102,6 +102,10 @@ public enum Command {
      */
     HOST(TEXT, false, false, 0),
     /**
+     * Sends user statistics
+     */
+    STATS(TEXT, false, false, 0),
+    /**
      * Manage and configure bot.
      */
     ADMIN(TEXT, true, true, 1);

@@ -76,6 +76,15 @@ public class ExternalMessage {
         return this;
     }
 
+    public ExternalMessage trimTrailingNewLine() {
+        int lastCharIndex = stringBuilder.length() - 1;
+        char lastChar = stringBuilder.charAt(lastCharIndex);
+        if (EXTERNAL_LINE_SEPARATOR.equals(String.valueOf(lastChar))) {
+            stringBuilder.deleteCharAt(lastCharIndex);
+        }
+        return this;
+    }
+
     public String getText() {
         int index = stringBuilder.lastIndexOf(EXTERNAL_LINE_SEPARATOR);
         if (stringBuilder.length() > 0 && index == stringBuilder.length() - 1) {
@@ -84,12 +93,9 @@ public class ExternalMessage {
         return stringBuilder.toString();
     }
 
-    public void trimTrailingNewLine() {
-        int lastCharIndex = stringBuilder.length() - 1;
-        char lastChar = stringBuilder.charAt(lastCharIndex);
-        if (EXTERNAL_LINE_SEPARATOR.equals(String.valueOf(lastChar))) {
-            stringBuilder.deleteCharAt(lastCharIndex);
-        }
+    public ExternalMessage concat(ExternalMessage otherMessage) {
+        stringBuilder.append(otherMessage.getText());
+        return this;
     }
     //TODO ADD TEST
 }

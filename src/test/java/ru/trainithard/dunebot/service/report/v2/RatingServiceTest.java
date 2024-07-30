@@ -3,6 +3,8 @@ package ru.trainithard.dunebot.service.report.v2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.LeaderRatingRepository;
 import ru.trainithard.dunebot.repository.MatchRepository;
@@ -13,6 +15,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,8 +31,9 @@ class RatingServiceTest {
     private final RatingUpdateService<PlayerRating> playerRatingUpdateService = mock(RatingUpdateService.class);
     private final RatingUpdateService<LeaderRating> leaderRatingUpdateService = mock(RatingUpdateService.class);
     private final MetaDataService metaDataService = mock(MetaDataService.class);
+    private final CacheManager cacheManager = mock(CacheManager.class);
     private final RatingService ratingService = new RatingService(clock, matchRepository, playerRatingRepository,
-            leaderRatingRepository, playerRatingUpdateService, leaderRatingUpdateService, metaDataService);
+            leaderRatingRepository, playerRatingUpdateService, leaderRatingUpdateService, metaDataService, cacheManager);
     private final Match match1 = new Match();
     private final Match match2 = new Match();
     private final Match match3 = new Match();
@@ -73,7 +77,7 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldSelectToDateToday() {
+    void shouldSelectOnlyFinishedMatches() {
         ratingService.buildFullRating();
 
         verify(matchRepository).findAllByDatesAndState(any(), any(), argThat((List<MatchState> states) ->
@@ -81,10 +85,10 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldSelectOnlyFinishedMatches() {
+    void shouldSelectToDateToYesterday() {
         ratingService.buildFullRating();
 
-        verify(matchRepository).findAllByDatesAndState(any(), eq(TODAY), any());
+        verify(matchRepository).findAllByDatesAndState(any(), eq(TODAY.minusDays(1)), any());
     }
 
     @Test
@@ -203,13 +207,23 @@ class RatingServiceTest {
         ArgumentCaptor<List<Match>> playerMergeMatchesCaptor = ArgumentCaptor.forClass(List.class);
         verify(playerRatingUpdateService).updateRatings(playerMergeMatchesCaptor.capture(), any(), any());
         List<LocalDate> actualMatchDates = playerMergeMatchesCaptor.getAllValues().stream()
-                .flatMap(t -> t.stream())
+                .flatMap(Collection::stream)
                 .map(Match::getFinishDate)
                 .toList();
 
         assertThat(actualMatchDates)
                 .hasSize(2)
                 .doesNotContain(date(4, 15));
+    }
+
+    @Test
+    void shouldClearRatingsCacheOnCompletion() {
+        Cache cache = mock(Cache.class);
+        doReturn(cache).when(cacheManager).getCache("playerRatings");
+
+        ratingService.buildFullRating();
+
+        verify(cache).clear();
     }
 
     private LocalDate date(int month, int day) {
