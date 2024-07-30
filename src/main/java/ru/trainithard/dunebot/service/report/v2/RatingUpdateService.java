@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import static ru.trainithard.dunebot.model.AbstractRating.RATING_COMPARATOR;
 
 @Slf4j
-//todo lock simultaneous execution
 public abstract class RatingUpdateService<T extends AbstractRating> {
     private final Function<MatchPlayer, Long> entityIdSupplier = getEntityIdSupplier();
 
