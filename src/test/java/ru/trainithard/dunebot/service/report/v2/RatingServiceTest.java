@@ -77,7 +77,7 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldSelectToDateToday() {
+    void shouldSelectOnlyFinishedMatches() {
         ratingService.buildFullRating();
 
         verify(matchRepository).findAllByDatesAndState(any(), any(), argThat((List<MatchState> states) ->
@@ -85,10 +85,10 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldSelectOnlyFinishedMatches() {
+    void shouldSelectToDateToYesterday() {
         ratingService.buildFullRating();
 
-        verify(matchRepository).findAllByDatesAndState(any(), eq(TODAY), any());
+        verify(matchRepository).findAllByDatesAndState(any(), eq(TODAY.minusDays(1)), any());
     }
 
     @Test

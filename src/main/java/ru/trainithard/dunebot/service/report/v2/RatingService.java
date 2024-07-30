@@ -36,10 +36,10 @@ public class RatingService {
         LocalDate playersRatingDate = metaDataService.findRatingDate(MetaDataKey.PLAYER_RATING_DATE);
         LocalDate leadersRatingDate = metaDataService.findRatingDate(MetaDataKey.LEADER_RATING_DATE);
 
-        LocalDate today = LocalDate.now(clock);
+        LocalDate yesterday = LocalDate.now(clock).minusDays(1);
         LocalDate selectionStartDate = playersRatingDate.isBefore(leadersRatingDate) ? playersRatingDate : leadersRatingDate;
         selectionStartDate = selectionStartDate.plusDays(1);
-        List<Match> matches = matchRepository.findAllByDatesAndState(selectionStartDate, today, List.of(MatchState.FINISHED));
+        List<Match> matches = matchRepository.findAllByDatesAndState(selectionStartDate, yesterday, List.of(MatchState.FINISHED));
         log.debug("Found {} matches", matches.size());
         if (matches.isEmpty()) {
             return;
@@ -60,8 +60,8 @@ public class RatingService {
         List<LeaderRating> latestLeaderRatings = leaderRatingRepository.findLatestLeaderRatings();
         log.debug("Found {} player_ratings, {} leader ratings", latestPlayerRatings.size(), latestLeaderRatings.size());
 
-        playerRatingUpdateService.updateRatings(playerRatingMatches, latestPlayerRatings, today);
-        leaderRatingUpdateService.updateRatings(leaderRatingMatches, latestLeaderRatings, today);
+        playerRatingUpdateService.updateRatings(playerRatingMatches, latestPlayerRatings, yesterday);
+        leaderRatingUpdateService.updateRatings(leaderRatingMatches, latestLeaderRatings, yesterday);
         log.debug("Full rating calculation finished");
 
         clearCache();
