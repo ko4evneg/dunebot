@@ -2,6 +2,8 @@ package ru.trainithard.dunebot.service.report.v2;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import ru.trainithard.dunebot.model.*;
 import ru.trainithard.dunebot.repository.LeaderRatingRepository;
@@ -13,6 +15,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -26,6 +29,7 @@ public class RatingService {
     private final RatingUpdateService<PlayerRating> playerRatingUpdateService;
     private final RatingUpdateService<LeaderRating> leaderRatingUpdateService;
     private final MetaDataService metaDataService;
+    private final CacheManager cacheManager;
 
     public void buildFullRating() {
         log.debug("Full rating calculation...");
@@ -59,5 +63,14 @@ public class RatingService {
         playerRatingUpdateService.updateRatings(playerRatingMatches, latestPlayerRatings, today);
         leaderRatingUpdateService.updateRatings(leaderRatingMatches, latestLeaderRatings, today);
         log.debug("Full rating calculation finished");
+
+        clearCache();
+    }
+
+    private void clearCache() {
+        Cache playerRatingsCache = cacheManager.getCache("playerRatings");
+        if (!Objects.isNull(playerRatingsCache)) {
+            playerRatingsCache.clear();
+        }
     }
 }
