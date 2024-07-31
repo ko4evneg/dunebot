@@ -3,6 +3,8 @@ package ru.trainithard.dunebot.service.telegram.command.processor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -233,6 +235,20 @@ class StatsCommandProcessorTest extends TestContextMock {
         assertThat(actualRatings)
                 .extracting(playerRating -> playerRating.getPlayer().getId())
                 .containsExactly(10006L, 10005L, 10007L);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"10004, 1", "10000, 4", "10003, 3", "10007, 4", "10006, 1", "10002, 4"})
+    void shouldPassFirstPlayerPlaceRelatedToPlayer(int playerId, int expectedPlace) {
+        doReturn(new ExternalMessage("abc")).when(messageFactory).getRatingStatsMessage(anyInt(), any(), any());
+
+        processor.process(getCommandMessage(playerId));
+
+        ArgumentCaptor<Integer> firstPlaceCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(messageFactory).getRatingStatsMessage(firstPlaceCaptor.capture(), any(), any());
+        Integer actualFirstPlace = firstPlaceCaptor.getValue();
+
+        assertThat(actualFirstPlace).isEqualTo(expectedPlace);
     }
 
     private CommandMessage getCommandMessage(long userId) {

@@ -22,6 +22,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -61,12 +62,25 @@ public class StatsCommandProcessor extends CommandProcessor {
                     .ifPresentOrElse(index -> {
                         List<PlayerRating> closestEntitiesList =
                                 RatingCloseEntitiesUtil.getClosestEntitiesList(playerRatings, index, rowsCount);
-                        sendPlayerStats(index + 1 - rowsCount / 2, closestEntitiesList, commandMessage, player);
+                        int requestingPlayerPlace = index + 1;
+                        int firstPlayerPlace = getFirstPlayerPlace(closestEntitiesList, player, requestingPlayerPlace);
+                        sendPlayerStats(firstPlayerPlace, closestEntitiesList, commandMessage, player);
                     }, () ->
                             sendNoOwnedRatingsMessage(commandMessage));
         }
 
         log.debug("{}: STATS ended", logId());
+    }
+
+    private int getFirstPlayerPlace(List<PlayerRating> closestEntitiesList, Player requestingPlayer, int requestingPlayerPlace) {
+        Integer playerOrder = null;
+        for (int i = 0; i < closestEntitiesList.size(); i++) {
+            if (closestEntitiesList.get(i).getPlayer().equals(requestingPlayer)) {
+                playerOrder = i;
+                break;
+            }
+        }
+        return requestingPlayerPlace - Objects.requireNonNull(playerOrder);
     }
 
     private void sendEmptyRatingsMessage(CommandMessage commandMessage) {
