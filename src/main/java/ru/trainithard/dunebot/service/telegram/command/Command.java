@@ -38,6 +38,10 @@ public enum Command {
      */
     NEW_DUNE(TEXT, false, false, 0),
     /**
+     * Creates new buff Dune match gathering poll.
+     */
+    NEW_BUFF(TEXT, false, false, 0),
+    /**
      * Creates new Uprising 4 players Dune match gathering poll.
      */
     NEW_UP4(TEXT, false, false, 0),

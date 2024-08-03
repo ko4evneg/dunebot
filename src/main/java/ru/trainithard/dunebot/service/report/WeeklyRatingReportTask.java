@@ -109,7 +109,7 @@ public class WeeklyRatingReportTask implements Runnable {
     private int getTopicId(ModType modType) {
         return switch (modType) {
             case CLASSIC -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_CLASSIC);
-            case UPRISING_4, UPRISING_6 -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
+            case UPRISING_4, UPRISING_6, BUFF -> appSettingsService.getIntSetting(AppSettingKey.TOPIC_ID_UPRISING);
         };
     }
 }
