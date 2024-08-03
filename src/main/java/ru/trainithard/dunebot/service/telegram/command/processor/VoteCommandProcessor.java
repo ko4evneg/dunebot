@@ -116,7 +116,8 @@ public class VoteCommandProcessor extends CommandProcessor {
 
         if (match.isReadyToStart()) {
             rescheduleNewMatchStart(match.getId());
-            if (match.getModType() == ModType.UPRISING_6) {
+            ModType modType = match.getModType();
+            if (modType == ModType.UPRISING_6 || modType == ModType.BUFF) {
                 match.setState(MatchState.FAILED);
                 matchRepository.save(match);
             }

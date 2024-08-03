@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public enum ModType {
     CLASSIC("'Дюна (классика)'", Command.NEW_DUNE, "dune", 4),
+    BUFF("'Дюна (БАФ)'", Command.NEW_BUFF, "dune", 4),
     UPRISING_4("'Апрайзинг на 4-х'", Command.NEW_UP4, "up4", 4),
     UPRISING_6("'Апрайзинг 3х3''", Command.NEW_UP6, "up6", 6);
 
