@@ -38,12 +38,12 @@ public class ScheduledTasksConfiguration {
         taskScheduler.scheduleWithFixedDelay(updateProcessor::process, Duration.ofMillis(5));
         log.info("Scheduled TelegramUpdateProcessor#process for execution every 5 ms");
 
-        //TODO replace with mothly reporting
-        Instant ratingReportStartTime = TimeUtil.getRounded(now, 23, 0);
+        //RATING IS DISABLED
+/*        Instant ratingReportStartTime = TimeUtil.getRounded(now, 23, 0);
         taskScheduler.scheduleWithFixedDelay(weeklyRatingReportTask, ratingReportStartTime, DAY_INTERVAL);
         log.info("Scheduled MonthlyRatingReportTask#run for execution every 1 day, starting at {}", ratingReportStartTime);
 //        dunebotTaskScheduler.scheduleWithFixedDelay(monthlyRatingReportTask, ratingReportStartTime, Duration.ofDays(1));
-//        log.info("Scheduled MonthlyRatingReportTask#run for execution every 1 day, starting at {}", ratingReportStartTime);
+//        log.info("Scheduled MonthlyRatingReportTask#run for execution every 1 day, starting at {}", ratingReportStartTime);*/
 
         Instant ratingUpdateStartTime = getClosestExecutionTime(now, 3);
         taskScheduler.scheduleWithFixedDelay(ratingService::buildFullRating, ratingUpdateStartTime, DAY_INTERVAL);
